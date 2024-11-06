@@ -30,6 +30,7 @@ from ._unit_constants import *
 from ._unit_constants import __all__ as _constants_all
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
+from . import _matplotlib_compat
 
 __all__ = ['math'] + _common_all + _std_units_all + _constants_all + _base_all + _celsius_all
-del _common_all, _std_units_all, _constants_all, _base_all, _celsius_all
+del _common_all, _std_units_all, _constants_all, _base_all, _celsius_all, _matplotlib_compat

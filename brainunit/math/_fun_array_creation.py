@@ -604,7 +604,7 @@ def asarray(
   leaf_unit = leaves[0].unit
 
   # get unit
-  if unit is not None:
+  if unit is not None and not leaf_unit.is_unitless:
     assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
     leaves = [leaf.in_unit(unit) for leaf in leaves]
   else:

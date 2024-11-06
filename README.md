@@ -38,4 +38,4 @@ The official documentation is hosted on Read the Docs: [https://brainunit.readth
 
 ## See also the BDP ecosystem
 
-We are building the BDP ecosystem: https://ecosystem-for-brain-dynamics.readthedocs.io/
+We are building the [brain dynamics programming ecosystem](https://ecosystem-for-brain-dynamics.readthedocs.io/).

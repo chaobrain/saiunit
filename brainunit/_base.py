@@ -2183,6 +2183,24 @@ class Quantity:
       "Please create a new Quantity object with the unit you want."
     )
 
+  def to(self, new_unit: Unit) -> 'Quantity':
+    """
+    Convert the given :py:class:`Quantity` into the given unit.
+
+    Examples::
+
+    >>> a = jax.numpy.array([1, 2, 3]) * mV
+    >>> a.to(volt)
+    array([0.001, 0.002, 0.003]) * volt
+
+    Args:
+      new_unit: The new unit to convert the quantity to.
+
+    Returns:
+      The new quantity with the given unit.
+    """
+    return self.in_unit(new_unit)
+
   def to_decimal(self, unit: Unit = UNITLESS) -> jax.typing.ArrayLike:
     """
     Convert the given :py:class:`Quantity` into the decimal number.

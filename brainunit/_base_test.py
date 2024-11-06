@@ -67,22 +67,22 @@ class TestUnit(unittest.TestCase):
   def test_div(self):
     print()
 
-    a = 1. * bu.second
-    b = 1. * bu.ms
+    a = 1. * u.second
+    b = 1. * u.ms
     print(a / b)
 
-    a = 1. * bu.ms
+    a = 1. * u.ms
     print(a / b)
 
-    c = bu.ms / bu.ms
+    c = u.ms / u.ms
     assert c.is_unitless
 
-    print(bu.Unit((bu.ms / bu.ms).dim, scale=2))
-    print(bu.Unit(bu.ms.dim, scale=2))
+    print(u.Unit((u.ms / u.ms).dim, scale=2))
+    print(u.Unit(u.ms.dim, scale=2))
 
   def test_mul(self):
-    a = bu.Unit(base=2)
-    b = bu.Unit(base=10)
+    a = u.Unit(base=2)
+    b = u.Unit(base=10)
     with pytest.raises(AssertionError):
       a * b
 
@@ -102,55 +102,55 @@ class TestUnit(unittest.TestCase):
         inplace_op(volt)
 
   def test_display(self):
-    print(str(bu.kmeter / bu.meter))
-    assert_equal(str(bu.kmeter / bu.meter), 'Unit(10.0^3)')
+    print(str(u.kmeter / u.meter))
+    assert_equal(str(u.kmeter / u.meter), 'Unit(10.0^3)')
 
 
 class TestQuantity(unittest.TestCase):
   def test_dim(self):
-    a = [1, 2.] * bu.ms
+    a = [1, 2.] * u.ms
 
     with self.assertRaises(NotImplementedError):
-      a.dim = bu.mV.dim
+      a.dim = u.mV.dim
 
   def test_clip(self):
-    a = [1, 2.] * bu.ms
-    self.assertTrue(bu.math.allclose(a.clip(1.5 * bu.ms, 2.5 * bu.ms), [1.5, 2.] * bu.ms))
+    a = [1, 2.] * u.ms
+    self.assertTrue(u.math.allclose(a.clip(1.5 * u.ms, 2.5 * u.ms), [1.5, 2.] * u.ms))
 
-    b = bu.Quantity([1, 2.])
-    self.assertTrue(bu.math.allclose(b.clip(1.5, 2.5), bu.math.asarray([1.5, 2.])))
+    b = u.Quantity([1, 2.])
+    self.assertTrue(u.math.allclose(b.clip(1.5, 2.5), u.math.asarray([1.5, 2.])))
 
   def test_round(self):
-    for u in [bu.ms, bu.joule, bu.mV]:
-      a = [1.1, 2.2] * u
-      self.assertTrue(bu.math.allclose(a.round(), [1, 2] * u))
+    for unit in [u.ms, u.joule, u.mV]:
+      a = [1.1, 2.2] * unit
+      self.assertTrue(u.math.allclose(a.round(), [1, 2] * unit))
 
-    b = bu.Quantity([1.1, 2.2])
-    self.assertTrue(bu.math.allclose(b.round(), bu.math.asarray([1, 2])))
+    b = u.Quantity([1.1, 2.2])
+    self.assertTrue(u.math.allclose(b.round(), u.math.asarray([1, 2])))
 
   def test_astype(self):
-    a = [1, 2.] * bu.ms
+    a = [1, 2.] * u.ms
     self.assertTrue(a.astype(jnp.float16).dtype == jnp.float16)
 
   def test___array__(self):
-    a = bu.Quantity([1, 2.])
-    self.assertTrue(bu.math.allclose(np.asarray(a), np.asarray([1, 2.])))
+    a = u.Quantity([1, 2.])
+    self.assertTrue(u.math.allclose(np.asarray(a), np.asarray([1, 2.])))
 
     with self.assertRaises(TypeError):
-      a = [1, 2.] * bu.ms
-      self.assertTrue(bu.math.allclose(np.asarray(a), np.asarray([1, 2.])))
+      a = [1, 2.] * u.ms
+      self.assertTrue(u.math.allclose(np.asarray(a), np.asarray([1, 2.])))
 
   def test__float__(self):
-    a = bu.Quantity(1.)
-    self.assertTrue(bu.math.allclose(float(a), 1.))
+    a = u.Quantity(1.)
+    self.assertTrue(u.math.allclose(float(a), 1.))
 
-    a = bu.Quantity([1, 2.])
+    a = u.Quantity([1, 2.])
     with self.assertRaises(TypeError):
-      self.assertTrue(bu.math.allclose(float(a), 1.5))
+      self.assertTrue(u.math.allclose(float(a), 1.5))
 
     with self.assertRaises(TypeError):
-      a = [1, 2.] * bu.ms
-      self.assertTrue(bu.math.allclose(float(a), 1.5))
+      a = [1, 2.] * u.ms
+      self.assertTrue(u.math.allclose(float(a), 1.5))
 
   def test_construction(self):
     """Test the construction of Array objects"""
@@ -194,13 +194,13 @@ class TestQuantity(unittest.TestCase):
       Quantity([500 * ms, 1 * volt])
 
   def test_construction2(self):
-    a = np.array([1, 2, 3]) * bu.mV
-    b = bu.Quantity(a)
-    self.assertTrue(bu.math.allclose(a, b))
+    a = np.array([1, 2, 3]) * u.mV
+    b = u.Quantity(a)
+    self.assertTrue(u.math.allclose(a, b))
 
-    c = bu.Quantity(a, unit=bu.volt)
-    self.assertTrue(bu.math.allclose(c.mantissa, np.asarray([1, 2, 3]) * 1e-3))
-    self.assertTrue(bu.math.allclose(c, a))
+    c = u.Quantity(a, unit=u.volt)
+    self.assertTrue(u.math.allclose(c.mantissa, np.asarray([1, 2, 3]) * 1e-3))
+    self.assertTrue(u.math.allclose(c, a))
     print(c)
 
   def test_get_dimensions(self):
@@ -242,37 +242,37 @@ class TestQuantity(unittest.TestCase):
     assert_equal(display_in_unit(3. * volt, mvolt), "3000. * mvolt")
     # assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 ohm * A")
     assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 * volt")
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       display_in_unit(10 * nS, ohm)
     with bst.environ.context(precision=32):
       assert_equal(display_in_unit(3. * volt, mvolt), "3000. * mvolt")
       assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 * volt")
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         display_in_unit(10 * nS, ohm)
     assert_equal(display_in_unit(10.0, Unit(scale=1)), "1. * Unit(10.0^1)")
-    assert_equal(str(3 * bu.kmeter / bu.meter), '3000.0')
-    assert_equal(str(bu.mS / bu.cm ** 2), 'mS/cmeter2')
+    assert_equal(str(3 * u.kmeter / u.meter), '3000.0')
+    assert_equal(str(u.mS / u.cm ** 2), 'mS/cmeter2')
 
-    assert_equal(display_in_unit(10. * bu.mV), '10. * mvolt')
-    assert_equal(display_in_unit(10. * bu.ohm * bu.amp), '10. * volt')
-    assert_equal(display_in_unit(120. * (bu.mS / bu.cm ** 2)), '120. * msiemens / cmeter2')
-    assert_equal(display_in_unit(3.0 * bu.kmeter / 130.51 * bu.meter), '0.02298675 * 10.0^3 * meter2')
-    assert_equal(display_in_unit(3.0 * bu.kmeter / (130.51 * bu.meter)), 'Quantity(22.986746)')
-    assert_equal(display_in_unit(3.0 * bu.kmeter / 130.51 * bu.meter * bu.cm ** -2), 'Quantity(229867.45)')
-    assert_equal(display_in_unit(3.0 * bu.kmeter / 130.51 * bu.meter * bu.cm ** -1), '0.02298675 * 10.0^5 * meter')
-    assert_equal(display_in_unit(1. * bu.joule / bu.kelvin), '1. * joule / kelvin')
+    assert_equal(display_in_unit(10. * u.mV), '10. * mvolt')
+    assert_equal(display_in_unit(10. * u.ohm * u.amp), '10. * volt')
+    assert_equal(display_in_unit(120. * (u.mS / u.cm ** 2)), '120. * msiemens / cmeter2')
+    assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter), '0.02298675 * 10.0^3 * meter2')
+    assert_equal(display_in_unit(3.0 * u.kmeter / (130.51 * u.meter)), 'Quantity(22.986746)')
+    assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -2), 'Quantity(229867.45)')
+    assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -1), '0.02298675 * 10.0^5 * meter')
+    assert_equal(display_in_unit(1. * u.joule / u.kelvin), '1. * joule / kelvin')
 
-    assert_equal(str(1. * bu.metre / ((3.0 * bu.ms) / (1. * bu.second))), '333.33334 * meter')
-    assert_equal(str(1. * bu.metre / ((3.0 * bu.ms) / 1. * bu.second)), '0.33333334 * 10.0^3 * metre * second ** -2')
-    assert_equal(str((3.0 * bu.ms) / 1. * bu.second), '3. * 10.0^-3 * second2')
+    assert_equal(str(1. * u.metre / ((3.0 * u.ms) / (1. * u.second))), '333.33334 * meter')
+    assert_equal(str(1. * u.metre / ((3.0 * u.ms) / 1. * u.second)), '0.33333334 * 10.0^3 * metre * second ** -2')
+    assert_equal(str((3.0 * u.ms) / 1. * u.second), '3. * 10.0^-3 * second2')
 
   # def test_display2(self):
   #
   #   @jax.jit
   #   def f(s):
-  #     a = bu.ms ** s
+  #     a = u.ms ** s
   #     print(a)
-  #     return bu.Quantity(1., unit=a)
+  #     return u.Quantity(1., unit=a)
   #
   #   f(2)
 
@@ -421,13 +421,13 @@ class TestQuantity(unittest.TestCase):
     # Slicing and indexing, setting items
     a = np.reshape(np.arange(6), (2, 3))
     q = a * mV
-    assert bu.math.allclose(q[:].mantissa, q.mantissa)
-    assert bu.math.allclose(q[0].mantissa, (a[0] * volt).mantissa)
-    assert bu.math.allclose(q[0:1].mantissa, (a[0:1] * volt).mantissa)
-    assert bu.math.allclose(q[0, 1].mantissa, (a[0, 1] * volt).mantissa)
-    assert bu.math.allclose(q[0:1, 1:].mantissa, (a[0:1, 1:] * volt).mantissa)
+    assert u.math.allclose(q[:].mantissa, q.mantissa)
+    assert u.math.allclose(q[0].mantissa, (a[0] * volt).mantissa)
+    assert u.math.allclose(q[0:1].mantissa, (a[0:1] * volt).mantissa)
+    assert u.math.allclose(q[0, 1].mantissa, (a[0, 1] * volt).mantissa)
+    assert u.math.allclose(q[0:1, 1:].mantissa, (a[0:1, 1:] * volt).mantissa)
     bool_matrix = np.array([[True, False, False], [False, False, True]])
-    assert bu.math.allclose(q[bool_matrix].mantissa, (a[bool_matrix] * volt).mantissa)
+    assert u.math.allclose(q[bool_matrix].mantissa, (a[bool_matrix] * volt).mantissa)
 
   def test_setting(self):
     quantity = np.reshape(np.arange(6), (2, 3)) * mV
@@ -446,7 +446,7 @@ class TestQuantity(unittest.TestCase):
 
     with pytest.raises(TypeError):
       set_to_value(0, 1)
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       set_to_value(0, 1 * second)
     with pytest.raises(TypeError):
       set_to_value((slice(2), slice(3)), np.ones((2, 3)))
@@ -498,90 +498,90 @@ class TestQuantity(unittest.TestCase):
       #   q * "string"
 
   def test_addition_subtraction(self):
-    u = mV
+    unit = mV
     quantities = [3 * mV, np.array([1, 2]) * mV, np.ones((3, 3)) * mV]
     q2 = 5 * volt
-    q2_mantissa = q2.in_unit(u).mantissa
+    q2_mantissa = q2.in_unit(unit).mantissa
 
     for q in quantities:
       # arrays with units
-      assert_quantity(q + q, q.mantissa + q.mantissa, u)
-      assert_quantity(q - q, 0, u)
-      assert_quantity(q + q2, q.mantissa + q2_mantissa, u)
-      assert_quantity(q2 + q, q2_mantissa + q.mantissa, u)
-      assert_quantity(q - q2, q.mantissa - q2_mantissa, u)
-      assert_quantity(q2 - q, q2_mantissa - q.mantissa, u)
+      assert_quantity(q + q, q.mantissa + q.mantissa, unit)
+      assert_quantity(q - q, 0, unit)
+      assert_quantity(q + q2, q.mantissa + q2_mantissa, unit)
+      assert_quantity(q2 + q, q2_mantissa + q.mantissa, unit)
+      assert_quantity(q - q2, q.mantissa - q2_mantissa, unit)
+      assert_quantity(q2 - q, q2_mantissa - q.mantissa, unit)
 
       # mismatching units
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q + 5 * second
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         5 * second + q
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q - 5 * second
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         5 * second - q
 
       # scalar
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q + 5
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         5 + q
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q + np.float64(5)
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         np.float64(5) + q
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q - 5
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         5 - q
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q - np.float64(5)
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         np.float64(5) - q
 
       # unitless array
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q + np.array([5])
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         np.array([5]) + q
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q + np.array([5], dtype=np.float64)
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         np.array([5], dtype=np.float64) + q
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q - np.array([5])
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         np.array([5]) - q
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         q - np.array([5], dtype=np.float64)
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
         np.array([5], dtype=np.float64) - q
 
       # Check that operations with 0 work
-      with pytest.raises(bu.UnitMismatchError):
-        assert_quantity(q + 0, q.mantissa, u)
-      with pytest.raises(bu.UnitMismatchError):
-        assert_quantity(0 + q, q.mantissa, u)
-      with pytest.raises(bu.UnitMismatchError):
-        assert_quantity(q - 0, q.mantissa, u)
-      with pytest.raises(bu.UnitMismatchError):
+      with pytest.raises(u.UnitMismatchError):
+        assert_quantity(q + 0, q.mantissa, unit)
+      with pytest.raises(u.UnitMismatchError):
+        assert_quantity(0 + q, q.mantissa, unit)
+      with pytest.raises(u.UnitMismatchError):
+        assert_quantity(q - 0, q.mantissa, unit)
+      with pytest.raises(u.UnitMismatchError):
         # Doesn't support 0 - Quantity
         # assert_quantity(0 - q, -q.mantissa, volt)
-        assert_quantity(q + np.float64(0), q.mantissa, u)
-      with pytest.raises(bu.UnitMismatchError):
-        assert_quantity(np.float64(0) + q, q.mantissa, u)
-      with pytest.raises(bu.UnitMismatchError):
-        assert_quantity(q - np.float64(0), q.mantissa, u)
+        assert_quantity(q + np.float64(0), q.mantissa, unit)
+      with pytest.raises(u.UnitMismatchError):
+        assert_quantity(np.float64(0) + q, q.mantissa, unit)
+      with pytest.raises(u.UnitMismatchError):
+        assert_quantity(q - np.float64(0), q.mantissa, unit)
 
       # # using unsupported objects should fail
-      # with pytest.raises(bu.UnitMismatchError):
+      # with pytest.raises(u.UnitMismatchError):
       #   "string" + q
-      # with pytest.raises(bu.UnitMismatchError):
+      # with pytest.raises(u.UnitMismatchError):
       #   q + "string"
-      # with pytest.raises(bu.UnitMismatchError):
+      # with pytest.raises(u.UnitMismatchError):
       #   q - "string"
-      # with pytest.raises(bu.UnitMismatchError):
+      # with pytest.raises(u.UnitMismatchError):
       #   "string" - q
 
   def test_binary_operations(self):
@@ -601,16 +601,16 @@ class TestQuantity(unittest.TestCase):
 
         # Test equivalent numpy functions
         numpy_funcs = [
-          bu.math.add,
-          bu.math.subtract,
-          bu.math.less,
-          bu.math.less_equal,
-          bu.math.greater,
-          bu.math.greater_equal,
-          bu.math.equal,
-          bu.math.not_equal,
-          bu.math.maximum,
-          bu.math.minimum,
+          u.math.add,
+          u.math.subtract,
+          u.math.less,
+          u.math.less_equal,
+          u.math.greater,
+          u.math.greater_equal,
+          u.math.equal,
+          u.math.not_equal,
+          u.math.maximum,
+          u.math.minimum,
         ]
         for numpy_func in numpy_funcs:
           numpy_func(a, b)
@@ -622,9 +622,9 @@ class TestQuantity(unittest.TestCase):
       # Test python builtins
       tryops = [add, sub, lt, le, gt, ge, eq, ne]
       for op in tryops:
-        with pytest.raises(bu.UnitMismatchError):
+        with pytest.raises(u.UnitMismatchError):
           op(a, b)
-        with pytest.raises(bu.UnitMismatchError):
+        with pytest.raises(u.UnitMismatchError):
           op(b, a)
 
     #
@@ -681,16 +681,16 @@ class TestQuantity(unittest.TestCase):
       np.array([1, 2]) * kilogram,
     ]
     for value in values:
-      assert bu.math.all(value < np.inf * bu.get_unit(value))
-      assert bu.math.all(np.inf * bu.get_unit(value) > value)
-      assert bu.math.all(value <= np.inf * bu.get_unit(value))
-      assert bu.math.all(np.inf * bu.get_unit(value) >= value)
-      assert bu.math.all(value != np.inf * bu.get_unit(value))
-      assert bu.math.all(np.inf * bu.get_unit(value) != value)
-      assert bu.math.all(value >= -np.inf * bu.get_unit(value))
-      assert bu.math.all(-np.inf * bu.get_unit(value) <= value)
-      assert bu.math.all(value > -np.inf * bu.get_unit(value))
-      assert bu.math.all(-np.inf * bu.get_unit(value) < value)
+      assert u.math.all(value < np.inf * u.get_unit(value))
+      assert u.math.all(np.inf * u.get_unit(value) > value)
+      assert u.math.all(value <= np.inf * u.get_unit(value))
+      assert u.math.all(np.inf * u.get_unit(value) >= value)
+      assert u.math.all(value != np.inf * u.get_unit(value))
+      assert u.math.all(np.inf * u.get_unit(value) != value)
+      assert u.math.all(value >= -np.inf * u.get_unit(value))
+      assert u.math.all(-np.inf * u.get_unit(value) <= value)
+      assert u.math.all(value > -np.inf * u.get_unit(value))
+      assert u.math.all(-np.inf * u.get_unit(value) < value)
 
   def test_power(self):
     """
@@ -730,18 +730,18 @@ class TestQuantity(unittest.TestCase):
       q = np.arange(10) * volt
       q += q2
 
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       illegal_add(1 * second)
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       illegal_add(1)
 
     def illegal_sub(q2):
       q = np.arange(10) * volt
       q -= q2
 
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       illegal_sub(1 * second)
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       illegal_sub(1)
 
     def illegal_pow(q2):
@@ -798,7 +798,7 @@ class TestQuantity(unittest.TestCase):
       l = value.tolist()
       from_list = Quantity(l)
       assert have_same_dim(from_list, value)
-      assert bu.math.allclose(from_list.mantissa, value.mantissa)
+      assert u.math.allclose(from_list.mantissa, value.mantissa)
 
   def test_units_vs_quantities(self):
     # Unit objects should stay Unit objects under certain operations
@@ -823,35 +823,35 @@ class TestQuantity(unittest.TestCase):
   def test_jit_array(self):
     @jax.jit
     def f1(a):
-      b = a * bu.siemens / bu.cm ** 2
+      b = a * u.siemens / u.cm ** 2
       print(b)
       return b
 
     val = np.random.rand(3)
     r = f1(val)
-    bu.math.allclose(val * bu.siemens / bu.cm ** 2, r)
+    u.math.allclose(val * u.siemens / u.cm ** 2, r)
 
     @jax.jit
     def f2(a):
-      a = a + 1. * bu.siemens / bu.cm ** 2
+      a = a + 1. * u.siemens / u.cm ** 2
       return a
 
-    val = np.random.rand(3) * bu.siemens / bu.cm ** 2
+    val = np.random.rand(3) * u.siemens / u.cm ** 2
     r = f2(val)
-    bu.math.allclose(val + 1 * bu.siemens / bu.cm ** 2, r)
+    u.math.allclose(val + 1 * u.siemens / u.cm ** 2, r)
 
     @jax.jit
     def f3(a):
-      b = a * bu.siemens / bu.cm ** 2
-      print(display_in_unit(b, bu.siemens / bu.meter ** 2))
+      b = a * u.siemens / u.cm ** 2
+      print(display_in_unit(b, u.siemens / u.meter ** 2))
       return b
 
     val = np.random.rand(3)
     r = f3(val)
-    bu.math.allclose(val * bu.siemens / bu.cm ** 2, r)
+    u.math.allclose(val * u.siemens / u.cm ** 2, r)
 
   def test_jit_array2(self):
-    a = 2.0 * (bu.farad / bu.metre ** 2)
+    a = 2.0 * (u.farad / u.metre ** 2)
     print(a)
 
     @jax.jit
@@ -862,32 +862,39 @@ class TestQuantity(unittest.TestCase):
     f(a)
 
   def test_setiterm(self):
-    u = bu.Quantity([0, 0, 0.])
-    u[jnp.asarray([0, 1, 1])] += jnp.asarray([1., 1., 1.])
-    assert_quantity(u, [1., 1., 0.])
+    unit = u.Quantity([0, 0, 0.])
+    unit[jnp.asarray([0, 1, 1])] += jnp.asarray([1., 1., 1.])
+    assert_quantity(unit, [1., 1., 0.])
 
-    u = bu.Quantity([0, 0, 0.])
-    u = u.scatter_add(jnp.asarray([0, 1, 1]), jnp.asarray([1., 1., 1.]))
-    assert_quantity(u, [1., 2., 0.])
+    unit = u.Quantity([0, 0, 0.])
+    unit = unit.scatter_add(jnp.asarray([0, 1, 1]), jnp.asarray([1., 1., 1.]))
+    assert_quantity(unit, [1., 2., 0.])
 
     nu = np.asarray([0, 0, 0.])
     nu[np.asarray([0, 1, 1])] += np.asarray([1., 1., 1.])
     self.assertTrue(np.allclose(nu, np.asarray([1., 1., 0.])))
 
   def test_at(self):
-    x = jnp.arange(5.0) * bu.mV
-    with self.assertRaises(bu.UnitMismatchError):
+    x = jnp.arange(5.0) * u.mV
+    with self.assertRaises(u.UnitMismatchError):
       x.at[2].add(10)
-    x.at[2].add(10 * bu.mV)
-    x.at[10].add(10 * bu.mV)  # out-of-bounds indices are ignored
-    x.at[20].add(10 * bu.mV, mode='clip')
+    x.at[2].add(10 * u.mV)
+    x.at[10].add(10 * u.mV)  # out-of-bounds indices are ignored
+    x.at[20].add(10 * u.mV, mode='clip')
     x.at[2].get()
     x.at[20].get()  # out-of-bounds indices clipped
     x.at[20].get(mode='fill')  # out-of-bounds indices filled with NaN
-    with self.assertRaises(bu.UnitMismatchError):
+    with self.assertRaises(u.UnitMismatchError):
       x.at[20].get(mode='fill', fill_value=-1)  # custom fill value
-    x.at[20].get(mode='fill', fill_value=-1 * bu.mV)  # custom fill value
-
+    x.at[20].get(mode='fill', fill_value=-1 * u.mV)  # custom fill value
+  
+  def test_to(self):
+    x = jnp.arange(5.0) * u.mV
+    with self.assertRaises(u.UnitMismatchError):
+      x.to(u.mA)
+    print(x.to(u.volt))
+    print(x.to(u.uvolt))
+  
 
 class TestNumPyFunctions(unittest.TestCase):
   def test_special_case_numpy_functions(self):
@@ -902,63 +909,63 @@ class TestNumPyFunctions(unittest.TestCase):
     with warnings.catch_warnings():
       warnings.simplefilter("ignore")
       # Check that function and method do the same
-      assert bu.math.allclose(ravel(quadratic_matrix).mantissa, quadratic_matrix.ravel().mantissa)
+      assert u.math.allclose(ravel(quadratic_matrix).mantissa, quadratic_matrix.ravel().mantissa)
       # Check that function gives the same result as on unitless arrays
-      assert bu.math.allclose(
+      assert u.math.allclose(
         np.asarray(ravel(quadratic_matrix).mantissa),
         ravel(np.asarray(quadratic_matrix.mantissa))
       )
       # Check that the function gives the same results as the original numpy
       # function
-      assert bu.math.allclose(
+      assert u.math.allclose(
         np.ravel(np.asarray(quadratic_matrix.mantissa)),
         ravel(np.asarray(quadratic_matrix.mantissa))
       )
 
     # Do the same checks for diagonal, trace and dot
-    assert bu.math.allclose(diagonal(quadratic_matrix).mantissa, quadratic_matrix.diagonal().mantissa)
-    assert bu.math.allclose(
+    assert u.math.allclose(diagonal(quadratic_matrix).mantissa, quadratic_matrix.diagonal().mantissa)
+    assert u.math.allclose(
       np.asarray(diagonal(quadratic_matrix).mantissa),
       diagonal(np.asarray(quadratic_matrix.mantissa))
     )
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.diagonal(np.asarray(quadratic_matrix.mantissa)),
       diagonal(np.asarray(quadratic_matrix.mantissa)),
     )
 
-    assert bu.math.allclose(
+    assert u.math.allclose(
       trace(quadratic_matrix).mantissa,
       quadratic_matrix.trace().mantissa
     )
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.asarray(trace(quadratic_matrix).mantissa),
       trace(np.asarray(quadratic_matrix.mantissa))
     )
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.trace(np.asarray(quadratic_matrix.mantissa)),
       trace(np.asarray(quadratic_matrix.mantissa))
     )
 
-    assert bu.math.allclose(
+    assert u.math.allclose(
       dot(quadratic_matrix, quadratic_matrix).mantissa,
       quadratic_matrix.dot(quadratic_matrix).mantissa
     )
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.asarray(dot(quadratic_matrix, quadratic_matrix).mantissa),
       dot(np.asarray(quadratic_matrix.mantissa),
           np.asarray(quadratic_matrix.mantissa)),
     )
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.dot(np.asarray(quadratic_matrix.mantissa),
              np.asarray(quadratic_matrix.mantissa)),
       dot(np.asarray(quadratic_matrix.mantissa),
           np.asarray(quadratic_matrix.mantissa)),
     )
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.asarray(quadratic_matrix.prod().mantissa),
       np.asarray(quadratic_matrix.mantissa).prod()
     )
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.asarray(quadratic_matrix.prod(axis=0).mantissa),
       np.asarray(quadratic_matrix.mantissa).prod(axis=0),
     )
@@ -985,7 +992,7 @@ class TestNumPyFunctions(unittest.TestCase):
     assert_equal(np.where(cond, ar1, ar2), where(cond, ar1, ar2))
 
     # dimensionless Array
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.where(cond, ar1, ar2),
       np.asarray(where(cond, ar1 * mV / mV, ar2 * mV / mV))
     )
@@ -993,7 +1000,7 @@ class TestNumPyFunctions(unittest.TestCase):
     # Array with dimensions
     ar1 = ar1 * mV
     ar2 = ar2 * mV
-    assert bu.math.allclose(
+    assert u.math.allclose(
       np.where(cond, ar1.mantissa, ar2.mantissa),
       np.asarray(where(cond, ar1, ar2).mantissa),
     )
@@ -1003,7 +1010,7 @@ class TestNumPyFunctions(unittest.TestCase):
       where(cond, ar1)
     with pytest.raises(TypeError):
       where(cond, ar1, ar1, ar2)
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       where(cond, ar1, ar1 / ms)
 
     # Check setasflat (for numpy < 1.7)
@@ -1018,7 +1025,7 @@ class TestNumPyFunctions(unittest.TestCase):
 
     # Check cumprod
     a = np.arange(1, 10) * mV / mV
-    assert bu.math.allclose(a.cumprod(), np.asarray(a).cumprod())
+    assert u.math.allclose(a.cumprod(), np.asarray(a).cumprod())
     (np.arange(1, 5) * mV).cumprod()
 
   def test_unit_discarding_functions(self):
@@ -1029,8 +1036,8 @@ class TestNumPyFunctions(unittest.TestCase):
     values = [3 * mV, np.array([1, 2]) * mV, np.arange(12).reshape(3, 4) * mV]
     for a in values:
       assert np.allclose(np.sign(a.mantissa), np.sign(np.asarray(a.mantissa)))
-      assert np.allclose(bu.math.zeros_like(a).mantissa, np.zeros_like(np.asarray(a.mantissa)))
-      assert np.allclose(bu.math.ones_like(a).mantissa, np.ones_like(np.asarray(a.mantissa)))
+      assert np.allclose(u.math.zeros_like(a).mantissa, np.zeros_like(np.asarray(a.mantissa)))
+      assert np.allclose(u.math.ones_like(a).mantissa, np.ones_like(np.asarray(a.mantissa)))
       if a.ndim > 0:
         # Calling non-zero on a 0d array is deprecated, don't test it:
         assert np.allclose(np.nonzero(a.mantissa), np.nonzero(np.asarray(a.mantissa)))
@@ -1059,10 +1066,10 @@ class TestNumPyFunctions(unittest.TestCase):
       q_ar = value * unit
       for func in keep_dim_funcs:
         test_ar = getattr(q_ar, func)()
-        if bu.get_unit(test_ar) != q_ar.unit:
+        if u.get_unit(test_ar) != q_ar.unit:
           raise AssertionError(
             f"'{func.__name__}' failed on {q_ar!r} -- unit was "
-            f"{q_ar.unit}, is now {bu.get_unit(test_ar)}."
+            f"{q_ar.unit}, is now {u.get_unit(test_ar)}."
           )
 
     # Python builtins should work on one-dimensional arrays
@@ -1072,11 +1079,11 @@ class TestNumPyFunctions(unittest.TestCase):
       q_ar = value * unit
       for func in builtins:
         test_ar = func(q_ar)
-        if bu.get_unit(test_ar) != q_ar.unit:
+        if u.get_unit(test_ar) != q_ar.unit:
           raise AssertionError(
             f"'{func.__name__}' failed on {q_ar!r} -- unit "
             f"was {q_ar.unit}, is now "
-            f"{bu.get_unit(test_ar)}"
+            f"{u.get_unit(test_ar)}"
           )
 
   def test_unitsafe_functions(self):
@@ -1085,20 +1092,20 @@ class TestNumPyFunctions(unittest.TestCase):
     """
     # All functions with their numpy counterparts
     funcs = [
-      (bu.math.sin, np.sin),
-      (bu.math.sinh, np.sinh),
-      (bu.math.arcsin, np.arcsin),
-      (bu.math.arcsinh, np.arcsinh),
-      (bu.math.cos, np.cos),
-      (bu.math.cosh, np.cosh),
-      (bu.math.arccos, np.arccos),
-      (bu.math.arccosh, np.arccosh),
-      (bu.math.tan, np.tan),
-      (bu.math.tanh, np.tanh),
-      (bu.math.arctan, np.arctan),
-      (bu.math.arctanh, np.arctanh),
-      (bu.math.log, np.log),
-      (bu.math.exp, np.exp),
+      (u.math.sin, np.sin),
+      (u.math.sinh, np.sinh),
+      (u.math.arcsin, np.arcsin),
+      (u.math.arcsinh, np.arcsinh),
+      (u.math.cos, np.cos),
+      (u.math.cosh, np.cosh),
+      (u.math.arccos, np.arccos),
+      (u.math.arccosh, np.arccosh),
+      (u.math.tan, np.tan),
+      (u.math.tanh, np.tanh),
+      (u.math.arctan, np.arctan),
+      (u.math.arctanh, np.arctanh),
+      (u.math.log, np.log),
+      (u.math.exp, np.exp),
     ]
 
     unitless_values = [0.1 * mV / mV, np.array([0.1, 0.5]) * mV / mV, np.random.rand(3, 3) * mV / mV]
@@ -1113,12 +1120,12 @@ class TestNumPyFunctions(unittest.TestCase):
 
       for val in unitless_values:
         if hasattr(val, "mantissa"):
-          assert bu.math.allclose(bu_fun(val.mantissa), np_fun(val.mantissa), equal_nan=True)
+          assert u.math.allclose(bu_fun(val.mantissa), np_fun(val.mantissa), equal_nan=True)
         else:
-          assert bu.math.allclose(bu_fun(val), np_fun(val), equal_nan=True)
+          assert u.math.allclose(bu_fun(val), np_fun(val), equal_nan=True)
 
       for val in numpy_values:
-        assert bu.math.allclose(bu_fun(val), np_fun(val), equal_nan=True)
+        assert u.math.allclose(bu_fun(val), np_fun(val), equal_nan=True)
 
 
 class TestConstant(unittest.TestCase):
@@ -1139,11 +1146,11 @@ class TestConstant(unittest.TestCase):
     assert constants.zero_celsius.dim == kelvin.dim
 
     # Check the consistency between a few constants
-    assert bu.math.allclose(
+    assert u.math.allclose(
       constants.gas_constant.mantissa,
       (constants.avogadro_constant * constants.boltzmann_constant).mantissa,
     )
-    assert bu.math.allclose(
+    assert u.math.allclose(
       constants.faraday_constant.mantissa,
       (constants.avogadro_constant * constants.elementary_charge).mantissa,
     )
@@ -1180,7 +1187,7 @@ class TestHelperFunctions(unittest.TestCase):
     Test the check_units decorator
     """
 
-    @bu.check_dims(v=volt.dim)
+    @u.check_dims(v=volt.dim)
     def a_function(v, x):
       """
       v has to have units of volt, x can have any (or no) unit.
@@ -1207,7 +1214,7 @@ class TestHelperFunctions(unittest.TestCase):
     with pytest.raises(TypeError):
       a_function([1, 2 * volt, 3], None)
 
-    @bu.check_dims(result=second.dim)
+    @u.check_dims(result=second.dim)
     def b_function(return_second):
       """
       Return a value in seconds if return_second is True, otherwise return
@@ -1224,7 +1231,7 @@ class TestHelperFunctions(unittest.TestCase):
     with pytest.raises(DimensionMismatchError):
       b_function(False)
 
-    @bu.check_dims(a=bool, b=1, result=bool)
+    @u.check_dims(a=bool, b=1, result=bool)
     def c_function(a, b):
       if a:
         return b > 0
@@ -1245,7 +1252,7 @@ class TestHelperFunctions(unittest.TestCase):
     Test the check_units decorator
     """
 
-    @bu.check_units(v=volt)
+    @u.check_units(v=volt)
     def a_function(v, x):
       """
       v has to have units of volt, x can have any (or no) unit.
@@ -1254,7 +1261,7 @@ class TestHelperFunctions(unittest.TestCase):
 
     # Try correct units
 
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       a_function(3 * mV, 5 * second)
     a_function(3 * volt, 5 * second)
     a_function(5 * volt, "something")
@@ -1266,9 +1273,9 @@ class TestHelperFunctions(unittest.TestCase):
     a_function(None, None)
 
     # Try incorrect units
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       a_function(5 * second, None)
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       a_function(5, None)
     with pytest.raises(AttributeError):
       a_function(object(), None)
@@ -1289,7 +1296,7 @@ class TestHelperFunctions(unittest.TestCase):
     # Should work (returns second)
     b_function(True)
     # Should fail (returns volt)
-    with pytest.raises(bu.UnitMismatchError):
+    with pytest.raises(u.UnitMismatchError):
       b_function(False)
 
     @check_units(a=bool, b=1, result=bool)
@@ -1316,91 +1323,91 @@ def test_str_repr():
   """
 
   units_which_should_exist = [
-    bu.metre,
-    bu.meter,
-    bu.kilogram,
-    bu.kilogramme,
-    bu.second,
-    bu.amp,
-    bu.kelvin,
-    bu.mole,
-    bu.candle,
-    bu.radian,
-    bu.steradian,
-    bu.hertz,
-    bu.newton,
-    bu.pascal,
-    bu.joule,
-    bu.watt,
-    bu.coulomb,
-    bu.volt,
-    bu.farad,
-    bu.ohm,
-    bu.siemens,
-    bu.weber,
-    bu.tesla,
-    bu.henry,
-    bu.lumen,
-    bu.lux,
-    bu.becquerel,
-    bu.gray,
-    bu.sievert,
-    bu.katal,
-    bu.gram,
-    bu.gramme,
-    bu.molar,
-    bu.liter,
-    bu.litre,
+    u.metre,
+    u.meter,
+    u.kilogram,
+    u.kilogramme,
+    u.second,
+    u.amp,
+    u.kelvin,
+    u.mole,
+    u.candle,
+    u.radian,
+    u.steradian,
+    u.hertz,
+    u.newton,
+    u.pascal,
+    u.joule,
+    u.watt,
+    u.coulomb,
+    u.volt,
+    u.farad,
+    u.ohm,
+    u.siemens,
+    u.weber,
+    u.tesla,
+    u.henry,
+    u.lumen,
+    u.lux,
+    u.becquerel,
+    u.gray,
+    u.sievert,
+    u.katal,
+    u.gram,
+    u.gramme,
+    u.molar,
+    u.liter,
+    u.litre,
   ]
 
   # scaled versions of all these units should exist (we just check farad as an example)
   some_scaled_units = [
-    bu.Yfarad,
-    bu.Zfarad,
-    bu.Efarad,
-    bu.Pfarad,
-    bu.Tfarad,
-    bu.Gfarad,
-    bu.Mfarad,
-    bu.kfarad,
-    bu.hfarad,
-    bu.dafarad,
-    bu.dfarad,
-    bu.cfarad,
-    bu.mfarad,
-    bu.ufarad,
-    bu.nfarad,
-    bu.pfarad,
-    bu.ffarad,
-    bu.afarad,
-    bu.zfarad,
-    bu.yfarad,
+    u.Yfarad,
+    u.Zfarad,
+    u.Efarad,
+    u.Pfarad,
+    u.Tfarad,
+    u.Gfarad,
+    u.Mfarad,
+    u.kfarad,
+    u.hfarad,
+    u.dafarad,
+    u.dfarad,
+    u.cfarad,
+    u.mfarad,
+    u.ufarad,
+    u.nfarad,
+    u.pfarad,
+    u.ffarad,
+    u.afarad,
+    u.zfarad,
+    u.yfarad,
   ]
 
   # some powered units
-  powered_units = [bu.cmetre2, bu.Yfarad3]
+  powered_units = [u.cmetre2, u.Yfarad3]
 
   # Combined units
   complex_units = [
-    (bu.kgram * bu.metre2) / (bu.amp * bu.second3),
-    5 * (bu.kgram * bu.metre2) / (bu.amp * bu.second3),
-    bu.metre * bu.second ** -1,
-    10 * bu.metre * bu.second ** -1,
-    np.array([1, 2, 3]) * bu.kmetre / bu.second,
-    np.ones(3) * bu.nS / bu.cm ** 2,
+    (u.kgram * u.metre2) / (u.amp * u.second3),
+    5 * (u.kgram * u.metre2) / (u.amp * u.second3),
+    u.metre * u.second ** -1,
+    10 * u.metre * u.second ** -1,
+    np.array([1, 2, 3]) * u.kmetre / u.second,
+    np.ones(3) * u.nS / u.cm ** 2,
     # Made-up unit:
     Unit(
       dim=get_or_create_dimension(length=5, time=2),
       dispname="O",
     ),
-    8000 * bu.umetre ** 3,
-    [0.0001, 10000] * bu.umetre ** 3,
-    1 / bu.metre,
-    1 / (bu.coulomb * bu.metre ** 2),
+    8000 * u.umetre ** 3,
+    [0.0001, 10000] * u.umetre ** 3,
+    1 / u.metre,
+    1 / (u.coulomb * u.metre ** 2),
     Unit() / second,
-    3.0 * bu.mM,
-    5 * bu.mole / bu.liter,
-    7 * bu.liter / bu.meter3,
+    3.0 * u.mM,
+    5 * u.mole / u.liter,
+    7 * u.liter / u.meter3,
     1 / second ** 2,
     volt ** -2,
     (volt ** 2) ** -1,
@@ -1419,14 +1426,14 @@ def test_str_repr():
   # ):
   #   assert len(str(u)) > 0
   #   print(u)
-  #   v1 = bu.display_in_unit(u, python_code=False)
+  #   v1 = u.display_in_unit(u, python_code=False)
   #   if isinstance(u, Unit):
   #     if 'Unit(1.0)' in v1:
   #       continue
   #     v2 = eval(v1)
   #     assert v2 == u
   #     assert isinstance(u, Unit)
-  #     assert bu.math.allclose(v2.value, u.value)
+  #     assert u.math.allclose(v2.value, u.value)
 
   # test the `DIMENSIONLESS` object
   assert str(DIMENSIONLESS) == "1"

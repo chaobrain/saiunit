@@ -44,8 +44,8 @@ and ``numpy`` or ``jax`` arrays.
 
 .. code-block:: python
 
-    import brainunit as bu
-    61.8 * bu.second
+    import brainunit as u
+    61.8 * u.second
 
 .. code-block:: text
 
@@ -54,7 +54,7 @@ and ``numpy`` or ``jax`` arrays.
 
 .. code-block:: python
 
-    [1., 2., 3.] * bu.second
+    [1., 2., 3.] * u.second
 
 .. code-block:: text
 
@@ -64,7 +64,7 @@ and ``numpy`` or ``jax`` arrays.
 .. code-block:: python
     
     import numpy as np
-    np.array([1., 2., 3.]) * bu.second
+    np.array([1., 2., 3.]) * u.second
 
 .. code-block:: text
     
@@ -74,7 +74,7 @@ and ``numpy`` or ``jax`` arrays.
 .. code-block:: python
     
     import jax.numpy as jnp
-    jnp.array([1., 2., 3.]) * bu.second
+    jnp.array([1., 2., 3.]) * u.second
 
 .. code-block:: text
 
@@ -85,7 +85,7 @@ You can get the unit and mantissa from a ``Quantity`` using the unit and mantiss
 
 .. code-block:: python
 
-    q = 61.8 * bu.second
+    q = 61.8 * u.second
     q.mantissa
 
 .. code-block:: text
@@ -107,7 +107,7 @@ You can also combine quantities or units:
 
 .. code-block:: python
 
-    15.1 * bu.meter / (32.0 * bu.second)
+    15.1 * u.meter / (32.0 * u.second)
 
 .. code-block:: text
 
@@ -116,7 +116,7 @@ You can also combine quantities or units:
 
 .. code-block:: python
 
-    3.0 * bu.kmeter / (130.51 * bu.meter / bu.second)
+    3.0 * u.kmeter / (130.51 * u.meter / u.second)
 
 
 .. code-block:: text
@@ -127,7 +127,7 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
 
 .. code-block:: python
     
-    q = bu.Quantity(61.8)
+    q = u.Quantity(61.8)
     q.dim
 
 .. code-block:: text
@@ -141,7 +141,7 @@ See also the BDP ecosystem
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-We are building the `BDP ecosystem <https://ecosystem-for-brain-dynamics.readthedocs.io/>`_.
+We are building the `brain dynamics programming ecosystem <https://ecosystem-for-brain-dynamics.readthedocs.io/>`_.
 
 
 
