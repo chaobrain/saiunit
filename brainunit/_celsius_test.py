@@ -18,16 +18,16 @@ import brainunit as u
 
 
 def test1():
-  a = u.celsius2kelvin(0)
-  assert a == 273.15 * u.kelvin
+    a = u.celsius2kelvin(0)
+    assert a == 273.15 * u.kelvin
 
-  b = u.celsius2kelvin(-100)
-  assert b == 173.15 * u.kelvin
+    b = u.celsius2kelvin(-100)
+    assert b == 173.15 * u.kelvin
 
 
 def test2():
-  a = u.kelvin2celsius(273.15 * u.kelvin)
-  assert a == 0
+    a = u.kelvin2celsius(273.15 * u.kelvin)
+    assert a == 0
 
-  b = u.kelvin2celsius(173.15 * u.kelvin)
-  assert b == -100
+    b = u.kelvin2celsius(173.15 * u.kelvin)
+    assert b == -100

@@ -48,6 +48,7 @@ dependencies = [
     'jax',
     'jaxlib',
     'numpy',
+    'typing_extensions',
 ]
 
 dynamic = ['version']

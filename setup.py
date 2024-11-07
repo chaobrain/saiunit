@@ -56,7 +56,7 @@ setup(
   author_email='chao.brain@qq.com',
   packages=packages,
   python_requires='>=3.9',
-  install_requires=['numpy>=1.15', 'jax'],
+  install_requires=['numpy>=1.15', 'jax', 'typing_extensions'],
   url='https://github.com/chaoming0625/brainunit',
   project_urls={
     "Bug Tracker": "https://github.com/chaoming0625/brainunit/issues",

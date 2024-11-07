@@ -42,31 +42,30 @@ Molar mass constant  :math:`M_u`        ``molar_mass_constant`` :math:`1\times 1
 import numpy as np
 
 from ._unit_common import (
-  amp,
-  coulomb,
-  farad,
-  gram,
-  joule,
-  kelvin,
-  kilogram,
-  meter,
-  mole,
-  newton,
+    amp,
+    coulomb,
+    farad,
+    gram,
+    joule,
+    kelvin,
+    kilogram,
+    meter,
+    mole,
+    newton,
 )
 
 __all__ = [
-  'avogadro_constant',
-  'boltzmann_constant',
-  'electric_constant',
-  'electron_mass',
-  'elementary_charge',
-  'faraday_constant',
-  'gas_constant',
-  'magnetic_constant',
-  'molar_mass_constant',
-  'zero_celsius',
+    'avogadro_constant',
+    'boltzmann_constant',
+    'electric_constant',
+    'electron_mass',
+    'elementary_charge',
+    'faraday_constant',
+    'gas_constant',
+    'magnetic_constant',
+    'molar_mass_constant',
+    'zero_celsius',
 ]
-
 
 #: Avogadro constant (http://physics.nist.gov/cgi-bin/cuu/Value?na)
 avogadro_constant = np.asarray(6.022140857e23) / mole
