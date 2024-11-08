@@ -24,7 +24,7 @@ from .._misc import set_module_as
 
 __all__ = [
     # math funcs remove unit (unary)
-    'heaviside', 'signbit', 'sign', 'bincount', 'digitize',
+    'iscomplexobj', 'heaviside', 'signbit', 'sign', 'bincount', 'digitize',
 
     # logic funcs (unary)
     'all', 'any', 'logical_not',
@@ -49,12 +49,33 @@ def _fun_remove_unit_unary(func, x, *args, **kwargs):
     else:
         return func(x, *args, **kwargs)
 
+@set_module_as('brainunit.math')
+def iscomplexobj(
+    x: Union[jax.typing.ArrayLike, Quantity],
+) -> bool:
+    """
+    Return True if x is a complex type or an array of complex numbers.
+
+    Parameters
+    ----------
+    x : array_like, Quantity
+        Input array.
+
+    Returns
+    -------
+    out : bool
+        True if `x` is  a complex type or an array of complex numbers.
+
+    """
+    return _fun_remove_unit_unary(jnp.iscomplexobj, x)
+
+
 
 @set_module_as('brainunit.math')
 def heaviside(
-    x1: Union[Quantity, jax.jax.Array],
+    x1: Union[Quantity, jax.Array],
     x2: jax.typing.ArrayLike
-) -> Union[Quantity, jax.jax.Array]:
+) -> Union[Quantity, jax.Array]:
     """
     Compute the Heaviside step function.
 

@@ -48,7 +48,7 @@ __all__ = [
     'flatten', 'unflatten', 'remove_diag',
 
     # math funcs keep unit (unary)
-    'real', 'imag', 'conj', 'conjugate', 'negative', 'positive',
+    'astype', 'real', 'imag', 'conj', 'conjugate', 'negative', 'positive',
     'abs', 'sum', 'nancumsum', 'nansum',
     'cumsum', 'ediff1d', 'absolute', 'fabs', 'median',
     'nanmin', 'nanmax', 'ptp', 'average', 'mean', 'std',
@@ -1239,6 +1239,28 @@ def _fun_keep_unit_unary(func, x, *args, **kwargs):
         return Quantity(func(x.mantissa, *args, **kwargs), unit=x.unit)
     else:
         return func(x, *args, **kwargs)
+
+
+def astype(
+    x: Union[jax.typing.ArrayLike, Quantity],
+    dtype: jax.typing.DTypeLike
+) -> Union[jax.Array, Quantity]:
+    """
+    Copy of the array, cast to a specified type.
+
+    Parameters
+    ----------
+    x : array_like, Quantity
+        Input array.
+    dtype : dtype
+        Typecode or data-type to which the array is cast.
+
+    Returns
+    -------
+    out : ndarray, Quantity
+        A copy of the array, cast to a specified type.
+    """
+    return _fun_keep_unit_unary(jnp.astype, x, dtype)
 
 
 @set_module_as('brainunit.math')

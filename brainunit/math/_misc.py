@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import (Union, TypeVar)
+from typing import (Union, TypeVar, Any)
 
 import jax
 import jax.numpy as jnp
@@ -32,12 +32,13 @@ T = TypeVar("T")
 
 __all__ = [
     # constants
-    'e', 'pi', 'inf', 'nan', 'euler_gamma',
+    'e', 'pi', 'inf', 'nan', 'euler_gamma', 'inexact',
 
     # data types
-    'dtype', 'finfo', 'iinfo',
+    'dtype', 'finfo', 'iinfo', 'newaxis',
 
     # getting attribute funcs
+    'is_quantity', 'issubdtype', 'result_type',
     'ndim', 'isreal', 'isscalar', 'isfinite', 'isinf',
     'isnan', 'shape', 'size', 'get_dtype',
     'is_float', 'is_int', 'broadcast_shapes',
@@ -60,11 +61,59 @@ e = np.e
 pi = np.pi
 inf = np.inf
 nan = np.nan
+inexact = jnp.inexact
 euler_gamma = np.euler_gamma
 
 # data types
 # ----------
 dtype = jnp.dtype
+newaxis = jnp.newaxis
+
+
+def is_quantity(x: Any) -> bool:
+    """
+    Check if x is a Quantity.
+
+    Parameters
+    ----------
+    x : Any
+        The input object.
+
+    Returns
+    -------
+    bool
+        A boolean value indicating if x is a Quantity.
+    """
+    return isinstance(x, Quantity)
+
+
+@set_module_as('brainunit.math')
+def issubdtype(a: T, b: T) -> bool:
+    """
+    Returns True if first argument is a typecode lower/equal in type hierarchy.
+
+    Args:
+      a: dtype
+      b: dtype
+
+    Returns:
+      bool
+    """
+    return jnp.issubdtype(a, b)
+
+
+@set_module_as('brainunit.math')
+def result_type(*args):
+    """
+    Determine the result data type.
+
+    Args:
+      *args: array_like
+
+    Returns:
+      dtype: dtype
+    """
+    return jnp.result_type(*jax.tree.leaves(args))
 
 
 @set_module_as('brainunit.math')

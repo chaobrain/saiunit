@@ -53,15 +53,21 @@ def _fun_accept_unitless_unary(
 ):
     if isinstance(x, Quantity):
         if unit_to_scale is None:
-            assert x.dim.is_dimensionless, (f'Input should be dimensionless for the function "{func}" '
-                                            f'when scaling "unit_to_scale" is not provided.')
+            assert x.dim.is_dimensionless, (
+                f'{func} only support dimensionless input. But we got {x}. \n'
+                f'If you want to scale the input, please provide the "unit_to_scale" parameter. Or '
+                f'convert the input to a dimensionless Quantity manually.'
+            )
             x = x.to_decimal()
             return func(x, *args, **kwargs)
         else:
             assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
             return func(x.to_decimal(unit_to_scale), *args, **kwargs)
     else:
-        assert unit_to_scale is None, f'Unit should be None for the function "{func}" when "x" is not a Quantity.'
+        assert unit_to_scale is None, (
+            f'{func} only support dimensionless input. \n'
+            'When the input is not a Quantity, the "unit_to_scale" parameter should not be provided.'
+        )
         return func(x, *args, **kwargs)
 
 
@@ -762,8 +768,11 @@ def _fun_accept_unitless_binary(
 ):
     if isinstance(x, Quantity):
         if unit_to_scale is None:
-            assert x.dim.is_dimensionless, (f'Input should be dimensionless for the function "{func}" '
-                                            f'when scaling "unit_to_scale" is not provided.')
+            assert x.dim.is_dimensionless, (
+                f'{func} only support dimensionless input. But we got {x}. \n'
+                f'If you want to scale the input, please provide the "unit_to_scale" parameter. Or '
+                f'convert the input to a dimensionless Quantity manually.'
+            )
             x = x.to_decimal()
         else:
             assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
@@ -774,7 +783,10 @@ def _fun_accept_unitless_binary(
                                             f'when scaling "unit_to_scale" is not provided.')
             y = y.to_decimal()
         else:
-            assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
+            assert isinstance(unit_to_scale, Unit), (
+                f'{func} only support dimensionless input. \n'
+                'When the input is not a Quantity, the "unit_to_scale" parameter should not be provided.'
+            )
             y = y.to_decimal(unit_to_scale)
     return func(x, y, *args, **kwargs)
 

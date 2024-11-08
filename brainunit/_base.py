@@ -1117,7 +1117,7 @@ def is_scalar_type(obj) -> bool:
         dimensionless `Array`.
     """
     try:
-        return obj.ndim == 0 and is_unitless(obj)
+        return obj.ndim == 0 and is_unitless(obj) and not _is_tracer(obj)
     except AttributeError:
         return jnp.isscalar(obj) and not isinstance(obj, str)
 
@@ -1196,18 +1196,6 @@ def _wrap_function_remove_unit(func):
 def _assert_same_base(u1, u2):
     assert u1.has_same_base(u2), (f"Currently, we only support units have different bases. "
                                   f"But we got {u1.base} != {u1.base}.")
-
-
-# def _create_name(dim: Dimension, base, scale) -> Tuple[str, bool]:
-#   if dim == DIMENSIONLESS:
-#     return f"Unit({base}^{scale})", True
-#   else:
-#     name = f"{dim}"
-#     # if _is_tracer(scale) or scale == 0.:
-#     #   pass
-#     # else:
-#     #   name = f"{base}^{scale} * {dim}"
-#     return name, False
 
 
 def _find_base_unit(dim: Dimension, base, scale) -> Tuple[Optional[str], bool]:
