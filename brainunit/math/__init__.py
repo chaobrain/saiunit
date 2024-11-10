@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+from ._activation import *
+from ._activation import __all__ as _activation_all
 from ._einops import *
 from ._einops import __all__ as _einops_all
 from ._fun_accept_unitless import *
@@ -34,7 +36,8 @@ __all__ = (_compat_array_creation_all +
            _compat_funcs_accept_unitless_all +
            _compat_funcs_remove_unit_all +
            _compat_misc_all +
-           _einops_all)
+           _einops_all +
+           _activation_all)
 
 del (_compat_array_creation_all,
      _compat_funcs_change_unit_all,
@@ -42,4 +45,5 @@ del (_compat_array_creation_all,
      _compat_funcs_accept_unitless_all,
      _compat_funcs_remove_unit_all,
      _compat_misc_all,
-     _einops_all)
+     _einops_all,
+     _activation_all)
