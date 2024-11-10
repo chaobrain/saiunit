@@ -25,6 +25,7 @@ from jax import Array
 from .._base import (
     Quantity,
     Unit,
+    UNITLESS,
     fail_for_unit_mismatch,
     get_unit,
     unit_scale_align_to_first,
@@ -94,7 +95,7 @@ def eye(
     M: Optional[int] = None,
     k: int = 0,
     dtype: Optional[jax.typing.DTypeLike] = None,
-    unit: Optional[Unit] = None,
+    unit: Unit = UNITLESS,
 ) -> Union[Array, Quantity]:
     """
     Returns a 2-D quantity or array of `shape` and `unit` with ones on the diagonal and zeros elsewhere.
@@ -120,8 +121,8 @@ def eye(
       An array where all elements are equal to zero, except for the `k`-th
       diagonal, whose values are equal to one.
     """
-    if unit is not None:
-        assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not unit.is_unitless:
         return jnp.eye(N, M, k, dtype=dtype) * unit
     else:
         return jnp.eye(N, M, k, dtype=dtype)
@@ -131,7 +132,7 @@ def eye(
 def identity(
     n: int,
     dtype: Optional[jax.typing.DTypeLike] = None,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
     Return the identity Quantity or array.
@@ -154,8 +155,8 @@ def identity(
       `n` x `n` quantity or array with its main diagonal set to one,
       and all other elements 0.
     """
-    if unit is not None:
-        assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not unit.is_unitless:
         return jnp.identity(n, dtype=dtype) * unit
     else:
         return jnp.identity(n, dtype=dtype)
@@ -167,7 +168,7 @@ def tri(
     M: Optional[int] = None,
     k: int = 0,
     dtype: Optional[jax.typing.DTypeLike] = None,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
     A quantity or an array with ones at and below the given diagonal and zeros elsewhere.
@@ -194,8 +195,8 @@ def tri(
       quantity or array with its lower triangle filled with ones and zero elsewhere;
       in other words ``T[i,j] == 1`` for ``j <= i + k``, 0 otherwise.
     """
-    if unit is not None:
-        assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not unit.is_unitless:
         return jnp.tri(N, M, k, dtype=dtype) * unit
     else:
         return jnp.tri(N, M, k, dtype=dtype)
@@ -205,7 +206,7 @@ def tri(
 def empty(
     shape: Shape,
     dtype: Optional[jax.typing.DTypeLike] = None,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
     Return a new quantity or array of given shape and type, without initializing entries.
@@ -224,8 +225,8 @@ def empty(
     out : quantity or ndarray
       quantity or array of uninitialized (arbitrary) data of the given shape, dtype, and order.
     """
-    if unit is not None:
-        assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not unit.is_unitless:
         return jnp.empty(shape, dtype=dtype) * unit
     else:
         return jnp.empty(shape, dtype=dtype)
@@ -235,7 +236,7 @@ def empty(
 def ones(
     shape: Shape,
     dtype: Optional[jax.typing.DTypeLike] = None,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
     Returns a new quantity or array of given shape and type, filled with ones.
@@ -254,8 +255,8 @@ def ones(
     out : quantity or ndarray
       Array of ones with the given shape, dtype, and order.
     """
-    if unit is not None:
-        assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not unit.is_unitless:
         return jnp.ones(shape, dtype=dtype) * unit
     else:
         return jnp.ones(shape, dtype=dtype)
@@ -265,7 +266,7 @@ def ones(
 def zeros(
     shape: Shape,
     dtype: Optional[jax.typing.DTypeLike] = None,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
     Returns a new quantity or array of given shape and type, filled with zeros.
@@ -284,8 +285,8 @@ def zeros(
     out : quantity or ndarray
       Array of zeros with the given shape, dtype, and order.
     """
-    if unit is not None:
-        assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not unit.is_unitless:
         return jnp.zeros(shape, dtype=dtype) * unit
     else:
         return jnp.zeros(shape, dtype=dtype)
@@ -342,7 +343,7 @@ def full_like(
 def diag(
     v: Union[Quantity, jax.typing.ArrayLike],
     k: int = 0,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
     Extract a diagonal or construct a diagonal array.
@@ -363,14 +364,13 @@ def diag(
     out : quantity or ndarray
       The extracted diagonal or constructed diagonal array.
     """
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
     if isinstance(v, Quantity):
-        if unit is not None:
-            assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+        if not unit.is_unitless:
             v = v.in_unit(unit)
         return Quantity(jnp.diag(v.mantissa, k=k), unit=v.unit)
     else:
-        if unit is not None:
-            assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+        if not unit.is_unitless:
             return jnp.diag(v, k=k) * unit
         else:
             return jnp.diag(v, k=k)
@@ -380,7 +380,7 @@ def diag(
 def tril(
     m: Union[Quantity, jax.typing.ArrayLike],
     k: int = 0,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
     Lower triangle of an array.
@@ -402,14 +402,13 @@ def tril(
     out : quantity or ndarray
       Lower triangle of `m`, of the same shape and data-type as `m`.
     """
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
     if isinstance(m, Quantity):
-        if unit is not None:
-            assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+        if not unit.is_unitless:
             m = m.in_unit(unit)
         return Quantity(jnp.tril(m.mantissa, k=k), unit=m.unit)
     else:
-        if unit is not None:
-            assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+        if not unit.is_unitless:
             return jnp.tril(m, k=k) * unit
         else:
             return jnp.tril(m, k=k)
@@ -419,7 +418,7 @@ def tril(
 def triu(
     m: Union[Quantity, jax.typing.ArrayLike],
     k: int = 0,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
     Upper triangle of a quantity or an array.
@@ -434,14 +433,13 @@ def triu(
     --------
     tril : lower triangle of an array
     """
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
     if isinstance(m, Quantity):
-        if unit is not None:
-            assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+        if not unit.is_unitless:
             m = m.in_unit(unit)
         return Quantity(jnp.triu(m.mantissa, k=k), unit=m.unit)
     else:
-        if unit is not None:
-            assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+        if not unit.is_unitless:
             return jnp.triu(m, k=k) * unit
         else:
             return jnp.triu(m, k=k)
@@ -452,7 +450,7 @@ def empty_like(
     prototype: Union[Quantity, jax.typing.ArrayLike],
     dtype: Optional[jax.typing.DTypeLike] = None,
     shape: Shape = None,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
     Return a new quantity or array with the same shape and type as a given array.
@@ -473,14 +471,13 @@ def empty_like(
     out : quantity or ndarray
       Array of uninitialized (arbitrary) data with the same shape and type as `prototype`.
     """
+    assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
     if isinstance(prototype, Quantity):
-        if unit is not None:
-            assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+        if not unit.is_unitless:
             prototype = prototype.in_unit(unit)
         return Quantity(jnp.empty_like(prototype.mantissa, dtype=dtype), unit=prototype.unit)
     else:
-        if unit is not None:
-            assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+        if not unit.is_unitless:
             return jnp.empty_like(prototype, dtype=dtype, shape=shape) * unit
         else:
             return jnp.empty_like(prototype, dtype=dtype, shape=shape)
@@ -491,7 +488,7 @@ def ones_like(
     a: Union[Quantity, jax.typing.ArrayLike],
     dtype: Optional[jax.typing.DTypeLike] = None,
     shape: Shape = None,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
     Return a quantity or an array of ones with the same shape and type as a given array.
@@ -512,14 +509,13 @@ def ones_like(
     out : quantity or ndarray
       Array of ones with the same shape and type as `a`.
     """
+    assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
     if isinstance(a, Quantity):
-        if unit is not None:
-            assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+        if not unit.is_unitless:
             a = a.in_unit(unit)
         return Quantity(jnp.ones_like(a.mantissa, dtype=dtype, shape=shape), unit=a.unit)
     else:
-        if unit is not None:
-            assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+        if not unit.is_unitless:
             return jnp.ones_like(a, dtype=dtype, shape=shape) * unit
         else:
             return jnp.ones_like(a, dtype=dtype, shape=shape)
@@ -530,7 +526,7 @@ def zeros_like(
     a: Union[Quantity, jax.typing.ArrayLike],
     dtype: Optional[jax.typing.DTypeLike] = None,
     shape: Shape = None,
-    unit: Optional[Unit] = None
+    unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
     Return a quantity or an array of zeros with the same shape and type as a given array.
@@ -551,14 +547,13 @@ def zeros_like(
     out : quantity or ndarray
       Array of zeros with the same shape and type as `a`.
     """
+    assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
     if isinstance(a, Quantity):
-        if unit is not None:
-            assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+        if not unit.is_unitless:
             a = a.in_unit(unit)
         return Quantity(jnp.zeros_like(a.mantissa, dtype=dtype, shape=shape), unit=a.unit)
     else:
-        if unit is not None:
-            assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+        if not unit.is_unitless:
             return jnp.zeros_like(a, dtype=dtype, shape=shape) * unit
         else:
             return jnp.zeros_like(a, dtype=dtype, shape=shape)
@@ -876,7 +871,7 @@ def vander(
     x: Union[Quantity, jax.typing.ArrayLike],
     N: Optional[bool] = None,
     increasing: Optional[bool] = False,
-    unit: Optional[Unit] = None,
+    unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
     Generate a Vandermonde matrix.
@@ -903,8 +898,8 @@ def vander(
         assert x.is_unitless, f'x must be unitless for function {vander.__name__}.'
         x = x.mantissa
     r = jnp.vander(x, N=N, increasing=increasing)
-    if unit is not None:
-        assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not unit.is_unitless:
         return Quantity(r, unit=unit)
     else:
         return r
@@ -977,7 +972,7 @@ def triu_indices_from(
 @set_module_as('brainunit.math')
 def from_numpy(
     x: np.ndarray,
-    unit: Unit = None
+    unit: Unit = UNITLESS
 ) -> jax.Array | Quantity:
     """
     Convert the numpy array to jax array.
@@ -989,7 +984,8 @@ def from_numpy(
     Returns:
       The jax array.
     """
-    if unit is not None:
+    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not unit.is_unitless:
         return jnp.array(x) * unit
     return jnp.array(x)
 

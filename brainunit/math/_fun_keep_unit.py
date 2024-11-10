@@ -23,12 +23,14 @@ import jax.numpy as jnp
 import numpy as np
 
 from ._fun_array_creation import asarray
-from .._base import (Quantity,
-                     fail_for_dimension_mismatch,
-                     get_unit,
-                     UNITLESS,
-                     unit_scale_align_to_first,
-                     maybe_decimal)
+from .._base import (
+    Quantity,
+    fail_for_dimension_mismatch,
+    get_unit,
+    UNITLESS,
+    unit_scale_align_to_first,
+    maybe_decimal
+)
 from .._misc import set_module_as
 
 __all__ = [
