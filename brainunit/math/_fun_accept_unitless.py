@@ -126,7 +126,11 @@ def _exprel_v2(x, *, order: int = 2):
 
 
 @set_module_as('brainunit.math')
-def exprel(x, *, order: int = 2):
+def exprel(
+    x: Union[Quantity, jax.typing.ArrayLike],
+    *,
+    order: int = 2
+) -> jax.Array:
     """
     Relative error exponential, ``(exp(x) - 1)/x``.
 

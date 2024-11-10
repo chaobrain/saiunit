@@ -15,11 +15,8 @@
 
 __version__ = "0.0.2"
 
-from . import _base
 from . import _matplotlib_compat
-from . import _unit_common
-from . import _unit_constants
-from . import _unit_shortcuts
+from . import lax
 from . import math
 from ._base import *
 from ._base import __all__ as _base_all
