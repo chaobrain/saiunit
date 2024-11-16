@@ -15,6 +15,8 @@
 
 from ._activation import *
 from ._activation import __all__ as _activation_all
+from ._alias import *
+from ._alias import __all__ as _alias_all
 from ._einops import *
 from ._einops import __all__ as _einops_all
 from ._fun_accept_unitless import *
@@ -31,6 +33,7 @@ from ._misc import *
 from ._misc import __all__ as _compat_misc_all
 
 __all__ = (_compat_array_creation_all +
+           _alias_all +
            _compat_funcs_change_unit_all +
            _compat_funcs_keep_unit_all +
            _compat_funcs_accept_unitless_all +
@@ -40,6 +43,7 @@ __all__ = (_compat_array_creation_all +
            _activation_all)
 
 del (_compat_array_creation_all,
+     _alias_all,
      _compat_funcs_change_unit_all,
      _compat_funcs_keep_unit_all,
      _compat_funcs_accept_unitless_all,

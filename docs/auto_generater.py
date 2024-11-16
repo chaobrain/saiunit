@@ -311,6 +311,7 @@ def main():
                 template=True)
 
   module_and_name = [
+    ('_alias', 'Unit Processing'),
     ('_einops', 'Einstein Operations'),
     ('_fun_accept_unitless', 'Functions that Accepting Unitless'),
     ('_fun_array_creation', 'Array Creation Functions'),

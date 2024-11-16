@@ -36,9 +36,13 @@ __all__ = [
     'Unit',
     'Quantity',
 
-    # helpers
+    # errors
     'DimensionMismatchError',
     'UnitMismatchError',
+    'DIMENSIONLESS',
+    'UNITLESS',
+
+    # helpers
     'is_dimensionless',
     'is_unitless',
     'get_dim',
@@ -47,10 +51,6 @@ __all__ = [
     'get_magnitude',
     'display_in_unit',
     'maybe_decimal',
-
-    # helper classes
-    'DIMENSIONLESS',
-    'UNITLESS',
 
     # functions for checking
     'check_dims',
