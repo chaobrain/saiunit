@@ -1209,7 +1209,7 @@ class TestHelperFunctions(unittest.TestCase):
             a_function(5 * second, None)
         with pytest.raises(DimensionMismatchError):
             a_function(5, None)
-        with pytest.raises(AttributeError):
+        with pytest.raises(DimensionMismatchError):
             a_function(object(), None)
         with pytest.raises(TypeError):
             a_function([1, 2 * volt, 3], None)
@@ -1277,7 +1277,7 @@ class TestHelperFunctions(unittest.TestCase):
             a_function(5 * second, None)
         with pytest.raises(u.UnitMismatchError):
             a_function(5, None)
-        with pytest.raises(AttributeError):
+        with pytest.raises(u.UnitMismatchError):
             a_function(object(), None)
         with pytest.raises(TypeError):
             a_function([1, 2 * volt, 3], None)
@@ -1531,3 +1531,15 @@ class TestGetMethod(unittest.TestCase):
         assert u.get_mantissa(u.mV.dim / u.second.dim) == u.mV.dim / u.second.dim
         assert u.get_mantissa(u.mV.dim / u.second.dim ** 2) == u.mV.dim / u.second.dim ** 2
         assert u.get_mantissa(u.mV.dim ** 2 / u.second.dim ** 2) == u.mV.dim ** 2 / u.second.dim ** 2
+
+    def test_format(self):
+        with bst.environ.context(precision=64):
+            q1 = 1.23456789 * u.mV
+            assert f"{q1:.2f}" == "1.23 * mvolt"
+            assert f"{q1:.3f}" == "1.235 * mvolt"
+            assert f"{q1:.4f}" == "1.2346 * mvolt"
+
+            q2 = [1.23456789, 1.23456789] * u.mV
+            assert f"{q2:.2f}" == "ArrayImpl([1.23, 1.23]) * mvolt"
+            assert f"{q2:.3f}" == "ArrayImpl([1.235, 1.235]) * mvolt"
+            assert f"{q2:.4f}" == "ArrayImpl([1.2346, 1.2346]) * mvolt"
