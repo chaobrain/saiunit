@@ -901,7 +901,8 @@ class TestNumPyFunctions(unittest.TestCase):
         """
         Test a couple of functions/methods that need special treatment.
         """
-        from brainunit.math import diagonal, dot, ravel, trace, where
+        from brainunit.math import diagonal, ravel, trace, where
+        from brainunit.linalg import dot
 
         quadratic_matrix = np.reshape(np.arange(9), (3, 3)) * mV
 

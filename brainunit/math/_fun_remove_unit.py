@@ -36,9 +36,8 @@ __all__ = [
 
     # indexing
     'argsort', 'argmax', 'argmin', 'nanargmax', 'nanargmin', 'argwhere',
-    'nonzero', 'flatnonzero', 'searchsorted', 'count_nonzero',
+    'nonzero', 'flatnonzero', 'searchsorted', 'count_nonzero', 'diag_indices_from',
 ]
-
 
 # math funcs remove unit (unary)
 # ------------------------------
@@ -1238,3 +1237,34 @@ def searchsorted(
     a = Quantity(a).mantissa
     r = jnp.searchsorted(a, v, side=side, sorter=sorter, method=method)
     return r
+
+@set_module_as('brainunit.math')
+def diag_indices_from(
+    arr: Union[jax.typing.ArrayLike, Quantity],
+) -> tuple[jax.Array, ...]:
+    """Return indices for accessing the main diagonal of a given array.
+
+    JAX implementation of :func:`numpy.diag_indices_from`.
+
+    Args:
+        arr: Input array. Must be at least 2-dimensional and have equal length along
+            all dimensions.
+
+    Returns:
+        A tuple of arrays containing the indices to access the main diagonal of
+        the input array.
+
+    Examples:
+    >>> arr = jnp.array([[1, 2, 3],
+    ...                  [4, 5, 6],
+    ...                  [7, 8, 9]])
+    >>> jnp.diag_indices_from(arr)
+    (Array([0, 1, 2], dtype=int32), Array([0, 1, 2], dtype=int32))
+    >>> arr = jnp.array([[[1, 2], [3, 4]],
+    ...                  [[5, 6], [7, 8]]])
+    >>> jnp.diag_indices_from(arr)
+    (Array([0, 1], dtype=int32),
+    Array([0, 1], dtype=int32),
+    Array([0, 1], dtype=int32))
+    """
+    return _fun_remove_unit_unary(jnp.diag_indices_from, arr)

@@ -446,18 +446,18 @@ def test_einsum2():
     x = bu.math.arange(4) * bu.mA
     y = bu.math.array([5, 4, 3, 2]) * bu.mV
     assert bu.math.allclose(bu.math.einsum('i,i', x, y), 16 * bu.uwatt)
-    assert bu.math.allclose(bu.math.vecdot(x, y), 16 * bu.uwatt)
+    assert bu.math.allclose(bu.linalg.vecdot(x, y), 16 * bu.uwatt)
     assert bu.math.allclose(bu.math.einsum('i,i->', x, y), 16 * bu.uwatt)
     assert bu.math.allclose(bu.math.einsum(x, (0,), y, (0,)), 16 * bu.uwatt)
     assert bu.math.allclose(bu.math.einsum(x, (0,), y, (0,), ()), 16 * bu.uwatt)
 
     assert bu.math.allclose(bu.math.einsum('ij,j->i', M, x), jnp.asarray([14., 38., 62., 86.]) * bu.mvolt)
-    assert bu.math.allclose(bu.math.matmul(M, x), jnp.asarray([14., 38., 62., 86.]) * bu.mvolt)
+    assert bu.math.allclose(bu.linalg.matmul(M, x), jnp.asarray([14., 38., 62., 86.]) * bu.mvolt)
     assert bu.math.allclose(bu.math.einsum('ij,j', M, x), jnp.asarray([14., 38., 62., 86.]) * bu.mvolt)
     assert bu.math.allclose(bu.math.einsum(M, (0, 1), x, (1,), (0,)), jnp.asarray([14., 38., 62., 86.]) * bu.mvolt)
     assert bu.math.allclose(bu.math.einsum(M, (0, 1), x, (1,)), jnp.asarray([14., 38., 62., 86.]) * bu.mvolt)
 
-    outer = bu.math.outer(x, y)
+    outer = bu.linalg.outer(x, y)
     assert bu.math.allclose(bu.math.einsum("i,j->ij", x, y), outer)
     assert bu.math.allclose(bu.math.einsum("i,j", x, y), outer)
     assert bu.math.allclose(bu.math.einsum(x, (0,), y, (1,), (0, 1)), outer)
@@ -487,7 +487,7 @@ def test_einsum2():
     x = bu.math.arange(30).reshape(2, 3, 5) * bu.mA
     y = bu.math.arange(60).reshape(3, 4, 5) * bu.ohm
     product = bu.math.einsum('ijk,jlk->il', x, y)
-    assert bu.math.allclose(bu.math.tensordot(x, y, axes=[(1, 2), (0, 2)]), product)
+    assert bu.math.allclose(bu.linalg.tensordot(x, y, axes=[(1, 2), (0, 2)]), product)
     assert bu.math.allclose(bu.math.einsum('ijk,jlk', x, y), product)
     assert bu.math.allclose(bu.math.einsum(x, (0, 1, 2), y, (1, 3, 2), (0, 3)), product)
     assert bu.math.allclose(bu.math.einsum(x, (0, 1, 2), y, (1, 3, 2)), product)
@@ -499,4 +499,4 @@ def test_einsum2():
     dot = bu.math.einsum('ij,jk,kl,lm->im', w, x, y, z)
     assert bu.math.allclose(bu.math.einsum(w, (0, 1), x, (1, 2), y, (2, 3), z, (3, 4)), dot)
     assert bu.math.allclose(w @ x @ y @ z, dot)
-    assert bu.math.allclose(bu.math.multi_dot([w, x, y, z]), dot)
+    assert bu.math.allclose(bu.linalg.multi_dot([w, x, y, z]), dot)
