@@ -268,49 +268,50 @@ def _import(mod, klass=None, is_jax=False):
 def main():
   os.makedirs('apis/', exist_ok=True)
 
-  _write_module(module_name='brainunit.math._einops',
-                automodule='brainunit.math',
-                filename='apis/brainunit.math.einops.rst',
-                header='Einstein Operations',
-                template=True)
-
-  _write_module(module_name='brainunit.math._fun_array_creation',
-                automodule='brainunit.math',
-                filename='apis/brainunit.math.array-creation.rst',
-                header='Array Creation Functions',
-                template=True)
-
-  _write_module(module_name='brainunit.math._fun_accept_unitless',
-                automodule='brainunit.math',
-                filename='apis/brainunit.math.unitless.rst',
-                header='Functions that Accepting Unitless',
-                template=True)
-
-  _write_module(module_name='brainunit.math._fun_change_unit',
-                automodule='brainunit.math',
-                filename='apis/brainunit.math.change-unit.rst',
-                header='Functions that Changing Unit',
-                template=True)
-
-  _write_module(module_name='brainunit.math._fun_keep_unit',
-                automodule='brainunit.math',
-                filename='apis/brainunit.math.keep-unit.rst',
-                header='Functions that Keeping Unit',
-                template=True)
-
-  _write_module(module_name='brainunit.math._fun_remove_unit',
-                automodule='brainunit.math',
-                filename='apis/brainunit.math.remove-unit.rst',
-                header='Functions that Removing Unit',
-                template=True)
-
-  _write_module(module_name='brainunit.math._misc',
-                automodule='brainunit.math',
-                filename='apis/brainunit.math.misc.rst',
-                header='Other Functions',
-                template=True)
+  # _write_module(module_name='brainunit.math._einops',
+  #               automodule='brainunit.math',
+  #               filename='apis/brainunit.math.einops.rst',
+  #               header='Einstein Operations',
+  #               template=True)
+  #
+  # _write_module(module_name='brainunit.math._fun_array_creation',
+  #               automodule='brainunit.math',
+  #               filename='apis/brainunit.math.array-creation.rst',
+  #               header='Array Creation Functions',
+  #               template=True)
+  #
+  # _write_module(module_name='brainunit.math._fun_accept_unitless',
+  #               automodule='brainunit.math',
+  #               filename='apis/brainunit.math.unitless.rst',
+  #               header='Functions that Accepting Unitless',
+  #               template=True)
+  #
+  # _write_module(module_name='brainunit.math._fun_change_unit',
+  #               automodule='brainunit.math',
+  #               filename='apis/brainunit.math.change-unit.rst',
+  #               header='Functions that Changing Unit',
+  #               template=True)
+  #
+  # _write_module(module_name='brainunit.math._fun_keep_unit',
+  #               automodule='brainunit.math',
+  #               filename='apis/brainunit.math.keep-unit.rst',
+  #               header='Functions that Keeping Unit',
+  #               template=True)
+  #
+  # _write_module(module_name='brainunit.math._fun_remove_unit',
+  #               automodule='brainunit.math',
+  #               filename='apis/brainunit.math.remove-unit.rst',
+  #               header='Functions that Removing Unit',
+  #               template=True)
+  #
+  # _write_module(module_name='brainunit.math._misc',
+  #               automodule='brainunit.math',
+  #               filename='apis/brainunit.math.misc.rst',
+  #               header='Other Functions',
+  #               template=True)
 
   module_and_name = [
+    ('_activation', 'Activation Functions'),
     ('_alias', 'Unit Processing'),
     ('_einops', 'Einstein Operations'),
     ('_fun_accept_unitless', 'Functions that Accepting Unitless'),
@@ -324,6 +325,44 @@ def main():
   _write_submodules(module_name='brainunit.math',
                     filename='apis/brainunit.math.rst',
                     header='``brainunit.math`` module',
+                    submodule_names=[k[0] for k in module_and_name],
+                    section_names=[k[1] for k in module_and_name])
+
+  module_and_name = [
+    ('_linalg_change_unit', 'Functions that Changing Unit'),
+    ('_linalg_keep_unit', 'Functions that Keeping Unit'),
+  ]
+
+  _write_submodules(module_name='brainunit.linalg',
+                    filename='apis/brainunit.linalg.rst',
+                    header='``brainunit.linalg`` module',
+                    submodule_names=[k[0] for k in module_and_name],
+                    section_names=[k[1] for k in module_and_name])
+
+  module_and_name = [
+    ('_lax_accept_unitless', 'Functions that Accepting Unitless'),
+    ('_lax_array_creation', 'Array Creation Functions'),
+    ('_lax_change_unit', 'Functions that Changing Unit'),
+    ('_lax_keep_unit', 'Functions that Keeping Unit'),
+    ('_fun_remove_unit', 'Functions that Removing Unit'),
+    ('_lax_linalg', 'Linalg Functions'),
+    ('_misc', 'Other Functions'),
+  ]
+
+  _write_submodules(module_name='brainunit.lax',
+                    filename='apis/brainunit.lax.rst',
+                    header='``brainunit.lax`` module',
+                    submodule_names=[k[0] for k in module_and_name],
+                    section_names=[k[1] for k in module_and_name])
+
+  module_and_name = [
+    ('_linalg_change_unit', 'Functions that Changing Unit'),
+    ('_linalg_keep_unit', 'Functions that Keeping Unit'),
+  ]
+
+  _write_submodules(module_name='brainunit.autograd',
+                    filename='apis/brainunit.autograd.rst',
+                    header='``brainunit.autograd`` module',
                     submodule_names=[k[0] for k in module_and_name],
                     section_names=[k[1] for k in module_and_name])
 

@@ -3206,7 +3206,7 @@ class Quantity:
         r = jnp.repeat(self.mantissa, repeats=repeats, axis=axis)
         return Quantity(r, unit=self.unit)
 
-    def reshape(self, *shape, order='C') -> 'Quantity':
+    def reshape(self, shape, order='C') -> 'Quantity':
         """Returns an array containing the same data with a new shape."""
         return Quantity(jnp.reshape(self.mantissa, shape, order=order), unit=self.unit)
 

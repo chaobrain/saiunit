@@ -187,7 +187,10 @@ We are building the `brain dynamics programming ecosystem <https://ecosystem-for
 
    apis/changelog.md
    apis/brainunit.rst
+   apis/brainunit.autograd.rst
    apis/brainunit.math.rst
+   apis/brainunit.linalg.rst
+   apis/brainunit.lax.rst
 
 
 
