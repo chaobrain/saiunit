@@ -57,9 +57,11 @@ def vector_grad(
             assert len(leaves) == 1, 'The function must return a single array when unit_aware is True.'
         tangents = jax.tree.unflatten(tree, [jnp.ones(l.shape, dtype=l.dtype) for l in leaves])
         grads = vjp_fn(tangents)
+        if isinstance(argnums, int):
+            grads = grads[0]
         if unit_aware:
             args_to_grad = jax.tree.map(lambda i: args[i], argnums)
-            r_unit = get_unit(jax.tree.leaves(y, is_leaf=lambda x: isinstance(x, Quantity))[0])
+            r_unit = get_unit(y)
             grads = jax.tree.map(
                 lambda arg, grad: maybe_decimal(
                     Quantity(get_mantissa(grad), unit=r_unit / get_unit(arg))
@@ -68,8 +70,6 @@ def vector_grad(
                 grads,
                 is_leaf=lambda x: isinstance(x, Quantity)
             )
-        if isinstance(argnums, int):
-            grads = grads[0]
         if has_aux:
             return (grads, y, aux) if return_value else (grads, aux)
         else:

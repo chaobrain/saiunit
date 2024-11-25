@@ -39,6 +39,21 @@ def test_vector_grad_simple():
             assert u.math.allclose(grad, jnp.array([6.0, 8.0]) * unit)
 
 
+def test_vector_grad_simple2():
+    def simple_function(x):
+        return x ** 3
+
+    x = jnp.array([3.0, 4.0])
+    for unit in [None, u.ms, u.mvolt]:
+        vector_grad_fn = u.autograd.vector_grad(simple_function)
+        if unit is None:
+            grad = vector_grad_fn(x)
+            assert jnp.allclose(grad, 3 * x ** 2)
+        else:
+            grad = vector_grad_fn(x * unit)
+            assert u.math.allclose(grad, 3 * (x * unit) ** 2)
+
+
 def test_vector_grad_multiple_args():
     def multi_arg_function(x, y):
         return x * y
