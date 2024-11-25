@@ -344,7 +344,7 @@ def main():
     ('_lax_array_creation', 'Array Creation Functions'),
     ('_lax_change_unit', 'Functions that Changing Unit'),
     ('_lax_keep_unit', 'Functions that Keeping Unit'),
-    ('_fun_remove_unit', 'Functions that Removing Unit'),
+    ('_lax_remove_unit', 'Functions that Removing Unit'),
     ('_lax_linalg', 'Linalg Functions'),
     ('_misc', 'Other Functions'),
   ]
@@ -352,17 +352,6 @@ def main():
   _write_submodules(module_name='brainunit.lax',
                     filename='apis/brainunit.lax.rst',
                     header='``brainunit.lax`` module',
-                    submodule_names=[k[0] for k in module_and_name],
-                    section_names=[k[1] for k in module_and_name])
-
-  module_and_name = [
-    ('_linalg_change_unit', 'Functions that Changing Unit'),
-    ('_linalg_keep_unit', 'Functions that Keeping Unit'),
-  ]
-
-  _write_submodules(module_name='brainunit.autograd',
-                    filename='apis/brainunit.autograd.rst',
-                    header='``brainunit.autograd`` module',
                     submodule_names=[k[0] for k in module_and_name],
                     section_names=[k[1] for k in module_and_name])
 
