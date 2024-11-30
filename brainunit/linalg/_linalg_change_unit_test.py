@@ -20,7 +20,7 @@ from absl.testing import parameterized
 
 import brainunit as bu
 import brainunit.linalg as bulinalg
-from brainunit import meter, second, volt
+from brainunit import meter, second
 from brainunit._base import assert_quantity
 
 fun_change_unit_linear_algebra = [
@@ -34,6 +34,7 @@ fun_change_unit_linear_algebra_det = [
 fun_change_unit_linear_tensordot = [
     'tensordot',
 ]
+
 
 class TestLinalgChangeUnit(parameterized.TestCase):
     @parameterized.product(

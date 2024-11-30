@@ -15,18 +15,17 @@
 
 
 import jax.numpy as jnp
-import pytest
 from absl.testing import parameterized
 
-import brainunit as bu
 import brainunit.linalg as bulinalg
-from brainunit import second, meter, ms
+from brainunit import second, meter
 from brainunit._base import assert_quantity
-
 
 fun_keep_unit_math_unary_linalg = [
     'norm',
 ]
+
+
 class TestLinalgKeepUnit(parameterized.TestCase):
     @parameterized.product(
         value=[(1.0, 2.0), (1.23, 2.34, 3.45)],

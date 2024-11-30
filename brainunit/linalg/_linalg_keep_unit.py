@@ -15,28 +15,19 @@
 
 from __future__ import annotations
 
-import functools
-from typing import (Union, Sequence, Tuple, Optional)
+from typing import (Union)
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
-from ..math._fun_array_creation import asarray
-from ..math._fun_keep_unit import _fun_keep_unit_unary
-from .._base import (
-    Quantity,
-    fail_for_dimension_mismatch,
-    get_unit,
-    UNITLESS,
-    unit_scale_align_to_first,
-    maybe_decimal
-)
+from .._base import Quantity
 from .._misc import set_module_as
+from ..math._fun_keep_unit import _fun_keep_unit_unary
 
 __all__ = [
     'norm',
 ]
+
 
 @set_module_as('brainunit.math')
 def norm(
@@ -108,4 +99,3 @@ def norm(
     Array([3.7416575, 9.486833 ], dtype=float32)
     """
     return _fun_keep_unit_unary(jnp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims)
-
