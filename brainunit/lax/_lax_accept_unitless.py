@@ -45,6 +45,9 @@ __all__ = [
 
     # fft
     'fft',
+
+    # misc
+    'collapse',
 ]
 
 
@@ -109,7 +112,7 @@ def atanh(
 def collapse(
     x: Union[Quantity, jax.typing.ArrayLike],
     start_dimension: int,
-    end_dimension: Optional[int] = None,
+    stop_dimension: Optional[int] = None,
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """Collapses dimensions of an array into a single dimension.
@@ -122,7 +125,7 @@ def collapse(
     Args:
         x: an input array.
         start_dimension: the start of the dimensions to collapse (inclusive).
-        end_dimension: the end of the dimensions to collapse (exclusive). Pass None
+        stop_dimension: the end of the dimensions to collapse (exclusive). Pass None
           to collapse all the dimensions after start.
         unit_to_scale: the unit to scale the input to. If None, the input should be
             dimensionless.
@@ -131,7 +134,7 @@ def collapse(
         An array where dimensions ``[start_dimension, stop_dimension)`` have been
         collapsed (raveled) into a single dimension.
     """
-    return _fun_accept_unitless_unary(lax.collapse, x, start_dimension, end_dimension,
+    return _fun_accept_unitless_unary(lax.collapse, x, start_dimension=start_dimension, stop_dimension=stop_dimension,
                                       unit_to_scale=unit_to_scale)
 
 
@@ -309,6 +312,7 @@ def _fun_accept_unitless_nary(
 ):
     if not isinstance(quantity_num, int):
         raise TypeError(f'quantity_num should be an integer. Got {quantity_num}')
+    new_args = []
     for arg in args:
         if isinstance(arg, Quantity):
             if unit_to_scale is None:
@@ -317,11 +321,13 @@ def _fun_accept_unitless_nary(
                     f'If you want to scale the input, please provide the "unit_to_scale" parameter. Or '
                     f'convert the input to a dimensionless Quantity manually.'
                 )
-                arg = arg.to_decimal()
+                new_args.append(arg.to_decimal())
             else:
                 assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
-                arg = arg.to_decimal(unit_to_scale)
-    return func(*args, **kwargs)
+                new_args.append(arg.to_decimal(unit_to_scale))
+        else:
+            new_args.append(arg)
+    return func(*new_args, **kwargs)
 
 
 @set_module_as('brainunit.lax')

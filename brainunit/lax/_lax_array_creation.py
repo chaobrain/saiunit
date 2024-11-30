@@ -77,6 +77,12 @@ def broadcasted_iota(
     """Convenience wrapper around ``iota``."""
     if unit is not None:
         assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
-        return lax.broadcasted_iota(dtype, shape, dimension, _sharding) * unit
+        try:
+            return lax.broadcasted_iota(dtype, shape, dimension, _sharding) * unit
+        except:
+            return lax.broadcasted_iota(dtype, shape, dimension) * unit
     else:
-        return lax.broadcasted_iota(dtype, shape, dimension, _sharding)
+        try:
+            return lax.broadcasted_iota(dtype, shape, dimension, _sharding)
+        except:
+            return lax.broadcasted_iota(dtype, shape, dimension)

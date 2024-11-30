@@ -11,10 +11,16 @@ from .._misc import set_module_as
 from ..math._fun_change_unit import _fun_change_unit_unary
 
 __all__ = [
-    # linear algebra
+    # linear algebra unary
     'cholesky', 'eig', 'eigh', 'hessenberg', 'lu',
-    'householder_product', 'qdwh', 'qr', 'schur', 'svd', 'triangular_solve',
-    'tridiagonal', 'tridiagonal_solve',
+    'qdwh', 'qr', 'schur', 'svd',
+    'tridiagonal',
+
+    # linear algebra binary
+    'householder_product', 'triangular_solve',
+
+    # linear algebra nary
+    'tridiagonal_solve',
 ]
 
 
@@ -50,7 +56,8 @@ def cholesky(
     """
     return _fun_change_unit_unary(lax.linalg.cholesky,
                                   lambda u: u ** 0.5,
-                                  x)
+                                  x,
+                                  symmetrize_input)
 
 
 @set_module_as('brainunit.lax')

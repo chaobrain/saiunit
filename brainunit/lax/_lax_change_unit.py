@@ -28,8 +28,13 @@ __all__ = [
     'rsqrt',
 
     # math funcs change unit (binary)
-    'conv', 'conv_transpose', 'div', 'dot_general',
-    'pow', 'integer_pow', 'mul', 'rem', 'batch_matmul',
+    'div', 'pow', 'integer_pow', 'mul', 'rem', 'batch_matmul',
+
+    # math funcs conv
+    'conv', 'conv_transpose',
+
+    # math funcs misc
+    'dot_general',
 ]
 
 
@@ -212,10 +217,16 @@ def dot_general(
         by the ``lhs`` non-contracting/non-batch dimensions, and finally the ``rhs``
         non-contracting/non-batch dimensions.
     """
-    return _fun_change_unit_binary(lax.dot_general,
-                                   lambda x, y: x * y,
-                                   x, y,
-                                   dimension_numbers, precision, preferred_element_type, out_type)
+    try:
+        return _fun_change_unit_binary(lax.dot_general,
+                                       lambda x, y: x * y,
+                                       x, y,
+                                       dimension_numbers, precision, preferred_element_type, out_type)
+    except:
+        return _fun_change_unit_binary(lax.dot_general,
+                                       lambda x, y: x * y,
+                                       x, y,
+                                       dimension_numbers, precision, preferred_element_type)
 
 
 @set_module_as('brainunit.lax')
@@ -288,6 +299,8 @@ def rem(
         return maybe_decimal(Quantity(lax.rem(x.mantissa, y), unit=x.unit))
     elif isinstance(y, Quantity):
         return maybe_decimal(Quantity(lax.rem(x, y.mantissa), unit=UNITLESS))
+    else:
+        return lax.rem(x, y)
 
 
 @unit_change(lambda x, y: x * y)

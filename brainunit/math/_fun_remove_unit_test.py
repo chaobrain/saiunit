@@ -66,13 +66,13 @@ fun_remove_unit_searchsorted = [
 ]
 
 
-class TestFunChangeUnit(parameterized.TestCase):
+class TestFunRemoveUnit(parameterized.TestCase):
 
     @parameterized.product(
         value=[(-1.0, 2.0), (-1.23, 2.34, 3.45)],
         unit=[bu.meter, bu.second]
     )
-    def test_fun_remove_unit_logic_unary(self, value, unit):
+    def test_fun_remove_unit_unary(self, value, unit):
         bm_fun_list = [getattr(bm, fun) for fun in fun_remove_unit_unary]
         jnp_fun_list = [getattr(jnp, fun) for fun in fun_remove_unit_unary]
 

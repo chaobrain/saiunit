@@ -33,8 +33,6 @@ __all__ = [
     # logic funcs (binary)
     'eq', 'ne', 'ge', 'gt', 'le', 'lt',
 
-    # indexing
-    'argmax', 'argmin',
 ]
 
 
@@ -108,24 +106,3 @@ def lt(
 ) -> Union[bool, jax.Array]:
     r"""Elementwise less-than: :math:`x < y`."""
     return _fun_logic_binary(lax.lt, x, y)
-
-
-# indexing
-@set_module_as('brainunit.lax')
-def argmax(
-    operand: Union[Quantity, jax.typing.ArrayLike],
-    axis: int,
-    index_dtype: jax.typing.DTypeLike
-) -> jax.Array:
-    """Computes the index of the maximum element along ``axis``."""
-    return _fun_logic_unary(lax.argmax, operand, axis, index_dtype)
-
-
-@set_module_as('brainunit.lax')
-def argmin(
-    operand: Union[Quantity, jax.typing.ArrayLike],
-    axis: int,
-    index_dtype: jax.typing.DTypeLike
-) -> jax.Array:
-    """Computes the index of the minimum element along ``axis``."""
-    return _fun_logic_unary(lax.argmin, operand, axis, index_dtype)
