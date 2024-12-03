@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Union, Callable, Any
+from typing import Union, Callable, Any, Tuple, List
 
 import jax
-from jax import lax
+from jax import lax, Array
 
 from brainunit.lax._lax_change_unit import unit_change
 from .._base import Quantity, maybe_decimal, fail_for_unit_mismatch
@@ -65,7 +65,7 @@ def eig(
     x: Union[Quantity, jax.typing.ArrayLike],
     compute_left_eigenvectors: bool = True,
     compute_right_eigenvectors: bool = True
-) -> tuple[Quantity, jax.Array, jax.Array] | list[jax.Array] | tuple[Quantity, jax.Array] | Quantity:
+) -> tuple[Array | Quantity, Array, Array] | list[Array] | tuple[Array | Quantity, Array] | tuple[Array | Quantity]:
     """Eigendecomposition of a general matrix.
 
     Nonsymmetric eigendecomposition is at present only implemented on CPU.
@@ -87,31 +87,37 @@ def eig(
     """
     if compute_left_eigenvectors and compute_right_eigenvectors:
         if isinstance(x, Quantity):
-            w, vl, vr = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=True, compute_right_eigenvectors=True)
+            w, vl, vr = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
+                                       compute_right_eigenvectors=compute_right_eigenvectors)
             return maybe_decimal(Quantity(w, unit=x.unit)), vl, vr
         else:
-            return lax.linalg.eig(x, compute_left_eigenvectors=True, compute_right_eigenvectors=True)
+            return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
+                                  compute_right_eigenvectors=compute_right_eigenvectors)
     elif compute_left_eigenvectors:
         if isinstance(x, Quantity):
-            w, vl = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=True, compute_right_eigenvectors=False)
+            w, vl = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
+                                   compute_right_eigenvectors=compute_right_eigenvectors)
             return maybe_decimal(Quantity(w, unit=x.unit)), vl
         else:
-            return lax.linalg.eig(x, compute_left_eigenvectors, compute_left_eigenvectors=True,
-                                  compute_right_eigenvectors=False)
+            return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
+                                  compute_right_eigenvectors=compute_right_eigenvectors)
 
     elif compute_right_eigenvectors:
         if isinstance(x, Quantity):
-            w, vr = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=False, compute_right_eigenvectors=True)
+            w, vr = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
+                                   compute_right_eigenvectors=compute_right_eigenvectors)
             return maybe_decimal(Quantity(w, unit=x.unit)), vr
         else:
-            return lax.linalg.eig(x, compute_right_eigenvectors, compute_left_eigenvectors=False,
-                                  compute_right_eigenvectors=True)
+            return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
+                                  compute_right_eigenvectors=compute_right_eigenvectors)
     else:
         if isinstance(x, Quantity):
-            w = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=False, compute_right_eigenvectors=False)
-            return maybe_decimal(Quantity(w, unit=x.unit))
+            w = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
+                               compute_right_eigenvectors=compute_right_eigenvectors)
+            return (maybe_decimal(Quantity(w, unit=x.unit)),)
         else:
-            return lax.linalg.eig(x, compute_left_eigenvectors=False, compute_right_eigenvectors=False)
+            return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
+                                  compute_right_eigenvectors=compute_right_eigenvectors)
 
 
 @set_module_as('brainunit.lax')
@@ -344,7 +350,12 @@ def schur(
 @set_module_as('brainunit.lax')
 def svd(
     x: Union[Quantity, jax.typing.ArrayLike],
-) -> tuple[jax.Array, Quantity | jax.Array, jax.Array]:
+    *,
+    full_matrices: bool = True,
+    compute_uv: bool = True,
+    subset_by_index: tuple[int, int] | None = None,
+    algorithm: jax.lax.linalg.SvdAlgorithm | None = None,
+) -> Union[Quantity, jax.typing.ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
     """Singular value decomposition.
 
     Returns the singular values if compute_uv is False, otherwise returns a triple
@@ -352,10 +363,17 @@ def svd(
     the right singular vectors.
     """
     if isinstance(x, Quantity):
-        u, s, vh = lax.linalg.svd(x.mantissa)
-        return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
+        if compute_uv:
+            u, s, vh = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
+                                      subset_by_index=subset_by_index, algorithm=algorithm)
+            return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
+        else:
+            s = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
+                               subset_by_index=subset_by_index, algorithm=algorithm)
+            return maybe_decimal(Quantity(s, unit=x.unit))
     else:
-        return lax.linalg.svd(x)
+        return lax.linalg.svd(x, full_matrices=full_matrices, compute_uv=compute_uv,
+                              subset_by_index=subset_by_index, algorithm=algorithm)
 
 
 @set_module_as('brainunit.lax')

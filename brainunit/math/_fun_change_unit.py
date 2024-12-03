@@ -1362,7 +1362,7 @@ def det(
     Examples:
     >>> a = jnp.array([[1, 2],
     ...                [3, 4]])
-    >>> jnp.linalg.det(a)
+    >>> brainunit.linalg.det(a)
     Array(-2., dtype=float32)
     """
     if isinstance(a, Quantity):
