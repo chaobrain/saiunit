@@ -19,7 +19,7 @@ import numbers
 import operator
 from contextlib import contextmanager
 from copy import deepcopy
-from functools import wraps
+from functools import wraps, partial
 from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict
 
 import jax
@@ -4150,24 +4150,20 @@ def check_dims(**au):
                     expected_result = au["result"](*[get_dim(a) for a in args])
                 else:
                     expected_result = au["result"]
-                if au["result"] == bool:
-                    if not isinstance(result, bool):
-                        error_message = (
-                            "The return value of function "
-                            f"'{f.__name__}' was expected to be "
-                            "a boolean value, but was of type "
-                            f"{type(result)}"
-                        )
-                        raise TypeError(error_message)
-                elif not have_same_dim(result, expected_result):
-                    unit = get_dim_for_display(expected_result)
-                    error_message = (
-                        "The return value of function "
-                        f"'{f.__name__}' was expected to have "
-                        f"dimension {unit} but was "
-                        f"'{result}'"
+
+                if (
+                    jax.tree.structure(expected_result, is_leaf=_is_quantity)
+                    !=
+                    jax.tree.structure(result, is_leaf=_is_quantity)
+                ):
+                    raise TypeError(
+                        f"Expected a return value of type {expected_result} but got {result}"
                     )
-                    raise DimensionMismatchError(error_message, get_dim(result))
+
+                jax.tree.map(
+                    partial(_check_dim, f), result, expected_result,
+                    is_leaf=_is_quantity
+                )
             return result
 
         new_f._orig_func = f
@@ -4204,6 +4200,19 @@ def check_dims(**au):
         return new_f
 
     return do_check_units
+
+
+def _check_dim(f, val, dim):
+    dim = DIMENSIONLESS if dim is None else dim
+    if not have_same_dim(val, dim):
+        unit = get_dim_for_display(dim)
+        error_message = (
+            "The return value of function "
+            f"'{f.__name__}' was expected to have "
+            f"dimension {unit} but was "
+            f"'{val}'"
+        )
+        raise DimensionMismatchError(error_message, get_dim(val))
 
 
 @set_module_as('brainunit')
@@ -4392,23 +4401,20 @@ def check_units(**au):
                     expected_result = au["result"](*[get_dim(a) for a in args])
                 else:
                     expected_result = au["result"]
-                if au["result"] == bool:
-                    if not isinstance(result, bool):
-                        error_message = (
-                            "The return value of function "
-                            f"'{f.__name__}' was expected to be "
-                            "a boolean value, but was of type "
-                            f"{type(result)}"
-                        )
-                        raise TypeError(error_message)
-                elif not has_same_unit(result, expected_result):
-                    error_message = (
-                        "The return value of function "
-                        f"'{f.__name__}' was expected to have "
-                        f"unit {get_unit(expected_result)} but was "
-                        f"'{result}'"
+
+                if (
+                    jax.tree.structure(expected_result, is_leaf=_is_quantity)
+                    !=
+                    jax.tree.structure(result, is_leaf=_is_quantity)
+                ):
+                    raise TypeError(
+                        f"Expected a return value of type {expected_result} but got {result}"
                     )
-                    raise UnitMismatchError(error_message, get_unit(result))
+
+                jax.tree.map(
+                    partial(_check_unit, f), result, expected_result,
+                    is_leaf=_is_quantity
+                )
             return result
 
         new_f._orig_func = f
@@ -4445,3 +4451,19 @@ def check_units(**au):
         return new_f
 
     return do_check_units
+
+
+def _check_unit(f, val, unit):
+    unit = UNITLESS if unit is None else unit
+    if not has_same_unit(val, unit):
+        error_message = (
+            "The return value of function "
+            f"'{f.__name__}' was expected to have "
+            f"unit {get_unit(val)} but was "
+            f"'{val}'"
+        )
+        raise UnitMismatchError(error_message, get_unit(val))
+
+
+def _is_quantity(x):
+    return isinstance(x, Quantity)

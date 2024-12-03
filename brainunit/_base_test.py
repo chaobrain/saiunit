@@ -30,7 +30,6 @@ import pytest
 from numpy.testing import assert_equal
 
 import brainunit as u
-import brainunit as bu
 from brainunit._base import (
     DIMENSIONLESS,
     UNITLESS,
@@ -1185,7 +1184,7 @@ class TestHelperFunctions(unittest.TestCase):
 
     def test_check_dims(self):
         """
-        Test the check_units decorator
+        Test the check_dims decorator
         """
 
         @u.check_dims(v=volt.dim)
@@ -1245,8 +1244,49 @@ class TestHelperFunctions(unittest.TestCase):
             c_function(1, 1)
         with pytest.raises(TypeError):
             c_function(1 * mV, 1)
+
+        # with pytest.raises(TypeError):
+        #     c_function(False, 1)
+
+        # Multiple results
+        @u.check_dims(result=(second.dim, volt.dim))
+        def d_function(true_result):
+            """
+            Return a value in seconds if return_second is True, otherwise return
+            a value in volt.
+            """
+            if true_result:
+                return 5 * second, 3 * volt
+            else:
+                return 3 * volt, 5 * second
+
+        # Should work (returns second)
+        d_function(True)
+        # Should fail (returns volt)
+        with pytest.raises(u.DimensionMismatchError):
+            d_function(False)
+
+        # Multiple results
+        @u.check_dims(result={'u': second.dim, 'v': (volt.dim, metre.dim)})
+        def d_function2(true_result):
+            """
+            Return a value in seconds if return_second is True, otherwise return
+            a value in volt.
+            """
+            if true_result == 0:
+                return {'u': 5 * second, 'v': (3 * volt, 2 * metre)}
+            elif true_result == 1:
+                return 3 * volt, 5 * second
+            else:
+                return {'u': 5 * second, 'v': (3 * volt, 2 * volt)}
+
+        d_function2(0)
+
         with pytest.raises(TypeError):
-            c_function(False, 1)
+            d_function2(1)
+
+        with pytest.raises(u.DimensionMismatchError):
+            d_function2(2)
 
     def test_check_units(self):
         """
@@ -1313,8 +1353,47 @@ class TestHelperFunctions(unittest.TestCase):
             c_function(1, 1)
         with pytest.raises(TypeError):
             c_function(1 * mV, 1)
+
+        # Multiple results
+        @check_units(result=(second, volt))
+        def d_function(true_result):
+            """
+            Return a value in seconds if return_second is True, otherwise return
+            a value in volt.
+            """
+            if true_result:
+                return 5 * second, 3 * volt
+            else:
+                return 3 * volt, 5 * second
+
+        # Should work (returns second)
+        d_function(True)
+        # Should fail (returns volt)
+        with pytest.raises(u.UnitMismatchError):
+            d_function(False)
+
+        # Multiple results
+        @check_units(result={'u': second, 'v': (volt, metre)})
+        def d_function2(true_result):
+            """
+            Return a value in seconds if return_second is True, otherwise return
+            a value in volt.
+            """
+            if true_result == 0:
+                return {'u': 5 * second, 'v': (3 * volt, 2 * metre)}
+            elif true_result == 1:
+                return 3 * volt, 5 * second
+            else:
+                return {'u': 5 * second, 'v': (3 * volt, 2 * volt)}
+
+        # Should work (returns second)
+        d_function2(0)
+        # Should fail (returns volt)
         with pytest.raises(TypeError):
-            c_function(False, 1)
+            d_function2(1)
+
+        with pytest.raises(u.UnitMismatchError):
+            d_function2(2)
 
 
 def test_str_repr():
