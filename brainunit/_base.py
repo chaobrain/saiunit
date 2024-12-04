@@ -55,6 +55,7 @@ __all__ = [
     # functions for checking
     'check_dims',
     'check_units',
+    'assign_units',
     'fail_for_dimension_mismatch',
     'fail_for_unit_mismatch',
     'assert_quantity',
@@ -4453,6 +4454,78 @@ def check_units(**au):
     return do_check_units
 
 
+@set_module_as('brainunit')
+def assign_units(**au):
+    """
+    Decorator to transform units of arguments passed to a function
+    """
+
+    def do_assign_units(f):
+        @wraps(f)
+        def new_f(*args, **kwds):
+            newkeyset = kwds.copy()
+            arg_names = f.__code__.co_varnames[0: f.__code__.co_argcount]
+            for n, v in zip(arg_names, args[0: f.__code__.co_argcount]):
+                if n in au and v is not None:
+                    specific_unit = au[n]
+                    # if the specific unit is a boolean, just check and return
+                    if specific_unit == bool:
+                        if isinstance(v, bool):
+                            newkeyset[n] = v
+                        else:
+                            raise TypeError(f"Function '{f.__name__}' expected a boolean value for argument '{n}' but got '{v}'")
+
+                    elif specific_unit == 1:
+                        if isinstance(v, Quantity):
+                            newkeyset[n] = v.to_decimal()
+                        elif isinstance(v, (jax.Array, np.ndarray, int, float, complex)):
+                            newkeyset[n] = v
+                        else:
+                            specific_unit = jax.typing.ArrayLike
+                            raise TypeError(f"Function '{f.__name__}' expected a unitless Quantity object"
+                                            f"or {specific_unit} for argument '{n}' but got '{v}'")
+
+                    elif isinstance(specific_unit, Unit):
+                        if isinstance(v, Quantity):
+                            v = v.to_decimal(specific_unit)
+                            newkeyset[n] = v
+                        else:
+                            raise TypeError(
+                                f"Function '{f.__name__}' expected a Quantity object for argument '{n}' but got '{v}'"
+                            )
+                    else:
+                        raise TypeError(
+                            f"Function '{f.__name__}' expected a target unit object or"
+                            f" a Number, boolean object for checking, but got '{specific_unit}'"
+                        )
+                else:
+                    newkeyset[n] = v
+
+            result = f(**newkeyset)
+            if "result" in au:
+                if isinstance(au["result"], Callable) and au["result"] != bool:
+                    expected_result = au["result"](*[get_unit(a) for a in args])
+                else:
+                    expected_result = au["result"]
+
+                if (
+                    jax.tree.structure(expected_result, is_leaf=_is_quantity)
+                    !=
+                    jax.tree.structure(result, is_leaf=_is_quantity)
+                ):
+                    raise TypeError(
+                        f"Expected a return value of type {expected_result} but got {result}"
+                    )
+
+                result = jax.tree.map(
+                    partial(_assign_unit, f), result, expected_result
+                )
+            return result
+
+        return new_f
+
+    return do_assign_units
+
 def _check_unit(f, val, unit):
     unit = UNITLESS if unit is None else unit
     if not has_same_unit(val, unit):
@@ -4463,6 +4536,11 @@ def _check_unit(f, val, unit):
             f"'{val}'"
         )
         raise UnitMismatchError(error_message, get_unit(val))
+
+def _assign_unit(f, val, unit):
+    if unit is None or unit == bool or unit == 1:
+        return val
+    return Quantity(val, unit=unit)
 
 
 def _is_quantity(x):

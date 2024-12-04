@@ -1395,6 +1395,87 @@ class TestHelperFunctions(unittest.TestCase):
         with pytest.raises(u.UnitMismatchError):
             d_function2(2)
 
+    def test_assign_units(self):
+        """
+        Test the assign_units decorator
+        """
+
+        @u.assign_units(v=volt)
+        def a_function(v, x):
+            """
+            v has to have units of volt, x can have any (or no) unit.
+            """
+            return v
+
+        # Try correct units
+        assert a_function(3 * mV, 5 * second) == (3 * mV).to_decimal(volt)
+        assert a_function(3 * volt, 5 * second) == (3 * volt).to_decimal(volt)
+        assert a_function(5 * volt, "something") == (5 * volt).to_decimal(volt)
+        assert_quantity(a_function([1, 2, 3] * volt, None), ([1, 2, 3] * volt).to_decimal(volt))
+
+        # Try incorrect units
+        with pytest.raises(u.UnitMismatchError):
+            a_function(5 * second, None)
+        with pytest.raises(TypeError):
+            a_function(5, None)
+        with pytest.raises(TypeError):
+            a_function(object(), None)
+
+        @u.assign_units(result=second)
+        def b_function():
+            """
+            Return a value in seconds if return_second is True, otherwise return
+            a value in volt.
+            """
+            return 5
+
+        # Should work (returns second)
+        assert b_function() == 5 * second
+
+        @u.assign_units(a=bool, b=1, result=bool)
+        def c_function(a, b):
+            if a:
+                return b > 0
+            else:
+                return b
+
+        assert c_function(True, 1)
+        assert not c_function(True, -1)
+        with pytest.raises(TypeError):
+            c_function(1, 1)
+        with pytest.raises(TypeError):
+            c_function(1 * mV, 1)
+
+        # Multiple results
+        @u.assign_units(result=(second, volt))
+        def d_function():
+            return 5, 3
+
+        # Should work (returns second)
+        assert d_function()[0] == 5 * second
+        assert d_function()[1] == 3 * volt
+
+        # Multiple results
+        @u.assign_units(result={'u': second, 'v': (volt, metre)})
+        def d_function2(true_result):
+            """
+            Return a value in seconds if return_second is True, otherwise return
+            a value in volt.
+            """
+            if true_result == 0:
+                return {'u': 5, 'v': (3, 2)}
+            elif true_result == 1:
+                return 3, 5
+            else:
+                return 3, 5
+
+        # Should work (returns dict)
+        d_function2(0)
+        # Should fail (returns tuple)
+        with pytest.raises(TypeError):
+            d_function2(1)
+
+
 
 def test_str_repr():
     """
