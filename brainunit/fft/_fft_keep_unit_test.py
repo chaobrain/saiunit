@@ -14,27 +14,17 @@
 # ==============================================================================
 
 import jax.numpy as jnp
-import pytest
-from absl.testing import parameterized
-
-import brainunit as bu
-import brainunit.math as bm
-from brainunit import second, meter, ms
-from brainunit._base import assert_quantity
-
-import jax.numpy as jnp
 import jax.numpy.fft as jnpfft
-import pytest
 from absl.testing import parameterized
 
-import brainunit as u
 import brainunit.fft as ufft
 from brainunit import meter, second
-from brainunit._base import assert_quantity, Unit, get_or_create_dimension
+from brainunit._base import assert_quantity
 
 fft_keep_unit = [
     'fftshift', 'ifftshift',
 ]
+
 
 class TestFftKeepUnit(parameterized.TestCase):
     def __init__(self, *args, **kwargs):

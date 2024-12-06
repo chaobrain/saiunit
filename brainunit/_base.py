@@ -4476,7 +4476,8 @@ def assign_units(**au):
                         if isinstance(v, bool):
                             newkeyset[n] = v
                         else:
-                            raise TypeError(f"Function '{f.__name__}' expected a boolean value for argument '{n}' but got '{v}'")
+                            raise TypeError(
+                                f"Function '{f.__name__}' expected a boolean value for argument '{n}' but got '{v}'")
 
                     elif specific_unit == 1:
                         if isinstance(v, Quantity):
@@ -4521,13 +4522,14 @@ def assign_units(**au):
                     )
 
                 result = jax.tree.map(
-                    partial(_assign_unit, f), result, expected_result
+                    partial(_assign_unit, f), result, expected_result,
                 )
             return result
 
         return new_f
 
     return do_assign_units
+
 
 def _check_unit(f, val, unit):
     unit = UNITLESS if unit is None else unit
@@ -4540,8 +4542,9 @@ def _check_unit(f, val, unit):
         )
         raise UnitMismatchError(error_message, get_unit(val))
 
+
 def _assign_unit(f, val, unit):
-    if unit is None or unit == bool or unit == 1:
+    if unit is None or unit is bool:
         return val
     return Quantity(val, unit=unit)
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+from . import linalg, fft
 from ._activation import *
 from ._activation import __all__ as _activation_all
 from ._alias import *
@@ -32,22 +33,29 @@ from ._fun_remove_unit import __all__ as _compat_funcs_remove_unit_all
 from ._misc import *
 from ._misc import __all__ as _compat_misc_all
 
-__all__ = (_compat_array_creation_all +
-           _alias_all +
-           _compat_funcs_change_unit_all +
-           _compat_funcs_keep_unit_all +
-           _compat_funcs_accept_unitless_all +
-           _compat_funcs_remove_unit_all +
-           _compat_misc_all +
-           _einops_all +
-           _activation_all)
+__all__ = (
+    _compat_array_creation_all +
+    _alias_all +
+    _compat_funcs_change_unit_all +
+    _compat_funcs_keep_unit_all +
+    _compat_funcs_accept_unitless_all +
+    _compat_funcs_remove_unit_all +
+    _compat_misc_all +
+    _einops_all +
+    _activation_all +
+    [
+        'linalg', 'fft'
+    ]
+)
 
-del (_compat_array_creation_all,
-     _alias_all,
-     _compat_funcs_change_unit_all,
-     _compat_funcs_keep_unit_all,
-     _compat_funcs_accept_unitless_all,
-     _compat_funcs_remove_unit_all,
-     _compat_misc_all,
-     _einops_all,
-     _activation_all)
+del (
+    _compat_array_creation_all,
+    _alias_all,
+    _compat_funcs_change_unit_all,
+    _compat_funcs_keep_unit_all,
+    _compat_funcs_accept_unitless_all,
+    _compat_funcs_remove_unit_all,
+    _compat_misc_all,
+    _einops_all,
+    _activation_all
+)

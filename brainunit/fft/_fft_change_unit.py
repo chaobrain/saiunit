@@ -14,7 +14,6 @@
 # ==============================================================================
 from __future__ import annotations
 
-import sys
 from typing import Callable, Union, Sequence
 
 import jax
@@ -1046,6 +1045,7 @@ _time_freq_map = {
     24: (u.Ysecond, u.yhertz),
 }
 
+
 def _find_closet_scale(scale):
     values = list(_time_freq_map.keys())
 
@@ -1111,7 +1111,6 @@ def fftfreq(
     else:
         # noinspection PyUnresolvedReferences
         return jnpfft.fftfreq(n, d, dtype=dtype)
-
 
 
 @set_module_as('brainunit.fft')
