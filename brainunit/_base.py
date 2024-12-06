@@ -1506,6 +1506,9 @@ class Unit:
             is_fullname=self.is_fullname,
         )
 
+    def __hash__(self):
+        return hash((self.dim, self.base, self.scale, self.name, self.dispname, self.iscompound, self.is_fullname))
+
     def has_same_scale(self, other: 'Unit') -> bool:
         """
         Whether this Unit has the same ``scale`` as another Unit.

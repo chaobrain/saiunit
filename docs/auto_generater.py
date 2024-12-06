@@ -355,6 +355,16 @@ def main():
                     submodule_names=[k[0] for k in module_and_name],
                     section_names=[k[1] for k in module_and_name])
 
+  module_and_name = [
+    ('_fft_change_unit', 'Functions that Changing Unit'),
+    ('_fft_keep_unit', 'Functions that Keeping Unit'),
+  ]
+
+  _write_submodules(module_name='brainunit.fft',
+                    filename='apis/brainunit.fft.rst',
+                    header='``brainunit.fft`` module',
+                    submodule_names=[k[0] for k in module_and_name],
+                    section_names=[k[1] for k in module_and_name])
 
 if __name__ == '__main__':
   main()

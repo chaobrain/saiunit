@@ -20,6 +20,7 @@ from . import lax
 from . import math
 from . import linalg
 from . import autograd
+from . import fft
 from ._base import *
 from ._base import __all__ as _base_all
 from ._celsius import *
@@ -31,5 +32,5 @@ from ._unit_constants import __all__ as _constants_all
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
 
-__all__ = ['math', 'linalg', 'autograd'] + _common_all + _std_units_all + _constants_all + _base_all + _celsius_all
+__all__ = ['math', 'linalg', 'autograd', 'fft'] + _common_all + _std_units_all + _constants_all + _base_all + _celsius_all
 del _common_all, _std_units_all, _constants_all, _base_all, _celsius_all, _matplotlib_compat
