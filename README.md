@@ -47,7 +47,7 @@ The official documentation is hosted on Read the Docs: [https://brainunit.readth
 - [``pinnx``](https://github.com/chaobrain/pinnx): Physics-Informed Neural Networks for Scientific Machine Learning in JAX.
 
 - [``diffrax``](https://github.com/chaobrain/diffrax): Numerical differential equation solvers in JAX.
-- [``jax-md``](○https://github.com/Routhleck/jax-md): Differentiable Molecular Dynamics in JAX
+- [``jax-md``](https://github.com/Routhleck/jax-md): Differentiable Molecular Dynamics in JAX
 - [``Catalax``](https://github.com/Routhleck/Catalax): JAX-based framework to model biological systems
 - ...
 

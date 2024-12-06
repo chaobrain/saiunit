@@ -14,6 +14,7 @@
 # ==============================================================================
 from __future__ import annotations
 
+import sys
 from typing import Callable, Union, Sequence
 
 import jax
@@ -1100,7 +1101,7 @@ def fftfreq(
             freq_unit = Unit.create(get_or_create_dimension(s=-1),
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
-                                    scale=freq_unit_scale,)
+                                    scale=freq_unit_scale, )
         if sys.version_info >= (3, 10):
             return Quantity(jnpfft.fftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device), unit=freq_unit)
         else:
