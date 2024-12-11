@@ -82,6 +82,11 @@ def _fun_keep_unit_sequence(
     **kwargs
 ):
     leaves, treedef = jax.tree.flatten(args, is_leaf=lambda x: isinstance(x, Quantity))
+    leaves = jax.tree.map(
+        lambda x: x.factorless() if isinstance(x, Quantity) else x,
+        leaves,
+        is_leaf=lambda x: isinstance(x, Quantity)
+    )
     leaves = unit_scale_align_to_first(*leaves)
     unit = leaves[0].unit
     leaves = [x.mantissa for x in leaves]

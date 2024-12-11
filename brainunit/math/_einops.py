@@ -1212,6 +1212,12 @@ def einsum(
 
     .. _opt_einsum: https://github.com/dgasmith/opt_einsum
     """
+    operands = jax.tree.map(
+        lambda x: x.factorless() if isinstance(x, Quantity) else x,
+        operands,
+        is_leaf=lambda x: isinstance(x, Quantity)
+    )
+
     operands = (subscripts, *operands)
     spec = operands[0] if isinstance(operands[0], str) else None
     path_type = 'optimal' if optimize is True else Unoptimized() if optimize is False else optimize

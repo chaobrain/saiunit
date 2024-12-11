@@ -48,7 +48,14 @@ molar = Unit.create((mole/liter).dim, name="molar", dispname="M", scale=3)
 candle = Unit.create(get_or_create_dimension(candle=1), "candle", "cd")
 fundamental_units = [metre, meter, gram, second, amp, kelvin, mole, candle]
 
+
+### Derived units
+
 {derived}
+
+
+# Difinitions of base units
+
 {definitions}
 
 {base_units}
@@ -56,6 +63,7 @@ fundamental_units = [metre, meter, gram, second, amp, kelvin, mole, candle]
 {powered_units}
 {additional_units}
 {all_units}
+
 
 del base_units, scaled_units, powered_units, additional_units
 # fmt: on

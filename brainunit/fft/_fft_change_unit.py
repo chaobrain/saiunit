@@ -197,9 +197,14 @@ def rfft(
                [ 1.-2.j,  3.-4.j,  5.-6.j],
                [-1.+0.j, -1.+0.j, -1.+0.j]], dtype=complex64)
     """
-    return _fun_change_unit_unary(jnpfft.rfft,
-                                  lambda u: u * second,
-                                  a, n=n, axis=axis, norm=norm)
+    return _fun_change_unit_unary(
+        jnpfft.rfft,
+        lambda u: u * second,
+        a,
+        n=n,
+        axis=axis,
+        norm=norm
+    )
 
 
 # return original unit / time unit (inverse)
@@ -263,9 +268,14 @@ def ifft(
          [ 0.67+0.58j -0.5 +1.44j  0.17+2.02j  1.83+0.29j]
          [ 0.67-0.58j -0.5 -1.44j  0.17-2.02j  1.83-0.29j]]
     """
-    return _fun_change_unit_unary(jnpfft.ifft,
-                                  lambda u: u / second,
-                                  a, n=n, axis=axis, norm=norm)
+    return _fun_change_unit_unary(
+        jnpfft.ifft,
+        lambda u: u / second,
+        a,
+        n=n,
+        axis=axis,
+        norm=norm
+    )
 
 
 @unit_change(lambda u: u / second)

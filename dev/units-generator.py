@@ -62,6 +62,7 @@ for longname, shortname, definition in derived_unit_table:
     longname=longname, shortname=shortname, definition=definition)
   base_units.append(longname)
 
+
 all_units = base_units + []
 
 definitions = '######### SCALED BASE UNITS ###########\n'
@@ -120,6 +121,14 @@ for _bu in ['liter', 'litre']:
     definitions += '{_u} = Unit.create_scaled_unit({_bu}, "{_k}")\n'.format(_u=_u, _bu=_bu, _k=_k)
     additional_units += _u + ', '
 additional_units += ']'
+
+
+modular_dynamics_units = [
+  'eV', 'Angstrom', 'AMU', 'IMF'
+]
+
+# all_units = all_units + modular_dynamics_units
+
 
 # Add unit names to __all__
 all = '''

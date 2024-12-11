@@ -52,6 +52,7 @@ def _fun_accept_unitless_unary(
     **kwargs
 ):
     if isinstance(x, Quantity):
+        x = x.factorless()
         if unit_to_scale is None:
             assert x.dim.is_dimensionless, (
                 f'{func} only support dimensionless input. But we got {x}. \n'
@@ -771,6 +772,7 @@ def _fun_accept_unitless_binary(
     **kwargs
 ):
     if isinstance(x, Quantity):
+        x = x.factorless()
         if unit_to_scale is None:
             assert x.dim.is_dimensionless, (
                 f'{func} only support dimensionless input. But we got {x}. \n'
@@ -782,6 +784,7 @@ def _fun_accept_unitless_binary(
             assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
             x = x.to_decimal(unit_to_scale)
     if isinstance(y, Quantity):
+        y = y.factorless()
         if unit_to_scale is None:
             assert y.dim.is_dimensionless, (f'Input should be dimensionless for the function "{func}" '
                                             f'when scaling "unit_to_scale" is not provided.')
@@ -1142,9 +1145,11 @@ def invert(
 
 def _fun_unitless_binary(func, x, y, *args, **kwargs):
     if isinstance(x, Quantity):
+        x = x.factorless()
         assert x.dim.is_dimensionless, f'Expected dimensionless array, got {x}'
         x = x.to_decimal()
     if isinstance(y, Quantity):
+        y = y.factorless()
         assert y.dim.is_dimensionless, f'Expected dimensionless array, got {y}'
         y = y.to_decimal()
     return func(x, y, *args, **kwargs)

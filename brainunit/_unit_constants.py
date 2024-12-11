@@ -13,77 +13,47 @@
 # limitations under the License.
 # ==============================================================================
 
-r"""
-A module providing some physical units as `Quantity` objects. Note that these
-units are not imported by wildcard imports, they
-have to be imported explicitly. You can use ``import ... as ...`` to import them
-with shorter names, e.g.::
+from ._base import Unit
+from ._unit_common import joule, kilogram, second, meter
 
-    from brainunit import faraday_constant as F
+# ----- Time -----
 
-The available constants are:
+minute = Unit.create(second.dim, name="minute", dispname="min", scale=second.scale + 1, factor=6.0)
+hour = Unit.create(second.dim, name="hour", dispname="h", scale=second.scale + 3, factor=3.600)
+day = Unit.create(second.dim, name="day", dispname="d", scale=second.scale + 4, factor=8.6400)
+week = Unit.create(second.dim, name="week", dispname="wk", scale=second.scale + 5, factor=6.04800)
+month = Unit.create(second.dim, name="month", dispname="mo", scale=second.scale + 6, factor=2.629746)
+year = Unit.create(second.dim, name="year", dispname="yr", scale=second.scale + 7, factor=3.1556952)
+julian_year = Unit.create(second.dim, name="julian year", dispname="julian yr", scale=second.scale + 7, factor=3.15576)
 
-==================== ================== ======================= ==================================================================
-Constant             Symbol(s)          name                    Value
-==================== ================== ======================= ==================================================================
-Avogadro constant    :math:`N_A, L`     ``avogadro_constant``   :math:`6.022140857\times 10^{23}\,\mathrm{mol}^{-1}`
-Boltzmann constant   :math:`k`          ``boltzmann_constant``  :math:`1.38064852\times 10^{-23}\,\mathrm{J}\,\mathrm{K}^{-1}`
-Electric constant    :math:`\epsilon_0` ``electric_constant``   :math:`8.854187817\times 10^{-12}\,\mathrm{F}\,\mathrm{m}^{-1}`
-Electron mass        :math:`m_e`        ``electron_mass``       :math:`9.10938356\times 10^{-31}\,\mathrm{kg}`
-Elementary charge    :math:`e`          ``elementary_charge``   :math:`1.6021766208\times 10^{-19}\,\mathrm{C}`
-Faraday constant     :math:`F`          ``faraday_constant``    :math:`96485.33289\,\mathrm{C}\,\mathrm{mol}^{-1}`
-Gas constant         :math:`R`          ``gas_constant``        :math:`8.3144598\,\mathrm{J}\,\mathrm{mol}^{-1}\,\mathrm{K}^{-1}`
-Magnetic constant    :math:`\mu_0`      ``magnetic_constant``   :math:`12.566370614\times 10^{-7}\,\mathrm{N}\,\mathrm{A}^{-2}`
-Molar mass constant  :math:`M_u`        ``molar_mass_constant`` :math:`1\times 10^{-3}\,\mathrm{kg}\,\mathrm{mol}^{-1}`
-0°C                                     ``zero_celsius``        :math:`273.15\,\mathrm{K}`
-==================== ================== ======================= ==================================================================
-"""
+# ----- Length -----
 
-import numpy as np
+inch = Unit.create(meter.dim, name="inch", dispname="in", scale=meter.scale, factor=0.0254)
+foot = Unit.create(meter.dim, name="foot", dispname="ft", scale=meter.scale, factor=0.3048)
+yard = Unit.create(meter.dim, name="yard", dispname="yd", scale=meter.scale, factor=0.9144)
+mile = Unit.create(meter.dim, name="mile", dispname="mi", scale=meter.scale + 3, factor=1.609344)
+mil = Unit.create(meter.dim, name="mil", dispname="mil", scale=meter.scale, factor=2.54e-5)
+point = Unit.create(meter.dim, name="point", dispname="pt", scale=meter.scale - 4, factor=3.5277777777777776)
+pica = Unit.create(meter.dim, name="pica", dispname="p", scale=meter.scale, factor=4.233333333333333e-3)
+survey_foot = Unit.create(meter.dim, name="survey foot", dispname="ft", scale=meter.scale, factor=0.3048006096012192)
+survey_mile = Unit.create(meter.dim, name="survey mile", dispname="mi", scale=meter.scale + 3,
+                          factor=1.6093472186944374)
+nautical_mile = Unit.create(meter.dim, name="nautical mile", dispname="nmi", scale=meter.scale + 3, factor=1.8520)
+fermi = Unit.create(meter.dim, name="fermi", dispname="fm", scale=meter.scale - 15)
+angstrom = Unit.create(meter.dim, name="angstrom", dispname="Å", scale=-10, factor=1.0)
+micron = Unit.create(meter.dim, name="micron", dispname="µm", scale=-6, factor=1.0e-6)
+astronomical_unit = Unit.create(meter.dim, name="astronomical unit", dispname="AU", scale=11, factor=1.495978707e11)
+light_year = Unit.create(meter.dim / second.dim, name="light year", dispname="ly", scale=11, factor=1.094991952845)
 
-from ._unit_common import (
-    amp,
-    coulomb,
-    farad,
-    gram,
-    joule,
-    kelvin,
-    kilogram,
-    meter,
-    mole,
-    newton,
-)
+# UNITS in modular dynamics
+# See https://github.com/chaobrain/brainunit/issues/63
 
-__all__ = [
-    'avogadro_constant',
-    'boltzmann_constant',
-    'electric_constant',
-    'electron_mass',
-    'elementary_charge',
-    'faraday_constant',
-    'gas_constant',
-    'magnetic_constant',
-    'molar_mass_constant',
-    'zero_celsius',
-]
+electron_volt = Unit.create(joule.dim, name="electronvolt", dispname="eV", scale=-19, factor=1.602176565)
+elementary_charge = eV = electron_volt
+# atomic mass unit (amu)
+AMU = Unit.create(kilogram.dim, name="atomic mass unit", dispname="AMU", scale=-27, factor=1.66053886)
+# Intermolecular force 分子间作用力
+IMF = Unit.create(eV.dim / angstrom.dim, name="intermolecular force", dispname="IMF", scale=-9, factor=1.602176565)
 
-#: Avogadro constant (http://physics.nist.gov/cgi-bin/cuu/Value?na)
-avogadro_constant = np.asarray(6.022140857e23) / mole
-#: Boltzmann constant (physics.nist.gov/cgi-bin/cuu/Value?k)
-boltzmann_constant = np.asarray(1.38064852e-23) * (joule / kelvin)
-#: electric constant (http://physics.nist.gov/cgi-bin/cuu/Value?ep0)
-electric_constant = np.asarray(8.854187817e-12) * (farad / meter)
-#: Electron rest mass (physics.nist.gov/cgi-bin/cuu/Value?me)
-electron_mass = np.asarray(9.10938356e-31) * kilogram
-#: Elementary charge (physics.nist.gov/cgi-bin/cuu/Value?e)
-elementary_charge = np.asarray(1.6021766208e-19) * coulomb
-#: Faraday constant (http://physics.nist.gov/cgi-bin/cuu/Value?f)
-faraday_constant = np.asarray(96485.33289) * (coulomb / mole)
-#: gas constant (http://physics.nist.gov/cgi-bin/cuu/Value?r)
-gas_constant = np.asarray(8.3144598) * (joule / mole / kelvin)
-#: Magnetic constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu0)
-magnetic_constant = np.asarray(4 * np.pi * 1e-7) * (newton / amp ** 2)
-#: Molar mass constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu)
-molar_mass_constant = np.asarray(1.) * (gram / mole)
-#: zero degree Celsius
-zero_celsius = np.asarray(273.15) * kelvin
+
+
