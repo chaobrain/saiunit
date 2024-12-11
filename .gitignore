@@ -54,13 +54,6 @@ docs/apis/generated
 docs/apis/math/generated
 docs/apis/integrators/generated
 
-develop/benchmark/COBA/brian2*
-develop/benchmark/COBA/annarchy*
-develop/benchmark/COBAHH/brian2*
-develop/benchmark/COBAHH/annarchy*
-develop/benchmark/CUBA/annarchy*
-develop/benchmark/CUBA/brian2*
-
 
 *~
 \#*\#
@@ -227,3 +220,8 @@ cython_debug/
 /my_tests/
 /examples/dynamics_simulation/Joglekar_2018_data/
 /docs/apis/deprecated/generated/
+/docs/apis/brainunit.fft.rst
+/docs/apis/brainunit.lax.rst
+/docs/apis/brainunit.linalg.rst
+/docs/apis/brainunit.math.rst
+/docs/apis/changelog.md

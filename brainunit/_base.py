@@ -70,6 +70,12 @@ StaticScalar = Union[
 ]
 PyTree = Any
 _all_slice = slice(None, None, None)
+compat_with_equinox = False
+
+
+def compatible_with_equinox(mode: bool = True):
+    global compat_with_equinox
+    compat_with_equinox = mode
 
 
 def _to_quantity(array) -> 'Quantity':
@@ -809,8 +815,6 @@ def fail_for_dimension_mismatch(
         # ):
         #   return dim1, dim2
 
-        # We do another check here, this should allow Brian1 units to pass as
-        # having the same dimensions as a Brian2 unit
         if dim1 == dim2:
             return dim1, dim2
 
@@ -877,8 +881,6 @@ def fail_for_unit_mismatch(
     else:
         unit2 = get_unit(obj2)
 
-    # We do another check here, this should allow Brian1 units to pass as
-    # having the same dimensions as a Brian2 unit
     if unit1.has_same_dim(unit2):
         return unit1, unit2
 
@@ -1273,14 +1275,21 @@ class Unit:
     r"""
      A physical unit.
 
-     Normally, you do not need to worry about the implementation of
-     units. They are derived from the `Array` object with
-     some additional information (name and string representation).
-
      Basically, a unit is just a number with given dimensions, e.g.
      mvolt = 0.001 with the dimensions of voltage. The units module
      defines a large number of standard units, and you can also define
      your own (see below).
+
+     Mathematically, a unit represents:
+
+        .. math::
+
+            \text{{factor}} \times \text{{base}}^{\text{{scale}}} \times \text{{dimension}}
+
+     where the ``factor`` is the conversion factor of the unit (e.g. ``1 calorie = 4.18400 Joule``,
+     so the factor is 4.18400), the ``base`` is the base of the exponent (e.g. 10 for the kilo prefix),
+     the ``scale`` is the exponent of the base (e.g. 3 for the kilo prefix), and the ``dimension`` is
+     the physical dimensions of the unit (e.g. ``joule`` for energy).
 
      The unit class also keeps track of various things that were used
      to define it so as to generate a nice string representation of it.
@@ -1337,7 +1346,7 @@ class Unit:
      >>> area = 20000 * U.um**2
 
      If you now ask for the conductance density, you will get an "ugly" display
-     in basic SI dimensions, as Brian does not know of a corresponding unit:
+     in basic SI dimensions, as  does not know of a corresponding unit:
 
      >>> conductance/area
      0.5 * metre ** -4 * kilogram ** -1 * second ** 3 * amp ** 2
@@ -1347,11 +1356,11 @@ class Unit:
 
      >>> U.usiemens/U.cm**2
      usiemens / (cmetre ** 2)
-     >>> conductance/area  # same as before, but now Brian knows about uS/cm^2
+     >>> conductance/area  # same as before, but now knows about uS/cm^2
      50. * usiemens / (cmetre ** 2)
 
      Note that user-defined units cannot override the standard units (`volt`,
-     `second`, etc.) that are predefined by Brian. For example, the unit
+     `second`, etc.) that are predefined. For example, the unit
      ``Nm`` has the dimensions "length²·mass/time²", and therefore the same
      dimensions as the standard unit `joule`. The latter will be used for display
      purposes:
@@ -2927,6 +2936,14 @@ class Quantity:
     # -------------------- #
 
     def __pow__(self, oc):
+        if compat_with_equinox:
+            try:
+                from equinox.internal._omega import ω  # noqa
+                if isinstance(oc, ω):
+                    return ω(self)
+            except (ImportError, ModuleNotFoundError):
+                pass
+
         if isinstance(oc, Quantity):
             assert oc.is_unitless, f"Cannot calculate {self} ** {oc}, the exponent has to be dimensionless"
             oc = oc.mantissa

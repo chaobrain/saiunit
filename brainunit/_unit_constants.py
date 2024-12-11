@@ -15,7 +15,7 @@
 
 r"""
 A module providing some physical units as `Quantity` objects. Note that these
-units are not imported by wildcard imports (e.g. `from brian2 import *`), they
+units are not imported by wildcard imports, they
 have to be imported explicitly. You can use ``import ... as ...`` to import them
 with shorter names, e.g.::
 
@@ -24,7 +24,7 @@ with shorter names, e.g.::
 The available constants are:
 
 ==================== ================== ======================= ==================================================================
-Constant             Symbol(s)          Brian name              Value
+Constant             Symbol(s)          name                    Value
 ==================== ================== ======================= ==================================================================
 Avogadro constant    :math:`N_A, L`     ``avogadro_constant``   :math:`6.022140857\times 10^{23}\,\mathrm{mol}^{-1}`
 Boltzmann constant   :math:`k`          ``boltzmann_constant``  :math:`1.38064852\times 10^{-23}\,\mathrm{J}\,\mathrm{K}^{-1}`

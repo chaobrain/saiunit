@@ -35,7 +35,7 @@ pip install brainunit --upgrade
 The official documentation is hosted on Read the Docs: [https://brainunit.readthedocs.io](https://brainunit.readthedocs.io)
 
 
-## Unit-Aware Computation Ecosystem
+## Unit-aware computation ecosystem
 
 
 `brainunit` has been deeply integrated into following diverse projects, such as:
@@ -46,7 +46,10 @@ The official documentation is hosted on Read the Docs: [https://brainunit.readth
 - [``dendritex``](https://github.com/chaobrain/dendritex): Dendritic Modeling in JAX
 - [``pinnx``](https://github.com/chaobrain/pinnx): Physics-Informed Neural Networks for Scientific Machine Learning in JAX.
 
-- [``diffrax``](https://github.com/chaobrain/diffrax): Numerical differential equation solvers in JAX.
+
+Other unofficial projects include:
+
+- [``diffrax``](https://github.com/chaoming0625/diffrax): Numerical differential equation solvers in JAX.
 - [``jax-md``](https://github.com/Routhleck/jax-md): Differentiable Molecular Dynamics in JAX
 - [``Catalax``](https://github.com/Routhleck/Catalax): JAX-based framework to model biological systems
 - ...
