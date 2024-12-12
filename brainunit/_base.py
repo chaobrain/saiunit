@@ -1145,7 +1145,7 @@ def _wrap_function_keep_unit(func):
     """
 
     def f(x: Quantity, *args, **kwds):  # pylint: disable=C0111
-        x = x.factorless()
+        # x = x.factorless()
         return Quantity(func(x.mantissa, *args, **kwds), unit=x.unit)
 
     f._arg_units = [None]
@@ -1171,7 +1171,7 @@ def _wrap_function_change_unit(func, unit_fun):
 
     def f(x, *args, **kwds):  # pylint: disable=C0111
         assert isinstance(x, Quantity), "Only Quantity objects can be passed to this function"
-        x = x.factorless()
+        # x = x.factorless()
         return maybe_decimal(Quantity(func(x.mantissa, *args, **kwds), unit=unit_fun(x.unit, x.unit)))
 
     f._arg_units = [None]
@@ -1195,7 +1195,7 @@ def _wrap_function_remove_unit(func):
 
     def f(x, *args, **kwds):  # pylint: disable=C0111
         assert isinstance(x, Quantity), "Only Quantity objects can be passed to this function"
-        x = x.factorless()
+        # x = x.factorless()
         return func(x.mantissa, *args, **kwds)
 
     f._arg_units = [None]
@@ -2589,12 +2589,12 @@ class Quantity:
 
     @property
     def imag(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.imag(self.mantissa), unit=self.unit)
 
     @property
     def real(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.real(self.mantissa), unit=self.unit)
 
     @property
@@ -2603,12 +2603,12 @@ class Quantity:
 
     @property
     def T(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa).T, unit=self.unit)
 
     @property
     def mT(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa).mT, unit=self.unit)
 
     @property
@@ -2671,7 +2671,7 @@ class Quantity:
         - https://github.com/google/jax/issues/7713
         - https://github.com/google/jax/pull/3821
         """
-        self = self.factorless()
+        # self = self.factorless()
 
         if self.ndim == 0:
             yield self
@@ -2680,7 +2680,7 @@ class Quantity:
                 yield Quantity(self.mantissa[i], unit=self.unit)
 
     def __getitem__(self, index) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
 
         if isinstance(index, slice) and (index == _all_slice):
             return Quantity(self.mantissa, unit=self.unit)
@@ -2728,7 +2728,7 @@ class Quantity:
         out : Quantity
             The scatter-added value.
         """
-        self = self.factorless()
+        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -2788,7 +2788,7 @@ class Quantity:
         out : Quantity
             The scatter-multiplied value.
         """
-        self = self.factorless()
+        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -2826,7 +2826,7 @@ class Quantity:
         out : Quantity
             The scatter-divided value.
         """
-        self = self.factorless()
+        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -2864,7 +2864,7 @@ class Quantity:
         out : Quantity
             The scatter-maximum value.
         """
-        self = self.factorless()
+        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -2902,7 +2902,7 @@ class Quantity:
         out : Quantity
             The scatter-minimum value.
         """
-        self = self.factorless()
+        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -2928,19 +2928,19 @@ class Quantity:
         return len(self.mantissa)
 
     def __neg__(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(self.mantissa.__neg__(), unit=self.unit)
 
     def __pos__(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(self.mantissa.__pos__(), unit=self.unit)
 
     def __abs__(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(self.mantissa.__abs__(), unit=self.unit)
 
     def __invert__(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(self.mantissa.__invert__(), unit=self.unit)
 
     def _comparison(self, other: Any, operator_str: str, operation: Callable):
@@ -3003,7 +3003,7 @@ class Quantity:
         inplace: bool, optional
             Whether to do the operation in-place (defaults to ``False``).
         """
-        self = self.factorless()
+        # self = self.factorless()
 
         # format "other"
         other = _to_quantity(other)
@@ -3142,7 +3142,7 @@ class Quantity:
     # -------------------- #
 
     def __pow__(self, oc):
-        self = self.factorless()
+        # self = self.factorless()
         if compat_with_equinox:
             try:
                 from equinox.internal._omega import ω  # noqa
@@ -3158,7 +3158,7 @@ class Quantity:
 
     def __rpow__(self, oc):
         # oc ** self
-        self = self.factorless()
+        # self = self.factorless()
         assert self.is_unitless, f"Cannot calculate {oc} ** {self}, the exponent has to be dimensionless"
         return oc ** self.mantissa
 
@@ -3206,7 +3206,7 @@ class Quantity:
 
     def __lshift__(self, oc) -> 'Quantity':
         # self << oc
-        self = self.factorless()
+        # self = self.factorless()
         if isinstance(oc, Quantity):
             assert oc.is_unitless, "The shift amount must be dimensionless"
             oc = oc.mantissa
@@ -3215,20 +3215,20 @@ class Quantity:
 
     def __rlshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
         # oc << self
-        self = self.factorless()
+        # self = self.factorless()
         assert self.is_unitless, "The shift amount must be dimensionless"
         return oc << self.mantissa
 
     def __ilshift__(self, oc) -> 'Quantity':
         # self <<= oc
-        self = self.factorless()
+        # self = self.factorless()
         r = self.__lshift__(oc)
         self.update_mantissa(r.mantissa)
         return self
 
     def __rshift__(self, oc) -> 'Quantity':
         # self >> oc
-        self = self.factorless()
+        # self = self.factorless()
         if isinstance(oc, Quantity):
             assert oc.is_unitless, "The shift amount must be dimensionless"
             oc = oc.mantissa
@@ -3237,13 +3237,13 @@ class Quantity:
 
     def __rrshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
         # oc >> self
-        self = self.factorless()
+        # self = self.factorless()
         assert self.is_unitless, "The shift amount must be dimensionless"
         return oc >> self.mantissa
 
     def __irshift__(self, oc) -> 'Quantity':
         # self >>= oc
-        self = self.factorless()
+        # self = self.factorless()
         r = self.__rshift__(oc)
         self.update_mantissa(r.mantissa)
         return self
@@ -3255,7 +3255,7 @@ class Quantity:
         :param ndigits: The number of decimals to round to.
         :return: The rounded Quantity.
         """
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(self.mantissa.__round__(ndigits), unit=self.unit)
 
     def __reduce__(self):
@@ -3323,7 +3323,7 @@ class Quantity:
             The real and imaginary parts of complex numbers are rounded
             separately.  The result of rounding a float is a float.
         """
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.round(self.mantissa, decimals), unit=self.unit)
 
     def astype(
@@ -3337,7 +3337,7 @@ class Quantity:
         dtype: str, dtype
           Typecode or data-type to which the array is cast.
         """
-        self = self.factorless()
+        # self = self.factorless()
         if dtype is None:
             return Quantity(self.mantissa, unit=self.unit)
         else:
@@ -3351,24 +3351,24 @@ class Quantity:
         """
         Return an array whose values are limited to [min, max]. One of max or min must be given.
         """
-        self = self.factorless()
+        # self = self.factorless()
         _, min = unit_scale_align_to_first(self, min)
         _, max = unit_scale_align_to_first(self, max)
         return Quantity(jnp.clip(self.mantissa, min.mantissa, max.mantissa), unit=self.unit)
 
     def conj(self) -> 'Quantity':
         """Complex-conjugate all elements."""
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.conj(self.mantissa), unit=self.unit)
 
     def conjugate(self) -> 'Quantity':
         """Return the complex conjugate, element-wise."""
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.conjugate(self.mantissa), unit=self.unit)
 
     def copy(self) -> 'Quantity':
         """Return a copy of the quantity."""
-        self = self.factorless()
+        # self = self.factorless()
         return type(self)(jnp.copy(self.mantissa), unit=self.unit)
 
     def dot(self, b) -> 'Quantity':
@@ -3378,23 +3378,23 @@ class Quantity:
 
     def fill(self, value: Quantity) -> 'Quantity':
         """Fill the array with a scalar mantissa."""
-        self = self.factorless()
+        # self = self.factorless()
         fail_for_dimension_mismatch(self, value, "fill")
         self[:] = value
         return self
 
     def flatten(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.reshape(self.mantissa, -1), unit=self.unit)
 
     def item(self, *args) -> 'Quantity':
         """Copy an element of an array to a standard Python scalar and return it."""
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(self.mantissa.item(*args), unit=self.unit)
 
     def prod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
         """Return the product of the array elements over the given axis."""
-        self = self.factorless()
+        # self = self.factorless()
 
         prod_res = jnp.prod(self.mantissa, *args, **kwds)
         # Calculating the correct dimensions is not completly trivial (e.g.
@@ -3415,7 +3415,7 @@ class Quantity:
 
     def nanprod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
         """Return the product of array elements over a given axis treating Not a Numbers (NaNs) as ones."""
-        self = self.factorless()
+        # self = self.factorless()
 
         prod_res = jnp.nanprod(self.mantissa, *args, **kwds)
         nan_mask = jnp.isnan(self.mantissa)
@@ -3426,7 +3426,7 @@ class Quantity:
         return maybe_decimal(r)
 
     def cumprod(self, *args, **kwds):  # TODO: check error when axis is not None
-        self = self.factorless()
+        # self = self.factorless()
 
         prod_res = jnp.cumprod(self.mantissa, *args, **kwds)
         dim_exponent = jnp.ones_like(self.mantissa).cumsum(*args, **kwds)
@@ -3436,7 +3436,7 @@ class Quantity:
         return maybe_decimal(r)
 
     def nancumprod(self, *args, **kwds):  # TODO: check error when axis is not None
-        self = self.factorless()
+        # self = self.factorless()
 
         prod_res = jnp.nancumprod(self.mantissa, *args, **kwds)
         nan_mask = jnp.isnan(self.mantissa)
@@ -3456,25 +3456,25 @@ class Quantity:
         values: array_like
           Values to place in the array at target indices.
         """
-        self = self.factorless()
+        # self = self.factorless()
         fail_for_dimension_mismatch(self, values, "put")
         self.__setitem__(indices, values)
         return self
 
     def repeat(self, repeats, axis=None) -> 'Quantity':
         """Repeat elements of an array."""
-        self = self.factorless()
+        # self = self.factorless()
         r = jnp.repeat(self.mantissa, repeats=repeats, axis=axis)
         return Quantity(r, unit=self.unit)
 
     def reshape(self, shape, order='C') -> 'Quantity':
         """Returns an array containing the same data with a new shape."""
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.reshape(self.mantissa, shape, order=order), unit=self.unit)
 
     def resize(self, new_shape) -> 'Quantity':
         """Change shape and size of array in-place."""
-        self = self.factorless()
+        # self = self.factorless()
         self.update_mantissa(jnp.resize(self.mantissa, new_shape))
         return self
 
@@ -3495,18 +3495,18 @@ class Quantity:
             but unspecified fields will still be used, in the order in which
             they come up in the dtype, to break ties.
         """
-        self = self.factorless()
+        # self = self.factorless()
         self.update_mantissa(jnp.sort(self.mantissa, axis=axis, stable=stable, order=order))
         return self
 
     def squeeze(self, axis=None) -> 'Quantity':
         """Remove axes of length one from ``a``."""
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.squeeze(self.mantissa, axis=axis), unit=self.unit)
 
     def swapaxes(self, axis1, axis2) -> 'Quantity':
         """Return a view of the array with `axis1` and `axis2` interchanged."""
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.swapaxes(self.mantissa, axis1, axis2), unit=self.unit)
 
     def split(self, indices_or_sections, axis=0) -> List['Quantity']:
@@ -3537,7 +3537,7 @@ class Quantity:
         sub-arrays : list of ndarrays
           A list of sub-arrays as views into `ary`.
         """
-        self = self.factorless()
+        # self = self.factorless()
         return [Quantity(a, unit=self.unit) for a in jnp.split(self.mantissa, indices_or_sections, axis=axis)]
 
     def take(
@@ -3550,7 +3550,7 @@ class Quantity:
         fill_value=None,
     ) -> 'Quantity':
         """Return an array formed from the elements of a at the given indices."""
-        self = self.factorless()
+        # self = self.factorless()
 
         if isinstance(fill_value, Quantity):
             fail_for_dimension_mismatch(self, fill_value, "take")
@@ -3613,7 +3613,7 @@ class Quantity:
         out : ndarray
             View of `a`, with axes suitably permuted.
         """
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.transpose(self.mantissa, *axes), unit=self.unit)
 
     def tile(self, reps) -> 'Quantity':
@@ -3645,7 +3645,7 @@ class Quantity:
         c : ndarray
             The tiled output array.
         """
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.tile(self.mantissa, reps), unit=self.unit)
 
     def view(self, *args, dtype=None) -> 'Quantity':
@@ -3784,7 +3784,7 @@ class Quantity:
             [4, 16]
 
         """
-        self = self.factorless()
+        # self = self.factorless()
         if len(args) == 0:
             if dtype is None:
                 raise ValueError('Provide dtype or shape.')
@@ -3806,7 +3806,7 @@ class Quantity:
 
     def __array__(self, dtype: Optional[jax.typing.DTypeLike] = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
-        self = self.factorless()
+        # self = self.factorless()
         if self.dim.is_dimensionless:
             return np.asarray(self.to_decimal(), dtype=dtype)
         else:
@@ -3816,7 +3816,7 @@ class Quantity:
             )
 
     def __float__(self):
-        self = self.factorless()
+        # self = self.factorless()
         if self.dim.is_dimensionless and self.ndim == 0:
             return float(self.to_decimal())
         else:
@@ -3826,7 +3826,7 @@ class Quantity:
             )
 
     def __int__(self):
-        self = self.factorless()
+        # self = self.factorless()
         if self.dim.is_dimensionless and self.ndim == 0:
             return int(self.to_decimal())
         else:
@@ -3836,7 +3836,7 @@ class Quantity:
             )
 
     def __index__(self):
-        self = self.factorless()
+        # self = self.factorless()
         if self.dim.is_dimensionless:
             return operator.index(self.to_decimal())
         else:
@@ -3857,7 +3857,7 @@ class Quantity:
 
         See :func:`brainstate.math.unsqueeze`
         """
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
     def expand_dims(self, axis: Union[int, Sequence[int]]) -> 'Quantity':
@@ -3874,7 +3874,7 @@ class Quantity:
         expanded : Quantity
             A view with the new axis inserted.
         """
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
     def expand_as(self, array: Union['Quantity', jax.typing.ArrayLike]) -> 'Quantity':
@@ -3892,14 +3892,14 @@ class Quantity:
             typically not contiguous. Furthermore, more than one element of a
             expanded array may refer to a single memory location.
         """
-        self = self.factorless()
+        # self = self.factorless()
         if isinstance(array, Quantity):
             fail_for_dimension_mismatch(self, array, "expand_as (Quantity)")
             array = array.mantissa
         return Quantity(jnp.broadcast_to(self.mantissa, array), unit=self.unit)
 
     def pow(self, oc) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return self.__pow__(oc)
 
     def clone(self) -> 'Quantity':
@@ -3941,15 +3941,15 @@ class Quantity:
     # dtype exchanging #
     # ---------------- #
     def half(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float16), unit=self.unit)
 
     def float(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float32), unit=self.unit)
 
     def double(self) -> 'Quantity':
-        self = self.factorless()
+        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float64), unit=self.unit)
 
 

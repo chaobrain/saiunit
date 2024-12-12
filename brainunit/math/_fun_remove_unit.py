@@ -45,7 +45,7 @@ __all__ = [
 
 def _fun_remove_unit_unary(func, x, *args, **kwargs):
     if isinstance(x, Quantity):
-        x = x.factorless()
+        # x = x.factorless()
         return func(x.mantissa, *args, **kwargs)
     else:
         return func(x, *args, **kwargs)
@@ -352,15 +352,15 @@ sometrue = any
 
 def _fun_logic_binary(func, x, y, *args, **kwargs):
     if isinstance(x, Quantity) and isinstance(y, Quantity):
-        x = x.factorless()
-        y = y.factorless()
+        # x = x.factorless()
+        # y = y.factorless()
         return func(x.mantissa, y.in_unit(x.unit).mantissa, *args, **kwargs)
     elif isinstance(x, Quantity):
-        x = x.factorless()
+        # x = x.factorless()
         assert x.is_unitless, f'Expected unitless array when y is not Quantity, while got {x}'
         return func(x.mantissa, y, *args, **kwargs)
     elif isinstance(y, Quantity):
-        y = y.factorless()
+        # y = y.factorless()
         assert y.is_unitless, f'Expected unitless array when x is not Quantity, while got {y}'
         return func(x, y.mantissa, *args, **kwargs)
     else:
