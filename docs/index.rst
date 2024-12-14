@@ -192,7 +192,8 @@ We are building the `brain dynamics programming ecosystem <https://ecosystem-for
    apis/brainunit.linalg.rst
    apis/brainunit.lax.rst
    apis/brainunit.fft.rst
-   apis/constants.rst
+   apis/brainunit.sparse.rst
+   apis/brainunit.constants.rst
 
 
 

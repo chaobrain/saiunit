@@ -24,7 +24,7 @@ from .._misc import set_module_as
 
 __all__ = [
     # math funcs remove unit (unary)
-    'iscomplexobj', 'heaviside', 'signbit', 'sign', 'bincount', 'digitize',
+    'iscomplexobj', 'heaviside', 'signbit', 'sign', 'bincount', 'digitize', 'get_promote_dtypes',
 
     # logic funcs (unary)
     'all', 'any', 'logical_not',
@@ -42,6 +42,28 @@ __all__ = [
 
 # math funcs remove unit (unary)
 # ------------------------------
+
+
+@set_module_as('brainunit.math')
+def get_promote_dtypes(
+    *args: Union[Quantity, jax.typing.ArrayLike]
+) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
+    """
+    Promote the data types of the inputs to a common type.
+
+    Parameters
+    ----------
+    `*args` : array_likes
+        The arrays to promote.
+
+    Returns
+    -------
+    promoted : list of arrays
+        These arrays have the same shape as the input arrays, with the
+        data type of the most precise input.
+    """
+    return jnp.promote_types(*jax.tree.leaves(args))
+
 
 def _fun_remove_unit_unary(func, x, *args, **kwargs):
     if isinstance(x, Quantity):

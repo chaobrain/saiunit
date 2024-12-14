@@ -22,6 +22,7 @@ from . import fft
 from . import lax
 from . import linalg
 from . import math
+from . import sparse
 from ._base import *
 from ._base import __all__ as _base_all
 from ._celsius import *
@@ -35,7 +36,7 @@ from .constants import *
 from .constants import __all__ as _constants_all
 
 __all__ = (
-    ['math', 'linalg', 'autograd', 'fft', 'constants'] +
+    ['math', 'linalg', 'autograd', 'fft', 'constants', 'sparse'] +
     _common_all +
     _std_units_all +
     _constants_all +

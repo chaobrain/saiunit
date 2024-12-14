@@ -29,6 +29,7 @@ from jax.interpreters.partial_eval import DynamicJaxprTracer
 from jax.tree_util import register_pytree_node_class
 
 from ._misc import set_module_as
+from ._sparse_base import SparseMatrix
 
 __all__ = [
     # three base objects
@@ -50,6 +51,7 @@ __all__ = [
     'get_mantissa',
     'get_magnitude',
     'display_in_unit',
+    'split_mantissa_unit',
     'maybe_decimal',
 
     # functions for checking
@@ -715,6 +717,26 @@ def get_mantissa(obj):
 
 
 get_magnitude = get_mantissa
+
+
+def split_mantissa_unit(obj):
+    """
+    Split a Quantity into its mantissa and unit.
+
+    Parameters
+    ----------
+    obj : `object`
+        The object to check.
+
+    Returns
+    -------
+    mantissa : `float` or `array_like`
+        The mantissa of the `obj`.
+    unit : Unit
+        The physical unit of the `obj`.
+    """
+    obj = _to_quantity(obj)
+    return obj.mantissa, obj.unit
 
 
 @set_module_as('brainunit')
@@ -3033,6 +3055,8 @@ class Quantity:
             return r
 
     def __add__(self, oc):
+        if isinstance(oc, SparseMatrix):
+            return oc.__radd__(self)
         return self._binary_operation(oc, operator.add, fail_for_mismatch=True, operator_str="+")
 
     def __radd__(self, oc):
@@ -3043,6 +3067,8 @@ class Quantity:
         return self._binary_operation(oc, operator.add, fail_for_mismatch=True, operator_str="+=", inplace=True)
 
     def __sub__(self, oc):
+        if isinstance(oc, SparseMatrix):
+            return oc.__rsub__(self)
         return self._binary_operation(oc, operator.sub, fail_for_mismatch=True, operator_str="-")
 
     def __rsub__(self, oc):
@@ -3053,6 +3079,8 @@ class Quantity:
         return self._binary_operation(oc, operator.sub, fail_for_mismatch=True, operator_str="-=", inplace=True)
 
     def __mul__(self, oc):
+        if isinstance(oc, SparseMatrix):
+            return oc.__rmul__(self)
         r = self._binary_operation(oc, operator.mul, operator.mul)
         return maybe_decimal(r)
 
@@ -3065,6 +3093,8 @@ class Quantity:
 
     def __div__(self, oc):
         # self / oc
+        if isinstance(oc, SparseMatrix):
+            return oc.__rdiv__(self)
         r = self._binary_operation(oc, operator.truediv, operator.truediv)
         return maybe_decimal(r)
 
@@ -3073,6 +3103,8 @@ class Quantity:
 
     def __truediv__(self, oc):
         # self / oc
+        if isinstance(oc, SparseMatrix):
+            return oc.__rtruediv__(self)
         return self.__div__(oc)
 
     def __rdiv__(self, oc):
@@ -3092,6 +3124,8 @@ class Quantity:
 
     def __floordiv__(self, oc):
         # self // oc
+        if isinstance(oc, SparseMatrix):
+            return oc.__rfloordiv__(self)
         r = self._binary_operation(oc, operator.floordiv, operator.truediv)
         return maybe_decimal(r)
 
@@ -3108,6 +3142,8 @@ class Quantity:
 
     def __mod__(self, oc):
         # self % oc
+        if isinstance(oc, SparseMatrix):
+            return oc.__rmod__(self)
         r = self._binary_operation(oc, operator.mod, lambda ua, ub: ua, fail_for_mismatch=True, operator_str=r"%")
         return maybe_decimal(r)
 
@@ -3127,6 +3163,8 @@ class Quantity:
         return self.__rfloordiv__(oc), self.__rmod__(oc)
 
     def __matmul__(self, oc):
+        if isinstance(oc, SparseMatrix):
+            return oc.__rmatmul__(self)
         r = self._binary_operation(oc, operator.matmul, operator.mul, operator_str="@")
         return maybe_decimal(r)
 
