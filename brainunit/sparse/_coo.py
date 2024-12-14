@@ -177,19 +177,24 @@ class COO(SparseMatrix):
                    rows_sorted=self._cols_sorted, cols_sorted=self._rows_sorted)
 
     def tree_flatten(self) -> Tuple[
-        Tuple[jax.Array | Quantity, jax.Array, jax.Array], dict[str, Any]
+        Tuple[jax.Array | Quantity,], dict[str, Any]
     ]:
-        return (self.data, self.row, self.col), self._info._asdict()
+        aux = self._info._asdict()
+        aux['row'] = self.row
+        aux['col'] = self.col
+        return (self.data,), aux
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
         obj = object.__new__(cls)
-        obj.data, obj.row, obj.col = children
-        if aux_data.keys() != {'shape', 'rows_sorted', 'cols_sorted'}:
+        obj.data, = children
+        if aux_data.keys() != {'shape', 'rows_sorted', 'cols_sorted', 'row', 'col'}:
             raise ValueError(f"COO.tree_unflatten: invalid {aux_data=}")
         obj.shape = aux_data['shape']
         obj._rows_sorted = aux_data['rows_sorted']
         obj._cols_sorted = aux_data['cols_sorted']
+        obj.row = aux_data['row']
+        obj.col = aux_data['col']
         return obj
 
     def __abs__(self):

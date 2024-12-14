@@ -220,13 +220,13 @@ class CSR(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def tree_flatten(self):
-        return (self.data, self.indices, self.indptr), {"shape": self.shape}
+        return (self.data,), {"shape": self.shape, "indices": self.indices, "indptr": self.indptr}
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
         obj = object.__new__(cls)
-        obj.data, obj.indices, obj.indptr = children
-        if aux_data.keys() != {'shape'}:
+        obj.data, = children
+        if aux_data.keys() != {'shape', 'indices', 'indptr'}:
             raise ValueError(f"CSR.tree_unflatten: invalid {aux_data=}")
         obj.__dict__.update(**aux_data)
         return obj
@@ -410,14 +410,14 @@ class CSC(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def tree_flatten(self):
-        return (self.data, self.indices, self.indptr), {"shape": self.shape}
+        return (self.data,), {"shape": self.shape, "indices": self.indices, "indptr": self.indptr}
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
         obj = object.__new__(cls)
-        obj.data, obj.indices, obj.indptr = children
-        if aux_data.keys() != {'shape'}:
-            raise ValueError(f"CSC.tree_unflatten: invalid {aux_data=}")
+        obj.data, = children
+        if aux_data.keys() != {'shape', 'indices', 'indptr'}:
+            raise ValueError(f"CSR.tree_unflatten: invalid {aux_data=}")
         obj.__dict__.update(**aux_data)
         return obj
 

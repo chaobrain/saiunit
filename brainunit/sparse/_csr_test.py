@@ -285,6 +285,38 @@ class TestCSR(unittest.TestCase):
 
             grads = jax.grad(f)(csr.data, xs)
 
+    def test_grad2(self):
+        for ux in [
+            u.ms,
+            u.UNITLESS,
+            u.mV,
+        ]:
+            data1 = bst.random.randn(10, 20) * ux
+            csr = u.sparse.CSR.fromdense(data1)
+
+            def f(csr, x):
+                return u.get_mantissa((csr @ x).sum())
+
+            xs = bst.random.randn(20)
+
+            grads = jax.grad(f)(csr, xs)
+
+    def test_jit(self):
+        @jax.jit
+        def f(csr, x):
+            return csr @ x
+
+        for ux in [
+            u.ms,
+            u.UNITLESS,
+            u.mV,
+        ]:
+            data1 = bst.random.randn(10, 20) * ux
+            csr = u.sparse.CSR.fromdense(data1)
+
+            xs = bst.random.randn(20)
+            ys = f(csr, xs)
+
 
 class TestCSC(unittest.TestCase):
     def test_matvec(self):
@@ -547,3 +579,36 @@ class TestCSC(unittest.TestCase):
             xs = bst.random.randn(20)
 
             grads = jax.grad(f)(csc.data, xs)
+
+    def test_grad2(self):
+        for ux in [
+            u.ms,
+            u.UNITLESS,
+            u.mV,
+        ]:
+            data1 = bst.random.randn(10, 20) * ux
+            csc = u.sparse.CSC.fromdense(data1)
+
+            def f(csc, x):
+                return u.get_mantissa((csc @ x).sum())
+
+            xs = bst.random.randn(20)
+
+            grads = jax.grad(f)(csc, xs)
+
+    def test_jit(self):
+
+        @jax.jit
+        def f(csc, x):
+            return csc @ x
+
+        for ux in [
+            u.ms,
+            u.UNITLESS,
+            u.mV,
+        ]:
+            data1 = bst.random.randn(10, 20) * ux
+            csc = u.sparse.CSC.fromdense(data1)
+
+            xs = bst.random.randn(20)
+            ys = f(csc, xs)

@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from .coo import COO, coo_todense, coo_fromdense
-from .csr import CSR, CSC, csr_todense, csr_fromdense, csc_fromdense, csc_todense
+from ._coo import COO, coo_todense, coo_fromdense
+from ._csr import CSR, CSC, csr_todense, csr_fromdense, csc_fromdense, csc_todense
+from .._sparse_base import SparseMatrix
 
 __all__ = [
+    "SparseMatrix",
     "CSR", "CSC",
     "csr_todense", "csr_fromdense",
     "csc_todense", "csc_fromdense",

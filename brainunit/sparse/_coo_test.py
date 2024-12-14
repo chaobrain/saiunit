@@ -19,6 +19,7 @@ from __future__ import annotations
 import unittest
 
 import brainstate as bst
+import jax
 
 import brainunit as u
 
@@ -268,3 +269,51 @@ class TestCOO(unittest.TestCase):
                     data2 % coo1.data
                 )
             )
+
+    def test_grad(self):
+        for ux in [
+            u.ms,
+            u.UNITLESS,
+            u.mV,
+        ]:
+            data1 = bst.random.randn(10, 20) * ux
+            sp = u.sparse.COO.fromdense(data1)
+
+            def f(data, x):
+                return u.get_mantissa((sp.with_data(data) @ x).sum())
+
+            xs = bst.random.randn(20)
+
+            grads = jax.grad(f)(sp.data, xs)
+
+    def test_grad2(self):
+        for ux in [
+            u.ms,
+            u.UNITLESS,
+            u.mV,
+        ]:
+            data1 = bst.random.randn(10, 20) * ux
+            sp = u.sparse.CSR.fromdense(data1)
+
+            def f(sp, x):
+                return u.get_mantissa((sp @ x).sum())
+
+            xs = bst.random.randn(20)
+
+            grads = jax.grad(f)(sp, xs)
+
+    def test_jit(self):
+        @jax.jit
+        def f(sp, x):
+            return sp @ x
+
+        for ux in [
+            u.ms,
+            u.UNITLESS,
+            u.mV,
+        ]:
+            data1 = bst.random.randn(10, 20) * ux
+            sp = u.sparse.CSR.fromdense(data1)
+
+            xs = bst.random.randn(20)
+            ys = f(sp, xs)
