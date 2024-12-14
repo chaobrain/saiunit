@@ -302,6 +302,9 @@ class TestCOO(unittest.TestCase):
 
             grads = jax.grad(f)(sp, xs)
 
+            sp = sp + grads * 1e-3
+            sp = sp + 1e-3 * grads
+
     def test_jit(self):
         @jax.jit
         def f(sp, x):

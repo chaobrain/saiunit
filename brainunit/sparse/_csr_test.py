@@ -301,6 +301,9 @@ class TestCSR(unittest.TestCase):
 
             grads = jax.grad(f)(csr, xs)
 
+            csr = csr + grads * 1e-3
+            csr = csr + 1e-3 * grads
+
     def test_jit(self):
         @jax.jit
         def f(csr, x):
@@ -595,6 +598,9 @@ class TestCSC(unittest.TestCase):
             xs = bst.random.randn(20)
 
             grads = jax.grad(f)(csc, xs)
+
+            csc = csc + grads * 1e-3
+            csc = csc + 1e-3 * grads
 
     def test_jit(self):
 

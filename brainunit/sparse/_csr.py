@@ -120,8 +120,15 @@ class CSR(SparseMatrix):
         return CSR((self.data.__pos__(), self.indices, self.indptr), shape=self.shape)
 
     def _binary_op(self, other, op):
+        if isinstance(other, CSR):
+            if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
+                return CSR(
+                    (op(self.data, other.data), self.indices, self.indptr),
+                    shape=self.shape
+                )
         if isinstance(other, JAXSparse):
-            raise NotImplementedError("mul between two sparse objects.")
+            raise NotImplementedError(f"binary operation {op} between two sparse objects.")
+
         other = asarray(other)
         if other.size == 1:
             return CSR(
@@ -139,8 +146,15 @@ class CSR(SparseMatrix):
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
     def _binary_rop(self, other, op):
+        if isinstance(other, CSR):
+            if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
+                return CSR(
+                    (op(other.data, self.data), self.indices, self.indptr),
+                    shape=self.shape
+                )
         if isinstance(other, JAXSparse):
-            raise NotImplementedError("mul between two sparse objects.")
+            raise NotImplementedError(f"binary operation {op} between two sparse objects.")
+
         other = asarray(other)
         if other.size == 1:
             return CSR(
@@ -294,8 +308,15 @@ class CSC(SparseMatrix):
         return CSC((self.data.__pos__(), self.indices, self.indptr), shape=self.shape)
 
     def _binary_op(self, other, op):
+        if isinstance(other, CSC):
+            if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
+                return CSC(
+                    (op(self.data, other.data), self.indices, self.indptr),
+                    shape=self.shape
+                )
         if isinstance(other, JAXSparse):
-            raise NotImplementedError("mul between two sparse objects.")
+            raise NotImplementedError(f"binary operation {op} between two sparse objects.")
+
         other = asarray(other)
         if other.size == 1:
             return CSC(
@@ -313,8 +334,15 @@ class CSC(SparseMatrix):
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
     def _binary_rop(self, other, op):
+        if isinstance(other, CSC):
+            if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
+                return CSC(
+                    (op(other.data, self.data), self.indices, self.indptr),
+                    shape=self.shape
+                )
         if isinstance(other, JAXSparse):
-            raise NotImplementedError("mul between two sparse objects.")
+            raise NotImplementedError(f"binary operation {op} between two sparse objects.")
+
         other = asarray(other)
         if other.size == 1:
             return CSC(

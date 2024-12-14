@@ -222,37 +222,63 @@ class COO(SparseMatrix):
         )
 
     def _binary_op(self, other, op):
+        if isinstance(other, COO):
+            if id(self.row) == id(other.row) and id(self.col) == id(other.col):
+                return COO(
+                    (op(self.data, other.data), self.row, self.col),
+                    shape=self.shape,
+                    rows_sorted=self._rows_sorted,
+                    cols_sorted=self._cols_sorted
+                )
         if isinstance(other, JAXSparse):
-            raise NotImplementedError("mul between two sparse objects.")
+            raise NotImplementedError(f"binary operation {op} between two sparse objects.")
+
         other = asarray(other)
         if other.size == 1:
             return COO(
                 (op(self.data, other), self.row, self.col),
-                shape=self.shape
+                shape=self.shape,
+                rows_sorted=self._rows_sorted,
+                cols_sorted=self._cols_sorted
             )
         elif other.ndim == 2 and other.shape == self.shape:
             other = other[self.row, self.col]
             return COO(
                 (op(self.data, other), self.row, self.col),
-                shape=self.shape
+                shape=self.shape,
+                rows_sorted=self._rows_sorted,
+                cols_sorted=self._cols_sorted
             )
         else:
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
     def _binary_rop(self, other, op):
+        if isinstance(other, COO):
+            if id(self.row) == id(other.row) and id(self.col) == id(other.col):
+                return COO(
+                    (op(other.data, self.data), self.row, self.col),
+                    shape=self.shape,
+                    rows_sorted=self._rows_sorted,
+                    cols_sorted=self._cols_sorted
+                )
         if isinstance(other, JAXSparse):
-            raise NotImplementedError("mul between two sparse objects.")
+            raise NotImplementedError(f"binary operation {op} between two sparse objects.")
+
         other = asarray(other)
         if other.size == 1:
             return COO(
                 (op(other, self.data), self.row, self.col),
-                shape=self.shape
+                shape=self.shape,
+                rows_sorted=self._rows_sorted,
+                cols_sorted=self._cols_sorted
             )
         elif other.ndim == 2 and other.shape == self.shape:
             other = other[self.row, self.col]
             return COO(
                 (op(other, self.data), self.row, self.col),
-                shape=self.shape
+                shape=self.shape,
+                rows_sorted=self._rows_sorted,
+                cols_sorted=self._cols_sorted
             )
         else:
             raise NotImplementedError(f"mul with object of shape {other.shape}")
