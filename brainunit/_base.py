@@ -3296,16 +3296,16 @@ class Quantity:
         # self = self.factorless()
         return Quantity(self.mantissa.__round__(ndigits), unit=self.unit)
 
-    def __reduce__(self):
-        """
-        Method used by Pickle object serialization.
-
-        Returns
-        -------
-        tuple
-            The tuple of the class and the arguments required to reconstruct the object.
-        """
-        return array_with_unit, (self.mantissa, self.unit, None)
+    # def __reduce__(self):
+    #     """
+    #     Method used by Pickle object serialization.
+    #
+    #     Returns
+    #     -------
+    #     tuple
+    #         The tuple of the class and the arguments required to reconstruct the object.
+    #     """
+    #     return array_with_unit, (self.mantissa, self.unit, None)
 
     # ----------------------- #
     #      NumPy methods      #

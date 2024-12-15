@@ -16,6 +16,7 @@
     </a>  	
     <a href="https://badge.fury.io/py/brainunit"><img alt="PyPI version" src="https://badge.fury.io/py/brainunit.svg"></a>
     <a href="https://github.com/chaobrain/brainunit/actions/workflows/CI.yml"><img alt="Continuous Integration" src="https://github.com/chaobrain/brainunit/actions/workflows/CI.yml/badge.svg"></a>
+    <a href="https://pepy.tech/projects/brainunit"><img src="https://static.pepy.tech/badge/brainunit" alt="PyPI Downloads"></a>
 </p>
 
 

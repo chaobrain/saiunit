@@ -123,7 +123,9 @@ class CSR(SparseMatrix):
         if isinstance(other, CSR):
             if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
                 return CSR(
-                    (op(self.data, other.data), self.indices, self.indptr),
+                    (op(self.data, other.data),
+                     self.indices,
+                     self.indptr),
                     shape=self.shape
                 )
         if isinstance(other, JAXSparse):
@@ -139,7 +141,9 @@ class CSR(SparseMatrix):
             rows, cols = _csr_to_coo(self.indices, self.indptr)
             other = other[rows, cols]
             return CSR(
-                (op(self.data, other), self.indices, self.indptr),
+                (op(self.data, other),
+                 self.indices,
+                 self.indptr),
                 shape=self.shape
             )
         else:
@@ -149,7 +153,9 @@ class CSR(SparseMatrix):
         if isinstance(other, CSR):
             if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
                 return CSR(
-                    (op(other.data, self.data), self.indices, self.indptr),
+                    (op(other.data, self.data),
+                     self.indices,
+                     self.indptr),
                     shape=self.shape
                 )
         if isinstance(other, JAXSparse):
@@ -158,14 +164,18 @@ class CSR(SparseMatrix):
         other = asarray(other)
         if other.size == 1:
             return CSR(
-                (op(other, self.data), self.indices, self.indptr),
+                (op(other, self.data),
+                 self.indices,
+                 self.indptr),
                 shape=self.shape
             )
         elif other.ndim == 2 and other.shape == self.shape:
             rows, cols = _csr_to_coo(self.indices, self.indptr)
             other = other[rows, cols]
             return CSR(
-                (op(other, self.data), self.indices, self.indptr),
+                (op(other, self.data),
+                 self.indices,
+                 self.indptr),
                 shape=self.shape
             )
         else:
@@ -213,9 +223,21 @@ class CSR(SparseMatrix):
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
         if other.ndim == 1:
-            return _csr_matvec(data, self.indices, self.indptr, other, shape=self.shape)
+            return _csr_matvec(
+                data,
+                self.indices,
+                self.indptr,
+                other,
+                shape=self.shape
+            )
         elif other.ndim == 2:
-            return _csr_matmat(data, self.indices, self.indptr, other, shape=self.shape)
+            return _csr_matmat(
+                data,
+                self.indices,
+                self.indptr,
+                other,
+                shape=self.shape
+            )
         else:
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
@@ -225,10 +247,24 @@ class CSR(SparseMatrix):
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
         if other.ndim == 1:
-            return _csr_matvec(data, self.indices, self.indptr, other, shape=self.shape, transpose=True)
+            return _csr_matvec(
+                data,
+                self.indices,
+                self.indptr,
+                other,
+                shape=self.shape,
+                transpose=True
+            )
         elif other.ndim == 2:
             other = other.T
-            r = _csr_matmat(data, self.indices, self.indptr, other, shape=self.shape, transpose=True)
+            r = _csr_matmat(
+                data,
+                self.indices,
+                self.indptr,
+                other,
+                shape=self.shape,
+                transpose=True
+            )
             return r.T
         else:
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
@@ -257,8 +293,6 @@ class CSC(SparseMatrix):
     shape: tuple[int, int]
     nse = property(lambda self: self.data.size)
     dtype = property(lambda self: self.data.dtype)
-
-    __array_priority__ = 2000
 
     def __init__(self, args, *, shape):
         self.data, self.indices, self.indptr = map(asarray, args)
@@ -311,7 +345,9 @@ class CSC(SparseMatrix):
         if isinstance(other, CSC):
             if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
                 return CSC(
-                    (op(self.data, other.data), self.indices, self.indptr),
+                    (op(self.data, other.data),
+                     self.indices,
+                     self.indptr),
                     shape=self.shape
                 )
         if isinstance(other, JAXSparse):
@@ -320,14 +356,18 @@ class CSC(SparseMatrix):
         other = asarray(other)
         if other.size == 1:
             return CSC(
-                (op(self.data, other), self.indices, self.indptr),
+                (op(self.data, other),
+                 self.indices,
+                 self.indptr),
                 shape=self.shape
             )
         elif other.ndim == 2 and other.shape == self.shape:
             cols, rows = _csr_to_coo(self.indices, self.indptr)
             other = other[rows, cols]
             return CSC(
-                (op(self.data, other), self.indices, self.indptr),
+                (op(self.data, other),
+                 self.indices,
+                 self.indptr),
                 shape=self.shape
             )
         else:
@@ -337,7 +377,9 @@ class CSC(SparseMatrix):
         if isinstance(other, CSC):
             if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
                 return CSC(
-                    (op(other.data, self.data), self.indices, self.indptr),
+                    (op(other.data, self.data),
+                     self.indices,
+                     self.indptr),
                     shape=self.shape
                 )
         if isinstance(other, JAXSparse):
@@ -346,14 +388,18 @@ class CSC(SparseMatrix):
         other = asarray(other)
         if other.size == 1:
             return CSC(
-                (op(other, self.data), self.indices, self.indptr),
+                (op(other, self.data),
+                 self.indices,
+                 self.indptr),
                 shape=self.shape
             )
         elif other.ndim == 2 and other.shape == self.shape:
             cols, rows = _csr_to_coo(self.indices, self.indptr)
             other = other[rows, cols]
             return CSC(
-                (op(other, self.data), self.indices, self.indptr),
+                (op(other, self.data),
+                 self.indices,
+                 self.indptr),
                 shape=self.shape
             )
         else:
@@ -427,12 +473,23 @@ class CSC(SparseMatrix):
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
         if other.ndim == 1:
-            return _csr_matvec(data, self.indices, self.indptr, other,
-                               shape=self.shape[::-1], transpose=False)
+            return _csr_matvec(
+                data,
+                self.indices,
+                self.indptr,
+                other,
+                shape=self.shape[::-1],
+                transpose=False
+            )
         elif other.ndim == 2:
             other = other.T
-            r = _csr_matmat(data, self.indices, self.indptr, other,
-                            shape=self.shape[::-1], transpose=False)
+            r = _csr_matmat(
+                data,
+                self.indices,
+                self.indptr, other,
+                shape=self.shape[::-1],
+                transpose=False
+            )
             return r.T
         else:
             raise NotImplementedError(f"matmul with object of shape {other.shape}")

@@ -15,6 +15,7 @@
 
 
 import os
+import tempfile
 
 os.environ['JAX_TRACEBACK_FILTERING'] = 'off'
 import itertools
@@ -47,6 +48,7 @@ from brainunit._base import (
 )
 from brainunit._unit_common import *
 from brainunit._unit_shortcuts import kHz, ms, mV, nS
+import pickle
 
 
 class TestDimension(unittest.TestCase):
@@ -1450,6 +1452,25 @@ class TestHelperFunctions(unittest.TestCase):
         # Should fail (returns tuple)
         with pytest.raises(TypeError):
             d_function2(1)
+
+
+def test_pickle():
+    tmpdir = tempfile.gettempdir()
+    filename = os.path.join(tmpdir, "test.pkl")
+    a = 3 * mV
+    with open(filename, "wb") as f:
+        # pickle.dump(a, f)
+        # pickle.dump(u.mV, f)
+        pickle.dump(a, f)
+
+    with open(filename, "rb") as f:
+        b = pickle.load(f)
+        print(b)
+
+
+
+
+
 
 
 

@@ -106,9 +106,14 @@ class COO(SparseMatrix):
         # TODO(jakevdp): would be benefit from lowering this to cusparse sort_rows utility?
         if self._rows_sorted:
             return self
-        row, col, data = lax.sort((self.row, self.col, self.data), num_keys=2)
+        data, unit = split_mantissa_unit(self.data)
+        row, col, data = lax.sort((self.row, self.col, data), num_keys=2)
         return self.__class__(
-            (data, row, col),
+            (
+                maybe_decimal(Quantity(data, unit=unit)),
+                row,
+                col
+            ),
             shape=self.shape,
             rows_sorted=True
         )
@@ -159,7 +164,12 @@ class COO(SparseMatrix):
         k = _const(idx, k)
         row = lax.sub(idx, lax.cond(k >= 0, lambda: zero, lambda: k))
         col = lax.add(idx, lax.cond(k <= 0, lambda: zero, lambda: k))
-        return cls((data, row, col), shape=(N, M), rows_sorted=True, cols_sorted=True)
+        return cls(
+            (data, row, col),
+            shape=(N, M),
+            rows_sorted=True,
+            cols_sorted=True
+        )
 
     def with_data(self, data: jax.Array | Quantity) -> COO:
         assert data.shape == self.data.shape
@@ -173,8 +183,12 @@ class COO(SparseMatrix):
     def transpose(self, axes: Tuple[int, ...] | None = None) -> COO:
         if axes is not None:
             raise NotImplementedError("axes argument to transpose()")
-        return COO((self.data, self.col, self.row), shape=self.shape[::-1],
-                   rows_sorted=self._cols_sorted, cols_sorted=self._rows_sorted)
+        return COO(
+            (self.data, self.col, self.row),
+            shape=self.shape[::-1],
+            rows_sorted=self._cols_sorted,
+            cols_sorted=self._rows_sorted
+        )
 
     def tree_flatten(self) -> Tuple[
         Tuple[jax.Array | Quantity,], dict[str, Any]
@@ -225,7 +239,11 @@ class COO(SparseMatrix):
         if isinstance(other, COO):
             if id(self.row) == id(other.row) and id(self.col) == id(other.col):
                 return COO(
-                    (op(self.data, other.data), self.row, self.col),
+                    (
+                        op(self.data, other.data),
+                        self.row,
+                        self.col
+                    ),
                     shape=self.shape,
                     rows_sorted=self._rows_sorted,
                     cols_sorted=self._cols_sorted
@@ -236,7 +254,11 @@ class COO(SparseMatrix):
         other = asarray(other)
         if other.size == 1:
             return COO(
-                (op(self.data, other), self.row, self.col),
+                (
+                    op(self.data, other),
+                    self.row,
+                    self.col
+                ),
                 shape=self.shape,
                 rows_sorted=self._rows_sorted,
                 cols_sorted=self._cols_sorted
@@ -244,7 +266,11 @@ class COO(SparseMatrix):
         elif other.ndim == 2 and other.shape == self.shape:
             other = other[self.row, self.col]
             return COO(
-                (op(self.data, other), self.row, self.col),
+                (
+                    op(self.data, other),
+                    self.row,
+                    self.col
+                ),
                 shape=self.shape,
                 rows_sorted=self._rows_sorted,
                 cols_sorted=self._cols_sorted
@@ -256,7 +282,11 @@ class COO(SparseMatrix):
         if isinstance(other, COO):
             if id(self.row) == id(other.row) and id(self.col) == id(other.col):
                 return COO(
-                    (op(other.data, self.data), self.row, self.col),
+                    (
+                        op(other.data, self.data),
+                        self.row,
+                        self.col
+                    ),
                     shape=self.shape,
                     rows_sorted=self._rows_sorted,
                     cols_sorted=self._cols_sorted
@@ -267,7 +297,11 @@ class COO(SparseMatrix):
         other = asarray(other)
         if other.size == 1:
             return COO(
-                (op(other, self.data), self.row, self.col),
+                (
+                    op(other, self.data),
+                    self.row,
+                    self.col
+                ),
                 shape=self.shape,
                 rows_sorted=self._rows_sorted,
                 cols_sorted=self._cols_sorted
@@ -275,7 +309,11 @@ class COO(SparseMatrix):
         elif other.ndim == 2 and other.shape == self.shape:
             other = other[self.row, self.col]
             return COO(
-                (op(other, self.data), self.row, self.col),
+                (
+                    op(other, self.data),
+                    self.row,
+                    self.col
+                ),
                 shape=self.shape,
                 rows_sorted=self._rows_sorted,
                 cols_sorted=self._cols_sorted
@@ -326,7 +364,14 @@ class COO(SparseMatrix):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
-        self_promoted = COO((data, self.row, self.col), **self._info._asdict())
+        self_promoted = COO(
+            (
+                data,
+                self.row,
+                self.col
+            ),
+            **self._info._asdict()
+        )
         if other.ndim == 1:
             return coo_matvec(self_promoted, other)
         elif other.ndim == 2:
@@ -342,7 +387,14 @@ class COO(SparseMatrix):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
-        self_promoted = COO((data, self.row, self.col), **self._info._asdict())
+        self_promoted = COO(
+            (
+                data,
+                self.row,
+                self.col
+            ),
+            **self._info._asdict()
+        )
         if other.ndim == 1:
             return coo_matvec(self_promoted, other, transpose=True)
         elif other.ndim == 2:
