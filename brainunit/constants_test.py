@@ -47,36 +47,39 @@ constants_list = [
     'dyn', 'lbf', 'kgf', 'IMF',
 ]
 
+
 class TestConstant(unittest.TestCase):
 
     def test_constants(self):
         import brainunit.constants as constants
 
         # Check that the expected names exist and have the correct dimensions
-        assert constants.avogadro_constant.dim == (1 / mole).dim
-        assert constants.boltzmann_constant.dim == (joule / kelvin).dim
-        assert constants.electric_constant.dim == (farad / meter).dim
+        assert constants.avogadro.dim == (1 / mole).dim
+        assert constants.boltzmann.dim == (joule / kelvin).dim
+        assert constants.electric.dim == (farad / meter).dim
         assert constants.electron_mass.dim == kilogram.dim
         assert constants.elementary_charge.dim == coulomb.dim
-        assert constants.faraday_constant.dim == (coulomb / mole).dim
-        assert constants.gas_constant.dim == (joule / mole / kelvin).dim
-        assert constants.magnetic_constant.dim == (newton / amp2).dim
-        assert constants.molar_mass_constant.dim == (kilogram / mole).dim
+        assert constants.faraday.dim == (coulomb / mole).dim
+        assert constants.gas.dim == (joule / mole / kelvin).dim
+        assert constants.magnetic.dim == (newton / amp2).dim
+        assert constants.molar_mass.dim == (kilogram / mole).dim
         assert constants.zero_celsius.dim == kelvin.dim
 
         # Check the consistency between a few constants
         assert u.math.allclose(
-            constants.gas_constant.mantissa,
-            (constants.avogadro_constant * constants.boltzmann_constant).mantissa,
+            constants.gas.mantissa,
+            (constants.avogadro * constants.boltzmann).mantissa,
         )
         assert u.math.allclose(
-            constants.faraday_constant.mantissa,
-            (constants.avogadro_constant * constants.elementary_charge).mantissa,
+            constants.faraday.mantissa,
+            (constants.avogadro * constants.elementary_charge).mantissa,
         )
+
     def test_quantity_constants_and_unit_constants(self):
         import brainunit.constants as quantity_constants
         import brainunit._unit_constants as unit_constants
         for c in constants_list:
             q_c = getattr(quantity_constants, c)
             u_c = getattr(unit_constants, c)
-            assert q_c.to_decimal(q_c.unit) == (1. * u_c).to_decimal(q_c.unit), f"Mismatch between {c} in quantity_constants and unit_constants"
+            assert q_c.to_decimal(q_c.unit) == (1. * u_c).to_decimal(
+                q_c.unit), f"Mismatch between {c} in quantity_constants and unit_constants"

@@ -51,28 +51,48 @@ from ._unit_common import (
     kilogram,
     meter,
     mole,
-    newton, radian, second, pascal, meter2, meter3, watt,
+    newton,
+    radian,
+    second,
+    meter2,
+    meter3,
+    watt,
 )
 from ._unit_constants import speed_unit
 
+__all__ = [
+    'arcmin', 'arcminute', 'arcsec', 'arcsecond', 'atomic_mass', 'au', 'astronomical_unit',
+    'angstrom', 'atm', 'atmosphere', 'avogadro', 'bar', 'blob', 'boltzmann', 'Btu', 'Btu_IT',
+    'Btu_th', 'carat', 'calorie', 'calorie_IT', 'calorie_th', 'day', 'degree', 'degree_Fahrenheit',
+    'dyn', 'dyne', 'eV', 'electron_mass', 'electric', 'electronvolt', 'elementary_charge', 'erg',
+    'faraday', 'fermi', 'fluid_ounce', 'fluid_ounce_US', 'fluid_ounce_imp', 'foot', 'gas', 'grain',
+    'gallon', 'gallon_US', 'gallon_imp', 'gram', 'hectare', 'hour', 'hp', 'horsepower', 'IMF',
+    'inch', 'julian_year', 'kelvin', 'kgf', 'kilogram_force', 'knot', 'lb', 'lbf', 'light_year',
+    'long_ton', 'mach', 'magnetic', 'meter', 'metric_ton', 'micron', 'mil', 'mile', 'minute',
+    'molar_mass', 'month', 'mph', 'nautical_mile', 'newton', 'ounce', 'oz', 'parsec', 'pica',
+    'point', 'pound', 'psi', 'radian', 'second', 'short_ton', 'slug', 'slinch', 'speed_unit',
+    'stone', 'survey_foot', 'survey_mile', 'torr', 'troy_ounce', 'troy_pound', 'ton_TNT', 'week',
+    'watt', 'year', 'zero_celsius'
+]
+
 #: Avogadro constant (http://physics.nist.gov/cgi-bin/cuu/Value?na)
-avogadro_constant = np.asarray(6.022140857e23) / mole
+avogadro = np.asarray(6.022140857e23) / mole
 #: Boltzmann constant (physics.nist.gov/cgi-bin/cuu/Value?k)
-boltzmann_constant = np.asarray(1.38064852e-23) * (joule / kelvin)
+boltzmann = np.asarray(1.38064852e-23) * (joule / kelvin)
 #: electric constant (http://physics.nist.gov/cgi-bin/cuu/Value?ep0)
-electric_constant = np.asarray(8.854187817e-12) * (farad / meter)
+electric = np.asarray(8.854187817e-12) * (farad / meter)
 #: Electron rest mass (physics.nist.gov/cgi-bin/cuu/Value?me)
 electron_mass = np.asarray(9.10938356e-31) * kilogram
 #: Elementary charge (physics.nist.gov/cgi-bin/cuu/Value?e)
 elementary_charge = np.asarray(1.6021766208e-19) * coulomb
 #: Faraday constant (http://physics.nist.gov/cgi-bin/cuu/Value?f)
-faraday_constant = np.asarray(96485.33289) * (coulomb / mole)
+faraday = np.asarray(96485.33289) * (coulomb / mole)
 #: gas constant (http://physics.nist.gov/cgi-bin/cuu/Value?r)
-gas_constant = np.asarray(8.3144598) * (joule / mole / kelvin)
+gas = np.asarray(8.3144598) * (joule / mole / kelvin)
 #: Magnetic constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu0)
-magnetic_constant = np.asarray(4 * np.pi * 1e-7) * (newton / amp ** 2)
+magnetic = np.asarray(4 * np.pi * 1e-7) * (newton / amp ** 2)
 #: Molar mass constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu)
-molar_mass_constant = np.asarray(1.) * (gram / mole)
+molar_mass = np.asarray(1.) * (gram / mole)
 #: zero degree Celsius
 zero_celsius = np.asarray(273.15) * kelvin
 

@@ -32,14 +32,30 @@ from ._unit_common import __all__ as _common_all
 from ._unit_constants import *
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
-# from .constants import *
-# from .constants import __all__ as _constants_all
 
 __all__ = (
-    ['math', 'linalg', 'autograd', 'fft', 'constants', 'sparse'] +
+    [
+        'math',
+        'linalg',
+        'autograd',
+        'fft',
+        'constants',
+        'sparse'
+    ] +
     _common_all +
     _std_units_all +
     _base_all +
     _celsius_all
 )
 del _common_all, _std_units_all, _base_all, _celsius_all, _matplotlib_compat
+
+# old version compatibility
+avogadro_constant = constants.avogadro
+boltzmann_constant = constants.boltzmann
+electric_constant = constants.electric
+electron_mass = constants.electron_mass
+elementary_charge = constants.elementary_charge
+faraday_constant = constants.faraday
+gas_constant = constants.gas
+magnetic_constant = constants.magnetic
+molar_mass_constant = constants.molar_mass
