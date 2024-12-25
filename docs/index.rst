@@ -1,7 +1,7 @@
 ``brainunit`` documentation
 ===========================
 
-`brainunit <https://github.com/chaoming0625/brainunit>`_ provides physical units and unit-aware mathematical system in JAX for brain dynamics and AI4Science.
+`brainunit <https://github.com/chaobrain/brainunit>`_ provides physical units and unit-aware mathematical system in JAX for brain dynamics and AI4Science.
 
 
 

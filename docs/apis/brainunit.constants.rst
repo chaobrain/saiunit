@@ -6,128 +6,24 @@
 
 Physical and mathematical constants and units.
 
-
-Mathematical constants
-======================
-
-================  =================================================================
-``pi``            Pi
-``golden``        Golden ratio
-``golden_ratio``  Golden ratio
-================  =================================================================
-
-
 Physical constants
 ==================
 
-===========================  =================================================================
-``c``                        speed of light in vacuum
-``speed_of_light``           speed of light in vacuum
-``mu_0``                     the magnetic constant :math:`\mu_0`
-``epsilon_0``                the electric constant (vacuum permittivity), :math:`\epsilon_0`
-``h``                        the Planck constant :math:`h`
-``Planck``                   the Planck constant :math:`h`
-``hbar``                     :math:`\hbar = h/(2\pi)`
-``G``                        Newtonian constant of gravitation
-``gravitational_constant``   Newtonian constant of gravitation
-``g``                        standard acceleration of gravity
-``e``                        elementary charge
-``elementary_charge``        elementary charge
-``R``                        molar gas constant
-``gas_constant``             molar gas constant
-``alpha``                    fine-structure constant
-``fine_structure``           fine-structure constant
-``N_A``                      Avogadro constant
-``Avogadro``                 Avogadro constant
-``k``                        Boltzmann constant
-``Boltzmann``                Boltzmann constant
-``sigma``                    Stefan-Boltzmann constant :math:`\sigma`
-``Stefan_Boltzmann``         Stefan-Boltzmann constant :math:`\sigma`
-``Wien``                     Wien displacement law constant
-``Rydberg``                  Rydberg constant
-``m_e``                      electron mass
-``electron_mass``            electron mass
-``m_p``                      proton mass
-``proton_mass``              proton mass
-``m_n``                      neutron mass
-``neutron_mass``             neutron mass
-===========================  =================================================================
+==================== ================== ======================= ==================================================================
+Constant             Symbol(s)          name                    Value
+==================== ================== ======================= ==================================================================
+Avogadro constant    :math:`N_A, L`     ``avogadro_constant``   :math:`6.022140857\times 10^{23}\,\mathrm{mol}^{-1}`
+Boltzmann constant   :math:`k`          ``boltzmann_constant``  :math:`1.38064852\times 10^{-23}\,\mathrm{J}\,\mathrm{K}^{-1}`
+Electric constant    :math:`\epsilon_0` ``electric_constant``   :math:`8.854187817\times 10^{-12}\,\mathrm{F}\,\mathrm{m}^{-1}`
+Electron mass        :math:`m_e`        ``electron_mass``       :math:`9.10938356\times 10^{-31}\,\mathrm{kg}`
+Elementary charge    :math:`e`          ``elementary_charge``   :math:`1.6021766208\times 10^{-19}\,\mathrm{C}`
+Faraday constant     :math:`F`          ``faraday_constant``    :math:`96485.33289\,\mathrm{C}\,\mathrm{mol}^{-1}`
+Gas constant         :math:`R`          ``gas_constant``        :math:`8.3144598\,\mathrm{J}\,\mathrm{mol}^{-1}\,\mathrm{K}^{-1}`
+Magnetic constant    :math:`\mu_0`      ``magnetic_constant``   :math:`12.566370614\times 10^{-7}\,\mathrm{N}\,\mathrm{A}^{-2}`
+Molar mass constant  :math:`M_u`        ``molar_mass_constant`` :math:`1\times 10^{-3}\,\mathrm{kg}\,\mathrm{mol}^{-1}`
+0°C                                     ``zero_celsius``        :math:`273.15\,\mathrm{K}`
+==================== ================== ======================= ==================================================================
 
-
-Constants database
-------------------
-
-In addition to the above variables, :mod:`scipy.constants` also contains the
-2018 CODATA recommended values [CODATA2018]_ database containing more physical
-constants.
-
-.. autosummary::
-   :toctree: generated/
-
-   value      -- Value in physical_constants indexed by key
-   unit       -- Unit in physical_constants indexed by key
-   precision  -- Relative precision in physical_constants indexed by key
-   find       -- Return list of physical_constant keys with a given string
-   ConstantWarning -- Constant sought not in newest CODATA data set
-
-.. data:: physical_constants
-
-   Dictionary of physical constants, of the format
-   ``physical_constants[name] = (value, unit, uncertainty)``.
-
-Available constants:
-
-======================================================================  ====
-%(constant_names)s
-======================================================================  ====
-
-
-Units
-=====
-
-SI prefixes
------------
-
-============  =================================================================
-``quetta``    :math:`10^{30}`
-``ronna``     :math:`10^{27}`
-``yotta``     :math:`10^{24}`
-``zetta``     :math:`10^{21}`
-``exa``       :math:`10^{18}`
-``peta``      :math:`10^{15}`
-``tera``      :math:`10^{12}`
-``giga``      :math:`10^{9}`
-``mega``      :math:`10^{6}`
-``kilo``      :math:`10^{3}`
-``hecto``     :math:`10^{2}`
-``deka``      :math:`10^{1}`
-``deci``      :math:`10^{-1}`
-``centi``     :math:`10^{-2}`
-``milli``     :math:`10^{-3}`
-``micro``     :math:`10^{-6}`
-``nano``      :math:`10^{-9}`
-``pico``      :math:`10^{-12}`
-``femto``     :math:`10^{-15}`
-``atto``      :math:`10^{-18}`
-``zepto``     :math:`10^{-21}`
-``yocto``     :math:`10^{-24}`
-``ronto``     :math:`10^{-27}`
-``quecto``    :math:`10^{-30}`
-============  =================================================================
-
-Binary prefixes
----------------
-
-============  =================================================================
-``kibi``      :math:`2^{10}`
-``mebi``      :math:`2^{20}`
-``gibi``      :math:`2^{30}`
-``tebi``      :math:`2^{40}`
-``pebi``      :math:`2^{50}`
-``exbi``      :math:`2^{60}`
-``zebi``      :math:`2^{70}`
-``yobi``      :math:`2^{80}`
-============  =================================================================
 
 Mass
 ----
@@ -300,15 +196,6 @@ Force
 ``kgf``               one kilogram force in newtons
 ``kilogram_force``    one kilogram force in newtons
 ====================  =======================================================
-
-Optics
-------
-
-.. autosummary::
-   :toctree: generated/
-
-   lambda2nu
-   nu2lambda
 
 References
 ==========

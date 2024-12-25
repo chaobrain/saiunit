@@ -2,7 +2,7 @@
 
 ## Reporting a bug in BrainUnit
 
-Report security bugs in BrainPy via [Github Issue](https://github.com/chaoming0625/brainunit/issues).
+Report security bugs in BrainPy via [Github Issue](https://github.com/chaobrain/brainunit/issues).
 
 Normally your report will be acknowledged within 5 days, and you'll receive a more detailed response 
 to your report within 10 days indicating the next steps in handling your submission. These timelines 

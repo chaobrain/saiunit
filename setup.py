@@ -57,11 +57,11 @@ setup(
   packages=packages,
   python_requires='>=3.9',
   install_requires=['numpy>=1.15', 'jax', 'typing_extensions'],
-  url='https://github.com/chaoming0625/brainunit',
+  url='https://github.com/chaobrain/brainunit',
   project_urls={
-    "Bug Tracker": "https://github.com/chaoming0625/brainunit/issues",
+    "Bug Tracker": "https://github.com/chaobrain/brainunit/issues",
     "Documentation": "https://brainunit.readthedocs.io/",
-    "Source Code": "https://github.com/chaoming0625/brainunit",
+    "Source Code": "https://github.com/chaobrain/brainunit",
   },
   extras_require={
     'cpu': ['jaxlib'],
