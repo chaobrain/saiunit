@@ -52,6 +52,29 @@ class TestCSR(unittest.TestCase):
                 )
             )
 
+    def test_matvec_non_unit(self):
+        data = bst.random.rand(10, 20)
+        data = data * (data < 0.3)
+
+        csr = u.sparse.CSR.fromdense(data)
+
+        x = bst.random.random((10,))
+
+        self.assertTrue(
+            u.math.allclose(
+                x @ data,
+                x @ csr
+            )
+        )
+
+        x = bst.random.random((20,))
+        self.assertTrue(
+            u.math.allclose(
+                data @ x,
+                csr @ x
+            )
+        )
+
     def test_matmul(self):
         for ux, uy in [
             (u.ms, u.mV),

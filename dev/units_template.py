@@ -25,7 +25,6 @@ from ._base import (Unit, get_or_create_dimension)
 
 {all}
 
-Unit.automatically_register_units = False
 
 #### FUNDAMENTAL UNITS
 metre = Unit.create(get_or_create_dimension(m=1), "metre", "m")

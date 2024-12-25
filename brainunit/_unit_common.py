@@ -2097,8 +2097,6 @@ __all__ = [
     ]
 
 
-Unit.automatically_register_units = False
-
 #### FUNDAMENTAL UNITS
 metre = Unit.create(get_or_create_dimension(m=1), "metre", "m")
 meter = Unit.create(get_or_create_dimension(m=1), "meter", "m")

@@ -1760,9 +1760,15 @@ class Unit:
             return f'Unit({self.base}^{self.scale})'
         else:
             if self.factor == 1.:
-                return f'{self.base}^{self.scale} * {self.name}'
+                if self.scale == 0:
+                    return f'{self.name}'
+                else:
+                    return f'{self.base}^{self.scale} * {self.name}'
             else:
-                return f'{self.factor} * {self.base}^{self.scale} * {self.name}'
+                if self.scale == 0:
+                    return f'{self.factor} * {self.name}'
+                else:
+                    return f'{self.factor} * {self.base}^{self.scale} * {self.name}'
 
     def __str__(self) -> str:
         if self.is_fullname:
@@ -1771,9 +1777,15 @@ class Unit:
             return f'Unit({self.base}^{self.scale})'
         else:
             if self.factor == 1.:
-                return f'{self.base}^{self.scale} * {self.dispname}'
+                if self.scale == 0:
+                    return f'{self.dispname}'
+                else:
+                    return f'{self.base}^{self.scale} * {self.dispname}'
             else:
-                return f'{self.factor} * {self.base}^{self.scale} * {self.dispname}'
+                if self.scale == 0:
+                    return f'{self.factor} * {self.dispname}'
+                else:
+                    return f'{self.factor} * {self.base}^{self.scale} * {self.dispname}'
 
     def __mul__(self, other) -> 'Unit' | Quantity:
         # self * other

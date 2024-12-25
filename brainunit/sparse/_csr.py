@@ -101,7 +101,7 @@ class CSR(SparseMatrix):
         assert data.shape == self.data.shape
         assert data.dtype == self.data.dtype
         assert get_unit(data) == get_unit(self.data)
-        return CSR((data, self.indices, self.indptr), shape=self.shape)
+        return self.__class__((data, self.indices, self.indptr), shape=self.shape)
 
     def todense(self):
         return csr_todense(self)
