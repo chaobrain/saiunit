@@ -59,7 +59,7 @@ __all__ = [
     'percentile', 'nanpercentile', 'quantile', 'nanquantile',
 
     # math funcs only accept unitless (unary) can return Quantity
-    'round', 'around', 'round_', 'rint', 'floor', 'ceil', 'trunc', 'fix', 'modf',
+    'round', 'around', 'rint', 'floor', 'ceil', 'trunc', 'fix', 'modf',
 
     # math funcs keep unit (binary)
     'fmod', 'mod', 'copysign', 'remainder',
@@ -3376,24 +3376,6 @@ def unique(
                           size=size,
                           fill_value=fill_value)
 
-
-@set_module_as('brainunit.math')
-def round_(
-    x: Union[Quantity, jax.typing.ArrayLike],
-) -> jax.Array | Quantity:
-    """
-    Round an array to the nearest integer.
-
-    Parameters
-    ----------
-    x : array_like, Quantity
-      Input array.
-
-    Returns
-    -------
-    out : jax.Array
-    """
-    return _fun_keep_unit_unary(jnp.round, x)
 
 
 @set_module_as('brainunit.math')

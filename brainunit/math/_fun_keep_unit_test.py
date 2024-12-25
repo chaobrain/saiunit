@@ -52,7 +52,7 @@ fun_keep_unit_math_unary = [
 ]
 
 fun_accept_unitless_unary_can_return_quantity = [
-    'round', 'around', 'round_', 'rint',
+    'round', 'around', 'rint',
     'floor', 'ceil', 'trunc', 'fix',
 ]
 fun_keep_unit_math_binary = [

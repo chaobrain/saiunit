@@ -18,6 +18,34 @@ import unittest
 import brainunit as u
 from brainunit._unit_common import *
 
+constants_list = [
+    # Mass
+    'metric_ton', 'grain', 'pound', 'slinch', 'slug', 'ounce', 'stone', 'long_ton', 'short_ton', 'troy_ounce',
+    'troy_pound', 'carat', 'atomic_mass',
+    # Angle
+    'degree', 'arcmin', 'arcsec',
+    # Time
+    'minute', 'hour', 'day', 'week', 'month', 'year', 'julian_year',
+    # Length
+    'inch', 'foot', 'yard', 'mile', 'mil', 'point', 'pica', 'survey_foot', 'survey_mile', 'nautical_mile', 'fermi',
+    'angstrom', 'micron', 'au', 'light_year',
+    # Pressure
+    'atm', 'bar', 'mmHg', 'psi',
+    # Area
+    'hectare', 'acre',
+    # Volume
+    'gallon', 'gallon_imp', 'fluid_ounce', 'fluid_ounce_imp', 'bbl',
+    # Speed
+    'kmh', 'mph', 'knot', 'mach',
+    # Temperature
+    'degree_Fahrenheit',
+    # Energy
+    'eV', 'calorie', 'calorie_IT', 'erg', 'Btu', 'Btu_IT', 'ton_TNT',
+    # Power
+    'hp',
+    # Force
+    'dyn', 'lbf', 'kgf', 'IMF',
+]
 
 class TestConstant(unittest.TestCase):
 
@@ -45,3 +73,10 @@ class TestConstant(unittest.TestCase):
             constants.faraday_constant.mantissa,
             (constants.avogadro_constant * constants.elementary_charge).mantissa,
         )
+    def test_quantity_constants_and_unit_constants(self):
+        import brainunit.constants as quantity_constants
+        import brainunit._unit_constants as unit_constants
+        for c in constants_list:
+            q_c = getattr(quantity_constants, c)
+            u_c = getattr(unit_constants, c)
+            assert q_c.to_decimal(q_c.unit) == (1. * u_c).to_decimal(q_c.unit), f"Mismatch between {c} in quantity_constants and unit_constants"

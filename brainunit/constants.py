@@ -19,7 +19,7 @@ units are not imported by wildcard imports, they
 have to be imported explicitly. You can use ``import ... as ...`` to import them
 with shorter names, e.g.::
 
-    from brainunit import faraday_constant as F
+    from brainunit.constants import faraday_constant as F
 
 The available constants are:
 
@@ -51,21 +51,9 @@ from ._unit_common import (
     kilogram,
     meter,
     mole,
-    newton,
+    newton, radian, second, pascal, meter2, meter3, watt,
 )
-
-__all__ = [
-    'avogadro_constant',
-    'boltzmann_constant',
-    'electric_constant',
-    'electron_mass',
-    'elementary_charge',
-    'faraday_constant',
-    'gas_constant',
-    'magnetic_constant',
-    'molar_mass_constant',
-    'zero_celsius',
-]
+from ._unit_constants import speed_unit
 
 #: Avogadro constant (http://physics.nist.gov/cgi-bin/cuu/Value?na)
 avogadro_constant = np.asarray(6.022140857e23) / mole
@@ -87,3 +75,94 @@ magnetic_constant = np.asarray(4 * np.pi * 1e-7) * (newton / amp ** 2)
 molar_mass_constant = np.asarray(1.) * (gram / mole)
 #: zero degree Celsius
 zero_celsius = np.asarray(273.15) * kelvin
+
+# ----- Mass -----
+metric_ton = np.asarray(1e3) * kilogram  # Metric ton
+grain = np.asarray(6.479891e-5) * kilogram  # Grain
+lb = pound = np.asarray(0.45359237) * kilogram  # Pound
+slinch = blob = np.asarray(1.75126836e2) * kilogram  # Blob (slug-inch)
+slug = np.asarray(1.459390294e1) * kilogram  # Slug
+oz = ounce = np.asarray(2.8349523125e-2) * kilogram  # Ounce
+stone = np.asarray(6.35029318) * kilogram  # Stone
+long_ton = np.asarray(1.0160469088e3) * kilogram  # Long ton
+short_ton = np.asarray(0.90718474e3) * kilogram  # Short ton
+troy_ounce = np.asarray(3.11034768e-2) * kilogram  # Troy ounce
+troy_pound = np.asarray(0.3732417216) * kilogram  # Troy pound
+carat = np.asarray(2e-4) * kilogram  # Carat
+atomic_mass = np.asarray(1.66053886e-27) * kilogram  # Atomic mass unit (amu)
+
+# ----- Angle -----
+degree = np.asarray(np.pi / 180) * radian  # Degree
+arcmin = arcminute = np.asarray(np.pi / (180 * 60)) * radian  # Arcminute
+arcsec = arcsecond = np.asarray(np.pi / (180 * 3600)) * radian  # Arcsecond
+
+# ----- Time -----
+minute = np.asarray(60) * second  # Minute
+hour = np.asarray(3600) * second  # Hour
+day = np.asarray(86400) * second  # Day
+week = np.asarray(604800) * second  # Week
+month = np.asarray(2.629746e6) * second  # Month (approx.)
+year = np.asarray(3.1556952e7) * second  # Year (approx.)
+julian_year = np.asarray(3.15576e7) * second  # Julian year
+
+# ----- Length -----
+inch = np.asarray(0.0254) * meter  # Inch
+foot = np.asarray(0.3048) * meter  # Foot
+yard = np.asarray(0.9144) * meter  # Yard
+mile = np.asarray(1609.344) * meter  # Mile
+mil = np.asarray(2.54e-5) * meter  # Mil
+point = np.asarray(3.5277777777777776e-4) * meter  # Point
+pica = np.asarray(4.233333333333333e-3) * meter  # Pica
+survey_foot = np.asarray(0.3048006096012192) * meter  # Survey foot
+survey_mile = np.asarray(1609.3472186944374) * meter  # Survey mile
+nautical_mile = np.asarray(1852) * meter  # Nautical mile
+fermi = np.asarray(1e-15) * meter  # Fermi
+angstrom = np.asarray(1e-10) * meter  # Ångstrom
+micron = np.asarray(1e-6) * meter  # Micron
+au = astronomical_unit = np.asarray(1.495978707e11) * meter  # Astronomical unit
+light_year = np.asarray(9.460730777119564e15) * meter  # Light year
+parsec = np.asarray(3.085677581491367e16) * meter  # Parsec
+
+# ----- Pressure -----
+atm = atmosphere = np.asarray(1.013249966e5) * (newton / meter2)  # Atmosphere
+bar = np.asarray(1e5) * (newton / meter2)  # Bar
+mmHg = torr = np.asarray(1.3332236842105263e2) * (newton / meter2)  # Torr (mmHg)
+psi = np.asarray(6.894757293168361e3) * (newton / meter2)  # Pound per square inch (psi)
+
+# ----- Area -----
+hectare = np.asarray(1e4) * meter2  # Hectare
+acre = np.asarray(4046.864798) * meter2  # Acre
+
+# ----- Volume -----
+gallon = gallon_US = np.asarray(3.785411784e-3) * meter3  # Gallon (US)
+gallon_imp = np.asarray(4.54609e-3) * meter3  # Imperial gallon
+fluid_ounce = fluid_ounce_US = np.asarray(2.95735295625e-5) * meter3  # Fluid ounce (US)
+fluid_ounce_imp = np.asarray(2.84130742e-5) * meter3  # Imperial fluid ounce
+bbl = barrel = np.asarray(1.58987294928e2) * meter3  # Barrel (oil)
+
+# ----- Temperature -----
+degree_Fahrenheit = np.asarray(2.55927778e2) * kelvin  # Fahrenheit
+
+# ----- Speed -----
+kmh = np.asarray(2.77777778e-1) * speed_unit  # Kilometer per hour
+mph = np.asarray(4.4704e-1) * speed_unit  # Mile per hour
+knot = np.asarray(5.14444444e-1) * speed_unit  # Knot
+mach = np.asarray(3.4029e2) * speed_unit  # Mach
+
+# ----- Energy -----
+eV = electronvolt = np.asarray(1.6021766208e-19) * joule  # Electronvolt
+calorie = calorie_th = np.asarray(4.184) * joule  # Calorie (thermochemical)
+calorie_IT = np.asarray(4.1868) * joule  # Calorie (International Table)
+erg = np.asarray(1e-7) * joule  # Erg
+Btu = Btu_IT = np.asarray(1.05505585262e3) * joule  # British thermal unit (International Table)
+Btu_th = np.asarray(1.05435026444e3) * joule  # British thermal unit (thermochemical)
+ton_TNT = np.asarray(4.184e9) * joule  # Ton of TNT
+
+# ----- Power -----
+hp = horsepower = np.asarray(7.4569987158227022e2) * watt  # Horsepower
+
+# ----- Force -----
+dyn = dyne = np.asarray(1e-5) * newton  # Dyne
+lbf = pound_force = np.asarray(4.4482216152605) * newton  # Pound-force
+kgf = kilogram_force = np.asarray(9.80665) * newton  # Kilogram-force
+IMF = np.asarray(1.602176565e-9) * newton  # Intermolecular force

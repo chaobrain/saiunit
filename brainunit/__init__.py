@@ -32,15 +32,14 @@ from ._unit_common import __all__ as _common_all
 from ._unit_constants import *
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
-from .constants import *
-from .constants import __all__ as _constants_all
+# from .constants import *
+# from .constants import __all__ as _constants_all
 
 __all__ = (
     ['math', 'linalg', 'autograd', 'fft', 'constants', 'sparse'] +
     _common_all +
     _std_units_all +
-    _constants_all +
     _base_all +
     _celsius_all
 )
-del _common_all, _std_units_all, _constants_all, _base_all, _celsius_all, _matplotlib_compat
+del _common_all, _std_units_all, _base_all, _celsius_all, _matplotlib_compat
