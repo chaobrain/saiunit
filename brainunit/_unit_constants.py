@@ -87,10 +87,10 @@ light_year = Unit.create(meter.dim, name="light year", dispname="ly", scale=mete
 parsec = Unit.create(meter.dim, name="parsec", dispname="pc", scale=meter.scale + 16, factor=3.085677581491367e16)
 
 # ----- Pressure -----
-atm = atmosphere = Unit.create(pascal.dim, name="atmosphere", dispname="atm", scale=meter.scale + 5, factor=1.013249966)
-bar = Unit.create(pascal.dim, name="bar", dispname="bar", scale=meter.scale + 5, factor=1.)
-mmHg = torr = Unit.create(pascal.dim, name="torr", dispname="torr", scale=meter.scale + 2, factor=1.3332236842105263)
-psi = Unit.create(pascal.dim, name="pound per square inch", dispname="psi", scale=meter.scale + 3,
+atm = atmosphere = Unit.create(pascal.dim, name="atmosphere", dispname="atm", scale=pascal.scale + 5, factor=1.013249966)
+bar = Unit.create(pascal.dim, name="bar", dispname="bar", scale=pascal.scale + 5, factor=1.)
+mmHg = torr = Unit.create(pascal.dim, name="torr", dispname="torr", scale=pascal.scale + 2, factor=1.3332236842105263)
+psi = Unit.create(pascal.dim, name="pound per square inch", dispname="psi", scale=pascal.scale + 3,
                   factor=6.894757293168361)
 
 # ----- Area -----
@@ -122,7 +122,7 @@ degree_Fahrenheit = Unit.create(kelvin.dim, name="degree Fahrenheit", dispname="
                                 factor=2.55927778)
 
 # ----- Energy -----
-eV = electron_volt = Unit.create(joule.dim, name="electronvolt", dispname="eV", scale=-19, factor=1.602176565)
+eV = electron_volt = Unit.create(joule.dim, name="electronvolt", dispname="eV", scale=joule.scale - 19, factor=1.602176565)
 calorie = calorie_th = Unit.create(joule.dim, name="calorie", dispname="cal", scale=joule.scale, factor=4.184)
 calorie_IT = Unit.create(joule.dim, name="calorie (International Table)", dispname="cal IT", scale=joule.scale,
                          factor=4.1868)
