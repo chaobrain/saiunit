@@ -20,7 +20,7 @@ import operator
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps, partial
-from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict
+from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict, cast
 
 import jax
 import jax.numpy as jnp
@@ -4470,7 +4470,8 @@ def check_dims(**au):
                             f"'{value}'"
                         )
                         raise DimensionMismatchError(
-                            error_message, get_dim(newkeyset[k])
+                            error_message,
+                            get_dim(newkeyset[k])
                         )
 
             result = f(*args, **kwds)
@@ -4782,78 +4783,157 @@ def check_units(**au):
     return do_check_units
 
 
+class CallableAssignUnit(Callable):
+    without_result_units = Callable
+
+    def __call__(self, *args, **kwargs):
+        pass
+
+
+class Missing():
+    pass
+
+
+missing = Missing()
+
+
 @set_module_as('brainunit')
-def assign_units(**au):
+def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[Callable], CallableAssignUnit]:
     """
     Decorator to transform units of arguments passed to a function
     """
+    if f is missing:
+        return partial(assign_units, **au)
 
-    def do_assign_units(f):
-        @wraps(f)
-        def new_f(*args, **kwds):
-            newkeyset = kwds.copy()
-            arg_names = f.__code__.co_varnames[0: f.__code__.co_argcount]
-            for n, v in zip(arg_names, args[0: f.__code__.co_argcount]):
-                if n in au and v is not None:
-                    specific_unit = au[n]
-                    # if the specific unit is a boolean, just check and return
-                    if specific_unit == bool:
-                        if isinstance(v, bool):
-                            newkeyset[n] = v
-                        else:
-                            raise TypeError(
-                                f"Function '{f.__name__}' expected a boolean value for argument '{n}' but got '{v}'")
-
-                    elif specific_unit == 1:
-                        if isinstance(v, Quantity):
-                            newkeyset[n] = v.to_decimal()
-                        elif isinstance(v, (jax.Array, np.ndarray, int, float, complex)):
-                            newkeyset[n] = v
-                        else:
-                            specific_unit = jax.typing.ArrayLike
-                            raise TypeError(f"Function '{f.__name__}' expected a unitless Quantity object"
-                                            f"or {specific_unit} for argument '{n}' but got '{v}'")
-
-                    elif isinstance(specific_unit, Unit):
-                        if isinstance(v, Quantity):
-                            v = v.to_decimal(specific_unit)
-                            newkeyset[n] = v
-                        else:
-                            raise TypeError(
-                                f"Function '{f.__name__}' expected a Quantity object for argument '{n}' but got '{v}'"
-                            )
-                    else:
-                        raise TypeError(
-                            f"Function '{f.__name__}' expected a target unit object or"
-                            f" a Number, boolean object for checking, but got '{specific_unit}'"
-                        )
-                else:
-                    newkeyset[n] = v
-
-            result = f(**newkeyset)
-            if "result" in au:
-                if isinstance(au["result"], Callable) and au["result"] != bool:
-                    expected_result = au["result"](*[get_unit(a) for a in args])
-                else:
-                    expected_result = au["result"]
+    @wraps(f)
+    def new_f(*args, **kwds):
+        arg_names = f.__code__.co_varnames[0: f.__code__.co_argcount]
+        newkeyset = kwds.copy()
+        for n, v in zip(arg_names, args[0: f.__code__.co_argcount]):
+            newkeyset[n] = v
+        for n, v in tuple(newkeyset.items()):
+            if n in au and v is not None:
+                specific_unit = au[n]
 
                 if (
-                    jax.tree.structure(expected_result, is_leaf=_is_quantity)
+                    jax.tree.structure(specific_unit, is_leaf=_is_quantity)
                     !=
-                    jax.tree.structure(result, is_leaf=_is_quantity)
+                    jax.tree.structure(v, is_leaf=_is_quantity)
                 ):
                     raise TypeError(
-                        f"Expected a return value of type {expected_result} but got {result}"
+                        f"For argument '{n}', we expect the input type "
+                        f"with the structure like {specific_unit}, "
+                        f"but we got {v}"
                     )
 
-                result = jax.tree.map(
-                    partial(_assign_unit, f), result, expected_result,
+                v = jax.tree.map(
+                    partial(_remove_unit, f.__name__, n),
+                    specific_unit,
+                    v,
+                    is_leaf=_is_quantity
                 )
-            return result
+            newkeyset[n] = v
 
-        return new_f
+        result = f(**newkeyset)
+        if "result" in au:
+            if isinstance(au["result"], Callable) and au["result"] != bool:
+                expected_result = au["result"](*[get_unit(a) for a in args])
+            else:
+                expected_result = au["result"]
 
-    return do_assign_units
+            expected_pytree = jax.tree.structure(
+                expected_result,
+                is_leaf=lambda x: isinstance(x, Quantity) or x is None
+            )
+            result_pytree = jax.tree.structure(result, is_leaf=lambda x: isinstance(x, Quantity) or x is None)
+            if (
+                expected_pytree
+                !=
+                result_pytree
+            ):
+                raise TypeError(
+                    f"Expected a return value of pytree {expected_pytree} with type {expected_result}, "
+                    f"but got the pytree {result_pytree} and the value {result}"
+                )
+
+            result = jax.tree.map(
+                partial(_assign_unit, f),
+                result,
+                expected_result,
+                is_leaf=lambda x: isinstance(x, Quantity) or x is None
+            )
+        return result
+
+    def without_result_units(*args, **kwds):
+        arg_names = f.__code__.co_varnames[0: f.__code__.co_argcount]
+        newkeyset = kwds.copy()
+        for n, v in zip(arg_names, args[0: f.__code__.co_argcount]):
+            newkeyset[n] = v
+        for n, v in tuple(newkeyset.items()):
+            if n in au and v is not None:
+                specific_unit = au[n]
+
+                if (
+                    jax.tree.structure(specific_unit, is_leaf=_is_quantity)
+                    !=
+                    jax.tree.structure(v, is_leaf=_is_quantity)
+                ):
+                    raise TypeError(
+                        f"For argument '{n}', we expect the input type {specific_unit} but got {v}"
+                    )
+
+                v = jax.tree.map(
+                    partial(_remove_unit, f.__name__, n),
+                    specific_unit,
+                    v,
+                    is_leaf=_is_quantity
+                )
+            newkeyset[n] = v
+
+        result = f(**newkeyset)
+        return result
+
+    new_f.without_result_units = without_result_units
+
+    return cast(CallableAssignUnit, new_f)
+
+
+def _remove_unit(fname, n, unit, v):
+    if unit is None:
+        return v
+
+    # if the specific unit is a boolean, just check and return
+    elif unit is bool:
+        if isinstance(v, bool):
+            return v
+        else:
+            raise TypeError(
+                f"Function '{fname}' expected a boolean "
+                f"value for argument '{n}' but got '{v}'"
+            )
+
+    elif isinstance(unit, Unit):
+        if isinstance(v, Quantity):
+            v = v.to_decimal(unit)
+            return v
+        else:
+            raise TypeError(
+                f"Function '{fname}' expected a Quantity "
+                f"object for argument '{n}' but got '{v}'"
+            )
+
+    elif unit == 1:
+        if isinstance(v, Quantity):
+            raise TypeError(
+                f"Function '{fname}' expected a Number object for argument '{n}' but got '{v}'"
+            )
+        return v
+
+    else:
+        raise TypeError(
+            f"Function '{fname}' expected a target unit object or"
+            f" a Number, boolean object for checking, but got '{unit}'"
+        )
 
 
 def _check_unit(f, val, unit):

@@ -26,7 +26,7 @@ __all__ = [
     "hectare", "acre", "gallon", "gallon_US", "gallon_imp", "fluid_ounce", "fluid_ounce_US", "fluid_ounce_imp",
     "bbl", "barrel", "speed_unit", "kmh", "mph", "mach", "speed_of_sound", "knot", "degree_Fahrenheit", "eV",
     "electron_volt", "calorie", "calorie_th", "calorie_IT", "erg", "Btu", "Btu_IT", "Btu_th", "ton_TNT", "hp",
-    "horsepower", "dyn", "dyne", "lbf", "pound_force", "kgf", "kilogram_force", "IMF"
+    "horsepower", "dyn", "dyne", "lbf", "pound_force", "kgf", "kilogram_force", "IMF", 'kcal_per_h'
 ]
 
 # ----- Mass -----
@@ -136,6 +136,8 @@ ton_TNT = Unit.create(joule.dim, name="ton of TNT", dispname="ton TNT", scale=jo
 # ----- Power -----
 hp = horsepower = Unit.create(watt.dim, name="horsepower", dispname="hp", scale=watt.scale + 2,
                               factor=7.4569987158227022)
+kcal_per_h = Unit.create(watt.dim, name="kcal per hour", dispname="kcal/h", scale=watt.scale,
+                         factor=1.162222)
 
 # ----- Force -----
 dyn = dyne = Unit.create(newton.dim, name="dyne", dispname="dyn", scale=newton.scale - 5, factor=1.)
