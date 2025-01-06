@@ -35,20 +35,6 @@ def hessian(
     Physical unit-aware version of `jax.hessian <https://jax.readthedocs.io/en/latest/_autosummary/jax.hessian.html>`_,
     computing Hessian of ``fun`` as a dense array.
 
-    Example::
-        >>> import jax.numpy as jnp
-        >>> import brainunit as u
-        >>> def scalar_function1(x):
-        ...    return x ** 2 + 3 * x * u.ms + 2 * u.msecond2
-        >>> hess_fn = u.autograd.hessian(scalar_function1)
-        >>> hess_fn(jnp.array(1.0) * u.ms)
-        [2]
-        >>> def scalar_function2(x):
-        ...     return x ** 3 + 3 * x * u.msecond2 + 2 * u.msecond3
-        >>> hess_fn = u.autograd.hessian(scalar_function2)
-        >>> hess_fn(jnp.array(1.0) * u.ms)
-        [6] * ms
-
     Args:
       fun: Function whose Hessian is to be computed.  Its arguments at positions
         specified by ``argnums`` should be arrays, scalars, or standard Python
@@ -65,6 +51,55 @@ def hessian(
     Returns:
       A function with the same arguments as ``fun``, that evaluates the Hessian of
       ``fun``.
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def scalar_function1(x):
+    ...    return x ** 2 + 3 * x * u.ms + 2 * u.msecond2
+    >>> hess_fn = u.autograd.hessian(scalar_function1)
+    >>> hess_fn(jnp.array(1.0) * u.ms)
+    [2]
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def scalar_function2(x):
+    ...     return x ** 3 + 3 * x * u.msecond2 + 2 * u.msecond3
+    >>> hess_fn = u.autograd.hessian(scalar_function2)
+    >>> hess_fn(jnp.array(1.0) * u.ms)
+    [6] * ms
+
+    `hessian` is a generalization of the usual definition of the Hessian
+    that supports nested Python containers (i.e. pytrees) as inputs and outputs.
+    The tree structure of ``brainunit.autograd.hessian(fun)(x)`` is given by forming a tree
+    product of the structure of ``fun(x)`` with a tree product of two copies of
+    the structure of ``x``. A tree product of two tree structures is formed by
+    replacing each leaf of the first tree with a copy of the second. For example:
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def dict_function(x):
+    ...     return {'z': x['a'] ** 3 + x['b'] ** 3}
+    >>> x = {'a': jnp.array(1.0) * u.ms, 'b': jnp.array(2.0) * u.ms}
+    >>> u.autograd.hessian(dict_function)(x)
+    {'z': {'a': {'a': 6. * msecond, 'b': 0. * msecond},
+     'b': {'a': 0. * msecond, 'b': 12. * msecond}}}
+
+    Thus each leaf in the tree structure of ``brainunit.autograd.hessian(fun)(x)`` corresponds to
+    a leaf of ``fun(x)`` and a pair of leaves of ``x``. For each leaf in
+    ``brainunit.autograd.hessian(fun)(x)``, if the corresponding array leaf of ``fun(x)`` has
+    shape ``(out_1, out_2, ...)`` and the corresponding array leaves of ``x`` have
+    shape ``(in_1_1, in_1_2, ...)`` and ``(in_2_1, in_2_2, ...)`` respectively,
+    then the Hessian leaf has shape ``(out_1, out_2, ..., in_1_1, in_1_2, ...,
+    in_2_1, in_2_2, ...)``. In other words, the Python tree structure represents
+    the block structure of the Hessian, with blocks determined by the input and
+    output pytrees.
+
+    In particular, an array is produced (with no pytrees involved) when the
+    function input ``x`` and output ``fun(x)`` are each a single array, as in the
+    ``dict_function`` example above. If ``fun(x)`` has shape ``(out1, out2, ...)`` and ``x``
+    has shape ``(in1, in2, ...)`` then ``brainunit.autograd.hessian(fun)(x)`` has shape
+    ``(out1, out2, ..., in1, in2, ..., in1, in2, ...)``. To flatten pytrees into
+    1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
     """
     _check_callable(fun)
 

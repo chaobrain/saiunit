@@ -49,25 +49,6 @@ def jacrev(
     """
     Physical unit-aware version of `jax.jacrev <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacrev.html>`_.
 
-    Example::
-            >>> import jax.numpy as jnp
-            >>> import brainunit as u
-            >>> def simple_function1(x):
-            ...    return x ** 2
-            >>> jac_fn = u.autograd.jacrev(simple_function)
-            >>> jac_fn(jnp.array(3.0) * u.ms)
-            6.0 * ms
-            >>> def simple_function2(x, y):
-            ...    return x * y
-            >>> jac_fn = u.autograd.jacrev(simple_function2, argnums=(0, 1))
-            >>> x = jnp.array([3.0, 4.0]) * u.ohm
-            >>> y = jnp.array([5.0, 6.0]) * u.mA
-            >>> jac_fn(x, y)
-            ([[5., 0.],
-              [0., 6.]] * mA,
-             [[3., 0.],
-              [0., 4.]] * ohm)
-
     Args:
         fun: Function whose Jacobian is to be computed.
         argnums: Optional, integer or sequence of integers. Specifies which
@@ -80,6 +61,79 @@ def jacrev(
 
     Returns:
         A function that computes the Jacobian of ``fun`` through reverse-mode automatic differentiation.
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def simple_function1(x):
+    ...    return x ** 2
+>>> jac_fn = u.autograd.jacrev(simple_function1)
+    >>> jac_fn(jnp.array(3.0) * u.ms)
+    6.0 * ms
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def simple_function2(x, y):
+    ...    return x * y
+    >>> jac_fn = u.autograd.jacrev(simple_function2, argnums=(0, 1))
+    >>> x = jnp.array([3.0, 4.0]) * u.ohm
+    >>> y = jnp.array([5.0, 6.0]) * u.mA
+    >>> jac_fn(x, y)
+    ([[5., 0.],
+      [0., 6.]] * mA,
+     [[3., 0.],
+      [0., 4.]] * ohm)
+
+    `jacrev` is a generalization of the usual definition of the JacRev(Jacobian Reverse Mode).
+    that supports nested Python containers (i.e. pytrees) as inputs and outputs.
+    The tree structure of ``brainunit.autograd.jacrev(fun)(x)`` is given by forming a tree
+    product of the structure of ``fun(x)`` with a tree product of two copies of
+    the structure of ``x``. A tree product of two tree structures is formed by
+    replacing each leaf of the first tree with a copy of the second. For example:
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def dict_function(inputs):
+    ...    o1 = inputs['x'] * inputs['y']
+    ...    o2 = inputs['x'] * inputs['z']
+    ...    r = {'o1': o1, 'o2': o2}
+    ...    return r, r
+    >>> jac_fn = u.autograd.jacrev(dict_function, has_aux=True)
+    >>> x = jnp.array([3.0, 4.0]) * u.ohm
+    >>> y = jnp.array([5.0, 6.0]) * u.mA
+    >>> z = jnp.array([7.0, 8.0]) * u.siemens
+    >>> inp = {'x': x, 'y': y, 'z': z}
+    >>> jac_fn(inp)
+    ({'o1': {'x': ArrayImpl([[5., 0.],
+                  [0., 6.]], dtype=float32) * mampere,
+       'y': ArrayImpl([[3., 0.],
+                  [0., 4.]], dtype=float32) * ohm,
+       'z': ArrayImpl([[0., 0.],
+                  [0., 0.]], dtype=float32) * mvolt / siemens},
+      'o2': {'x': ArrayImpl([[7., 0.],
+                  [0., 8.]], dtype=float32) * siemens,
+       'y': ArrayImpl([[0., 0.],
+                  [0., 0.]], dtype=float32) * 10.0^3 * amp ** -1,
+       'z': ArrayImpl([[3., 0.],
+                  [0., 4.]], dtype=float32) * ohm}},
+     {'o1': ArrayImpl([15., 24.], dtype=float32) * mvolt,
+      'o2': Array([21., 32.], dtype=float32)})
+
+    Thus each leaf in the tree structure of ``brainunit.autograd.jacrev(fun)(x)`` corresponds to
+    a leaf of ``fun(x)`` and a pair of leaves of ``x``. For each leaf in
+    ``brainunit.autograd.jacrev(fun)(x)``, if the corresponding array leaf of ``fun(x)`` has
+    shape ``(out_1, out_2, ...)`` and the corresponding array leaves of ``x`` have
+    shape ``(in_1_1, in_1_2, ...)`` and ``(in_2_1, in_2_2, ...)`` respectively,
+    then the JacRev leaf has shape ``(out_1, out_2, ..., in_1_1, in_1_2, ...,
+    in_2_1, in_2_2, ...)``. In other words, the Python tree structure represents
+    the block structure of the Hessian, with blocks determined by the input and
+    output pytrees.
+
+    In particular, an array is produced (with no pytrees involved) when the
+    function input ``x`` and output ``fun(x)`` are each a single array, as in the
+    ``simple_function`` example above. If ``fun(x)`` has shape ``(out1, out2, ...)`` and ``x``
+    has shape ``(in1, in2, ...)`` then ``brainunit.autograd.jacrec(fun)(x)`` has shape
+    ``(out1, out2, ..., in1, in2, ..., in1, in2, ...)``. To flatten pytrees into
+    1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
     """
     _check_callable(fun)
 
@@ -154,6 +208,19 @@ def jacobian(
 ) -> Callable:
     """
     Alias of :func:`jacrev`.
+
+    Args:
+        fun: Function whose Jacobian is to be computed.
+        argnums: Optional, integer or sequence of integers. Specifies which
+            positional argument(s) to differentiate with respect to (default ``0``).
+        has_aux: Optional, bool. Indicates whether ``fun`` returns a pair where the
+            first element is considered the output of the mathematical function to be
+            differentiated and the second element is auxiliary data. Default False.
+        holomorphic: Optional, bool. Indicates whether ``fun`` is promised to be holomorphic. Default False.
+        allow_int: Optional, bool. Indicates whether integer arguments are allowed. Default False.
+
+    Returns:
+        A function that computes the Jacobian of ``fun`` through reverse-mode automatic differentiation.
     """
     return jacrev(
         fun,
@@ -173,25 +240,6 @@ def jacfwd(
     """
     Physical unit-aware version of `jax.jacfwd <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacfwd.html>`_.
 
-    Example::
-        >>> import jax.numpy as jnp
-        >>> import brainunit as u
-        >>> def simple_function(x):
-        ...    return x ** 2
-        >>> jac_fn = u.autograd.jacfwd(simple_function)
-        >>> jac_fn(jnp.array(3.0) * u.ms)
-        6.0 * ms
-        >>> def simple_function(x, y):
-        ...    return x * y
-        >>> jac_fn = u.autograd.jacfwd(simple_function, argnums=(0, 1))
-        >>> x = jnp.array([3.0, 4.0]) * u.ohm
-        >>> y = jnp.array([5.0, 6.0]) * u.mA
-        >>> jac_fn(x, y)
-        ([[5., 0.],
-          [0., 6.]] * mA,
-         [[3., 0.],
-          [0., 4.]] * ohm)
-
     Args:
         fun: Function whose Jacobian is to be computed.
         argnums: Optional, integer or sequence of integers. Specifies which
@@ -203,6 +251,79 @@ def jacfwd(
 
     Returns:
         A function that computes the Jacobian of ``fun`` through forward-mode automatic differentiation.
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def simple_function(x):
+    ...    return x ** 2
+    >>> jac_fn = u.autograd.jacfwd(simple_function)
+    >>> jac_fn(jnp.array(3.0) * u.ms)
+    6.0 * ms
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def simple_function(x, y):
+    ...    return x * y
+    >>> jac_fn = u.autograd.jacfwd(simple_function, argnums=(0, 1))
+    >>> x = jnp.array([3.0, 4.0]) * u.ohm
+    >>> y = jnp.array([5.0, 6.0]) * u.mA
+    >>> jac_fn(x, y)
+    ([[5., 0.],
+      [0., 6.]] * mA,
+     [[3., 0.],
+      [0., 4.]] * ohm)
+
+    `jacfwd` is a generalization of the usual definition of the JacFwd(Jacobian Reverse Mode).
+    that supports nested Python containers (i.e. pytrees) as inputs and outputs.
+    The tree structure of ``brainunit.autograd.jacfwd(fun)(x)`` is given by forming a tree
+    product of the structure of ``fun(x)`` with a tree product of two copies of
+    the structure of ``x``. A tree product of two tree structures is formed by
+    replacing each leaf of the first tree with a copy of the second. For example:
+
+    >>> import jax.numpy as jnp
+    >>> import brainunit as u
+    >>> def dict_function(inputs):
+    ...    o1 = inputs['x'] * inputs['y']
+    ...    o2 = inputs['x'] * inputs['z']
+    ...    r = {'o1': o1, 'o2': o2}
+    ...    return r, r
+    >>> jac_fn = u.autograd.jacfwd(dict_function, has_aux=True)
+    >>> x = jnp.array([3.0, 4.0]) * u.ohm
+    >>> y = jnp.array([5.0, 6.0]) * u.mA
+    >>> z = jnp.array([7.0, 8.0]) * u.siemens
+    >>> inp = {'x': x, 'y': y, 'z': z}
+    >>> jac_fn(inp)
+    ({'o1': {'x': ArrayImpl([[5., 0.],
+                  [0., 6.]], dtype=float32) * mampere,
+       'y': ArrayImpl([[3., 0.],
+                  [0., 4.]], dtype=float32) * ohm,
+       'z': ArrayImpl([[0., 0.],
+                  [0., 0.]], dtype=float32) * mvolt / siemens},
+      'o2': {'x': ArrayImpl([[7., 0.],
+                  [0., 8.]], dtype=float32) * siemens,
+       'y': ArrayImpl([[0., 0.],
+                  [0., 0.]], dtype=float32) * 10.0^3 * amp ** -1,
+       'z': ArrayImpl([[3., 0.],
+                  [0., 4.]], dtype=float32) * ohm}},
+     {'o1': ArrayImpl([15., 24.], dtype=float32) * mvolt,
+      'o2': Array([21., 32.], dtype=float32)})
+
+    Thus each leaf in the tree structure of ``brainunit.autograd.jacfwd(fun)(x)`` corresponds to
+    a leaf of ``fun(x)`` and a pair of leaves of ``x``. For each leaf in
+    ``brainunit.autograd.jacfwd(fun)(x)``, if the corresponding array leaf of ``fun(x)`` has
+    shape ``(out_1, out_2, ...)`` and the corresponding array leaves of ``x`` have
+    shape ``(in_1_1, in_1_2, ...)`` and ``(in_2_1, in_2_2, ...)`` respectively,
+    then the JacFwd leaf has shape ``(out_1, out_2, ..., in_1_1, in_1_2, ...,
+    in_2_1, in_2_2, ...)``. In other words, the Python tree structure represents
+    the block structure of the Hessian, with blocks determined by the input and
+    output pytrees.
+
+    In particular, an array is produced (with no pytrees involved) when the
+    function input ``x`` and output ``fun(x)`` are each a single array, as in the
+    ``simple_function`` example above. If ``fun(x)`` has shape ``(out1, out2, ...)`` and ``x``
+    has shape ``(in1, in2, ...)`` then ``brainunit.autograd.jacrec(fun)(x)`` has shape
+    ``(out1, out2, ..., in1, in2, ..., in1, in2, ...)``. To flatten pytrees into
+    1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
     """
     _check_callable(fun)
     argnums = _ensure_index(argnums)
