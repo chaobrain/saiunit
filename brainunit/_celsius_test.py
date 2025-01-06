@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import numpy as np
 
 import brainunit as u
 
@@ -22,7 +22,7 @@ def test1():
     assert a == 273.15 * u.kelvin
 
     b = u.celsius2kelvin(-100)
-    assert b == 173.15 * u.kelvin
+    assert u.math.allclose(b, 173.15 * u.kelvin)
 
 
 def test2():
@@ -30,4 +30,4 @@ def test2():
     assert a == 0
 
     b = u.kelvin2celsius(173.15 * u.kelvin)
-    assert b == -100
+    assert np.isclose(b, -100)

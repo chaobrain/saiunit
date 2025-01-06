@@ -107,8 +107,8 @@ class TestUnit(unittest.TestCase):
         assert_equal(str(u.kmeter / u.meter), 'Unit(10.0^3)')
 
     def test_unit_with_factor(self):
-        self.assertTrue(1. * u.eV / u.joule == 1.6021766e-19)
-        self.assertTrue(1. * u.joule / u.eV == 6.241509074460762e18)
+        self.assertTrue(u.math.isclose(1. * u.eV / u.joule, 1.6021766e-19))
+        self.assertTrue(u.math.isclose(1. * u.joule / u.eV, 6.241509074460762e18))
 
 
 class TestQuantity(unittest.TestCase):
@@ -261,10 +261,10 @@ class TestQuantity(unittest.TestCase):
         assert_equal(display_in_unit(10. * u.mV), '10. * mvolt')
         assert_equal(display_in_unit(10. * u.ohm * u.amp), '10. * volt')
         assert_equal(display_in_unit(120. * (u.mS / u.cm ** 2)), '120. * msiemens / cmeter2')
-        assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter), '0.02298675 * 10.0^3 * meter2')
-        assert_equal(display_in_unit(3.0 * u.kmeter / (130.51 * u.meter)), 'Quantity(22.986746)')
-        assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -2), 'Quantity(229867.45)')
-        assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -1), '0.02298675 * 10.0^5 * meter')
+        assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter), '0.02298674 * 10.0^3 * meter2')
+        assert_equal(display_in_unit(3.0 * u.kmeter / (130.51 * u.meter)), 'Quantity(22.986744)')
+        assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -2), 'Quantity(229867.44)')
+        assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -1), '0.02298674 * 10.0^5 * meter')
         assert_equal(display_in_unit(1. * u.joule / u.kelvin), '1. * joule / kelvin')
 
         assert_equal(str(1. * u.metre / ((3.0 * u.ms) / (1. * u.second))), '333.33334 * meter')

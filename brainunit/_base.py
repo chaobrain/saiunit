@@ -2187,7 +2187,8 @@ class Quantity:
                 # skip 'asarray' if dtype is not provided
 
             elif isinstance(mantissa, (jnp.number, numbers.Number)):
-                mantissa = jnp.array(mantissa, dtype=dtype)
+                # mantissa = jnp.array(mantissa, dtype=dtype)
+                mantissa = mantissa
 
             else:
                 mantissa = mantissa
@@ -3631,7 +3632,11 @@ class Quantity:
         If ``a.ndim`` is 0, then since the depth of the nested list is 0, it will
         not be a list at all, but a simple Python scalar.
         """
-        return _replace_with_array(self.mantissa.tolist(), self.unit)
+        if isinstance(self.mantissa, numbers.Number):
+            list_mantissa = self.mantissa
+        else:
+            list_mantissa = self.mantissa.tolist()
+        return _replace_with_array(list_mantissa, self.unit)
 
     def transpose(self, *axes) -> 'Quantity':
         """Returns a view of the array with axes transposed.
@@ -4054,7 +4059,7 @@ class _IndexUpdateRef:
         arguments ``indices_are_sorted`` and ``unique_indices`` to be passed.
         """
         if fill_value is not None:
-            fill_value = Quantity(fill_value).in_unit(self.unit).mantissa.item()
+            fill_value = Quantity(fill_value).in_unit(self.unit).mantissa
         return Quantity(
             self.mantissa_at[self.index].get(
                 indices_are_sorted=indices_are_sorted,

@@ -81,5 +81,7 @@ class TestConstant(unittest.TestCase):
         for c in constants_list:
             q_c = getattr(quantity_constants, c)
             u_c = getattr(unit_constants, c)
-            assert q_c.to_decimal(q_c.unit) == (1. * u_c).to_decimal(
-                q_c.unit), f"Mismatch between {c} in quantity_constants and unit_constants"
+            assert u.math.isclose(
+                q_c.to_decimal(q_c.unit),
+                (1. * u_c).to_decimal(q_c.unit)
+            ), f"Mismatch between {c} in quantity_constants and unit_constants"
