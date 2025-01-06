@@ -66,7 +66,7 @@ def jacrev(
     >>> import brainunit as u
     >>> def simple_function1(x):
     ...    return x ** 2
->>> jac_fn = u.autograd.jacrev(simple_function1)
+    >>> jac_fn = u.autograd.jacrev(simple_function1)
     >>> jac_fn(jnp.array(3.0) * u.ms)
     6.0 * ms
 
