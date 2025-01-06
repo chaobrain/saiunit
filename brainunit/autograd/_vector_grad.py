@@ -40,8 +40,35 @@ def vector_grad(
     unit_aware: bool = True,
 ):
     """
-     Compute the gradient of a vector with respect to the input.
-     """
+    Unit-aware compute the gradient of a vector with respect to the input.
+
+    Example::
+        >>> import jax.numpy as jnp
+        >>> import brainunit as u
+        >>> def simple_function(x):
+        ...    return x ** 2
+        >>> vector_grad_fn = u.autograd.vector_grad(simple_function)
+        >>> vector_grad_fn(jnp.array([3.0, 4.0]) * u.ms)
+        [6.0, 8.0] * ms
+        >>> vector_grad_fn = u.autograd.vector_grad(simple_function, return_value=True)
+        >>> grad, value = vector_grad_fn(jnp.array([3.0, 4.0]) * u.ms)
+        >>> grad
+        [6.0, 8.0] * ms
+        >>> value
+        [9.0, 16.0] * ms ** 2
+
+    Args:
+        fun: A Python callable that computes a scalar loss given arguments.
+        argnums: Optional, an integer or a tuple of integers. The argument number(s) to differentiate with respect to.
+        return_value: Optional, bool. Whether to return the value of the function.
+        has_aux: Optional, whether `fun` returns auxiliary data.
+        unit_aware: Optional, whether to enable unit-aware computation.
+
+    Returns:
+        A function that computes the gradient of `fun` with respect to
+        the argument(s) indicated by `argnums`.
+    """
+
     _check_callable(func)
 
     @wraps(func)

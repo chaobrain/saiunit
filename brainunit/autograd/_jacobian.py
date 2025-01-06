@@ -49,6 +49,25 @@ def jacrev(
     """
     Physical unit-aware version of `jax.jacrev <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacrev.html>`_.
 
+    Example::
+            >>> import jax.numpy as jnp
+            >>> import brainunit as u
+            >>> def simple_function1(x):
+            ...    return x ** 2
+            >>> jac_fn = u.autograd.jacrev(simple_function)
+            >>> jac_fn(jnp.array(3.0) * u.ms)
+            6.0 * ms
+            >>> def simple_function2(x, y):
+            ...    return x * y
+            >>> jac_fn = u.autograd.jacrev(simple_function2, argnums=(0, 1))
+            >>> x = jnp.array([3.0, 4.0]) * u.ohm
+            >>> y = jnp.array([5.0, 6.0]) * u.mA
+            >>> jac_fn(x, y)
+            ([[5., 0.],
+              [0., 6.]] * mA,
+             [[3., 0.],
+              [0., 4.]] * ohm)
+
     Args:
         fun: Function whose Jacobian is to be computed.
         argnums: Optional, integer or sequence of integers. Specifies which
@@ -153,6 +172,25 @@ def jacfwd(
 ) -> Callable:
     """
     Physical unit-aware version of `jax.jacfwd <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacfwd.html>`_.
+
+    Example::
+        >>> import jax.numpy as jnp
+        >>> import brainunit as u
+        >>> def simple_function(x):
+        ...    return x ** 2
+        >>> jac_fn = u.autograd.jacfwd(simple_function)
+        >>> jac_fn(jnp.array(3.0) * u.ms)
+        6.0 * ms
+        >>> def simple_function(x, y):
+        ...    return x * y
+        >>> jac_fn = u.autograd.jacfwd(simple_function, argnums=(0, 1))
+        >>> x = jnp.array([3.0, 4.0]) * u.ohm
+        >>> y = jnp.array([5.0, 6.0]) * u.mA
+        >>> jac_fn(x, y)
+        ([[5., 0.],
+          [0., 6.]] * mA,
+         [[3., 0.],
+          [0., 4.]] * ohm)
 
     Args:
         fun: Function whose Jacobian is to be computed.

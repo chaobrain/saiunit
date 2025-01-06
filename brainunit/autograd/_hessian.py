@@ -35,6 +35,20 @@ def hessian(
     Physical unit-aware version of `jax.hessian <https://jax.readthedocs.io/en/latest/_autosummary/jax.hessian.html>`_,
     computing Hessian of ``fun`` as a dense array.
 
+    Example::
+        >>> import jax.numpy as jnp
+        >>> import brainunit as u
+        >>> def scalar_function1(x):
+        ...    return x ** 2 + 3 * x * u.ms + 2 * u.msecond2
+        >>> hess_fn = u.autograd.hessian(scalar_function1)
+        >>> hess_fn(jnp.array(1.0) * u.ms)
+        [2]
+        >>> def scalar_function2(x):
+        ...     return x ** 3 + 3 * x * u.msecond2 + 2 * u.msecond3
+        >>> hess_fn = u.autograd.hessian(scalar_function2)
+        >>> hess_fn(jnp.array(1.0) * u.ms)
+        [6] * ms
+
     Args:
       fun: Function whose Hessian is to be computed.  Its arguments at positions
         specified by ``argnums`` should be arrays, scalars, or standard Python
