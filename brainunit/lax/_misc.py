@@ -23,25 +23,25 @@ from .._base import Quantity, maybe_decimal
 from .._misc import set_module_as
 
 __all__ = [
-    'after_all', 'reduce', 'reduce_precision',
+    'reduce', 'reduce_precision',
 
     # getting attribute funcs
     'broadcast_shapes',
 ]
 
 
-@set_module_as('brainunit.lax')
-def after_all(*operands):
-    """Merges one or more XLA token values. Experimental.
-
-    Wraps the XLA AfterAll operator."""
-    new_operands = []
-    for operand in operands:
-        if isinstance(operand, Quantity):
-            new_operands.append(operand.mantissa)
-        else:
-            new_operands.append(operand)
-    return lax.after_all(*new_operands)
+# @set_module_as('brainunit.lax')
+# def after_all(*operands):
+#     """Merges one or more XLA token values. Experimental.
+#
+#     Wraps the XLA AfterAll operator."""
+#     # new_operands = []
+#     # for operand in operands:
+#     #     if isinstance(operand, Quantity):
+#     #         new_operands.append(operand.mantissa)
+#     #     else:
+#     #         new_operands.append(operand)
+#     return lax.after_all(*operands)
 
 
 @set_module_as('brainunit.lax')

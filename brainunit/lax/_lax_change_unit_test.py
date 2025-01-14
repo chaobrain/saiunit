@@ -215,14 +215,14 @@ class TestLaxChangeUnit(parameterized.TestCase):
             assert_quantity(result, expected, unit=bulax_fun._unit_change_fun(bu.get_unit(q1), bu.get_unit(q2)))
 
     @parameterized.product(
-        shapes = [
+        shapes=[
             dict(lhs_shape=lhs_shape, rhs_shape=rhs_shape)
             for lhs_shape, rhs_shape in [
-            ((b, 10, i), (k, i, j))
-            for b, i, j, k in itertools.product(
-                [2, 3], [2, 3], [2, 3], [3,]
-            )
-        ]
+                ((b, 10, i), (k, i, j))
+                for b, i, j, k in itertools.product(
+                    [2, 3], [2, 3], [2, 3], [3, ]
+                )
+            ]
         ],
         strides=[(1,), (2,)],
         padding=["VALID", "SAME"],
@@ -251,17 +251,17 @@ class TestLaxChangeUnit(parameterized.TestCase):
             assert_quantity(result, expected, unit=bulax_fun._unit_change_fun(bu.get_unit(q1), bu.get_unit(q2)))
 
     @parameterized.product(
-        shapes = [
+        shapes=[
             dict(
                 lhs_shape=lhs_shape,
                 rhs_shape=rhs_shape,
                 dimension_numbers=dimension_numbers,
             )
             for lhs_shape, rhs_shape, dimension_numbers in [
-            ((3, 3, 2), (3, 2, 4), (([2], [1]), ([0], [0]))),
-            ((3, 3, 2), (2, 3, 4), (([2], [0]), ([0], [1]))),
-            ((3, 4, 2, 4), (3, 4, 3, 2), (([2], [3]), ([0, 1], [0, 1]))),
-        ]
+                ((3, 3, 2), (3, 2, 4), (([2], [1]), ([0], [0]))),
+                ((3, 3, 2), (2, 3, 4), (([2], [0]), ([0], [1]))),
+                ((3, 4, 2, 4), (3, 4, 3, 2), (([2], [3]), ([0, 1], [0, 1]))),
+            ]
         ],
     )
     def test_lax_change_unit_dot_general(self, shapes):

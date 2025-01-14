@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Union, Callable, Any, Tuple, List
+import sys
+from typing import Union, Callable, Any
 
 import jax
 from jax import lax, Array
@@ -57,7 +58,7 @@ def cholesky(
     return _fun_change_unit_unary(lax.linalg.cholesky,
                                   lambda u: u ** 0.5,
                                   x,
-                                  symmetrize_input)
+                                  symmetrize_input=symmetrize_input)
 
 
 @set_module_as('brainunit.lax')
@@ -362,18 +363,32 @@ def svd(
     containing the left singular vectors, the singular values and the adjoint of
     the right singular vectors.
     """
-    if isinstance(x, Quantity):
-        if compute_uv:
-            u, s, vh = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
-                                      subset_by_index=subset_by_index, algorithm=algorithm)
-            return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
+    if sys.version_info >= (3, 10):
+        if isinstance(x, Quantity):
+            if compute_uv:
+                u, s, vh = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
+                                          subset_by_index=subset_by_index, algorithm=algorithm)
+                return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
+            else:
+                s = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
+                                   subset_by_index=subset_by_index, algorithm=algorithm)
+                return maybe_decimal(Quantity(s, unit=x.unit))
         else:
-            s = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
-                               subset_by_index=subset_by_index, algorithm=algorithm)
-            return maybe_decimal(Quantity(s, unit=x.unit))
+            return lax.linalg.svd(x, full_matrices=full_matrices, compute_uv=compute_uv,
+                                  subset_by_index=subset_by_index, algorithm=algorithm)
     else:
-        return lax.linalg.svd(x, full_matrices=full_matrices, compute_uv=compute_uv,
-                              subset_by_index=subset_by_index, algorithm=algorithm)
+        if isinstance(x, Quantity):
+            if compute_uv:
+                u, s, vh = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
+                                          subset_by_index=subset_by_index)
+                return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
+            else:
+                s = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
+                                   subset_by_index=subset_by_index)
+                return maybe_decimal(Quantity(s, unit=x.unit))
+        else:
+            return lax.linalg.svd(x, full_matrices=full_matrices, compute_uv=compute_uv,
+                                  subset_by_index=subset_by_index)
 
 
 @set_module_as('brainunit.lax')

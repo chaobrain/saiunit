@@ -14,12 +14,11 @@
 # ==============================================================================
 
 
-import jax.numpy as jnp
 import jax.lax as lax
+import jax.numpy as jnp
 import pytest
 from absl.testing import parameterized
 
-import brainunit as bu
 import brainunit.lax as bulax
 from brainunit import meter, second
 from brainunit._base import assert_quantity
@@ -31,6 +30,7 @@ lax_remove_unit_unary = [
 lax_logic_funcs_binary = [
     'eq', 'ne', 'ge', 'gt', 'le', 'lt',
 ]
+
 
 class TestLaxRemoveUnit(parameterized.TestCase):
     def __init__(self, *args, **kwargs):

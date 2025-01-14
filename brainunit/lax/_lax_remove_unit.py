@@ -22,7 +22,7 @@ from jax import lax
 
 from .._base import Quantity
 from .._misc import set_module_as
-from ..math._fun_remove_unit import _fun_remove_unit_unary, _fun_logic_unary, _fun_logic_binary
+from ..math._fun_remove_unit import _fun_remove_unit_unary, _fun_logic_binary
 
 __all__ = [
     # math funcs remove unit (unary)
