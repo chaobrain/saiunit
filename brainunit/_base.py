@@ -20,7 +20,7 @@ import operator
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps, partial
-from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict, cast
+from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict, cast, TypeVar, Generic
 
 import jax
 import jax.numpy as jnp
@@ -73,6 +73,8 @@ StaticScalar = Union[
 PyTree = Any
 _all_slice = slice(None, None, None)
 compat_with_equinox = False
+A = TypeVar('A')
+
 
 
 def compatible_with_equinox(mode: bool = True):
@@ -2135,7 +2137,7 @@ def _element_not_quantity(x):
 
 
 @register_pytree_node_class
-class Quantity:
+class Quantity(Generic[A]):
     """
     The `Quantity` class represents a physical quantity with a mantissa and a unit.
     It is used to represent all physical quantities in ``BrainUnit``.
