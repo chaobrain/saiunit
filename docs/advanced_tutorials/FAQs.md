@@ -2,11 +2,6 @@
 
 
 
-[TOC]
-
-
-
-
 
 ### How ``saiunit`` is different from other physical unit libraries, such as [Quantities](https://github.com/python-quantities/python-quantities) and [Pint](https://github.com/hgrecco/pint)?
 
