@@ -36,11 +36,10 @@ sys.path.insert(0, os.path.abspath(os.path.curdir))
 sys.path.insert(0, os.path.abspath('../'))
 
 if package == 'brainunit':
-    import make_brainunit_doc
-    import make_brainunit_code
-
-    print(make_brainunit_doc)
-    print(make_brainunit_code)
+    from make_brainunit_doc import make
+    make('../')
+    from make_brainunit_code import make
+    make('../')
 
     sys.path.insert(0, os.path.abspath('../brainunit'))
 
