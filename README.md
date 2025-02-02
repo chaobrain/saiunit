@@ -95,6 +95,10 @@ You can install ``saiunit`` via pip:
 pip install saiunit --upgrade
 ```
 
+``saiunit`` has been well tested on ``jax>=0.4.30``, and can be used in Windows, Linux, and MacOS.
+
+
+
 ## Documentation
 
 The official documentation is hosted on Read the Docs: [https://saiunit.readthedocs.io](https://saiunit.readthedocs.io)
