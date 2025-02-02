@@ -60,3 +60,4 @@ def make(root_dir):
                 file.write(modified_content)
 
             print(destination_path)
+
