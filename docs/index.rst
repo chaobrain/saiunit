@@ -171,13 +171,14 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    :maxdepth: 1
    :caption: Unit-aware Math Functions
 
-   mathematical_functions/customize_functions.ipynb
    mathematical_functions/array_creation.ipynb
    mathematical_functions/numpy_functions.ipynb
    mathematical_functions/einstein_operations.ipynb
    mathematical_functions/linalg_functions.ipynb
    mathematical_functions/fft_functions.ipynb
    mathematical_functions/lax_functions.ipynb
+   mathematical_functions/check_units.ipynb
+   mathematical_functions/assign_units.ipynb
 
 
 .. toctree::

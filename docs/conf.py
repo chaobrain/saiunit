@@ -34,6 +34,8 @@ package = os.environ.get('TARGET', 'saiunit')
 
 sys.path.insert(0, os.path.abspath(os.path.curdir))
 sys.path.insert(0, os.path.abspath('../'))
+import auto_generater
+
 
 if package == 'brainunit':
     from make_brainunit_doc import make
@@ -42,8 +44,7 @@ if package == 'brainunit':
     make('../')
 
     sys.path.insert(0, os.path.abspath('../brainunit'))
-
-import auto_generater
+    auto_generater.main('saiunit')
 
 auto_generater.main(package)
 
