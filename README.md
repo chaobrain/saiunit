@@ -27,7 +27,7 @@
 
 It is initially designed to enable unit-aware computations in brain dynamics modeling (see our [ecosystem](https://ecosystem-for-brain-dynamics.readthedocs.io/)).
 
-However, its features and capacities can be applied to general domains for scientific computing and AI for science. 
+However, its features and capacities can be applied to general domains in scientific computing and AI for science. 
 We also provide ample examples and tutorials to help users integrate ``brainunit`` into their projects 
 (see [Unit-aware computation ecosystem](#unit-aware-computation-ecosystem) in the below).
 
@@ -41,6 +41,20 @@ The uniqueness of ``Brainunit`` lies in that it brings physical units handling a
 - It implements over 500 unit-aware mathematical functions.
 - Its physical units and unit-aware functions are fully compatible with JAX, including autograd, JIT, vecterization, parallelization, and others.
 
+
+```mermaid
+graph TD
+    A[BrainUnit] --> B[Physical Units]
+    A --> C[Mathematical Functions]
+    A --> D[JAX Integration]
+    B --> B1[2000+ Units]
+    B --> B2[Physical Constants]
+    C --> C1[500+ Unit-aware Functions]
+    D --> D1[Autograd]
+    D --> D2[JIT Compilation]
+    D --> D3[Vectorization]
+    D --> D4[Parallelization]
+```
 
 A quick example:
 
