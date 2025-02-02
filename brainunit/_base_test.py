@@ -30,6 +30,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
+from numpy.ma.core import indices
 from numpy.testing import assert_equal
 
 import brainunit as u
@@ -768,7 +769,7 @@ class TestQuantity(unittest.TestCase):
         assert d_copy["x"] == 2 * second
         assert d["x"] == 1 * second
 
-    def test_numpy_functions_indices(self):
+    def test_indices_functions(self):
         """
         Check numpy functions that return indices.
         """
@@ -776,15 +777,15 @@ class TestQuantity(unittest.TestCase):
         units = [volt, second, siemens, mV, kHz]
 
         # numpy functions
-        keep_dim_funcs = [np.argmin, np.argmax, np.argsort, np.nonzero]
+        indice_funcs = [u.math.argmin, u.math.argmax, u.math.argsort, u.math.nonzero]
 
         for value, unit in itertools.product(values, units):
             q_ar = value * unit
-            for func in keep_dim_funcs:
+            for func in indice_funcs:
                 test_ar = func(q_ar)
                 # Compare it to the result on the same value without units
                 comparison_ar = func(value)
-                test_ar = np.asarray(test_ar)
+                test_ar = u.math.asarray(test_ar)
                 comparison_ar = np.asarray(comparison_ar)
                 assert_equal(
                     test_ar,
