@@ -27,34 +27,44 @@
 #
 
 import os
-import sys
 import shutil
+import sys
+
+package = os.environ.get('TARGET', 'saiunit')
 
 sys.path.insert(0, os.path.abspath(os.path.curdir))
 sys.path.insert(0, os.path.abspath('../'))
 
-import saiunit
+if package == 'brainunit':
+    import make_brainunit_doc
+    import make_brainunit_code
+
+    print(make_brainunit_doc)
+    print(make_brainunit_code)
+
+    sys.path.insert(0, os.path.abspath('../brainunit'))
+
 import auto_generater
-auto_generater.main()
+
+auto_generater.main(package)
 
 os.makedirs('apis/', exist_ok=True)
-
 changelogs = [
-  ('../changelog.md', 'apis/changelog.md'),
+    ('../changelog.md', 'apis/changelog.md'),
 ]
 for source, dest in changelogs:
-  if os.path.exists(dest):
-    os.remove(dest)
-  shutil.copyfile(source, dest)
-
+    if os.path.exists(dest):
+        os.remove(dest)
+    shutil.copyfile(source, dest)
 
 # -- Project information -----------------------------------------------------
 
-project = 'saiunit'
-copyright = '2025, saiunit'
+project = package
+copyright = f'2025, {package}'
 author = 'BDP Ecosystem'
 
 # The full version, including alpha/beta/rc tags
+import saiunit
 release = saiunit.__version__
 
 # -- General configuration ---------------------------------------------------
@@ -63,17 +73,17 @@ release = saiunit.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-  'sphinx.ext.autodoc',
-  'sphinx.ext.autosummary',
-  'sphinx.ext.intersphinx',
-  'sphinx.ext.mathjax',
-  'sphinx.ext.napoleon',
-  'sphinx.ext.viewcode',
-  'sphinx_autodoc_typehints',
-  'myst_nb',
-  'matplotlib.sphinxext.plot_directive',
-  'sphinx_thebe',
-  'sphinx_design'
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
+    'sphinx_autodoc_typehints',
+    'myst_nb',
+    'matplotlib.sphinxext.plot_directive',
+    'sphinx_thebe',
+    'sphinx_design'
 ]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -81,7 +91,6 @@ extensions = [
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 source_suffix = ['.rst', '.ipynb', '.md']
-
 
 # source_suffix = '.rst'
 autosummary_generate = True
@@ -114,11 +123,11 @@ myst_enable_extensions = [
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = "sphinx_book_theme"
-html_logo = "_static/saiunit.png"
-html_title = "saiunit"
+html_logo = f"_static/{package}.png"
+html_title = f"{package}"
 html_copy_source = True
 html_sourcelink_suffix = ""
-html_favicon = "_static/saiunit.png"
+html_favicon = f"_static/{package}.png"
 html_last_updated_fmt = ""
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -130,7 +139,6 @@ thebe_config = {
     "repository_url": "https://github.com/binder-examples/jupyter-stacks-datascience",
     "repository_branch": "master",
 }
-
 
 html_theme_options = {
     'show_toc_level': 2,

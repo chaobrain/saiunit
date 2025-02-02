@@ -265,8 +265,10 @@ def _import(mod, klass=None, is_jax=False):
             return implemented_jax_funcs, ':obj:`{}.{{}}`'.format(mod)
 
 
-def main():
+def main(package: str):
     os.makedirs('apis/', exist_ok=True)
+
+    assert package in ['brainunit', 'saiunit']
 
     # _write_module(module_name='saiunit.math._einops',
     #               automodule='saiunit.math',
@@ -322,9 +324,9 @@ def main():
         ('_misc', 'Other Functions'),
     ]
 
-    _write_submodules(module_name='saiunit.math',
-                      filename='apis/saiunit.math.rst',
-                      header='``saiunit.math`` module',
+    _write_submodules(module_name=f'{package}.math',
+                      filename=f'apis/{package}.math.rst',
+                      header=f'``{package}.math`` module',
                       submodule_names=[k[0] for k in module_and_name],
                       section_names=[k[1] for k in module_and_name])
 
@@ -334,9 +336,9 @@ def main():
     ]
 
     _write_submodules(
-        module_name='saiunit.linalg',
-        filename='apis/saiunit.linalg.rst',
-        header='``saiunit.linalg`` module',
+        module_name=f'{package}.linalg',
+        filename=f'apis/{package}.linalg.rst',
+        header=f'``{package}.linalg`` module',
         submodule_names=[k[0] for k in module_and_name],
         section_names=[k[1] for k in module_and_name]
     )
@@ -352,9 +354,9 @@ def main():
     ]
 
     _write_submodules(
-        module_name='saiunit.lax',
-        filename='apis/saiunit.lax.rst',
-        header='``saiunit.lax`` module',
+        module_name=f'{package}.lax',
+        filename=f'apis/{package}.lax.rst',
+        header=f'``{package}.lax`` module',
         submodule_names=[k[0] for k in module_and_name],
         section_names=[k[1] for k in module_and_name]
     )
@@ -365,13 +367,13 @@ def main():
     ]
 
     _write_submodules(
-        module_name='saiunit.fft',
-        filename='apis/saiunit.fft.rst',
-        header='``saiunit.fft`` module',
+        module_name=f'{package}.fft',
+        filename=f'apis/{package}.fft.rst',
+        header=f'``{package}.fft`` module',
         submodule_names=[k[0] for k in module_and_name],
         section_names=[k[1] for k in module_and_name]
     )
 
 
 if __name__ == '__main__':
-    main()
+    main('brainunit')

@@ -23,7 +23,7 @@ import sys
 from collections import defaultdict
 
 sys.path.insert(0, os.path.abspath(os.path.curdir))
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('/'))
 
 import saiunit
 
@@ -42,13 +42,13 @@ list_functions(saiunit)
 
 # base directory
 cur_dir = os.path.abspath(os.path.curdir)
-saiunit_dir = os.path.abspath(os.path.join(cur_dir, '../'))
+saiunit_dir = os.path.abspath(os.path.join(cur_dir, './'))
 py_files = glob.glob(os.path.join(saiunit_dir, 'saiunit', '**', '*.py'), recursive=True)
 
 
 # def create_brainunit_package():
 # read template
-with open(os.path.join(cur_dir, 'pyfile.template'), 'r') as f:
+with open(os.path.join(cur_dir, 'brainunit/pyfile.template'), 'r') as f:
     template = f.read()
 
 # create '__init__.py' file
@@ -57,9 +57,9 @@ for file in py_files:
     su_path = su_path.replace('\\', '/')
     bu_path = su_path.replace('saiunit', 'brainunit')
     filename = filename.replace('\\', '/')
-    os.makedirs(bu_path, exist_ok=True)
+    os.makedirs(f'brainunit/{bu_path}', exist_ok=True)
     if filename == '__init__.py':
-        shutil.copyfile(file, os.path.join(bu_path, filename))
+        shutil.copyfile(file, os.path.join('brainunit', bu_path, filename))
 
 # create 'a.py' file
 for path, names in paths.items():
@@ -70,19 +70,19 @@ for path, names in paths.items():
         continue
 
     names = [f'{name} as {name}' for name in names]
-    with open(f'{bu_path}.py', 'w') as file:
+    with open(f'brainunit/{bu_path}.py', 'w') as file:
         file.write(template.format(path=path, functions=",\n    ".join(names)))
 
 
 # def create_brainunit_setup():
 # pyproject
-with open(os.path.join(cur_dir, 'pyproject.toml.template'), 'r') as f:
+with open(os.path.join(cur_dir, 'brainunit/pyproject.toml.template'), 'r') as f:
     pyproject = f.read()
-with open(os.path.join(cur_dir, 'pyproject.toml'), 'w') as f:
+with open(os.path.join(cur_dir, 'brainunit/pyproject.toml'), 'w') as f:
     f.write(pyproject.replace('saiunit==', f'saiunit=={ saiunit.__version__}'))
 
 # setup
-with open(os.path.join(cur_dir, 'setup.py.template'), 'r') as f:
+with open(os.path.join(cur_dir, 'brainunit/setup.py.template'), 'r') as f:
     setup = f.read()
-with open(os.path.join(cur_dir, 'setup.py'), 'w') as f:
+with open(os.path.join(cur_dir, 'brainunit/setup.py'), 'w') as f:
     f.write(setup.replace('saiunit==', f'saiunit=={ saiunit.__version__}'))
