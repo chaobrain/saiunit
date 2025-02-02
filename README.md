@@ -1,10 +1,10 @@
 
 
-# `SaiUnit`: Enabling Unit-aware Computations for AI-driven Scientific Computing
+# `SAIUnit`: Enabling Unit-aware Computations for AI-driven Scientific Computing
 
 
 <p align="center">
-  	<img alt="Header image of SaiUnit." src="https://raw.githubusercontent.com/chaobrain/saiunit/main/docs/_static/logo.png" width=80%>
+  	<img alt="Header image of SAIUnit." src="https://raw.githubusercontent.com/chaobrain/saiunit/main/docs/_static/logo.png" width=80%>
 </p> 
 
 
