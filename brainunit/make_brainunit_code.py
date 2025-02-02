@@ -70,7 +70,7 @@ for path, names in paths.items():
         continue
 
     names = [f'{name} as {name}' for name in names]
-    with open((bu_path + '.py'), 'w') as file:
+    with open(f'{bu_path}.py', 'w') as file:
         file.write(template.format(path=path, functions=",\n    ".join(names)))
 
 
