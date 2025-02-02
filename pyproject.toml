@@ -5,9 +5,13 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 exclude = [
-    "docs*", "build*", "dist*", "dev*",
-    "brainunit.egg-info*", "brainunit/__pycache__*",
-    "brainunit/__init__.py"
+    "docs*",
+    "build*",
+    "dist*",
+    "dev*",
+    "saiunit.egg-info*",
+    "saiunit/__pycache__*",
+    "saiunit/__init__.py"
 ]
 
 
@@ -16,12 +20,12 @@ universal = true
 
 
 [project]
-name = "brainunit"
-description = "Physical Units and Unit-aware Mathematical System in JAX"
+name = "saiunit"
+description = "Enabling Unit-aware Computations for AI-driven Scientific Computing."
 readme = 'README.md'
 license = { text = 'Apache-2.0 license' }
 requires-python = '>=3.9'
-authors = [{ name = 'BrainUnit Developers', email = 'chao.brain@qq.com' }]
+authors = [{ name = 'SaiUnit Developers', email = 'chao.brain@qq.com' }]
 classifiers = [
     'Natural Language :: English',
     'Operating System :: OS Independent',
@@ -33,6 +37,7 @@ classifiers = [
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
     'License :: OSI Approved :: Apache Software License',
     'Programming Language :: Python',
     'Topic :: Scientific/Engineering :: Bio-Informatics',
@@ -54,11 +59,11 @@ dependencies = [
 dynamic = ['version']
 
 [tool.flit.module]
-name = "brainunit"
+name = "saiunit"
 
 [project.urls]
-homepage = 'http://github.com/chaobrain/brainunit'
-repository = 'http://github.com/chaobrain/brainunit'
+homepage = 'http://github.com/chaobrain/saiunit'
+repository = 'http://github.com/chaobrain/saiunit'
 
 [project.optional-dependencies]
 testing = [

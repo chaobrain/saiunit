@@ -33,7 +33,7 @@ import shutil
 sys.path.insert(0, os.path.abspath(os.path.curdir))
 sys.path.insert(0, os.path.abspath('../'))
 
-import brainunit
+import saiunit
 import auto_generater
 auto_generater.main()
 
@@ -50,12 +50,12 @@ for source, dest in changelogs:
 
 # -- Project information -----------------------------------------------------
 
-project = 'brainunit'
-copyright = '2024, brainunit'
+project = 'saiunit'
+copyright = '2024, saiunit'
 author = 'BDP Ecosystem'
 
 # The full version, including alpha/beta/rc tags
-release = brainunit.__version__
+release = saiunit.__version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -114,11 +114,11 @@ myst_enable_extensions = [
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = "sphinx_book_theme"
-html_logo = "_static/brainunit.png"
-html_title = "brainunit"
+html_logo = "_static/saiunit.png"
+html_title = "saiunit"
 html_copy_source = True
 html_sourcelink_suffix = ""
-html_favicon = "_static/brainunit.png"
+html_favicon = "_static/saiunit.png"
 html_last_updated_fmt = ""
 
 # Add any paths that contain custom static files (such as style sheets) here,

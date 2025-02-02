@@ -50,7 +50,7 @@ jobs:
           pip install . --no-cache-dir
       - name: Test with pytest
         run: |
-          pytest brainunit/
+          pytest saiunit/
 
 
   test_macos:
@@ -80,7 +80,7 @@ jobs:
           pip install .
       - name: Test with pytest
         run: |
-          pytest brainunit/
+          pytest saiunit/
 
 
   test_windows:
@@ -110,4 +110,4 @@ jobs:
           pip install .  --no-cache-dir
       - name: Test with pytest
         run: |
-          pytest brainunit/ -p no:faulthandler
+          pytest saiunit/ -p no:faulthandler
