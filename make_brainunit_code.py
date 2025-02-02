@@ -60,7 +60,7 @@ def make(root_dir):
         su_path = su_path.replace('\\', '/')
         bu_path = su_path.replace('saiunit', 'brainunit')
         filename = filename.replace('\\', '/')
-        os.makedirs(f'brainunit/{bu_path}', exist_ok=True)
+        os.makedirs(os.path.join(brainunit_dir, f'brainunit/{bu_path}'), exist_ok=True)
         if filename == '__init__.py':
             shutil.copyfile(file, os.path.join('brainunit', bu_path, filename))
 
@@ -95,4 +95,3 @@ def make(root_dir):
 
 if __name__ == '__main__':
     make('.')
-
