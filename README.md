@@ -18,7 +18,7 @@
 
 ## Motivation
 
-[SAIUnit](https://github.com/chaobrain/saiunit) is designed to provide physical units and unit-aware mathematical systems within JAX, specifically tailored for **S**cientific **AI**. In this context, Scientific AI refers to the use of AI models or tools to advance scientific computations. SAIUnit evolves from our [BrainUnit](https://github.com/chaobrain/saiunit), a framework originally developed for brain dynamics modeling, extending its capabilities to support a broader range of scientific computing applications. SAIUnit is committed to providing rigorious  and automatic physical unit conversion and analysis for general scientific computing and AI4science scenarios. 
+[SAIUnit](https://github.com/chaobrain/saiunit) (/saɪ ˈjuːnɪt/) is designed to provide physical units and unit-aware mathematical systems tailored for **S**cientific **AI** within JAX. In this context, Scientific AI refers to the use of AI models or tools to advance scientific computations. SAIUnit evolves from our [BrainUnit](https://github.com/chaobrain/saiunit), a unit framework originally developed for brain dynamics modeling, extending its capabilities to support a broader range of scientific computing applications. SAIUnit is committed to providing rigorious and automatic physical unit conversion and analysis system for general AI-driven scientific computing. 
 
 
 
@@ -31,8 +31,6 @@ Compared to existing unit libraries, such as [Quantities](https://github.com/pyt
 - Deep integration with JAX, providing comprehensive support for modern AI framework features including automatic differentiation (autograd), just-in-time compilation (JIT), vectorization, and parallel computation
 - Unit conversion and analysis are performed at compilation time, resulting in zero runtime overhead
 - Strict physical unit type checking and dimensional inference system, detecting unit inconsistencies during compilation
-
-These features establish SAIUnit as a reliable physical unit handling solution for scientific computing and AI4science applications.
 
 
 ```mermaid
@@ -48,6 +46,8 @@ graph TD
     D --> D3[Vectorization]
     D --> D4[Parallelization]
 ```
+
+We hope these features establish SAIUnit as a reliable physical unit handling solution for general AI-driven scientific computing scenarios.
 
 A quick example:
 
@@ -73,13 +73,14 @@ jax.jit(f)(x)
 
 # vmap
 jax.vmap(f)(u.math.arange(0. * u.mV, 10. * u.mV, 1. * u.mV))
-# [out]  ArrayImpl([  0.,   1.,   8.,  27.,  64., 125., 216., 343., 512., 729.],
-#                  dtype=float32) * mvolt3
+# [out]  ArrayImpl([  0.,   1.,   8.,  27.,  64., 125., 216., 343., 512., 729.]) * mvolt3
 ```
 
 
 
 ## Installation
+
+``saiunit`` has been well tested on ``python>=3.9`` + ``jax>=0.4.30`` environments, and can be installed on Windows, Linux, and MacOS.
 
 You can install ``saiunit`` via pip:
 
@@ -87,7 +88,6 @@ You can install ``saiunit`` via pip:
 pip install saiunit --upgrade
 ```
 
-``saiunit`` has been well tested on ``jax>=0.4.30``, and can be installed on Windows, Linux, and MacOS.
 
 
 
@@ -100,7 +100,7 @@ The official documentation is hosted on Read the Docs: [https://saiunit.readthed
 
 ## Ecosystem
 
-`SAIUnit` has been deeply integrated into following diverse projects, such as:
+`saiunit` has been deeply integrated into following diverse projects, such as:
 
 - [``brainstate``](https://github.com/chaobrain/brainstate): A State-based Transformation System for Program Compilation and Augmentation
 - [``braintaichi``](https://github.com/chaobrain/braintaichi): Leveraging Taichi Lang to customize brain dynamics operators
