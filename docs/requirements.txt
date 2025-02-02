@@ -1,4 +1,7 @@
--r requirements.txt
+numpy
+jax
+jaxlib
+typing_extensions
 matplotlib
 brainstate
 
