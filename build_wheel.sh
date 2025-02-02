@@ -1,12 +1,12 @@
 # build SAIUnit
 python setup.py bdist_wheel
-cd dist/
+cd ./dist/
 twine upload saiunit*
 
 # build BrainUnit
-cd ./brainunit
 python make_brainunit_code.py
+cd ./brainunit
 python setup.py bdist_wheel
-cd dist/
+cd ./dist/
 twine upload brainunit*
 
