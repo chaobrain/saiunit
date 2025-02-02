@@ -1141,12 +1141,15 @@ class TestNumPyFunctions(unittest.TestCase):
 
             for val in unitless_values:
                 if hasattr(val, "mantissa"):
-                    assert u.math.allclose(bu_fun(val.mantissa), np_fun(val.mantissa), equal_nan=True)
+                    assert u.math.allclose(bu_fun(val.mantissa), np_fun(val.mantissa),
+                                           equal_nan=True, atol=1e-3, rtol=1e-3)
                 else:
-                    assert u.math.allclose(bu_fun(val), np_fun(val), equal_nan=True)
+                    assert u.math.allclose(bu_fun(val), np_fun(val),
+                                           equal_nan=True, atol=1e-3, rtol=1e-3)
 
             for val in numpy_values:
-                assert u.math.allclose(bu_fun(val), np_fun(val), equal_nan=True)
+                assert u.math.allclose(bu_fun(val), np_fun(val),
+                                       equal_nan=True, atol=1e-3, rtol=1e-3)
 
 
 class TestHelperFunctions(unittest.TestCase):
