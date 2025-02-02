@@ -1,8 +1,3 @@
-
-
-# `SAIUnit`: Enabling Unit-aware Computations for AI-driven Scientific Computing
-
-
 <p align="center">
   	<img alt="Header image of SAIUnit." src="https://raw.githubusercontent.com/chaobrain/saiunit/main/docs/_static/logo.png" width=80%>
 </p> 
@@ -23,29 +18,26 @@
 
 ## Motivation
 
+[SAIUnit](https://github.com/chaobrain/saiunit) is designed to provide physical units and unit-aware mathematical systems within JAX, specifically tailored for **S**cientific **AI**. In this context, Scientific AI refers to the use of AI models or tools to advance scientific computations. SAIUnit evolves from our [BrainUnit](https://github.com/chaobrain/saiunit), a framework originally developed for brain dynamics modeling, extending its capabilities to support a broader range of scientific computing applications. SAIUnit is committed to providing rigorious  and automatic physical unit conversion and analysis for general scientific computing and AI4science scenarios. 
 
-[``saiunit``](https://github.com/chaobrain/saiunit) provides physical units and unit-aware mathematical system in JAX for brain dynamics and AI4Science. 
-
-It is initially designed to enable unit-aware computations in brain dynamics modeling (see our [ecosystem](https://ecosystem-for-brain-dynamics.readthedocs.io/)).
-
-However, its features and capacities can be applied to general domains in scientific computing and AI for science. 
-We also provide ample examples and tutorials to help users integrate ``saiunit`` into their projects 
-(see [Unit-aware computation ecosystem](#unit-aware-computation-ecosystem) in the below).
 
 
 ## Features
 
+Compared to existing unit libraries, such as [Quantities](https://github.com/python-quantities/python-quantities) and [Pint](https://github.com/hgrecco/pint), SAIUnit introduces a rigorous physical unit system specifically designed to support AI computations (e.g., automatic differentiation, just-in-time compilation, and parallelization). Its unique advantages include:
 
-The uniqueness of ``saiunit`` lies in that it brings physical units handling and AI-driven computation together in a seamless way:
+- Integration of over 2,000 commonly used physical units and constants
+- Implementation of more than 500 unit-aware mathematical functions
+- Deep integration with JAX, providing comprehensive support for modern AI framework features including automatic differentiation (autograd), just-in-time compilation (JIT), vectorization, and parallel computation
+- Unit conversion and analysis are performed at compilation time, resulting in zero runtime overhead
+- Strict physical unit type checking and dimensional inference system, detecting unit inconsistencies during compilation
 
-- It provides over 2,000 commonly used physical units and constants.
-- It implements over 500 unit-aware mathematical functions.
-- Its physical units and unit-aware functions are fully compatible with JAX, including autograd, JIT, vecterization, parallelization, and others.
+These features establish SAIUnit as a reliable physical unit handling solution for scientific computing and AI4science applications.
 
 
 ```mermaid
 graph TD
-    A[saiunit] --> B[Physical Units]
+    A[SAIUnit] --> B[Physical Units]
     A --> C[Mathematical Functions]
     A --> D[JAX Integration]
     B --> B1[2000+ Units]
@@ -95,7 +87,7 @@ You can install ``saiunit`` via pip:
 pip install saiunit --upgrade
 ```
 
-``saiunit`` has been well tested on ``jax>=0.4.30``, and can be used in Windows, Linux, and MacOS.
+``saiunit`` has been well tested on ``jax>=0.4.30``, and can be installed on Windows, Linux, and MacOS.
 
 
 
@@ -104,10 +96,11 @@ pip install saiunit --upgrade
 The official documentation is hosted on Read the Docs: [https://saiunit.readthedocs.io](https://saiunit.readthedocs.io)
 
 
-## Unit-aware computation ecosystem
 
 
-`saiunit` has been deeply integrated into following diverse projects, such as:
+## Ecosystem
+
+`SAIUnit` has been deeply integrated into following diverse projects, such as:
 
 - [``brainstate``](https://github.com/chaobrain/brainstate): A State-based Transformation System for Program Compilation and Augmentation
 - [``braintaichi``](https://github.com/chaobrain/braintaichi): Leveraging Taichi Lang to customize brain dynamics operators
@@ -124,8 +117,3 @@ Other unofficial projects include:
 - ...
 
 
-
-## See also the BDP ecosystem
-
-We are building the [brain dynamics programming ecosystem](https://ecosystem-for-brain-dynamics.readthedocs.io/). 
-[``saiunit``](https://github.com/chaobrain/saiunit) has been deeply integrated into our BDP ecosystem.
