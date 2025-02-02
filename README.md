@@ -1,41 +1,42 @@
 
 
-# ``BrainUnit``: physical units and unit-aware mathematical system for brain dynamics and AI4Science
+# `SaiUnit`: Enabling Unit-aware Computations for AI-driven Scientific Computing
+
 
 <p align="center">
-  	<img alt="Header image of brainunit." src="https://github.com/chaobrain/brainunit/blob/main/docs/_static/brainunit.png" width=50%>
+  	<img alt="Header image of SaiUnit." src="https://raw.githubusercontent.com/chaobrain/saiunit/main/docs/_static/logo.png" width=80%>
 </p> 
 
 
 
 <p align="center">
-	<a href="https://pypi.org/project/brainunit/"><img alt="Supported Python Version" src="https://img.shields.io/pypi/pyversions/brainunit"></a>
-	<a href="https://github.com/chaobrain/brainunit/blob/main/LICENSE"><img alt="LICENSE" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>
-    <a href='https://brainunit.readthedocs.io/en/latest/?badge=latest'>
-        <img src='https://readthedocs.org/projects/brainunit/badge/?version=latest' alt='Documentation Status' />
+	<a href="https://pypi.org/project/saiunit/"><img alt="Supported Python Version" src="https://img.shields.io/pypi/pyversions/saiunit"></a>
+	<a href="https://github.com/chaobrain/saiunit/blob/main/LICENSE"><img alt="LICENSE" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>
+    <a href='https://saiunit.readthedocs.io/en/latest/?badge=latest'>
+        <img src='https://readthedocs.org/projects/saiunit/badge/?version=latest' alt='Documentation Status' />
     </a>  	
-    <a href="https://badge.fury.io/py/brainunit"><img alt="PyPI version" src="https://badge.fury.io/py/brainunit.svg"></a>
-    <a href="https://github.com/chaobrain/brainunit/actions/workflows/CI.yml"><img alt="Continuous Integration" src="https://github.com/chaobrain/brainunit/actions/workflows/CI.yml/badge.svg"></a>
-    <a href="https://pepy.tech/projects/brainunit"><img src="https://static.pepy.tech/badge/brainunit" alt="PyPI Downloads"></a>
+    <a href="https://badge.fury.io/py/saiunit"><img alt="PyPI version" src="https://badge.fury.io/py/saiunit.svg"></a>
+    <a href="https://github.com/chaobrain/saiunit/actions/workflows/CI.yml"><img alt="Continuous Integration" src="https://github.com/chaobrain/saiunit/actions/workflows/CI.yml/badge.svg"></a>
+    <a href="https://pepy.tech/projects/saiunit"><img src="https://static.pepy.tech/badge/saiunit" alt="PyPI Downloads"></a>
 </p>
 
 
 ## Motivation
 
 
-[``brainunit``](https://github.com/chaobrain/brainunit) provides physical units and unit-aware mathematical system in JAX for brain dynamics and AI4Science. 
+[``saiunit``](https://github.com/chaobrain/saiunit) provides physical units and unit-aware mathematical system in JAX for brain dynamics and AI4Science. 
 
 It is initially designed to enable unit-aware computations in brain dynamics modeling (see our [ecosystem](https://ecosystem-for-brain-dynamics.readthedocs.io/)).
 
 However, its features and capacities can be applied to general domains in scientific computing and AI for science. 
-We also provide ample examples and tutorials to help users integrate ``brainunit`` into their projects 
+We also provide ample examples and tutorials to help users integrate ``saiunit`` into their projects 
 (see [Unit-aware computation ecosystem](#unit-aware-computation-ecosystem) in the below).
 
 
 ## Features
 
 
-The uniqueness of ``Brainunit`` lies in that it brings physical units handling and AI-driven computation together in a seamless way:
+The uniqueness of ``saiunit`` lies in that it brings physical units handling and AI-driven computation together in a seamless way:
 
 - It provides over 2,000 commonly used physical units and constants.
 - It implements over 500 unit-aware mathematical functions.
@@ -44,7 +45,7 @@ The uniqueness of ``Brainunit`` lies in that it brings physical units handling a
 
 ```mermaid
 graph TD
-    A[BrainUnit] --> B[Physical Units]
+    A[saiunit] --> B[Physical Units]
     A --> C[Mathematical Functions]
     A --> D[JAX Integration]
     B --> B1[2000+ Units]
@@ -60,7 +61,7 @@ A quick example:
 
 ```python
 
-import brainunit as u
+import saiunit as u
 
 # Define a physical quantity
 x = 3.0 * u.meter
@@ -88,21 +89,21 @@ jax.vmap(f)(u.math.arange(0. * u.mV, 10. * u.mV, 1. * u.mV))
 
 ## Installation
 
-You can install ``brainunit`` via pip:
+You can install ``saiunit`` via pip:
 
 ```bash
-pip install brainunit --upgrade
+pip install saiunit --upgrade
 ```
 
 ## Documentation
 
-The official documentation is hosted on Read the Docs: [https://brainunit.readthedocs.io](https://brainunit.readthedocs.io)
+The official documentation is hosted on Read the Docs: [https://saiunit.readthedocs.io](https://saiunit.readthedocs.io)
 
 
 ## Unit-aware computation ecosystem
 
 
-`brainunit` has been deeply integrated into following diverse projects, such as:
+`saiunit` has been deeply integrated into following diverse projects, such as:
 
 - [``brainstate``](https://github.com/chaobrain/brainstate): A State-based Transformation System for Program Compilation and Augmentation
 - [``braintaichi``](https://github.com/chaobrain/braintaichi): Leveraging Taichi Lang to customize brain dynamics operators
@@ -123,4 +124,4 @@ Other unofficial projects include:
 ## See also the BDP ecosystem
 
 We are building the [brain dynamics programming ecosystem](https://ecosystem-for-brain-dynamics.readthedocs.io/). 
-[``brainunit``](https://github.com/chaobrain/brainunit) has been deeply integrated into our BDP ecosystem.
+[``saiunit``](https://github.com/chaobrain/saiunit) has been deeply integrated into our BDP ecosystem.

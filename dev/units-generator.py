@@ -1,7 +1,7 @@
 import os
 
 curdir, _ = os.path.split(__file__)
-units_fname = os.path.normpath(os.path.join(curdir, '../brainunit/_unit_common.py'))
+units_fname = os.path.normpath(os.path.join(curdir, '../saiunit/_unit_common.py'))
 
 _siprefixes = {
   "y": 1e-24,

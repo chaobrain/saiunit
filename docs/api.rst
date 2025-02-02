@@ -5,6 +5,6 @@ API Documentation
    :maxdepth: 1
 
    apis/changelog.md
-   apis/brainunit.rst
-   apis/brainunit.math.rst
+   apis/saiunit.rst
+   apis/saiunit.math.rst
 

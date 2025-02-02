@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a new idea or improvement for ``brainunit``
+about: Suggest a new idea or improvement for ``saiunit``
 title: ''
 labels: enhancement
 assignees: ''

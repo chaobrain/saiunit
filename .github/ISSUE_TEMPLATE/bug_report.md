@@ -13,7 +13,7 @@ Please:
 - [ ] Provide a complete example of how to reproduce the bug, wrapped in triple backticks like this:
 
 ```python
-import brainunit as bu
+import saiunit as u
 ```
 
 - [ ] If applicable, include full error messages/tracebacks.

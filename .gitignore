@@ -220,10 +220,10 @@ cython_debug/
 /my_tests/
 /examples/dynamics_simulation/Joglekar_2018_data/
 /docs/apis/deprecated/generated/
-/docs/apis/brainunit.fft.rst
-/docs/apis/brainunit.lax.rst
-/docs/apis/brainunit.linalg.rst
-/docs/apis/brainunit.math.rst
+/docs/apis/saiunit.fft.rst
+/docs/apis/saiunit.lax.rst
+/docs/apis/saiunit.linalg.rst
+/docs/apis/saiunit.math.rst
 /docs/apis/changelog.md
 /dist-hist/
 /dist-hist/

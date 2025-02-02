@@ -1,7 +1,7 @@
-``brainunit`` documentation
+``saiunit`` documentation
 ===========================
 
-`brainunit <https://github.com/chaobrain/brainunit>`_ provides physical units and unit-aware mathematical system in JAX for brain dynamics and AI4Science.
+`saiunit <https://github.com/chaobrain/saiunit>`_ provides physical units and unit-aware mathematical system in JAX for brain dynamics and AI4Science.
 
 
 
@@ -18,33 +18,33 @@ Installation
 
        .. code-block:: bash
 
-          pip install -U brainunit[cpu]
+          pip install -U saiunit[cpu]
 
     .. tab-item:: GPU (CUDA 12.0)
 
        .. code-block:: bash
 
-          pip install -U brainunit[cuda12]
+          pip install -U saiunit[cuda12]
 
     .. tab-item:: TPU
 
        .. code-block:: bash
 
-          pip install -U brainunit[tpu] -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
+          pip install -U saiunit[tpu] -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
 
 ----
 
 
 Quick Start
 ^^^^^^^^^^^
-Most users of the ``brainunit`` package will work with ``Quantity``: the combination of
+Most users of the ``saiunit`` package will work with ``Quantity``: the combination of
 a value and a unit. The most convenient way to create a ``Quantity`` is to multiply or
 divide a value by one of the built-in units. It works with scalars, sequences,
 and ``numpy`` or ``jax`` arrays.
 
 .. code-block:: python
 
-    import brainunit as u
+    import saiunit as u
     61.8 * u.second
 
 .. code-block:: text
@@ -189,14 +189,14 @@ We are building the `brain dynamics programming ecosystem <https://ecosystem-for
    :caption: API Documentation
 
    apis/changelog.md
-   apis/brainunit.rst
-   apis/brainunit.autograd.rst
-   apis/brainunit.math.rst
-   apis/brainunit.linalg.rst
-   apis/brainunit.lax.rst
-   apis/brainunit.fft.rst
-   apis/brainunit.sparse.rst
-   apis/brainunit.constants.rst
+   apis/saiunit.rst
+   apis/saiunit.autograd.rst
+   apis/saiunit.math.rst
+   apis/saiunit.linalg.rst
+   apis/saiunit.lax.rst
+   apis/saiunit.fft.rst
+   apis/saiunit.sparse.rst
+   apis/saiunit.constants.rst
 
 
 
