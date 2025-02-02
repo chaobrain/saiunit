@@ -18,7 +18,7 @@
 
 ## Motivation
 
-[SAIUnit](https://github.com/chaobrain/saiunit) (/saɪ ˈjuːnɪt/) is designed to provide physical units and unit-aware mathematical systems tailored for **S**cientific **AI** within JAX. In this context, Scientific AI refers to the use of AI models or tools to advance scientific computations. SAIUnit evolves from our [BrainUnit](https://github.com/chaobrain/saiunit), a unit framework originally developed for brain dynamics modeling, extending its capabilities to support a broader range of scientific computing applications. SAIUnit is committed to providing rigorious and automatic physical unit conversion and analysis system for general AI-driven scientific computing. 
+[SAIUnit](https://github.com/chaobrain/saiunit) (/saɪ ˈjuːnɪt/) is designed to provide physical units and unit-aware mathematical systems tailored for **S**cientific **AI** within JAX. In this context, Scientific AI refers to the use of AI models or tools to advance scientific computations. SAIUnit evolves from our [BrainUnit](https://github.com/chaobrain/brainunit), a unit framework originally developed for brain dynamics modeling, extending its capabilities to support a broader range of scientific computing applications. SAIUnit is committed to providing rigorious and automatic physical unit conversion and analysis system for general AI-driven scientific computing. 
 
 
 
@@ -115,5 +115,4 @@ Other unofficial projects include:
 - [``jax-md``](https://github.com/Routhleck/jax-md): Differentiable Molecular Dynamics in JAX
 - [``Catalax``](https://github.com/Routhleck/Catalax): JAX-based framework to model biological systems
 - ...
-
 

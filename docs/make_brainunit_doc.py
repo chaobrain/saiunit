@@ -16,26 +16,15 @@
 # -*- coding: utf-8 -*-
 
 import glob
-import inspect
 import os
-import shutil
-import sys
-from collections import defaultdict
-
-
-import os
-import glob
-
 
 # base directory
 cur_dir = os.path.abspath(os.path.curdir)
 saiunit_dir = os.path.abspath(os.path.join(cur_dir, '../'))
 py_files = glob.glob(os.path.join(saiunit_dir, 'saiunit', '**', '*.py'), recursive=True)
 
-
-
 # Define the source and destination directories
-source_dir = os.path.abspath(os.path.join(cur_dir, '../docs/'))
+source_dir = os.path.abspath(os.path.join(cur_dir, './docs/'))
 destination_dir = os.path.abspath(os.path.join(cur_dir, './docs/'))
 
 # Create the destination directory if it doesn't exist
@@ -43,7 +32,6 @@ os.makedirs(destination_dir, exist_ok=True)
 
 # Define the file extensions to process
 file_extensions = ['.md', '.rst', '.ipynb']
-
 
 # def create_brainunit_doc():
 # Iterate over the files in the source directory
@@ -71,4 +59,3 @@ for ext in file_extensions:
             file.write(modified_content)
 
         print(destination_path)
-
