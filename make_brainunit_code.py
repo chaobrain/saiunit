@@ -62,7 +62,7 @@ def make(root_dir):
         filename = filename.replace('\\', '/')
         os.makedirs(os.path.join(brainunit_dir, f'brainunit/{bu_path}'), exist_ok=True)
         if filename == '__init__.py':
-            shutil.copyfile(file, os.path.join('brainunit', bu_path, filename))
+            shutil.copyfile(file, os.path.join(brainunit_dir, 'brainunit', bu_path, filename))
 
     # create 'a.py' file
     for path, names in paths.items():
