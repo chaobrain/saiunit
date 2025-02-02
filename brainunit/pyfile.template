@@ -15,8 +15,9 @@
 
 # -*- coding: utf-8 -*-
 
-from {path} import (
-    {functions}
-)
+from {path} import *
 
-
+try:
+    from {path} import __all__
+except ImportError:
+    pass

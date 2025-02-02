@@ -1,7 +1,20 @@
 ``saiunit`` documentation
 ===========================
 
-`saiunit <https://github.com/chaobrain/saiunit>`_ provides physical units and unit-aware mathematical system in JAX for brain dynamics and AI4Science.
+`saiunit <https://github.com/chaobrain/saiunit>`_ provides physical units and unit-aware mathematical system in JAX for general AI-driven scientific computing.
+
+The core features of `saiunit` include:
+
+- Integration of over 2,000 commonly used physical units and constants
+- Implementation of more than 500 unit-aware mathematical functions
+- Deep integration with JAX, providing comprehensive support for modern AI framework features including automatic differentiation (autograd), just-in-time compilation (JIT), vectorization, and parallel computation
+- Unit conversion and analysis are performed at compilation time, resulting in zero runtime overhead
+- Strict physical unit type checking and dimensional inference system, detecting unit inconsistencies during compilation
+
+
+
+
+Compared to existing unit libraries, such as `Quantities <https://github.com/python-quantities/python-quantities>`_ and `Pint <https://github.com/hgrecco/pint>`_ , saiunit introduces a rigorous physical unit system specifically designed to support AI computations (e.g., automatic differentiation, just-in-time compilation, and parallelization).
 
 
 
@@ -136,12 +149,6 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
 
 ----
 
-
-See also the BDP ecosystem
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-We are building the `brain dynamics programming ecosystem <https://ecosystem-for-brain-dynamics.readthedocs.io/>`_.
 
 
 
