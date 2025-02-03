@@ -131,8 +131,8 @@ directly used with dimensionless abstract values
 Therefore, for applications requiring precise unit management, automatic
 dimensional checking, complex unit derivation, and extensibility,
 ``saiunit`` is undoubtedly more powerful and flexible, effectively
-preventing errors and improving code maintainability. This comparative
-analysis have been added to the ``saiunit`` documentation.
+preventing errors and improving code maintainability.
+
 
 What are the system requirements for ``saiunit``?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
