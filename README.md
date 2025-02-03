@@ -88,7 +88,13 @@ You can install ``saiunit`` via pip:
 pip install saiunit --upgrade
 ```
 
+which should install in about 1 minute. If you want to install the latest version from the source, you can clone the repository and install it:
 
+```bash
+git clone https://github.com/chaobrain/saiunit.git
+cd saiunit
+pip install -e .
+```
 
 
 ## Documentation
