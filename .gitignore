@@ -228,7 +228,6 @@ cython_debug/
 /dist-hist/
 /dist-hist/
 /examples/
-/brainunit/brainunit/
 !brainunit/docs/auto_generater.py
 !brainunit/docs/conf.py
 !brainunit/docs/requirements.txt

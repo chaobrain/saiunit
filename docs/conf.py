@@ -40,8 +40,8 @@ import auto_generater
 if package == 'brainunit':
     from make_brainunit_doc import make
     make('../')
-    from make_brainunit_code import make
-    make('../')
+    # from make_brainunit_code import make
+    # make('../')
 
     sys.path.insert(0, os.path.abspath('../brainunit'))
     auto_generater.main('saiunit')

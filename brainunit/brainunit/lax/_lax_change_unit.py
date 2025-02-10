@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2025 BDP Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-from saiunit.fft import *
-from saiunit.fft import __all__
+# -*- coding: utf-8 -*-
+
+from saiunit.lax._lax_change_unit import *
+from saiunit.lax._lax_change_unit import __all__
 

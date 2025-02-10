@@ -5,7 +5,8 @@ cd ./dist/
 cd ../
 
 # build BrainUnit
-python make_brainunit_code.py
+#python make_brainunit_code.py
+python make_brainunit_setup.py
 cd ./brainunit
 python setup.py bdist_wheel
 cd ./dist/

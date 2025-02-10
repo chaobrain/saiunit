@@ -79,7 +79,6 @@ def make(root_dir):
     #     with open(filename, 'w') as file:
     #         file.write(template.format(path=path, functions=",\n    ".join(names)))
 
-    # def create_brainunit_setup():
     # pyproject
     with open(os.path.join(brainunit_dir, 'pyproject.toml.template'), 'r') as f:
         pyproject = f.read()

@@ -13,6 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-from saiunit.fft import *
-from saiunit.fft import __all__
+from saiunit._sparse_base import SparseMatrix
+from ._coo import *
+from ._coo import __all__ as __coo_all__
+from ._csr import *
+from ._csr import __all__ as __csr_all__
 
+__all__ = ["SparseMatrix", ] + __coo_all__ + __csr_all__

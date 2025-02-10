@@ -270,48 +270,6 @@ def main(package: str):
 
     assert package in ['brainunit', 'saiunit']
 
-    # _write_module(module_name='saiunit.math._einops',
-    #               automodule='saiunit.math',
-    #               filename='apis/saiunit.math.einops.rst',
-    #               header='Einstein Operations',
-    #               template=True)
-    #
-    # _write_module(module_name='saiunit.math._fun_array_creation',
-    #               automodule='saiunit.math',
-    #               filename='apis/saiunit.math.array-creation.rst',
-    #               header='Array Creation Functions',
-    #               template=True)
-    #
-    # _write_module(module_name='saiunit.math._fun_accept_unitless',
-    #               automodule='saiunit.math',
-    #               filename='apis/saiunit.math.unitless.rst',
-    #               header='Functions that Accepting Unitless',
-    #               template=True)
-    #
-    # _write_module(module_name='saiunit.math._fun_change_unit',
-    #               automodule='saiunit.math',
-    #               filename='apis/saiunit.math.change-unit.rst',
-    #               header='Functions that Changing Unit',
-    #               template=True)
-    #
-    # _write_module(module_name='saiunit.math._fun_keep_unit',
-    #               automodule='saiunit.math',
-    #               filename='apis/saiunit.math.keep-unit.rst',
-    #               header='Functions that Keeping Unit',
-    #               template=True)
-    #
-    # _write_module(module_name='saiunit.math._fun_remove_unit',
-    #               automodule='saiunit.math',
-    #               filename='apis/saiunit.math.remove-unit.rst',
-    #               header='Functions that Removing Unit',
-    #               template=True)
-    #
-    # _write_module(module_name='saiunit.math._misc',
-    #               automodule='saiunit.math',
-    #               filename='apis/saiunit.math.misc.rst',
-    #               header='Other Functions',
-    #               template=True)
-
     module_and_name = [
         ('_activation', 'Activation Functions'),
         ('_alias', 'Unit Processing'),
