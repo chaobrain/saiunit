@@ -56,6 +56,7 @@ def make(root_dir):
             os.makedirs(os.path.dirname(destination_path), exist_ok=True)
 
             # Write the modified content to the destination file
+            destination_path = destination_path.replace('saiunit', 'brainunit')
             with open(destination_path, 'w', encoding='utf-8') as file:
                 file.write(modified_content)
 
