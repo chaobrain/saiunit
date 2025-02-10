@@ -18,7 +18,6 @@ from __future__ import annotations
 import itertools
 import os
 import pickle
-import sys
 import tempfile
 import unittest
 import warnings
@@ -30,7 +29,6 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
-from numpy.ma.core import indices
 from numpy.testing import assert_equal
 
 import saiunit as u
