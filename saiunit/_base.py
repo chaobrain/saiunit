@@ -76,7 +76,6 @@ compat_with_equinox = False
 A = TypeVar('A')
 
 
-
 def compatible_with_equinox(mode: bool = True):
     """
     This function is developed to set the compatibility with equinox.
