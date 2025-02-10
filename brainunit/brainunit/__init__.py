@@ -13,9 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
-__version__ = "0.0.7"
 
-from . import _matplotlib_compat
+import saiunit
+
+__version__ = saiunit.__version__
+
 from . import autograd
 from . import constants
 from . import fft
@@ -30,6 +32,7 @@ from ._celsius import __all__ as _celsius_all
 from ._unit_common import *
 from ._unit_common import __all__ as _common_all
 from ._unit_constants import *
+from ._unit_constants import __all__ as _constants_all
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
 
@@ -45,9 +48,10 @@ __all__ = (
     _common_all +
     _std_units_all +
     _base_all +
+    _constants_all +
     _celsius_all
 )
-del _common_all, _std_units_all, _base_all, _celsius_all, _matplotlib_compat
+del _common_all, _std_units_all, _base_all, _celsius_all, _constants_all, saiunit
 
 # old version compatibility
 avogadro_constant = constants.avogadro

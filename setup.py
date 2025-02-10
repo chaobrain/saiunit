@@ -50,10 +50,10 @@ packages = find_packages(
 setup(
     name='saiunit',
     version=version,
-    description='Physical Units and Unit-aware Mathematical System in JAX',
+    description='Unit-aware computations for scientific AI',
     long_description=README,
     long_description_content_type="text/markdown",
-    author='SaiUnit Developers',
+    author='SAIUnit Developers',
     author_email='chao.brain@qq.com',
     packages=packages,
     python_requires='>=3.9',
