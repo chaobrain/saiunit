@@ -284,7 +284,7 @@ _siprefixes = {
 
 
 def _is_tracer(x):
-    return isinstance(x, (jax.ShapeDtypeStruct, jax.core.ShapedArray, DynamicJaxprTracer))
+    return isinstance(x, (jax.ShapeDtypeStruct, jax.core.ShapedArray, DynamicJaxprTracer, jax.core.Tracer))
 
 
 class Dimension:
@@ -1883,7 +1883,7 @@ class Unit:
 
     def __rdiv__(self, other) -> 'Unit' | Quantity:
         # other / self
-        if is_scalar_type(other) and other == 1:
+        if is_scalar_type(other) and not _is_tracer(other) and other == 1:
             dim = self.dim ** -1
             scale = -self.scale
             factor = 1. / self.factor
