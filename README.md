@@ -103,6 +103,11 @@ The official documentation is hosted on Read the Docs: [https://saiunit.readthed
 
 
 
+## Citation
+
+- Wang, C., He, S., Luo, S. *et al.* Integrating physical units into high-performance AI-driven scientific computing. *Nat Commun* **16**, 3609 (2025). https://doi.org/10.1038/s41467-025-58626-4
+
+
 
 ## Ecosystem
 
