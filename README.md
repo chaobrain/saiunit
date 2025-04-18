@@ -7,7 +7,7 @@
 <p align="center">
 	<a href="https://pypi.org/project/saiunit/"><img alt="Supported Python Version" src="https://img.shields.io/pypi/pyversions/saiunit"></a>
 	<a href="https://github.com/chaobrain/saiunit/blob/main/LICENSE"><img alt="LICENSE" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>
-    <a href='https://saiunit.readthedocs.io/en/latest/?badge=latest'>
+    <a href='https://saiunit.readthedocs.io/?badge=latest'>
         <img src='https://readthedocs.org/projects/saiunit/badge/?version=latest' alt='Documentation Status' />
     </a>  	
     <a href="https://badge.fury.io/py/saiunit"><img alt="PyPI version" src="https://badge.fury.io/py/saiunit.svg"></a>
