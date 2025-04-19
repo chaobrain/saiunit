@@ -130,7 +130,8 @@ def _exprel_v2(x, *, order: int = 2):
 def exprel(
     x: Union[Quantity, jax.typing.ArrayLike],
     *,
-    order: int = 2
+    order: int = 2,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
     Relative error exponential, ``(exp(x) - 1)/x``.
@@ -146,7 +147,7 @@ def exprel(
     Returns:
       ``(exp(x) - 1)/x``, computed element-wise.
     """
-    return _fun_accept_unitless_unary(_exprel_v2, x, order=order)
+    return _fun_accept_unitless_unary(_exprel_v2, x, order=order, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
@@ -1102,6 +1103,7 @@ def ldexp(
 @set_module_as('saiunit.math')
 def bitwise_not(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
     Compute the bit-wise NOT of an array, element-wise.
@@ -1116,12 +1118,13 @@ def bitwise_not(
     out : jax.Array
       Output array.
     """
-    return _fun_accept_unitless_unary(jnp.bitwise_not, x)
+    return _fun_accept_unitless_unary(jnp.bitwise_not, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def invert(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
     Compute bit-wise inversion, or bit-wise NOT, element-wise.
@@ -1136,7 +1139,7 @@ def invert(
     out : jax.Array
       Output array.
     """
-    return _fun_accept_unitless_unary(jnp.invert, x)
+    return _fun_accept_unitless_unary(jnp.invert, x, unit_to_scale=unit_to_scale)
 
 
 # Elementwise bit operations (binary)
