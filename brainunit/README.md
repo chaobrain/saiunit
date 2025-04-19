@@ -10,7 +10,7 @@
 <p align="center">
 	<a href="https://pypi.org/project/brainunit/"><img alt="Supported Python Version" src="https://img.shields.io/pypi/pyversions/brainunit"></a>
 	<a href="https://github.com/chaobrain/brainunit/blob/main/LICENSE"><img alt="LICENSE" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>
-    <a href='https://brainunit.readthedocs.io/en/latest/?badge=latest'>
+    <a href='https://brainunit.readthedocs.io/?badge=latest'>
         <img src='https://readthedocs.org/projects/brainunit/badge/?version=latest' alt='Documentation Status' />
     </a>  	
     <a href="https://badge.fury.io/py/brainunit"><img alt="PyPI version" src="https://badge.fury.io/py/brainunit.svg"></a>
