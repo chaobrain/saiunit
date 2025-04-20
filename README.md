@@ -105,8 +105,16 @@ The official documentation is hosted on Read the Docs: [https://saiunit.readthed
 
 ## Citation
 
-- Wang, C., He, S., Luo, S. *et al.* Integrating physical units into high-performance AI-driven scientific computing. *Nat Commun* **16**, 3609 (2025). https://doi.org/10.1038/s41467-025-58626-4
-
+```bibtex
+@article{Wang2025IntegratingPU,
+  title={Integrating physical units into high-performance AI-driven scientific computing},
+  author={Chaoming Wang and Sichao He and Shouwei Luo and Yuxiang Huan and Si Wu},
+  journal={Nature Communications},
+  year={2025},
+  volume={16},
+  url={https://api.semanticscholar.org/CorpusID:277853734}
+}
+```
 
 
 ## Ecosystem
