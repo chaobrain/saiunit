@@ -92,6 +92,6 @@ Please refer to the [JAX installation guide](https://jax.readthedocs.io/en/lates
 ### How do I create a Quantity in ``saiunit``?
 
 
-Please refer to the documentation on https://brainunit.readthedocs.io/en/latest/physical_units/quantity.html.
+Please refer to the documentation on [https://saiunit.readthedocs.io/physical_units/quantity.html](https://saiunit.readthedocs.io/physical_units/quantity.html).
 
 
