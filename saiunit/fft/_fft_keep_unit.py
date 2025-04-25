@@ -85,7 +85,7 @@ def ifftshift(
     saiunit implementation of :func:`numpy.fft.ifftshift`.
 
     Args:
-        x: N-dimensional array array of frequencies.
+        x: N-dimensional quantity or array of frequencies.
         axes: optional integer or sequence of integers specifying which axes to
             shift. If None (default), then shift all axes.
 
