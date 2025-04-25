@@ -82,6 +82,6 @@ def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
     25.0
 
     """
-    if not isinstance(value, Quantity) and value.unit != kelvin:
+    if not (isinstance(value, Quantity) and value.unit == kelvin):
         raise TypeError("The input value should be a Quantity with kelvin.")
     return value.mantissa - 273.15
