@@ -21,9 +21,8 @@ __all__ = [
     'safe_map',
 ]
 
-
 if jax.__version_info__ < (0, 6, 0):
-    from jax.util import safe_map, safe_zip, unzip2, unzip3, wraps
+    from jax.util import safe_map
 
 else:
 
@@ -33,4 +32,3 @@ else:
         for arg in args[1:]:
             assert len(arg) == n, f'length mismatch: {list(map(len, args))}'
         return list(map(f, *args))
-
