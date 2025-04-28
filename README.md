@@ -112,7 +112,7 @@ The official documentation is hosted on Read the Docs: [https://saiunit.readthed
   journal={Nature Communications},
   year={2025},
   volume={16},
-  url={https://api.semanticscholar.org/CorpusID:277853734}
+  url={https://doi.org/10.1038/s41467-025-58626-4}
 }
 ```
 

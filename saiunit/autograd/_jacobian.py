@@ -20,16 +20,19 @@ from typing import (Sequence, Callable, Any)
 
 import jax
 import numpy as np
-from jax._src.api import (_jvp,
-                          _vjp,
-                          _check_input_dtype_jacrev,
-                          _check_output_dtype_jacrev,
-                          _check_input_dtype_jacfwd,
-                          _check_output_dtype_jacfwd)
+from jax._src.api import (
+    _jvp,
+    _vjp,
+    _check_input_dtype_jacrev,
+    _check_output_dtype_jacrev,
+    _check_input_dtype_jacfwd,
+    _check_output_dtype_jacfwd
+)
 from jax.api_util import argnums_partial
 from jax.extend import linear_util
 
 from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
+from saiunit._compatible_import import safe_map
 from ._misc import _ensure_index, _check_callable
 
 __all__ = [
@@ -354,7 +357,7 @@ def jacfwd(
 
 def _std_basis(pytree):
     leaves, _ = jax.tree.flatten(pytree)
-    ndim = sum(jax.util.safe_map(np.size, leaves))
+    ndim = sum(safe_map(np.size, leaves))
     dtype = jax.dtypes.result_type(*leaves)
     flat_basis = jax.numpy.eye(ndim, dtype=dtype)
     return _unravel_array_into_pytree(pytree, 1, flat_basis)
@@ -372,7 +375,7 @@ def _jacfwd_unravel(input_pytree, arr, is_leaf=None):
     leaves, treedef = jax.tree.flatten(input_pytree, is_leaf=is_leaf)
     axis = axis % arr.ndim
     shapes = [arr.shape[:axis] + np.shape(l) + arr.shape[axis + 1:] for l in leaves]
-    parts = _split(arr, np.cumsum(jax.util.safe_map(np.size, leaves[:-1])), axis)
+    parts = _split(arr, np.cumsum(safe_map(np.size, leaves[:-1])), axis)
     reshaped_parts = [x.reshape(shape) for x, shape in zip(parts, shapes)]
     unit_reshaped_parts = [
         maybe_decimal(
@@ -403,7 +406,7 @@ def _unravel_array_into_pytree(pytree, axis, arr, is_leaf=None):
     leaves, treedef = jax.tree.flatten(pytree, is_leaf=is_leaf)
     axis = axis % arr.ndim
     shapes = [arr.shape[:axis] + np.shape(l) + arr.shape[axis + 1:] for l in leaves]
-    parts = _split(arr, np.cumsum(jax.util.safe_map(np.size, leaves[:-1])), axis)
+    parts = _split(arr, np.cumsum(safe_map(np.size, leaves[:-1])), axis)
     reshaped_parts = [x.reshape(shape) for x, shape in zip(parts, shapes)]
     return jax.tree.unflatten(treedef, reshaped_parts)
 
