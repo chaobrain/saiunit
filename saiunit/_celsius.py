@@ -38,6 +38,18 @@ def celsius2kelvin(celsius: jax.typing.ArrayLike) -> Quantity:
     -------
       Quantity: The converted value.
 
+    Raises
+    ------
+    TypeError
+      If the input value is a Quantity.
+
+    Examples
+    --------
+    >>> from saiunit import kelvin, celsius2kelvin
+    >>> celsius = 25.0
+    >>> celsius2kelvin(celsius)
+    298.15 * kelvin
+
     """
     if isinstance(celsius, Quantity):
         raise TypeError("The input value should be not be a Quantity.")
@@ -57,7 +69,19 @@ def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
     -------
       Quantity: The converted value.
 
+    Raises
+    ------
+    TypeError
+      If the input value is not a Quantity with kelvin unit.
+
+    Examples
+    --------
+    >>> from saiunit import kelvin, kelvin2celsius
+    >>> value = 298.15 * kelvin
+    >>> kelvin2celsius(value)
+    25.0
+
     """
-    if not isinstance(value, Quantity) and value.unit != kelvin:
+    if not (isinstance(value, Quantity) and value.unit == kelvin):
         raise TypeError("The input value should be a Quantity with kelvin.")
     return value.mantissa - 273.15

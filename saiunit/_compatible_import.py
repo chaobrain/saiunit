@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2025 BDP Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,22 @@
 # limitations under the License.
 # ==============================================================================
 
-from ._linalg_change_unit import *
-from ._linalg_change_unit import __all__ as _linalg_change_unit_all
-from ._linalg_keep_unit import *
-from ._linalg_keep_unit import __all__ as _linalg_keep_unit_all
-from ._linalg_remove_unit import *
-from ._linalg_remove_unit import __all__ as _linalg_remove_unit_all
+# -*- coding: utf-8 -*-
 
-__all__ = (_linalg_change_unit_all +
-              _linalg_keep_unit_all +
-           _linalg_remove_unit_all)
+import jax
 
-del (_linalg_change_unit_all,
-     _linalg_keep_unit_all,
-     _linalg_remove_unit_all)
+__all__ = [
+    'safe_map',
+]
+
+if jax.__version_info__ < (0, 6, 0):
+    from jax.util import safe_map
+
+else:
+
+    def safe_map(f, *args):
+        args = list(map(list, args))
+        n = len(args[0])
+        for arg in args[1:]:
+            assert len(arg) == n, f'length mismatch: {list(map(len, args))}'
+        return list(map(f, *args))

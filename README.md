@@ -7,7 +7,7 @@
 <p align="center">
 	<a href="https://pypi.org/project/saiunit/"><img alt="Supported Python Version" src="https://img.shields.io/pypi/pyversions/saiunit"></a>
 	<a href="https://github.com/chaobrain/saiunit/blob/main/LICENSE"><img alt="LICENSE" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"></a>
-    <a href='https://saiunit.readthedocs.io/en/latest/?badge=latest'>
+    <a href='https://saiunit.readthedocs.io/?badge=latest'>
         <img src='https://readthedocs.org/projects/saiunit/badge/?version=latest' alt='Documentation Status' />
     </a>  	
     <a href="https://badge.fury.io/py/saiunit"><img alt="PyPI version" src="https://badge.fury.io/py/saiunit.svg"></a>
@@ -18,7 +18,7 @@
 
 ## Motivation
 
-[SAIUnit](https://github.com/chaobrain/saiunit) (/saɪ ˈjuːnɪt/) is designed to provide physical units and unit-aware mathematical systems tailored for **S**cientific **AI** within JAX. In this context, Scientific AI refers to the use of AI models or tools to advance scientific computations. SAIUnit evolves from our [BrainUnit](https://github.com/chaobrain/brainunit), a unit framework originally developed for brain dynamics modeling, extending its capabilities to support a broader range of scientific computing applications. SAIUnit is committed to providing rigorious and automatic physical unit conversion and analysis system for general AI-driven scientific computing. 
+[SAIUnit](https://github.com/chaobrain/saiunit) (/saɪ ˈjuːnɪt/) is designed to provide physical units and unit-aware mathematical systems tailored for **S**cientific **AI** within JAX. In this context, Scientific AI refers to the use of AI models or tools to advance scientific computations. SAIUnit evolves from our [BrainUnit](https://github.com/chaobrain/brainunit), a unit framework originally developed for brain dynamics modeling, extending its capabilities to support a broader range of scientific computing applications. SAIUnit is committed to providing rigorous and automatic physical unit conversion and analysis system for general AI-driven scientific computing. 
 
 
 
@@ -102,6 +102,19 @@ pip install -e .
 The official documentation is hosted on Read the Docs: [https://saiunit.readthedocs.io](https://saiunit.readthedocs.io)
 
 
+
+## Citation
+
+```bibtex
+@article{Wang2025IntegratingPU,
+  title={Integrating physical units into high-performance AI-driven scientific computing},
+  author={Chaoming Wang and Sichao He and Shouwei Luo and Yuxiang Huan and Si Wu},
+  journal={Nature Communications},
+  year={2025},
+  volume={16},
+  url={https://doi.org/10.1038/s41467-025-58626-4}
+}
+```
 
 
 ## Ecosystem

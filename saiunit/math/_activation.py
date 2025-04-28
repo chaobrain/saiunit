@@ -57,7 +57,7 @@ def relu(
         An array.
 
     Examples:
-        >>> jax.nn.relu(jax.numpy.array([-2., -1., -0.5, 0, 0.5, 1., 2.]))
+        >>> saiunit.math.relu(jax.numpy.array([-2., -1., -0.5, 0, 0.5, 1., 2.]))
         Array([0. , 0. , 0. , 0. , 0.5, 1. , 2. ], dtype=float32)
     """
     return _fun_keep_unit_unary(nn.relu, x)

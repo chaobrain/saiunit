@@ -42,7 +42,7 @@ def fftshift(
     saiunit implementation of :func:`numpy.fft.fftshift`.
 
     Args:
-        x: N-dimensional array array of frequencies.
+        x: N-dimensional quantity or array of frequencies.
         axes: optional integer or sequence of integers specifying which axes to
             shift. If None (default), then shift all axes.
 
@@ -56,20 +56,21 @@ def fftshift(
     Examples:
         Generate FFT frequencies with :func:`~saiunit.fft.fftfreq`:
 
-        >>> freq = saiunit.fft.fftfreq(5)
+        >>> import saiunit as u
+        >>> freq = u.fft.fftfreq(5, 1 * u.second)
         >>> freq
-        Array([ 0. ,  0.2,  0.4, -0.4, -0.2], dtype=float32)
+        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
 
         Use ``fftshift`` to shift the zero-frequency entry to the middle of the array:
 
-        >>> shifted_freq = saiunit.fft.fftshift(freq)
+        >>> shifted_freq = u.fft.fftshift(freq)
         >>> shifted_freq
-        Array([-0.4, -0.2,  0. ,  0.2,  0.4], dtype=float32)
+        ArrayImpl([-0.5 , -0.25,  0.  ,  0.25], dtype=float32) * hertz
 
         Unshift with :func:`~saiunit.fft.ifftshift` to recover the original frequencies:
 
-        >>> saiunit.fft.ifftshift(shifted_freq)
-        Array([ 0. ,  0.2,  0.4, -0.4, -0.2], dtype=float32)
+        >>> u.fft.ifftshift(shifted_freq)
+        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
     """
     return _fun_keep_unit_unary(jnpfft.fftshift, x, axes=axes)
 
@@ -84,7 +85,7 @@ def ifftshift(
     saiunit implementation of :func:`numpy.fft.ifftshift`.
 
     Args:
-        x: N-dimensional array array of frequencies.
+        x: N-dimensional quantity or array of frequencies.
         axes: optional integer or sequence of integers specifying which axes to
             shift. If None (default), then shift all axes.
 
@@ -98,20 +99,21 @@ def ifftshift(
     Examples:
         Generate FFT frequencies with :func:`~saiunit.fft.fftfreq`:
 
-        >>> freq = saiunit.fft.fftfreq(5)
+        >>> import saiunit as u
+        >>> freq = u.fft.fftfreq(4, 1 * u.second)
         >>> freq
-        Array([ 0. ,  0.2,  0.4, -0.4, -0.2], dtype=float32)
+        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
 
         Use :func:`~saiunit.fft.fftshift` to shift the zero-frequency entry
         to the middle of the array:
 
-        >>> shifted_freq = saiunit.fft.fftshift(freq)
+        >>> shifted_freq = u.fft.fftshift(freq)
         >>> shifted_freq
-        Array([-0.4, -0.2,  0. ,  0.2,  0.4], dtype=float32)
+        ArrayImpl([-0.5 , -0.25,  0.  ,  0.25], dtype=float32) * hertz
 
         Unshift with ``ifftshift`` to recover the original frequencies:
 
-        >>> saiunit.fft.ifftshift(shifted_freq)
-        Array([ 0. ,  0.2,  0.4, -0.4, -0.2], dtype=float32)
+        >>> u.fft.ifftshift(shifted_freq)
+        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
     """
     return _fun_keep_unit_unary(jnpfft.ifftshift, x, axes=axes)
