@@ -106,12 +106,15 @@ The official documentation is hosted on Read the Docs: [https://saiunit.readthed
 ## Citation
 
 ```bibtex
-@article{Wang2025IntegratingPU,
+@article{wang2025integrating,
   title={Integrating physical units into high-performance AI-driven scientific computing},
-  author={Chaoming Wang and Sichao He and Shouwei Luo and Yuxiang Huan and Si Wu},
+  author={Wang, Chaoming and He, Sichao and Luo, Shouwei and Huan, Yuxiang and Wu, Si},
   journal={Nature Communications},
-  year={2025},
   volume={16},
+  number={1},
+  pages={3609},
+  year={2025},
+  publisher={Nature Publishing Group UK London},
   url={https://doi.org/10.1038/s41467-025-58626-4}
 }
 ```

@@ -55,7 +55,7 @@ A quick example for this kind of integration:
 ```python
 
 import braintools
-import brainevent.nn
+import brainevent
 import brainstate
 import brainunit as u
 
@@ -72,13 +72,13 @@ class EINet(brainstate.nn.Module):
             V_initializer=brainstate.init.Normal(-55., 2., unit=u.mV)
         )
         self.E = brainstate.nn.AlignPostProj(
-            comm=brainevent.nn.FixedProb(self.n_exc, self.num, 0.02, 0.6 * u.mS),
+            comm=brainstate.nn.EventFixedProb(self.n_exc, self.num, 0.02, 0.6 * u.mS),
             syn=brainstate.nn.Expon.desc(self.num, tau=5. * u.ms),
             out=brainstate.nn.COBA.desc(E=0. * u.mV),
             post=self.N
         )
         self.I = brainstate.nn.AlignPostProj(
-            comm=brainevent.nn.FixedProb(self.n_inh, self.num, 0.02, 6.7 * u.mS),
+            comm=brainstate.nn.EventFixedProb(self.n_inh, self.num, 0.02, 6.7 * u.mS),
             syn=brainstate.nn.Expon.desc(self.num, tau=10. * u.ms),
             out=brainstate.nn.COBA.desc(E=-80. * u.mV),
             post=self.N
@@ -105,6 +105,25 @@ You can install ``brainunit`` via pip:
 
 ```bash
 pip install brainunit --upgrade
+```
+
+
+## Citation
+
+If you use `brainunit` in your research, please consider citing the following paper:
+
+```bibtex
+@article{wang2025integrating,
+  title={Integrating physical units into high-performance AI-driven scientific computing},
+  author={Wang, Chaoming and He, Sichao and Luo, Shouwei and Huan, Yuxiang and Wu, Si},
+  journal={Nature Communications},
+  volume={16},
+  number={1},
+  pages={3609},
+  year={2025},
+  publisher={Nature Publishing Group UK London},
+  url={https://doi.org/10.1038/s41467-025-58626-4}
+}
 ```
 
 
