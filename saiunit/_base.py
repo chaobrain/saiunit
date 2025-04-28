@@ -4806,7 +4806,62 @@ missing = Missing()
 @set_module_as('saiunit')
 def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[Callable], CallableAssignUnit]:
     """
-    Decorator to transform units of arguments passed to a function
+    Decorator to transform units of arguments passed to a function and optionally assign units to the return value.
+
+    This decorator performs two main functions:
+    1. Removes units from input arguments based on specified expected units
+    2. Optionally assigns units to the return value if 'result' is specified
+
+    Parameters
+    ----------
+    f : Callable, optional
+        The function to be decorated. If missing, returns a partial decorator.
+    **au : dict
+        Keyword arguments specifying expected units for function parameters.
+        Use parameter names as keys and expected units as values.
+        Special key 'result' can be used to specify return value units.
+
+    Returns
+    -------
+    CallableAssignUnit
+        The decorated function with unit transformation capabilities.
+
+    Examples
+    --------
+    Basic usage to transform input units:
+    >>> from saiunit import *
+    >>> @assign_units(I=amp, R=ohm)
+    ... def getvoltage(I, R):
+    ...     return I*R
+
+    You can specify units for kwargs:
+    >>> @assign_units(wibble=metre)
+    ... def func(wibble=None):
+    ...     return wibble
+
+    To specify return value units:
+    >>> @assign_units(I=amp, R=ohm, result=volt)
+    ... def getvoltage(I, R):
+    ...     return I*R
+
+    The return units can be dynamic based on input units:
+    >>> @assign_units(result=lambda d: d**2)
+    ... def square(value):
+    ...     return value**2
+
+    The decorated function has a 'without_result_units' attribute that
+    returns the raw result without unit assignment:
+    >>> func = assign_units(result=volt)(lambda x: x)
+    >>> func(3*mV).without_result_units()
+    0.003
+
+    Notes
+    -----
+    1. The decorator checks that input arguments have compatible dimensions
+       with the specified units before removing them.
+    2. When 'result' is specified, the return value will be assigned the given units.
+    3. The 'without_result_units' attribute provides access to the undecorated version
+       that skips the return value unit assignment step.
     """
     if f is missing:
         return partial(assign_units, **au)
