@@ -1015,7 +1015,7 @@ def tree_zeros_like(tree):
     Returns:
       The tree with zeros in each leaf.
     """
-    return jax.tree_map(zeros_like, tree)
+    return jax.tree.map(zeros_like, tree)
 
 
 @set_module_as('saiunit.math')
@@ -1030,4 +1030,4 @@ def tree_ones_like(tree):
       The tree with ones in each leaf.
 
     """
-    return jax.tree_map(ones_like, tree)
+    return jax.tree.map(ones_like, tree)
