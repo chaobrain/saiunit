@@ -24,7 +24,7 @@ name = "saiunit"
 description = "Enabling Unit-aware Computations for AI-driven Scientific Computing."
 readme = 'README.md'
 license = { text = 'Apache-2.0 license' }
-requires-python = '>=3.9'
+requires-python = '>=3.10'
 authors = [{ name = 'SaiUnit Developers', email = 'chao.brain@qq.com' }]
 classifiers = [
     'Natural Language :: English',

@@ -56,7 +56,7 @@ setup(
     author='SAIUnit Developers',
     author_email='chao.brain@qq.com',
     packages=packages,
-    python_requires='>=3.9',
+    python_requires='>=3.10',
     install_requires=['numpy>=1.15', 'jax', 'typing_extensions'],
     url='https://github.com/chaobrain/saiunit',
     project_urls={
