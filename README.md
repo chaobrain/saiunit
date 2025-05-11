@@ -143,3 +143,11 @@ Other unofficial projects include:
 - [``Catalax``](https://github.com/Routhleck/Catalax): JAX-based framework to model biological systems
 - ...
 
+
+## Acknowledgement
+
+The initial version of the project benefited a lot from the following projects:
+
+- [``astropy.units``](https://docs.astropy.org/en/stable/units/index.html): physical units in ``astropy``.
+- [``brian2.units``](https://brian2.readthedocs.io/en/stable/user/units.html): physical units in ``brian2``.
+
