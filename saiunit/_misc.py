@@ -15,6 +15,33 @@
 
 
 def set_module_as(module: str):
+    """
+    A decorator that changes the __module__ attribute of a function.
+
+    This utility decorator is useful for making functions appear as if they belong
+    to a different module than where they are defined, which can help organize
+    the public API of a package.
+
+    Parameters
+    ----------
+    module : str
+        The module name to set as the function's __module__ attribute.
+
+    Returns
+    -------
+    callable
+        A decorator function that modifies the __module__ attribute of the
+        decorated function.
+
+    Examples
+    --------
+    >>> @set_module_as('saiunit.public')
+    ... def my_function():
+    ...     pass
+    ...
+    >>> my_function.__module__
+    'saiunit.public'
+    """
     def wrapper(fun: callable):
         fun.__module__ = module
         return fun

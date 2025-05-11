@@ -24,7 +24,7 @@ import warnings
 from copy import deepcopy
 from typing import Union
 
-import brainstate as bst
+import brainstate
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -49,6 +49,95 @@ from saiunit._base import (
 )
 from saiunit._unit_common import *
 from saiunit._unit_shortcuts import kHz, ms, mV, nS
+
+import jax.numpy as jnp
+import numpy as np
+
+import saiunit as u
+from saiunit import get_dim, Unit, Quantity, DIMENSIONLESS, get_or_create_dimension
+
+
+class Test_get_dim:
+    def test_get_dimension_from_dimension_object(self):
+        # Create a dimension object
+        dim = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])  # Length
+
+        # Act
+        result = get_dim(dim)
+
+        # Assert
+        assert result is dim
+
+    def test_get_dimension_from_unit_object(self):
+        # Create a unit object
+        unit = Unit(get_or_create_dimension([1, 0, 0, 0, 0, 0, 0]))  # Meter
+
+        # Act
+        result = get_dim(unit)
+
+        # Assert
+        assert result is unit.dim
+
+    def test_get_dimension_from_quantity_object(self):
+        # Create a quantity object
+        quantity = Quantity(5.0, Unit(get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])))  # 5 meters
+
+        # Act
+        result = get_dim(quantity)
+
+        # Assert
+        assert result is quantity.dim
+
+    def test_get_dimension_from_numeric_types(self):
+        # Test with various numeric types
+        numeric_values = [5, 5.0, np.array(5), jnp.array(5)]
+
+        for value in numeric_values:
+            result = get_dim(value)
+            assert result is DIMENSIONLESS
+
+    def test_get_dimension_from_object_with_nested_dim_attribute(self):
+        # Create a mock object with nested dim structure
+        class NestedDimObject:
+            def __init__(self):
+                self.dim = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+
+        class OuterObject:
+            def __init__(self):
+                self.dim = NestedDimObject()
+
+        obj = OuterObject()
+
+        # Act
+        result = get_dim(obj)
+
+        # Assert
+        assert result is u.DIMENSIONLESS
+
+    def test_get_dimension_raises_for_invalid_object(self):
+        # Create an object without dim attribute
+        class InvalidObject:
+            pass
+
+        obj = InvalidObject()
+
+        assert get_dim(obj) == u.DIMENSIONLESS
+
+    def test_get_dimension_for_complex_dimensions(self):
+        # Test with more complex dimensions
+        length = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+        mass = get_or_create_dimension([0, 1, 0, 0, 0, 0, 0])
+        time = get_or_create_dimension([0, 0, 1, 0, 0, 0, 0])
+
+        # Force: mass * length / time^2
+        force_dim = mass * length * (time ** -2)
+        quantity = Quantity(10.0, Unit(force_dim))
+
+        # Act
+        result = get_dim(quantity)
+
+        # Assert
+        assert result is force_dim
 
 
 class TestDimension(unittest.TestCase):
@@ -249,7 +338,7 @@ class TestQuantity(unittest.TestCase):
         assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 * volt")
         with pytest.raises(u.UnitMismatchError):
             display_in_unit(10 * nS, ohm)
-        with bst.environ.context(precision=32):
+        with brainstate.environ.context(precision=32):
             assert_equal(display_in_unit(3. * volt, mvolt), "3000. * mvolt")
             assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 * volt")
             with pytest.raises(u.UnitMismatchError):
@@ -456,7 +545,7 @@ class TestQuantity(unittest.TestCase):
         with pytest.raises(TypeError):
             set_to_value((slice(2), slice(3)), np.ones((2, 3)))
 
-        quantity = Quantity(bst.random.rand(10))
+        quantity = Quantity(brainstate.random.rand(10))
         quantity[0] = 1
 
     def test_multiplication_division(self):
@@ -1701,7 +1790,7 @@ class TestGetMethod(unittest.TestCase):
         assert u.get_mantissa(u.mV.dim ** 2 / u.second.dim ** 2) == u.mV.dim ** 2 / u.second.dim ** 2
 
     def test_format(self):
-        with bst.environ.context(precision=64):
+        with brainstate.environ.context(precision=64):
             q1 = 1.23456789 * u.mV
             assert f"{q1:.2f}" == "1.23 * mvolt"
             assert f"{q1:.3f}" == "1.235 * mvolt"
