@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 
 from . import _matplotlib_compat
 from . import autograd
