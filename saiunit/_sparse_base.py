@@ -32,8 +32,27 @@ class SparseMatrix(JAXSparse, ABC):
     """
     Base class for sparse matrices in ``saiunit``.
 
-    This class is a subclass of ``jax.experimental.sparse.JAXSparse`` and adds some methods that are not implemented
-    in the original class.
+    This class is a subclass of ``jax.experimental.sparse.JAXSparse`` and adds methods
+    that are not implemented in the original class, such as arithmetic operations,
+    data manipulation, and specialized matrix operations.
+
+    This abstract base class defines the interface that all sparse matrix implementations
+    in the ``saiunit`` package should follow. Concrete subclasses must implement
+    the abstract methods defined here.
+
+    Attributes
+    ----------
+    data : jax.Array
+        The non-zero values in the sparse matrix.
+
+    See Also
+    --------
+    jax.experimental.sparse.JAXSparse : The parent class from JAX's sparse matrix framework.
+
+    Notes
+    -----
+    This class provides NotImplementedError for most operations, requiring concrete
+    subclasses to implement them according to their specific sparse format.
     """
 
     def with_data(
