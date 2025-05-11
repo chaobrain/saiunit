@@ -95,14 +95,14 @@ class TestLaxLinalg(parameterized.TestCase):
     def test_eigh(self):
         x = jnp.array([[1.0, 2.0], [3.0, 4.0]])
 
-        w, v = ulax.eigh(x)
-        w_e, v_e = lax.linalg.eigh(x)
+        v, w = ulax.eigh(x)
+        v_e, w_e = lax.linalg.eigh(x)
 
         assert_quantity(w, w_e)
         assert_quantity(v, v_e)
 
         x = x * u.second
-        w, v = ulax.eigh(x)
+        v, w = ulax.eigh(x)
         assert_quantity(w, w_e, u.second)
         assert_quantity(v, v_e)
 
