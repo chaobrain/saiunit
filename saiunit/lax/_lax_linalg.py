@@ -164,9 +164,9 @@ def eigh(
         ``d`` is equal to ``subset_by_index[1] - subset_by_index[0]``.
     """
     if isinstance(x, Quantity):
-        w, v = lax.linalg.eigh(x.mantissa, lower=lower, symmetrize_input=symmetrize_input,
+        v, w = lax.linalg.eigh(x.mantissa, lower=lower, symmetrize_input=symmetrize_input,
                                sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index)
-        return maybe_decimal(Quantity(w, unit=x.unit)), v
+        return v, maybe_decimal(Quantity(w, unit=x.unit))
     else:
         return lax.linalg.eigh(x, lower=lower, symmetrize_input=symmetrize_input,
                                sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index)

@@ -37,14 +37,14 @@ def cond(
 ) -> jax.Array:
     """Compute the condition number of a matrix.
 
-    JAX implementation of :func:`numpy.linalg.cond`.
+    SaiUnit implementation of :func:`numpy.linalg.cond`.
 
     The condition number is defined as ``norm(x, p) * norm(inv(x), p)``. For ``p = 2``
     (the default), the condition number is the ratio of the largest to the smallest
     singular value.
 
     Args:
-        x: array of shape ``(..., M, N)`` for which to compute the condition number.
+        x: quantity of shape ``(..., M, N)`` for which to compute the condition number.
         p: the order of the norm to use. One of ``{None, 1, -1, 2, -2, inf, -inf, 'fro'}``;
             see :func:`jax.numpy.linalg.norm` for the meaning of these. The default is ``p = None``,
             which is equivalent to ``p = 2``. If not in ``{None, 2, -2}`` then ``x`` must be square,
@@ -57,16 +57,18 @@ def cond(
 
         Well-conditioned matrix:
 
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
         >>> x = jnp.array([[1, 2],
-        ...                [2, 1]])
-        >>> saiunit.linalg.cond(x)
+        ...                [2, 1]]) * u.meter
+        >>> u.linalg.cond(x)
         Array(3., dtype=float32)
 
         Ill-conditioned matrix:
 
         >>> x = jnp.array([[1, 2],
-        ...                [0, 0]])
-        >>> saiunit.linalg.cond(x)
+        ...                [0, 0]]) * u.meter
+        >>> u.linalg.cond(x)
         Array(inf, dtype=float32)
     """
     return _fun_remove_unit_unary(jnp.linalg.cond, x, p=p)
@@ -81,13 +83,13 @@ def matrix_rank(
 ) -> jax.Array:
     """Compute the rank of a matrix.
 
-    JAX implementation of :func:`numpy.linalg.matrix_rank`.
+    SaiUnit implementation of :func:`numpy.linalg.matrix_rank`.
 
     The rank is calculated via the Singular Value Decomposition (SVD), and determined
     by the number of singular values greater than the specified tolerance.
 
     Args:
-        M: array of shape ``(..., N, K)`` whose rank is to be computed.
+        M: quantity of shape ``(..., N, K)`` whose rank is to be computed.
         rtol: optional array of shape ``(...)`` specifying the tolerance. Singular values
             smaller than `rtol * largest_singular_value` are considered to be zero. If
             ``rtol`` is None (the default), a reasonable default is chosen based the
@@ -104,14 +106,16 @@ def matrix_rank(
     ``rtol`` parameter or using a more specialized rank computation method in such cases.
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
         >>> a = jnp.array([[1, 2],
-        ...                [3, 4]])
-        >>> saiunit.linalg.matrix_rank(a)
+        ...                [3, 4]]) * u.meter
+        >>> u.linalg.matrix_rank(a)
         Array(2, dtype=int32)
 
         >>> b = jnp.array([[1, 0],  # Rank-deficient matrix
-        ...                [0, 0]])
-        >>> saiunit.linalg.matrix_rank(b)
+        ...                [0, 0]]) * u.meter
+        >>> u.linalg.matrix_rank(b)
         Array(1, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.linalg.matrix_rank, M, rtol=rtol, tol=tol)
@@ -126,10 +130,10 @@ def slogdet(
     """
     Compute the sign and (natural) logarithm of the determinant of an array.
 
-    JAX implementation of :func:`numpy.linalg.slogdet`.
+    SaiUnit implementation of :func:`numpy.linalg.slogdet`.
 
     Args:
-        a: array of shape ``(..., M, M)`` for which to compute the sign and log determinant.
+        a: quantity of shape ``(..., M, M)`` for which to compute the sign and log determinant.
         method: the method to use for determinant computation. Options are
 
         - ``'lu'`` (default): use the LU decomposition.
@@ -142,9 +146,11 @@ def slogdet(
         - ``logabsdet`` is the natural log of the determinant's absolute value.
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
         >>> a = jnp.array([[1, 2],
-        ...                [3, 4]])
-        >>> sign, logabsdet = saiunit.linalg.slogdet(a)
+        ...                [3, 4]]) * u.meter
+        >>> sign, logabsdet = u.linalg.slogdet(a)
         >>> sign  # -1 indicates negative determinant
         Array(-1., dtype=float32)
         >>> jnp.exp(logabsdet)  # Absolute value of determinant
