@@ -50,7 +50,7 @@ def norm(
     """Compute the norm of a matrix or vector.
 
     Args:
-        x: N-dimensional array for which the norm will be computed.
+        x: N-dimensional quantity for which the norm will be computed.
         ord: specify the kind of norm to take. Default is Frobenius norm for matrices,
             and the 2-norm for vectors. For other options, see Notes below.
         axis: integer or sequence of integers specifying the axes over which the norm
@@ -59,7 +59,7 @@ def norm(
             the input, with the size of reduced axes replaced by ``1`` (default: False).
 
     Returns:
-        array containing the specified norm of x.
+        quantity containing the specified norm of x.
 
     Notes:
     The flavor of norm computed depends on the value of ``ord`` and the number of
@@ -83,31 +83,36 @@ def norm(
     - ``ord=-2`` computes the smallest singular value
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+
         Vector norms:
 
-        >>> x = jnp.array([3., 4., 12.])
-        >>> jnp.linalg.norm(x)
-        Array(13., dtype=float32)
-        >>> jnp.linalg.norm(x, ord=1)
-        Array(19., dtype=float32)
-        >>> jnp.linalg.norm(x, ord=0)
-        Array(3., dtype=float32)
+        >>> x = jnp.array([3., 4., 12.]) * u.meter
+        >>> u.linalg.norm(x)
+        13. * meter
+        >>> u.linalg.norm(x, ord=1)
+        19. * meter
+        >>> u.linalg.norm(x, ord=0)
+        3. * meter
 
         Matrix norms:
 
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
         >>> x = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 7.]])
-        >>> jnp.linalg.norm(x)  # Frobenius norm
-        Array(10.198039, dtype=float32)
-        >>> jnp.linalg.norm(x, ord='nuc')  # nuclear norm
-        Array(10.762535, dtype=float32)
-        >>> jnp.linalg.norm(x, ord=1)  # 1-norm
-        Array(10., dtype=float32)
+        ...                [4., 5., 7.]]) * u.meter
+        >>> u.linalg.norm(x)  # Frobenius norm
+        10.198039 * meter
+        >>> u.linalg.norm(x, ord='nuc')  # nuclear norm
+        10.762534 * meter
+        >>> u.linalg.norm(x, ord=1)  # 1-norm
+        10. * meter
 
         Batched vector norm:
 
-        >>> jnp.linalg.norm(x, axis=1)
-        Array([3.7416575, 9.486833 ], dtype=float32)
+        >>> u.linalg.norm(x, axis=1)
+        ArrayImpl([3.7416575, 9.48683262], dtype=float32) * meter
     """
     return _fun_keep_unit_unary(jnp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims)
 
@@ -121,24 +126,27 @@ def matrix_norm(
 ) -> Union[jax.Array, Quantity]:
     """Compute the norm of a matrix or stack of matrices.
 
-    JAX implementation of :func:`numpy.linalg.matrix_norm`
+    SaiUnit implementation of :func:`numpy.linalg.matrix_norm`
 
     Args:
-        x: array of shape ``(..., M, N)`` for which to take the norm.
+        x: quantity of shape ``(..., M, N)`` for which to take the norm.
         keepdims: if True, keep the reduced dimensions in the output.
         ord: A string or int specifying the type of norm; default is the Frobenius norm.
             See :func:`numpy.linalg.norm` for details on available options.
 
     Returns:
-        array containing the norm of ``x``. Has shape ``x.shape[:-2]`` if ``keepdims`` is
+        quantity containing the norm of ``x``. Has shape ``x.shape[:-2]`` if ``keepdims`` is
         False, or shape ``(..., 1, 1)`` if ``keepdims`` is True.
 
     Examples:
+
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
         >>> x = jnp.array([[1, 2, 3],
         ...                [4, 5, 6],
-        ...                [7, 8, 9]])
-        >>> saiunit.linalg.matrix_norm(x)
-        Array(16.881943, dtype=float32)
+        ...                [7, 8, 9]]) * u.second
+        >>> u.linalg.matrix_norm(x)
+        16.881943 * second
     """
     return _fun_keep_unit_unary(jnp.linalg.norm,
                                 x,
@@ -155,10 +163,10 @@ def vector_norm(
 ) -> Union[jax.Array, Quantity]:
     """Compute the vector norm of a vector or batch of vectors.
 
-    JAX implementation of :func:`numpy.linalg.vector_norm`.
+    SaiUnit implementation of :func:`numpy.linalg.vector_norm`.
 
     Args:
-        x: N-dimensional array for which to take the norm.
+        x: N-dimensional quantity for which to take the norm.
         axis: optional axis along which to compute the vector norm. If None (default)
             then ``x`` is flattened and the norm is taken over all values.
         keepdims: if True, keep the reduced dimensions in the output.
@@ -166,21 +174,24 @@ def vector_norm(
             See :func:`numpy.linalg.norm` for details on available options.
 
     Returns:
-        array containing the norm of ``x``.
+        quantity containing the norm of ``x``.
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+
         Norm of a single vector:
 
-        >>> x = jnp.array([1., 2., 3.])
-        >>> jnp.linalg.vector_norm(x)
-        Array(3.7416575, dtype=float32)
+        >>> x = jnp.array([1., 2., 3.]) * u.meter
+        >>> u.linalg.vector_norm(x)
+        3.7416575 * meter
 
         Norm of a batch of vectors:
 
         >>> x = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 7.]])
-        >>> jnp.linalg.vector_norm(x, axis=1)
-        Array([3.7416575, 9.486833 ], dtype=float32)
+        ...                [4., 5., 7.]]) * u.meter
+        >>> u.linalg.vector_norm(x, axis=1)
+        ArrayImpl([3.7416575, 9.48683262], dtype=float32) * meter
     """
     return _fun_keep_unit_unary(jnp.linalg.norm,
                                 x,
@@ -194,9 +205,9 @@ def qr(
     a: Union[Quantity, jax.typing.ArrayLike],
     mode: str = "reduced"
 ) -> Array | Quantity:
-    """Compute the QR decomposition of an array
+    """Compute the QR decomposition of a quantity
 
-    JAX implementation of :func:`numpy.linalg.qr`.
+    SaiUnit implementation of :func:`numpy.linalg.qr`.
 
     The QR decomposition of a matrix `A` is given by
 
@@ -208,7 +219,7 @@ def qr(
     matrix.
 
     Args:
-        a: array of shape (..., M, N)
+        a: quantity of shape (..., M, N)
         mode: Computational mode. Supported values are:
 
         - ``"reduced"`` (default): return `Q` of shape ``(..., M, K)`` and `R` of shape
@@ -218,7 +229,7 @@ def qr(
         - ``"r"``: return `R` only.
 
     Returns:
-        A tuple ``(Q, R)`` (if ``mode`` is not ``"r"``) otherwise an array ``R``,
+        A tuple ``(Q, R)`` (if ``mode`` is not ``"r"``) otherwise an quantity ``R``,
         where:
 
         - ``Q`` is an orthogonal matrix of shape ``(..., M, K)`` (if ``mode`` is ``"reduced"``)
@@ -229,29 +240,33 @@ def qr(
         with ``K = min(M, N)``.
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+
         Compute the QR decomposition of a matrix:
 
         >>> a = jnp.array([[1., 2., 3., 4.],
         ...                [5., 4., 2., 1.],
-        ...                [6., 3., 1., 5.]])
-        >>> Q, R = saiunit.linalg.qr(a)
+        ...                [6., 3., 1., 5.]]) * u.meter
+        >>> Q, R = u.linalg.qr(a)
         >>> Q  # doctest: +SKIP
         Array([[-0.12700021, -0.7581426 , -0.6396022 ],
                [-0.63500065, -0.43322435,  0.63960224],
                [-0.7620008 ,  0.48737738, -0.42640156]], dtype=float32)
         >>> R  # doctest: +SKIP
-        Array([[-7.8740077, -5.080005 , -2.4130025, -4.953006 ],
-               [ 0.       , -1.7870499, -2.6534991, -1.028908 ],
-               [ 0.       ,  0.       , -1.0660033, -4.050814 ]], dtype=float32)
+        ArrayImpl([[-7.8740077, -5.08000517, -2.41300249, -4.95300531],
+                   [ 0.       , -1.78704989, -2.65349889, -1.02890778],
+                   [ 0.       ,  0.       , -1.06600308, -4.05081367]],
+                  dtype=float32) * meter
 
         Check that ``Q`` is orthonormal:
 
-        >>> jnp.allclose(Q.T @ Q, jnp.eye(3), atol=1E-5)
+        >>> u.math.allclose(Q.T @ Q, jnp.eye(3), atol=1E-5)
         Array(True, dtype=bool)
 
         Reconstruct the input:
 
-        >>> jnp.allclose(Q @ R, a)
+        >>> u.math.allclose(Q @ R, a)
         Array(True, dtype=bool)
     """
     if isinstance(a, Quantity):
@@ -267,26 +282,28 @@ def qr(
 
 svd = lax_linalg.svd
 
-
 @set_module_as('saiunit.linalg')
 def svdvals(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[jax.Array, Quantity]:
     """Compute the singular values of a matrix.
 
-    JAX implementation of :func:`numpy.linalg.svdvals`.
+    SaiUnit implementation of :func:`numpy.linalg.svdvals`.
 
     Args:
-        x: array of shape ``(..., M, N)`` for which singular values will be computed.
+        x: quantity of shape ``(..., M, N)`` for which singular values will be computed.
 
     Returns:
-        array of singular values of shape ``(..., K)`` with ``K = min(M, N)``.
+        quantity of singular values of shape ``(..., K)`` with ``K = min(M, N)``.
 
     Examples:
-        >>> x = jnp.array([[1, 2, 3],
-        ...                [4, 5, 6]])
-        >>> saiunit.linalg.svdvals(x)
-        Array([9.508031 , 0.7728694], dtype=float32)
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+
+        >>> x = jnp.array([[1., 2., 3.],
+        ...                [4., 5., 6.]]) * u.meter
+        >>> u.linalg.svdvals(x)
+        ArrayImpl([9.50803089, 0.77286941], dtype=float32) * meter
     """
     return svd(x, compute_uv=False)
 
@@ -296,27 +313,30 @@ def eig(
     a: Union[Quantity, jax.typing.ArrayLike],
 ) -> tuple[Union[jax.Array, Quantity], Union[jax.Array, Quantity]]:
     """
-    Compute the eigenvalues and eigenvectors of a square array.
+    Compute the eigenvalues and eigenvectors of a square quantity.
 
-    JAX implementation of :func:`numpy.linalg.eig`.
+    SaiUnit implementation of :func:`numpy.linalg.eig`.
 
     Args:
-        a: array of shape ``(..., M, M)`` for which to compute the eigenvalues and vectors.
+        a: quantity of shape ``(..., M, M)`` for which to compute the eigenvalues and vectors.
 
     Returns:
         A tuple ``(eigenvalues, eigenvectors)`` with
 
-        - ``eigenvalues``: an array of shape ``(..., M)`` containing the eigenvalues.
-        - ``eigenvectors``: an array of shape ``(..., M, M)``, where column ``v[:, i]`` is the
+        - ``eigenvalues``: a quantity of shape ``(..., M)`` containing the eigenvalues.
+        - ``eigenvectors``: an quantity of shape ``(..., M, M)``, where column ``v[:, i]`` is the
           eigenvector corresponding to the eigenvalue ``w[i]``.
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+
         >>> a = jnp.array([[1., 2.],
-        ...                [2., 1.]])
-        >>> w, v = saiunit.linalg.eig(a)
+        ...                [2., 1.]]) * u.meter
+        >>> w, v = u.linalg.eig(a)
         >>> with jax.numpy.printoptions(precision=4):
-        ...   w
-        Array([ 3.+0.j, -1.+0.j], dtype=complex64)
+        ...   print(w)
+        ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
         >>> v
         Array([[ 0.70710677+0.j, -0.70710677+0.j],
                [ 0.70710677+0.j,  0.70710677+0.j]], dtype=complex64)
@@ -333,10 +353,10 @@ def eigh(
     """
     Compute the eigenvalues and eigenvectors of a Hermitian matrix.
 
-    JAX implementation of :func:`numpy.linalg.eigh`.
+    SaiUnit implementation of :func:`numpy.linalg.eigh`.
 
     Args:
-        a: array of shape ``(..., M, M)``, containing the Hermitian (if complex)
+        a: quantity of shape ``(..., M, M)``, containing the Hermitian (if complex)
             or symmetric (if real) matrix.
         UPLO: specifies whether the calculation is done with the lower triangular
             part of ``a`` (``'L'``, default) or the upper triangular part (``'U'``).
@@ -346,21 +366,24 @@ def eigh(
     Returns:
         A namedtuple ``(eigenvalues, eigenvectors)`` where
 
-        - ``eigenvalues``: an array of shape ``(..., M)`` containing the eigenvalues,
+        - ``eigenvalues``: a quantity of shape ``(..., M)`` containing the eigenvalues,
             sorted in ascending order.
-        - ``eigenvectors``: an array of shape ``(..., M, M)``, where column ``v[:, i]`` is the
+        - ``eigenvectors``: a quantity of shape ``(..., M, M)``, where column ``v[:, i]`` is the
             normalized eigenvector corresponding to the eigenvalue ``w[i]``.
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+
         >>> a = jnp.array([[1, -2j],
-        ...                [2j, 1]])
-        >>> w, v = saiunit.linalg.eigh(a)
+        ...                [2j, 1]]) * u.meter
+        >>> w, v = u.linalg.eigh(a)
         >>> w
         Array([-1.,  3.], dtype=float32)
         >>> with jnp.printoptions(precision=3):
-        ...   v
-        Array([[-0.707+0.j   , -0.707+0.j   ],
-               [ 0.   +0.707j,  0.   -0.707j]], dtype=complex64)
+        ...   print(v)
+        ArrayImpl([[-0.707-0.j   , -0.707+0.j   ],
+                   [ 0.   +0.707j,  0.   -0.707j]], dtype=complex64) * meter
     """
     if UPLO is None or UPLO == "L":
         lower = True
@@ -379,24 +402,26 @@ def eigvals(
     """
     Compute the eigenvalues of a general matrix.
 
-    JAX implementation of :func:`numpy.linalg.eigvals`.
+    SaiUnit implementation of :func:`numpy.linalg.eigvals`.
 
     Args:
-        a: array of shape ``(..., M, M)`` for which to compute the eigenvalues.
+        a: quantity of shape ``(..., M, M)`` for which to compute the eigenvalues.
 
     Returns:
-        An array of shape ``(..., M)`` containing the eigenvalues.
+        An quantity of shape ``(..., M)`` containing the eigenvalues.
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+
         >>> a = jnp.array([[1., 2.],
-        ...                [2., 1.]])
-        >>> w = saiunit.linalg.eigvals(a)
+        ...                [2., 1.]]) * u.meter
+        >>> w = u.linalg.eigvals(a)
         >>> with jnp.printoptions(precision=2):
-        ...  w
-        Array([ 3.+0.j, -1.+0.j], dtype=complex64)
+        ...  print(w)
+        ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
     """
-    return eig(a, compute_left_eigenvectors=False,
-               compute_right_eigenvectors=False)[0]
+    return eig(a)[0]
 
 
 @set_module_as('saiunit.linalg')
@@ -407,25 +432,29 @@ def eigvalsh(
     """
     Compute the eigenvalues of a Hermitian matrix.
 
-    JAX implementation of :func:`numpy.linalg.eigvalsh`.
+    SaiUnit implementation of :func:`numpy.linalg.eigvalsh`.
 
     Args:
-        a: array of shape ``(..., M, M)``, containing the Hermitian (if complex)
+        a: quantity of shape ``(..., M, M)``, containing the Hermitian (if complex)
             or symmetric (if real) matrix.
         UPLO: specifies whether the calculation is done with the lower triangular
             part of ``a`` (``'L'``, default) or the upper triangular part (``'U'``).
 
     Returns:
-        An array of shape ``(..., M)`` containing the eigenvalues, sorted in
+        A quantity of shape ``(..., M)`` containing the eigenvalues, sorted in
         ascending order.
 
     Examples:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+
         >>> a = jnp.array([[1, -2j],
-        ...                [2j, 1]])
-        >>> w = saiunit.linalg.eigvalsh(a)
+        ...                [2j, 1]]) * u.meter
+        >>> w = u.linalg.eigvalsh(a)
         >>> w
         Array([-1.,  3.], dtype=float32)
     """
+    # TODO: Seems wrong implementation
     return eigh(a, UPLO=UPLO)[0]
 
 @set_module_as('saiunit.linalg')
@@ -434,39 +463,41 @@ def matrix_transpose(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Transpose a matrix or stack of matrices.
 
-    JAX implementation of :func:`numpy.linalg.matrix_transpose`.
+    SaiUnit implementation of :func:`numpy.linalg.matrix_transpose`.
 
     Args:
-        x: array of shape ``(..., M, N)``
+        x: quantity of shape ``(..., M, N)``
 
     Returns:
-        array of shape ``(..., N, M)`` containing the matrix transpose of ``x``.
+        quantity of shape ``(..., N, M)`` containing the matrix transpose of ``x``.
 
     Examples:
         Transpose of a single matrix:
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
 
         >>> x = jnp.array([[1, 2, 3],
-        ...                [4, 5, 6]])
-        >>> saiunit.linalg.matrix_transpose(x)
-        Array([[1, 4],
-               [2, 5],
-               [3, 6]], dtype=int32)
+        ...                [4, 5, 6]]) * u.meter
+        >>> u.linalg.matrix_transpose(x)
+        ArrayImpl([[1, 4],
+                   [2, 5],
+                   [3, 6]], dtype=int32) * meter
 
         Transpose of a stack of matrices:
 
         >>> x = jnp.array([[[1, 2],
         ...                 [3, 4]],
         ...                [[5, 6],
-        ...                 [7, 8]]])
-        >>> saiunit.linalg.matrix_transpose(x)
-        Array([[[1, 3],
-                [2, 4]],
+        ...                 [7, 8]]]) * u.meter
+        >>> u.linalg.matrix_transpose(x)
+        ArrayImpl([[[1, 3],
+                    [2, 4]],
         <BLANKLINE>
-               [[5, 7],
-                [6, 8]]], dtype=int32)
+                   [[5, 7],
+                    [6, 8]]], dtype=int32) * meter
 
         For convenience, the same computation can be done via the
-        :attr:`~jax.Array.mT` property of JAX array objects:
+        :attr:`~jax.Array.mT` property of SaiUnit quantity objects:
 
         >>> x.mT
         Array([[[1, 3],
