@@ -49,8 +49,6 @@ classifiers = [
 keywords = ['physical unit', 'physical quantity', 'brain modeling']
 
 dependencies = [
-    'jax',
-    'jaxlib',
     'numpy',
     'typing_extensions',
     'saiunit==',
