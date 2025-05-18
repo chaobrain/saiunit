@@ -546,7 +546,7 @@ class TestQuantity(unittest.TestCase):
             set_to_value((slice(2), slice(3)), np.ones((2, 3)))
 
         quantity = Quantity(brainstate.random.rand(10))
-        quantity[0] = 1
+        quantity[0] = 1.0
 
     def test_multiplication_division(self):
         u = mV

@@ -27,6 +27,7 @@ import jax.numpy as jnp
 import numpy as np
 import opt_einsum
 
+from saiunit._compatible_import import safe_map, unzip2
 from ._einops_parsing import ParsedExpression, _ellipsis, AnonymousAxis, EinopsError
 from ._fun_array_creation import asarray, zeros_like
 from ._fun_keep_unit import reshape, transpose, expand_dims, tile, where, squeeze
@@ -838,7 +839,7 @@ def _dot_general(
 
 def _delta(dtype: jax.typing.DTypeLike, shape_, axes: Sequence[int]) -> jax.Array:
     """This utility function exists for creating Kronecker delta arrays."""
-    axes = jax.util.safe_map(int, axes)
+    axes = safe_map(int, axes)
     dtype = jax.dtypes.canonicalize_dtype(dtype)
     base_shape = tuple(np.take(shape_, axes))
     iotas = [jax.lax.broadcasted_iota(np.uint32, base_shape, i)
@@ -933,7 +934,7 @@ def _einsum(
             lhs_and_rhs_names = set(lhs_names) & set(rhs_names)
             batch_names = [x for x in result_names if x in lhs_and_rhs_names]
 
-            lhs_batch, rhs_batch = jax.util.unzip2((lhs_names.find(n), rhs_names.find(n)) for n in batch_names)
+            lhs_batch, rhs_batch = unzip2((lhs_names.find(n), rhs_names.find(n)) for n in batch_names)
 
             # NOTE: this can fail non-deterministically in python3, maybe
             # due to opt_einsum
@@ -947,8 +948,7 @@ def _einsum(
 
             # contract using dot_general
             batch_names_str = ''.join(batch_names)
-            lhs_cont, rhs_cont = jax.util.unzip2((lhs_names.index(n), rhs_names.index(n))
-                                                 for n in contracted_names)
+            lhs_cont, rhs_cont = unzip2((lhs_names.index(n), rhs_names.index(n)) for n in contracted_names)
             deleted_names = batch_names_str + ''.join(contracted_names)
             remaining_lhs_names = _removechars(lhs_names, deleted_names)
             remaining_rhs_names = _removechars(rhs_names, deleted_names)
