@@ -58,7 +58,6 @@ setup(
   python_requires='>=3.10',
   install_requires=[
     'numpy>=1.15',
-    'jax',
     'typing_extensions',
     'saiunit=='
   ],
@@ -69,9 +68,9 @@ setup(
     "Source Code": "https://github.com/chaobrain/brainunit",
   },
   extras_require={
-    'cpu': ['jaxlib'],
-    'cuda12': ['jaxlib[cuda12]', ],
-    'tpu': ['jaxlib[tpu]'],
+    'cpu': ['jax[cpu]'],
+    'cuda12': ['jax[cuda12]', ],
+    'tpu': ['jax[tpu]'],
   },
   keywords=('physical unit, '
             'physical quantity, '

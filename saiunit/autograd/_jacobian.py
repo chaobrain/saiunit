@@ -28,7 +28,7 @@ from jax._src.api import (
     _check_input_dtype_jacfwd,
     _check_output_dtype_jacfwd
 )
-from jax.api_util import argnums_partial
+from jax.api_util import argnums_partial, debug_info
 from jax.extend import linear_util
 
 from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
@@ -142,7 +142,9 @@ def jacrev(
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
-        f = linear_util.wrap_init(fun, kwargs)
+        f = linear_util.wrap_init(
+            fun, kwargs, debug_info=debug_info('brainunit.autograd.jacrev', fun, args, kwargs)
+        )
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
         jax.tree.map(partial(_check_input_dtype_jacrev, holomorphic, allow_int), dyn_args)
         if not has_aux:
@@ -333,7 +335,9 @@ def jacfwd(
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
-        f = linear_util.wrap_init(fun, kwargs)
+        f = linear_util.wrap_init(
+            fun, kwargs, debug_info=debug_info('brainunit.autograd.jacfwd', fun, args, kwargs)
+        )
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
         jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic), dyn_args)
         if not has_aux:

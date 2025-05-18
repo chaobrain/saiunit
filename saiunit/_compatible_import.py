@@ -15,14 +15,22 @@
 
 # -*- coding: utf-8 -*-
 
+from typing import TypeVar, Iterable
 import jax
 
 __all__ = [
     'safe_map',
+    'unzip2',
 ]
 
+T = TypeVar("T")
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+T3 = TypeVar("T3")
+
+
 if jax.__version_info__ < (0, 6, 0):
-    from jax.util import safe_map
+    from jax.util import safe_map, unzip2
 
 else:
 
@@ -32,3 +40,16 @@ else:
         for arg in args[1:]:
             assert len(arg) == n, f'length mismatch: {list(map(len, args))}'
         return list(map(f, *args))
+
+
+    def unzip2(xys: Iterable[tuple[T1, T2]] ) -> tuple[tuple[T1, ...], tuple[T2, ...]]:
+        """Unzip sequence of length-2 tuples into two tuples."""
+        # Note: we deliberately don't use zip(*xys) because it is lazily evaluated,
+        # is too permissive about inputs, and does not guarantee a length-2 output.
+        xs: list[T1] = []
+        ys: list[T2] = []
+        for x, y in xys:
+            xs.append(x)
+            ys.append(y)
+        return tuple(xs), tuple(ys)
+
