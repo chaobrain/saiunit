@@ -496,7 +496,7 @@ def _get_shape(x) -> Tuple[int, ...]:
     if isinstance(x, Quantity):
         shape = x.shape
     else:
-        shape = jnp.shape(x)
+        shape = asarray(x).shape
     return shape
 
 
