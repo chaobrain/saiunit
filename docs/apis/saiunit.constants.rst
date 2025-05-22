@@ -12,15 +12,15 @@ Physical constants
 ==================== ================== ======================= ==================================================================
 Constant             Symbol(s)          name                    Value
 ==================== ================== ======================= ==================================================================
-Avogadro constant    :math:`N_A, L`     ``avogadro_constant``   :math:`6.022140857\times 10^{23}\,\mathrm{mol}^{-1}`
-Boltzmann constant   :math:`k`          ``boltzmann_constant``  :math:`1.38064852\times 10^{-23}\,\mathrm{J}\,\mathrm{K}^{-1}`
-Electric constant    :math:`\epsilon_0` ``electric_constant``   :math:`8.854187817\times 10^{-12}\,\mathrm{F}\,\mathrm{m}^{-1}`
+Avogadro constant    :math:`N_A, L`     ``avogadro``            :math:`6.022140857\times 10^{23}\,\mathrm{mol}^{-1}`
+Boltzmann constant   :math:`k`          ``boltzmann``           :math:`1.38064852\times 10^{-23}\,\mathrm{J}\,\mathrm{K}^{-1}`
+Electric constant    :math:`\epsilon_0` ``electric``            :math:`8.854187817\times 10^{-12}\,\mathrm{F}\,\mathrm{m}^{-1}`
 Electron mass        :math:`m_e`        ``electron_mass``       :math:`9.10938356\times 10^{-31}\,\mathrm{kg}`
 Elementary charge    :math:`e`          ``elementary_charge``   :math:`1.6021766208\times 10^{-19}\,\mathrm{C}`
-Faraday constant     :math:`F`          ``faraday_constant``    :math:`96485.33289\,\mathrm{C}\,\mathrm{mol}^{-1}`
-Gas constant         :math:`R`          ``gas_constant``        :math:`8.3144598\,\mathrm{J}\,\mathrm{mol}^{-1}\,\mathrm{K}^{-1}`
-Magnetic constant    :math:`\mu_0`      ``magnetic_constant``   :math:`12.566370614\times 10^{-7}\,\mathrm{N}\,\mathrm{A}^{-2}`
-Molar mass constant  :math:`M_u`        ``molar_mass_constant`` :math:`1\times 10^{-3}\,\mathrm{kg}\,\mathrm{mol}^{-1}`
+Faraday constant     :math:`F`          ``faraday``             :math:`96485.33289\,\mathrm{C}\,\mathrm{mol}^{-1}`
+Gas constant         :math:`R`          ``gas``                 :math:`8.3144598\,\mathrm{J}\,\mathrm{mol}^{-1}\,\mathrm{K}^{-1}`
+Magnetic constant    :math:`\mu_0`      ``magnetic``            :math:`12.566370614\times 10^{-7}\,\mathrm{N}\,\mathrm{A}^{-2}`
+Molar mass constant  :math:`M_u`        ``molar_mass``          :math:`1\times 10^{-3}\,\mathrm{kg}\,\mathrm{mol}^{-1}`
 0°C                                     ``zero_celsius``        :math:`273.15\,\mathrm{K}`
 ==================== ================== ======================= ==================================================================
 
