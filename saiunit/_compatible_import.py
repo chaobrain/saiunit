@@ -15,18 +15,38 @@
 
 # -*- coding: utf-8 -*-
 
-from typing import TypeVar, Iterable
+from typing import TypeVar, Iterable, Callable
+
 import jax
 
 __all__ = [
     'safe_map',
     'unzip2',
+    'debug_info',
+    'wrap_init',
 ]
 
 T = TypeVar("T")
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
+
+from jax.extend import linear_util
+
+if jax.__version_info__ < (0, 5, 0):
+    from jax._src.api_util import debug_info
+
+else:
+    from jax.api_util import debug_info
+
+
+def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):
+    if jax.__version_info__ < (0, 5, 0):
+        f = linear_util.wrap_init(fun, kwargs)
+    else:
+        f = linear_util.wrap_init(fun, kwargs, debug_info=debug_info(name, fun, args, kwargs))
+    return f
+
 
 
 if jax.__version_info__ < (0, 6, 0):

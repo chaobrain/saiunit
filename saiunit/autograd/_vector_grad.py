@@ -21,9 +21,10 @@ from typing import Callable, Sequence
 import jax
 from jax import numpy as jnp
 from jax._src.api import _vjp
-from jax.api_util import argnums_partial, debug_info
+from jax.api_util import argnums_partial
 from jax.extend import linear_util
 
+from saiunit._compatible_import import wrap_init
 from saiunit._base import get_unit, maybe_decimal, Quantity, get_mantissa
 from ._misc import _check_callable
 
@@ -77,9 +78,7 @@ def vector_grad(
 
     @wraps(func)
     def grad_fun(*args, **kwargs):
-        f = linear_util.wrap_init(
-            func, kwargs, debug_info=debug_info('vector_grad', func, args, kwargs)
-        )
+        f = wrap_init(func, args, kwargs, 'vector_grad')
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
         if has_aux:
             y, vjp_fn, aux = _vjp(f_partial, *dyn_args, has_aux=True)
