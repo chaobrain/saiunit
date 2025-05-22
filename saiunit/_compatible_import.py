@@ -18,11 +18,11 @@
 from typing import TypeVar, Iterable, Callable
 
 import jax
+from jax.extend import linear_util
 
 __all__ = [
     'safe_map',
     'unzip2',
-    'debug_info',
     'wrap_init',
 ]
 
@@ -31,22 +31,14 @@ T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
 
-from jax.extend import linear_util
-
-if jax.__version_info__ < (0, 5, 0):
-    from jax._src.api_util import debug_info
-
-else:
-    from jax.api_util import debug_info
-
 
 def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):
-    if jax.__version_info__ < (0, 5, 0):
+    if jax.__version_info__ < (0, 6, 0):
         f = linear_util.wrap_init(fun, kwargs)
     else:
+        from jax.api_util import debug_info
         f = linear_util.wrap_init(fun, kwargs, debug_info=debug_info(name, fun, args, kwargs))
     return f
-
 
 
 if jax.__version_info__ < (0, 6, 0):
@@ -62,8 +54,10 @@ else:
         return list(map(f, *args))
 
 
-    def unzip2(xys: Iterable[tuple[T1, T2]] ) -> tuple[tuple[T1, ...], tuple[T2, ...]]:
-        """Unzip sequence of length-2 tuples into two tuples."""
+    def unzip2(xys: Iterable[tuple[T1, T2]]) -> tuple[tuple[T1, ...], tuple[T2, ...]]:
+        """
+        Unzip sequence of length-2 tuples into two tuples.
+        """
         # Note: we deliberately don't use zip(*xys) because it is lazily evaluated,
         # is too permissive about inputs, and does not guarantee a length-2 output.
         xs: list[T1] = []
@@ -72,4 +66,3 @@ else:
             xs.append(x)
             ys.append(y)
         return tuple(xs), tuple(ys)
-
