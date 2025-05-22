@@ -23,11 +23,11 @@ import numpy as np
 from jax.numpy import fft as jnpfft
 from jaxlib import xla_client
 
-from .. import _unit_common as uc
-from .._base import Quantity, Unit, get_or_create_dimension
-from .._misc import set_module_as
-from .._unit_common import second
-from ..math._fun_change_unit import _fun_change_unit_unary
+from saiunit import _unit_common as uc
+from saiunit._base import Quantity, Unit, get_or_create_dimension
+from saiunit._misc import set_module_as
+from saiunit._unit_common import second
+from saiunit.math._fun_change_unit import _fun_change_unit_unary
 
 __all__ = [
     # return original unit * time unit
