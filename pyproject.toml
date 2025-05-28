@@ -50,7 +50,7 @@ keywords = ['physical unit', 'physical quantity', 'brain modeling', 'scientific 
 dependencies = [
     'jax',
     'jaxlib',
-    'numpy>1.15',
+    'numpy>',
     'typing_extensions',
 ]
 
