@@ -39,8 +39,6 @@ setup(
     version=version,
     long_description=README,
     long_description_content_type="text/markdown",
-    python_requires='>=3.10',
-    install_requires=['numpy>=1.15', 'typing_extensions'],
     url='https://github.com/chaobrain/saiunit',
     project_urls={
         "Bug Tracker": "https://github.com/chaobrain/saiunit/issues",

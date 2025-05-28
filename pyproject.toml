@@ -23,7 +23,7 @@ universal = true
 name = "saiunit"
 description = "Enabling Unit-aware Computations for AI-driven Scientific Computing."
 readme = 'README.md'
-license = { text = 'Apache-2.0' }
+license = { text = 'Apache-2.0 license' }
 requires-python = '>=3.10'
 authors = [{ name = 'SAIUnit Developers', email = 'chao.brain@qq.com' }]
 classifiers = [
@@ -50,7 +50,7 @@ keywords = ['physical unit', 'physical quantity', 'brain modeling', 'scientific 
 dependencies = [
     'jax',
     'jaxlib',
-    'numpy',
+    'numpy>1.15',
     'typing_extensions',
 ]
 
