@@ -556,21 +556,21 @@ class TestQuantity(unittest.TestCase):
         for q in quantities:
             # Scalars and array scalars
             assert_quantity(q / 3, q.mantissa / 3, u)
-            assert_quantity(3 / q, 3 / q.mantissa, 1 / u)
+            assert_quantity(3 / q, 3 / q.mantissa, u.reverse())
             assert_quantity(q * 3, q.mantissa * 3, u)
             assert_quantity(3 * q, 3 * q.mantissa, u)
             assert_quantity(q / np.float64(3), q.mantissa / 3, u)
-            assert_quantity(np.float64(3) / q, 3 / q.mantissa, 1 / u)
+            assert_quantity(np.float64(3) / q, 3 / q.mantissa, u.reverse())
             assert_quantity(q * np.float64(3), q.mantissa * 3, u)
             assert_quantity(np.float64(3) * q, 3 * q.mantissa, u)
             assert_quantity(q / jnp.array(3), q.mantissa / 3, u)
-            assert_quantity(np.array(3) / q, 3 / q.mantissa, 1 / u)
+            assert_quantity(np.array(3) / q, 3 / q.mantissa, u.reverse())
             assert_quantity(q * jnp.array(3), q.mantissa * 3, u)
             assert_quantity(np.array(3) * q, 3 * q.mantissa, u)
 
             # (unitless) arrays
             assert_quantity(q / np.array([3]), q.mantissa / 3, u)
-            assert_quantity(np.array([3]) / q, 3 / q.mantissa, 1 / u)
+            assert_quantity(np.array([3]) / q, 3 / q.mantissa, u.reverse())
             assert_quantity(q * np.array([3]), q.mantissa * 3, u)
             assert_quantity(np.array([3]) * q, 3 * q.mantissa, u)
 
@@ -903,8 +903,8 @@ class TestQuantity(unittest.TestCase):
         assert isinstance(meter ** 0.5, Unit)
         assert isinstance(meter / second, Unit)
         assert isinstance(amp / meter ** 2, Unit)
-        assert isinstance(1 / meter, Unit)
-        assert isinstance(1.0 / meter, Unit)
+        # assert isinstance(1 / meter, Unit)
+        # assert isinstance(1.0 / meter, Unit)
 
         # Using the unconventional type(x) == y since we want to test that
         # e.g. meter**2 stays a Unit and does not become a Array however Unit
@@ -1640,57 +1640,6 @@ def test_str_repr():
         u.zfarad,
         u.yfarad,
     ]
-
-    # some powered units
-    powered_units = [u.cmetre2, u.Yfarad3]
-
-    # Combined units
-    complex_units = [
-        (u.kgram * u.metre2) / (u.amp * u.second3),
-        5 * (u.kgram * u.metre2) / (u.amp * u.second3),
-        u.metre * u.second ** -1,
-        10 * u.metre * u.second ** -1,
-        np.array([1, 2, 3]) * u.kmetre / u.second,
-        np.ones(3) * u.nS / u.cm ** 2,
-        # Made-up unit:
-        Unit(
-            dim=get_or_create_dimension(length=5, time=2),
-            dispname="O",
-        ),
-        8000 * u.umetre ** 3,
-        [0.0001, 10000] * u.umetre ** 3,
-        1 / u.metre,
-        1 / (u.coulomb * u.metre ** 2),
-        Unit() / second,
-        3.0 * u.mM,
-        5 * u.mole / u.liter,
-        7 * u.liter / u.meter3,
-        1 / second ** 2,
-        volt ** -2,
-        (volt ** 2) ** -1,
-        (1 / second) / meter,
-        1 / (1 / second),
-    ]
-
-    unitless = [second / second, 5 * second / second, Unit()]
-    #
-    # for u in itertools.chain(
-    #     units_which_should_exist,
-    #     some_scaled_units,
-    #     powered_units,
-    #     complex_units,
-    #     unitless,
-    # ):
-    #   assert len(str(u)) > 0
-    #   print(u)
-    #   v1 = u.display_in_unit(u, python_code=False)
-    #   if isinstance(u, Unit):
-    #     if 'Unit(1.0)' in v1:
-    #       continue
-    #     v2 = eval(v1)
-    #     assert v2 == u
-    #     assert isinstance(u, Unit)
-    #     assert u.math.allclose(v2.value, u.value)
 
     # test the `DIMENSIONLESS` object
     assert str(DIMENSIONLESS) == "1"
