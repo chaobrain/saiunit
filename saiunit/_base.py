@@ -2226,40 +2226,41 @@ class Unit:
 
     def __rdiv__(self, other) -> 'Unit' | Quantity:
         # other / self
-        if is_scalar_type(other) and not _is_tracer(other) and other == 1:
-            dim = self.dim ** -1
-            scale = -self.scale
-            factor = 1. / self.factor
-            name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-            dispname = name
-            iscompound = False
-            if name is None and not dimless and not is_fullname and self.is_fullname:
-                if self.iscompound:
-                    dispname = f"({self.dispname})"
-                    name = f"({self.name})"
-                else:
-                    dispname = self.dispname
-                    name = self.name
-                iscompound = True
-            return Unit(
-                dim,
-                base=self.base,
-                scale=scale,
-                factor=factor,
-                name=name,
-                dispname=dispname,
-                iscompound=iscompound,
-                is_fullname=is_fullname
-            )
-
-        elif isinstance(other, Unit):
+        if isinstance(other, Unit):
             return other.__div__(self)
 
         elif isinstance(other, Quantity):
             return Quantity(other.mantissa, unit=(other.unit / self))
 
         else:
-            return Quantity(other, unit=(1 / self))
+            return Quantity(other, unit=self.reverse())
+
+    def reverse(self):
+        dim = self.dim ** -1
+        scale = -self.scale
+        factor = 1. / self.factor
+        name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
+        dispname = name
+        iscompound = False
+        if name is None and not dimless and not is_fullname and self.is_fullname:
+            if self.iscompound:
+                dispname = f"({self.dispname})"
+                name = f"({self.name})"
+            else:
+                dispname = self.dispname
+                name = self.name
+            iscompound = True
+        return Unit(
+            dim,
+            base=self.base,
+            scale=scale,
+            factor=factor,
+            name=name,
+            dispname=dispname,
+            iscompound=iscompound,
+            is_fullname=is_fullname
+        )
+
 
     def __idiv__(self, other):
         raise NotImplementedError("Units cannot be modified in-place")
