@@ -18,10 +18,7 @@
 import io
 import os
 import re
-import sys
-import time
 
-from setuptools import find_packages
 from setuptools import setup
 
 # version
@@ -39,10 +36,4 @@ setup(
     version=version,
     long_description=README,
     long_description_content_type="text/markdown",
-    url='https://github.com/chaobrain/saiunit',
-    project_urls={
-        "Bug Tracker": "https://github.com/chaobrain/saiunit/issues",
-        "Documentation": "https://saiunit.readthedocs.io/",
-        "Source Code": "https://github.com/chaobrain/saiunit",
-    },
 )

@@ -60,8 +60,10 @@ dynamic = ['version']
 name = "saiunit"
 
 [project.urls]
-homepage = 'http://github.com/chaobrain/saiunit'
-repository = 'http://github.com/chaobrain/saiunit'
+homepage = 'https://github.com/chaobrain/saiunit'
+repository = 'https://github.com/chaobrain/saiunit'
+"Bug Tracker" = "https://github.com/chaobrain/saiunit/issues"
+"Documentation" = "https://saiunit.readthedocs.io/"
 
 [project.optional-dependencies]
 testing = [

@@ -14,7 +14,6 @@ exclude = [
     "brainunit/__init__.py"
 ]
 
-
 [tool.distutils.bdist_wheel]
 universal = true
 
@@ -32,6 +31,7 @@ classifiers = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
     'Intended Audience :: Science/Research',
+    'Programming Language :: Python',
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
@@ -60,10 +60,15 @@ dynamic = ['version']
 name = "brainunit"
 
 [project.urls]
-homepage = 'http://github.com/chaobrain/brainunit'
-repository = 'http://github.com/chaobrain/brainunit'
+homepage = 'https://github.com/chaobrain/brainunit'
+repository = 'https://github.com/chaobrain/brainunit'
+"Bug Tracker": "https://github.com/chaobrain/brainunit/issues"
+"Documentation": "https://brainunit.readthedocs.io/"
 
 [project.optional-dependencies]
 testing = [
     'pytest',
 ]
+cpu = ["jax[cpu]"]
+cuda12 = ["jax[cuda12]"]
+tpu = ["jax[tpu]"]
