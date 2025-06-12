@@ -37,10 +37,10 @@ def make(root_dir):
         f.write(pyproject.replace('saiunit==', f'saiunit=={saiunit.__version__}'))
 
     # setup
-    with open(os.path.join(brainunit_dir, 'setup.py.template'), 'r') as f:
-        setup = f.read()
-    with open(os.path.join(brainunit_dir, 'setup.py'), 'w') as f:
-        f.write(setup.replace('saiunit==', f'saiunit=={saiunit.__version__}'))
+    # with open(os.path.join(brainunit_dir, 'setup.py.template'), 'r') as f:
+    #     setup = f.read()
+    # with open(os.path.join(brainunit_dir, 'setup.py'), 'w') as f:
+    #     f.write(setup.replace('saiunit==', f'saiunit=={saiunit.__version__}'))
 
 
 if __name__ == '__main__':

@@ -18,10 +18,7 @@
 import io
 import os
 import re
-import sys
-import time
 
-from setuptools import find_packages
 from setuptools import setup
 
 # version
@@ -34,63 +31,9 @@ version = re.search('__version__ = "(.*)"', init_py).groups()[0]
 with io.open(os.path.join(here, 'README.md'), 'r', encoding='utf-8') as f:
     README = f.read()
 
-# installation packages
-packages = find_packages(
-    exclude=[
-        "docs*",
-        "build*",
-        "dev*",
-        "dist*",
-        "saiunit.egg-info*",
-        "saiunit/__pycache__*"
-    ]
-)
-
 # setup
 setup(
-    name='saiunit',
     version=version,
-    description='Unit-aware computations for scientific AI',
     long_description=README,
     long_description_content_type="text/markdown",
-    author='SAIUnit Developers',
-    author_email='chao.brain@qq.com',
-    packages=packages,
-    python_requires='>=3.10',
-    install_requires=['numpy>=1.15', 'typing_extensions'],
-    url='https://github.com/chaobrain/saiunit',
-    project_urls={
-        "Bug Tracker": "https://github.com/chaobrain/saiunit/issues",
-        "Documentation": "https://saiunit.readthedocs.io/",
-        "Source Code": "https://github.com/chaobrain/saiunit",
-    },
-    extras_require={
-        'cpu': ['jax[cpu]'],
-        'cuda12': ['jax[cuda12]', ],
-        'tpu': ['jax[tpu]'],
-    },
-    keywords=(
-        'physical unit, '
-        'physical quantity, '
-        'brain modeling, '
-        'scientific computing, '
-        'AI for science, '
-    ),
-    classifiers=[
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Programming Language :: Python :: 3.12',
-        'Programming Language :: Python :: 3.13',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: Apache Software License',
-        'Topic :: Scientific/Engineering :: Bio-Informatics',
-        'Topic :: Scientific/Engineering :: Mathematics',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
-        'Topic :: Software Development :: Libraries',
-    ],
-    license='Apache-2.0 license',
 )
