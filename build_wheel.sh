@@ -1,5 +1,5 @@
 # build SAIUnit
-pythn -m build
+python -m build
 # twine upload dist/saiunit*
 
 # build BrainUnit

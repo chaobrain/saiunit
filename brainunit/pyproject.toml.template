@@ -62,8 +62,8 @@ name = "brainunit"
 [project.urls]
 homepage = 'https://github.com/chaobrain/brainunit'
 repository = 'https://github.com/chaobrain/brainunit'
-"Bug Tracker": "https://github.com/chaobrain/brainunit/issues"
-"Documentation": "https://brainunit.readthedocs.io/"
+"Bug Tracker" = "https://github.com/chaobrain/brainunit/issues"
+"Documentation" = "https://brainunit.readthedocs.io/"
 
 [project.optional-dependencies]
 testing = [
