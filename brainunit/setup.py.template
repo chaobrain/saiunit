@@ -21,18 +21,13 @@ import re
 
 from setuptools import setup
 
-# version
-here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, '../saiunit/', '__init__.py'), 'r') as f:
-  init_py = f.read()
-version = re.search('__version__ = "(.*)"', init_py).groups()[0]
-
 # obtain long description from README
+here = os.path.abspath(os.path.dirname(__file__))
 with io.open(os.path.join(here, 'README.md'), 'r', encoding='utf-8') as f:
     README = f.read()
 
 # setup
 setup(
-  version=version,
+  version=,
   long_description=README,
 )
