@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Union
+from typing import Union, Optional
 
 import jax
 from jax import nn
@@ -20,7 +20,7 @@ from jax import nn
 from ._fun_accept_unitless import _fun_accept_unitless_unary
 from ._fun_array_creation import asarray
 from ._fun_keep_unit import _fun_keep_unit_unary, where
-from .._base import Quantity, get_mantissa
+from .._base import Quantity, get_mantissa, Unit
 from .._misc import set_module_as
 
 __all__ = [
@@ -66,6 +66,7 @@ def relu(
 @set_module_as('saiunit.math')
 def relu6(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Rectified Linear Unit 6 activation function.
 
@@ -90,11 +91,12 @@ def relu6(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.relu6, x)
+    return _fun_accept_unitless_unary(nn.relu6, x, unit_to_scale=unit_to_scale)
 
 
 def sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sigmoid activation function.
 
@@ -109,11 +111,12 @@ def sigmoid(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.sigmoid, x)
+    return _fun_accept_unitless_unary(nn.sigmoid, x, unit_to_scale=unit_to_scale)
 
 
 def softplus(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Softplus activation function.
 
@@ -125,11 +128,12 @@ def softplus(
     Args:
         x : input array
     """
-    return _fun_accept_unitless_unary(nn.softplus, x)
+    return _fun_accept_unitless_unary(nn.softplus, x, unit_to_scale=unit_to_scale)
 
 
 def sparse_plus(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sparse plus function.
 
@@ -151,11 +155,12 @@ def sparse_plus(
     Args:
         x: input (float)
     """
-    return _fun_accept_unitless_unary(nn.sparse_plus, x)
+    return _fun_accept_unitless_unary(nn.sparse_plus, x, unit_to_scale=unit_to_scale)
 
 
 def sparse_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sparse sigmoid activation function.
 
@@ -182,11 +187,12 @@ def sparse_sigmoid(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.sparse_sigmoid, x)
+    return _fun_accept_unitless_unary(nn.sparse_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
 def soft_sign(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Soft-sign activation function.
 
@@ -198,11 +204,12 @@ def soft_sign(
     Args:
         x : input array
     """
-    return _fun_accept_unitless_unary(nn.soft_sign, x)
+    return _fun_accept_unitless_unary(nn.soft_sign, x, unit_to_scale=unit_to_scale)
 
 
 def silu(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""SiLU (aka swish) activation function.
 
@@ -219,11 +226,12 @@ def silu(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.silu, x)
+    return _fun_accept_unitless_unary(nn.silu, x, unit_to_scale=unit_to_scale)
 
 
 def swish(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Mish activation function.
 
@@ -242,11 +250,12 @@ def swish(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.swish, x)
+    return _fun_accept_unitless_unary(nn.swish, x, unit_to_scale=unit_to_scale)
 
 
 def log_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Log-sigmoid activation function.
 
@@ -261,12 +270,13 @@ def log_sigmoid(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.log_sigmoid, x)
+    return _fun_accept_unitless_unary(nn.log_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
 def leaky_relu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    negative_slope: jax.typing.ArrayLike = 1e-2
+    negative_slope: jax.typing.ArrayLike = 1e-2,
+    unit_to_scale: Optional[Unit] = None,
 ) -> Union[Quantity, jax.Array]:
     r"""Leaky rectified linear unit activation function.
 
@@ -287,12 +297,20 @@ def leaky_relu(
     Returns:
         An array.
     """
+    if unit_to_scale is None:
+        assert x.dim.is_dimensionless, (
+            f'{leaky_relu.__name__} only support dimensionless input. But we got {x}. \n'
+            f'If you want to scale the input, please provide the "unit_to_scale" parameter. Or '
+            f'convert the input to a dimensionless Quantity manually.'
+        )
+        x = x.to_decimal()
     x_arr = asarray(x)
     return where(get_mantissa(x_arr) >= 0, x_arr, negative_slope * x_arr)
 
 
 def hard_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard Sigmoid activation function.
 
@@ -307,11 +325,12 @@ def hard_sigmoid(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.hard_sigmoid, x)
+    return _fun_accept_unitless_unary(nn.hard_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
 def hard_silu(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard SiLU (swish) activation function
 
@@ -329,7 +348,7 @@ def hard_silu(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.hard_silu, x)
+    return _fun_accept_unitless_unary(nn.hard_silu, x, unit_to_scale=unit_to_scale)
 
 
 hard_swish = hard_silu
@@ -337,6 +356,7 @@ hard_swish = hard_silu
 
 def hard_tanh(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard :math:`\mathrm{tanh}` activation function.
 
@@ -355,12 +375,13 @@ def hard_tanh(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.hard_tanh, x)
+    return _fun_accept_unitless_unary(nn.hard_tanh, x, unit_to_scale=unit_to_scale)
 
 
 def elu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    alpha: jax.typing.ArrayLike = 1.0
+    alpha: jax.typing.ArrayLike = 1.0,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Exponential linear unit activation function.
 
@@ -379,12 +400,13 @@ def elu(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.elu, x, alpha=alpha)
+    return _fun_accept_unitless_unary(nn.elu, x, alpha=alpha, unit_to_scale=unit_to_scale)
 
 
 def celu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    alpha: jax.typing.ArrayLike = 1.0
+    alpha: jax.typing.ArrayLike = 1.0,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Continuously-differentiable exponential linear unit activation.
 
@@ -407,11 +429,12 @@ def celu(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.celu, x, alpha=alpha)
+    return _fun_accept_unitless_unary(nn.celu, x, alpha=alpha, unit_to_scale=unit_to_scale)
 
 
 def selu(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Scaled exponential linear unit activation.
 
@@ -436,12 +459,13 @@ def selu(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.selu, x)
+    return _fun_accept_unitless_unary(nn.selu, x, unit_to_scale=unit_to_scale)
 
 
 def gelu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    approximate: bool = True
+    approximate: bool = True,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Gaussian error linear unit activation function.
 
@@ -464,12 +488,13 @@ def gelu(
         x: input array
         approximate: whether to use the approximate or exact formulation.
     """
-    return _fun_accept_unitless_unary(nn.gelu, x, approximate=approximate)
+    return _fun_accept_unitless_unary(nn.gelu, x, approximate=approximate, unit_to_scale=unit_to_scale)
 
 
 def glu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    axis: int = -1
+    axis: int = -1,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Gated linear unit activation function.
 
@@ -490,12 +515,13 @@ def glu(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.glu, x, axis=axis)
+    return _fun_accept_unitless_unary(nn.glu, x, axis=axis, unit_to_scale=unit_to_scale)
 
 
 def squareplus(
     x: Union[Quantity, jax.typing.ArrayLike],
-    b: jax.typing.ArrayLike = 4
+    b: jax.typing.ArrayLike = 4,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Squareplus activation function.
 
@@ -510,11 +536,12 @@ def squareplus(
         x : input array
         b : smoothness parameter
     """
-    return _fun_accept_unitless_unary(nn.squareplus, x, b=b)
+    return _fun_accept_unitless_unary(nn.squareplus, x, b=b, unit_to_scale=unit_to_scale)
 
 
 def mish(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Mish activation function.
 
@@ -533,4 +560,4 @@ def mish(
     Returns:
         An array.
     """
-    return _fun_accept_unitless_unary(nn.mish, x)
+    return _fun_accept_unitless_unary(nn.mish, x, unit_to_scale=unit_to_scale)
