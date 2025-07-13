@@ -3063,6 +3063,15 @@ class Quantity(Generic[A]):
     # Python inherent methods #
     # ----------------------- #
 
+    def __hash__(self):
+        """
+        Hash the Quantity object.
+
+        Returns:
+          int: The hash value of the Quantity object.
+        """
+        return hash((self.mantissa, self.unit))
+
     def __repr__(self) -> str:
         return self.repr_in_unit(python_code=True)
 
