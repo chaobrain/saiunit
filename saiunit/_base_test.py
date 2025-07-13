@@ -32,16 +32,12 @@ import pytest
 from numpy.testing import assert_equal
 
 import saiunit as u
+from saiunit import get_dim, Unit, Quantity, DIMENSIONLESS, get_or_create_dimension
 from saiunit._base import (
-    DIMENSIONLESS,
     UNITLESS,
     DimensionMismatchError,
-    Quantity,
-    Unit,
     check_units,
     fail_for_dimension_mismatch,
-    get_or_create_dimension,
-    get_dim,
     have_same_dim,
     display_in_unit,
     is_scalar_type,
@@ -49,12 +45,6 @@ from saiunit._base import (
 )
 from saiunit._unit_common import *
 from saiunit._unit_shortcuts import kHz, ms, mV, nS
-
-import jax.numpy as jnp
-import numpy as np
-
-import saiunit as u
-from saiunit import get_dim, Unit, Quantity, DIMENSIONLESS, get_or_create_dimension
 
 
 class Test_get_dim:
@@ -1749,3 +1739,37 @@ class TestGetMethod(unittest.TestCase):
             assert f"{q2:.2f}" == "ArrayImpl([1.23, 1.23]) * mvolt"
             assert f"{q2:.3f}" == "ArrayImpl([1.235, 1.235]) * mvolt"
             assert f"{q2:.4f}" == "ArrayImpl([1.2346, 1.2346]) * mvolt"
+
+
+class TestJit:
+    def test1(self):
+        @jax.jit
+        def f(a):
+            return a * 2
+
+        f(3 * u.mV)
+        f(brainstate.random.rand(10) * u.mV)
+
+    def test2(self):
+        @brainstate.transform.jit
+        def f(a):
+            return a * 2
+
+        f(3 * u.mV)
+        f(brainstate.random.rand(10) * u.mV)
+
+    def test3(self):
+        @jax.jit
+        def f(**kwargs):
+            return kwargs['a'] * 2
+
+        f(a=3 * u.mV)
+        f(a=brainstate.random.rand(10) * u.mV)
+
+    def test4(self):
+        @brainstate.transform.jit
+        def f(**kwargs):
+            return kwargs['a'] * 2
+
+        f(a=3 * u.mV)
+        f(a=brainstate.random.rand(10) * u.mV)
