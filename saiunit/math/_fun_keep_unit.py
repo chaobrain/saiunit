@@ -28,6 +28,7 @@ from .._base import (
     Quantity,
     fail_for_dimension_mismatch,
     get_unit,
+    split_mantissa_unit,
     UNITLESS,
     unit_scale_align_to_first,
     maybe_decimal
@@ -2959,18 +2960,17 @@ def interp(
       Union[jax.Array, Quantity]: Quantity if `x`, `xp`, and `fp` are Quantities that have the same unit, else an array.
     """
     x_unit = get_unit(x)
+    fp, y_unit = split_mantissa_unit(fp)
     x, xp, fp, left, right, period = (
         x.mantissa if isinstance(x, Quantity) else x,
         Quantity(xp).in_unit(x_unit).mantissa,
-        Quantity(fp).in_unit(x_unit).mantissa,
+        fp,
         Quantity(left).in_unit(x_unit).mantissa if left is not None else left,
         Quantity(right).in_unit(x_unit).mantissa if right is not None else right,
         Quantity(period).in_unit(x_unit).mantissa if period is not None else period
     )
     r = jnp.interp(x, xp=xp, fp=fp, left=left, right=right, period=period)
-    if x_unit.is_unitless:
-        return r
-    return Quantity(r, unit=x_unit)
+    return maybe_decimal(Quantity(r, unit=y_unit))
 
 
 @set_module_as('saiunit.math')
