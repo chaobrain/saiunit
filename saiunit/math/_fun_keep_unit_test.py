@@ -584,10 +584,11 @@ class TestFunKeepUnitOther(parameterized.TestCase):
 
         x = [1, 2, 3] * u.second
         xp = [0, 1, 2, 3, 4] * u.second
-        fp = [0, 1, 2, 3, 4] * u.second
+        fp = [0, 1, 2, 3, 4] * u.mvolt
         result_q = u.math.interp(x, xp, fp)
-        expected_q = jnp.interp(jnp.array([1, 2, 3]), jnp.array([0, 1, 2, 3, 4]),
-                                jnp.array([0, 1, 2, 3, 4])) * u.second
+        expected_q = jnp.interp(jnp.array([1, 2, 3]),
+                                jnp.array([0, 1, 2, 3, 4]),
+                                jnp.array([0, 1, 2, 3, 4])) * u.mvolt
         assert u.math.allclose(result_q, expected_q)
 
     def test_clip(self):
