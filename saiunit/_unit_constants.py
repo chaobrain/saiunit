@@ -84,7 +84,7 @@ micron = Unit.create(meter.dim, name="micron", dispname="µm", scale=meter.scale
 au = astronomical_unit = Unit.create(meter.dim, name="astronomical unit", dispname="AU", scale=meter.scale + 11,
                                      factor=1.495978707)
 light_year = Unit.create(meter.dim, name="light year", dispname="ly", scale=meter.scale + 15, factor=9.460730777119564)
-parsec = Unit.create(meter.dim, name="parsec", dispname="pc", scale=meter.scale + 16, factor=3.085677581491367e16)
+parsec = Unit.create(meter.dim, name="parsec", dispname="pc", scale=meter.scale + 16, factor=3.085677581491367)
 
 # ----- Pressure -----
 atm = atmosphere = Unit.create(pascal.dim, name="atmosphere", dispname="atm", scale=pascal.scale + 5, factor=1.013249966)
@@ -104,7 +104,7 @@ fluid_ounce = fluid_ounce_US = Unit.create(meter3.dim, name="fluid ounce", dispn
                                            factor=2.95735295625)
 fluid_ounce_imp = Unit.create(meter3.dim, name="imperial fluid ounce", dispname="fl oz imp", scale=meter3.scale - 5,
                               factor=2.84130742)
-bbl = barrel = Unit.create(meter3.dim, name="barrel", dispname="bbl", scale=meter3.scale + 2, factor=1.5898729493)
+bbl = barrel = Unit.create(meter3.dim, name="barrel", dispname="bbl", scale=meter3.scale - 1, factor=1.58987294928)
 
 # ----- Speed -----
 speed_unit = meter / second
@@ -118,8 +118,8 @@ knot = Unit.create(speed_unit.dim, name="knot", dispname="kn", scale=speed_unit.
 # ----- Temperature -----
 # TODO: The relationship between Celsius and Kelvin should be linear, but the current implementation is not.
 # zero_Celsius = Unit.create(kelvin.dim, name="zero Celsius", dispname="0°C", scale=kelvin.scale, factor=273.15)
-degree_Fahrenheit = Unit.create(kelvin.dim, name="degree Fahrenheit", dispname="°F", scale=kelvin.scale + 2,
-                                factor=2.55927778)
+degree_Fahrenheit = Unit.create(kelvin.dim, name="degree Fahrenheit", dispname="°F", scale=kelvin.scale,
+                                factor=5/9)
 
 # ----- Energy -----
 eV = electron_volt = Unit.create(joule.dim, name="electronvolt", dispname="eV", scale=joule.scale - 19, factor=1.602176565)
@@ -130,7 +130,7 @@ erg = Unit.create(joule.dim, name="erg", dispname="erg", scale=joule.scale - 7, 
 Btu = Btu_IT = Unit.create(joule.dim, name="British thermal unit (International Table)", dispname="Btu IT",
                            scale=joule.scale + 3, factor=1.05505585262)
 Btu_th = Unit.create(joule.dim, name="British thermal unit (thermochemical)", dispname="Btu th", scale=joule.scale + 3,
-                     factor=1.0543499999744)
+                     factor=1.05435026444)
 ton_TNT = Unit.create(joule.dim, name="ton of TNT", dispname="ton TNT", scale=joule.scale + 9, factor=4.184)
 
 # ----- Power -----
