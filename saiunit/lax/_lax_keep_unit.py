@@ -291,7 +291,7 @@ def gather(
         return maybe_decimal(
             Quantity(lax.gather(operand.mantissa, start_indices, dimension_numbers, slice_sizes,
                                 unique_indices=unique_indices, indices_are_sorted=indices_are_sorted,
-                                mode=mode, fill_value=fill_value.in_unit(operand.unit)),
+                                mode=mode, fill_value=fill_value.in_unit(operand.unit).mantissa),
                      unit=operand.unit)
         )
     elif isinstance(operand, Quantity):
@@ -444,13 +444,13 @@ def dynamic_slice_ind_dim(
         Here is a one-dimensional example:
 
         >>> x = jnp.arange(5)
-        >>> dynamic_slice_in_dim(x, 1, 3)
+        >>> dynamic_slice_ind_dim(x, 1, 3)
         Array([1, 2, 3], dtype=int32)
 
         Like `jax.lax.dynamic_slice`, out-of-bound slices will be clipped to the
         valid range:
 
-        >>> dynamic_slice_in_dim(x, 4, 3)
+        >>> dynamic_slice_ind_dim(x, 4, 3)
         Array([2, 3, 4], dtype=int32)
 
         Here is a two-dimensional example:
@@ -461,7 +461,7 @@ def dynamic_slice_ind_dim(
                [ 4,  5,  6,  7],
                [ 8,  9, 10, 11]], dtype=int32)
 
-        >>> dynamic_slice_in_dim(x, 1, 2, axis=1)
+        >>> dynamic_slice_ind_dim(x, 1, 2, axis=1)
         Array([[ 1,  2],
                [ 5,  6],
                [ 9, 10]], dtype=int32)
@@ -656,16 +656,31 @@ def sort(
     """
     # check if operand is a sequence
     if isinstance(operand, Sequence):
-        output = []
+        # Convert quantities to mantissas, keeping track of units
+        mantissas = []
+        units = []
         for op in operand:
             if isinstance(op, Quantity):
-                output.append(Quantity(lax.sort(op.mantissa, dimension, is_stable, num_keys), unit=op.unit))
+                mantissas.append(op.mantissa)
+                units.append(op.unit)
             else:
-                output.append(lax.sort(op, dimension, is_stable, num_keys))
+                mantissas.append(op)
+                units.append(None)
+        
+        # Sort the mantissas
+        sorted_mantissas = lax.sort(mantissas, dimension, is_stable, num_keys)
+        
+        # Convert back to quantities where applicable
+        output = []
+        for i, (mantissa, unit) in enumerate(zip(sorted_mantissas, units)):
+            if unit is not None:
+                output.append(maybe_decimal(Quantity(mantissa, unit=unit)))
+            else:
+                output.append(mantissa)
         return output
     else:
         if isinstance(operand, Quantity):
-            return Quantity(lax.sort(operand.mantissa, dimension, is_stable, num_keys), unit=operand.unit)
+            return maybe_decimal(Quantity(lax.sort(operand.mantissa, dimension, is_stable, num_keys), unit=operand.unit))
         return lax.sort(operand, dimension, is_stable, num_keys)
 
 
