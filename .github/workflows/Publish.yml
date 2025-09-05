@@ -27,7 +27,7 @@ jobs:
           password: ${{ secrets.PYPI_API_TOKEN }}
       - name: build BrainUnit package
         run: |
-          python -m pip install jax jaxlib numpy typing_extensions
+          python -m pip install dist/saiunit* jax jaxlib numpy typing_extensions
           python make_brainunit_setup.py
           cd ./brainunit
           python -m build
