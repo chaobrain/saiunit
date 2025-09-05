@@ -93,6 +93,7 @@ def relu6(
     return _fun_accept_unitless_unary(nn.relu6, x)
 
 
+@set_module_as('saiunit.math')
 def sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -112,6 +113,7 @@ def sigmoid(
     return _fun_accept_unitless_unary(nn.sigmoid, x)
 
 
+@set_module_as('saiunit.math')
 def softplus(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -128,6 +130,7 @@ def softplus(
     return _fun_accept_unitless_unary(nn.softplus, x)
 
 
+@set_module_as('saiunit.math')
 def sparse_plus(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -154,6 +157,7 @@ def sparse_plus(
     return _fun_accept_unitless_unary(nn.sparse_plus, x)
 
 
+@set_module_as('saiunit.math')
 def sparse_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -185,6 +189,7 @@ def sparse_sigmoid(
     return _fun_accept_unitless_unary(nn.sparse_sigmoid, x)
 
 
+@set_module_as('saiunit.math')
 def soft_sign(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -201,6 +206,7 @@ def soft_sign(
     return _fun_accept_unitless_unary(nn.soft_sign, x)
 
 
+@set_module_as('saiunit.math')
 def silu(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -222,6 +228,7 @@ def silu(
     return _fun_accept_unitless_unary(nn.silu, x)
 
 
+@set_module_as('saiunit.math')
 def swish(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -245,6 +252,7 @@ def swish(
     return _fun_accept_unitless_unary(nn.swish, x)
 
 
+@set_module_as('saiunit.math')
 def log_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -264,6 +272,7 @@ def log_sigmoid(
     return _fun_accept_unitless_unary(nn.log_sigmoid, x)
 
 
+@set_module_as('saiunit.math')
 def leaky_relu(
     x: Union[Quantity, jax.typing.ArrayLike],
     negative_slope: jax.typing.ArrayLike = 1e-2
@@ -291,6 +300,7 @@ def leaky_relu(
     return where(get_mantissa(x_arr) >= 0, x_arr, negative_slope * x_arr)
 
 
+@set_module_as('saiunit.math')
 def hard_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -310,6 +320,7 @@ def hard_sigmoid(
     return _fun_accept_unitless_unary(nn.hard_sigmoid, x)
 
 
+@set_module_as('saiunit.math')
 def hard_silu(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -335,6 +346,7 @@ def hard_silu(
 hard_swish = hard_silu
 
 
+@set_module_as('saiunit.math')
 def hard_tanh(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -358,6 +370,7 @@ def hard_tanh(
     return _fun_accept_unitless_unary(nn.hard_tanh, x)
 
 
+@set_module_as('saiunit.math')
 def elu(
     x: Union[Quantity, jax.typing.ArrayLike],
     alpha: jax.typing.ArrayLike = 1.0
@@ -382,6 +395,7 @@ def elu(
     return _fun_accept_unitless_unary(nn.elu, x, alpha=alpha)
 
 
+@set_module_as('saiunit.math')
 def celu(
     x: Union[Quantity, jax.typing.ArrayLike],
     alpha: jax.typing.ArrayLike = 1.0
@@ -410,6 +424,7 @@ def celu(
     return _fun_accept_unitless_unary(nn.celu, x, alpha=alpha)
 
 
+@set_module_as('saiunit.math')
 def selu(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
@@ -439,6 +454,7 @@ def selu(
     return _fun_accept_unitless_unary(nn.selu, x)
 
 
+@set_module_as('saiunit.math')
 def gelu(
     x: Union[Quantity, jax.typing.ArrayLike],
     approximate: bool = True
@@ -467,6 +483,7 @@ def gelu(
     return _fun_accept_unitless_unary(nn.gelu, x, approximate=approximate)
 
 
+@set_module_as('saiunit.math')
 def glu(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: int = -1
@@ -493,6 +510,7 @@ def glu(
     return _fun_accept_unitless_unary(nn.glu, x, axis=axis)
 
 
+@set_module_as('saiunit.math')
 def squareplus(
     x: Union[Quantity, jax.typing.ArrayLike],
     b: jax.typing.ArrayLike = 4
@@ -513,6 +531,7 @@ def squareplus(
     return _fun_accept_unitless_unary(nn.squareplus, x, b=b)
 
 
+@set_module_as('saiunit.math')
 def mish(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
