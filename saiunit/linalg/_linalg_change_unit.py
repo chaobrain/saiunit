@@ -32,7 +32,7 @@ __all__ = [
     # Matrix and vector products
     'dot', 'multi_dot', 'vdot', 'vecdot',
     'inner', 'kron', 'matmul',
-    'tensordot', 'matrix_power', 'det',
+    'tensordot', 'matrix_power',
     'cross',
 
     # Decompositions

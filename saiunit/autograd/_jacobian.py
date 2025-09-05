@@ -29,7 +29,6 @@ from jax._src.api import (
     _check_output_dtype_jacfwd
 )
 from jax.api_util import argnums_partial
-from jax.extend import linear_util
 
 from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
 from saiunit._compatible_import import safe_map, wrap_init
@@ -134,7 +133,7 @@ def jacrev(
     In particular, an array is produced (with no pytrees involved) when the
     function input ``x`` and output ``fun(x)`` are each a single array, as in the
     ``simple_function`` example above. If ``fun(x)`` has shape ``(out1, out2, ...)`` and ``x``
-    has shape ``(in1, in2, ...)`` then ``saiunit.autograd.jacrec(fun)(x)`` has shape
+    has shape ``(in1, in2, ...)`` then ``saiunit.autograd.jacrev(fun)(x)`` has shape
     ``(out1, out2, ..., in1, in2, ..., in1, in2, ...)``. To flatten pytrees into
     1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
     """
@@ -142,7 +141,7 @@ def jacrev(
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
-        f = wrap_init(fun, args, kwargs, 'brainunit.autograd.jacrev')
+        f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacrev')
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
         jax.tree.map(partial(_check_input_dtype_jacrev, holomorphic, allow_int), dyn_args)
         if not has_aux:
@@ -238,7 +237,7 @@ def jacfwd(
     fun: Callable,
     argnums: int | Sequence[int] = 0,
     has_aux: bool = False,
-    holomorphic: bool = False
+    holomorphic: bool = False,
 ) -> Callable:
     """
     Physical unit-aware version of `jax.jacfwd <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacfwd.html>`_.
@@ -276,7 +275,7 @@ def jacfwd(
      [[3., 0.],
       [0., 4.]] * ohm)
 
-    `jacfwd` is a generalization of the usual definition of the JacFwd(Jacobian Reverse Mode).
+    `jacfwd` is a generalization of the usual definition of the JacFwd(Jacobian Forward Mode).
     that supports nested Python containers (i.e. pytrees) as inputs and outputs.
     The tree structure of ``saiunit.autograd.jacfwd(fun)(x)`` is given by forming a tree
     product of the structure of ``fun(x)`` with a tree product of two copies of
@@ -324,7 +323,7 @@ def jacfwd(
     In particular, an array is produced (with no pytrees involved) when the
     function input ``x`` and output ``fun(x)`` are each a single array, as in the
     ``simple_function`` example above. If ``fun(x)`` has shape ``(out1, out2, ...)`` and ``x``
-    has shape ``(in1, in2, ...)`` then ``saiunit.autograd.jacrec(fun)(x)`` has shape
+    has shape ``(in1, in2, ...)`` then ``saiunit.autograd.jacfwd(fun)(x)`` has shape
     ``(out1, out2, ..., in1, in2, ..., in1, in2, ...)``. To flatten pytrees into
     1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
     """
@@ -333,7 +332,7 @@ def jacfwd(
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
-        f = wrap_init(fun, args, kwargs, 'brainunit.autograd.jacfwd')
+        f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacfwd')
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
         jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic), dyn_args)
         if not has_aux:

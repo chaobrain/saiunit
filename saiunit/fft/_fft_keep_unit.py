@@ -56,7 +56,7 @@ def fftshift(
         Generate FFT frequencies with :func:`~saiunit.fft.fftfreq`:
 
         >>> import saiunit as u
-        >>> freq = u.fft.fftfreq(5, 1 * u.second)
+        >>> freq = u.fft.fftfreq(4, 1 * u.second)
         >>> freq
         ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
 

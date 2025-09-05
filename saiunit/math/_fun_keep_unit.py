@@ -20,8 +20,8 @@ from typing import (Union, Sequence, Tuple, Optional)
 
 import jax
 import jax.numpy as jnp
-from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 import numpy as np
+from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 
 from ._fun_array_creation import asarray
 from .._base import (
@@ -71,7 +71,7 @@ __all__ = [
     'interp', 'clip', 'histogram',
 
     # selection
-    'compress', 'extract', 'take', 'select', 'where', 'unique',
+    'compress', 'extract', 'take', 'select', 'where', 'unique', 'gather',
 ]
 
 
@@ -3377,10 +3377,10 @@ def unique(
                           fill_value=fill_value)
 
 
-
 @set_module_as('saiunit.math')
 def round(
     x: Union[Quantity, jax.typing.ArrayLike],
+    decimals: int = 0,
 ) -> jax.Array | Quantity:
     """
     Round an array to the nearest integer.
@@ -3388,13 +3388,15 @@ def round(
     Parameters
     ----------
     x : array_like, Quantity
-      Input array.
+        Input array.
+    decimals: int
+        Number of decimal places to round to (default is 0).
 
     Returns
     -------
     out : jax.Array
     """
-    return _fun_keep_unit_unary(jnp.round, x)
+    return _fun_keep_unit_unary(jnp.round, x, decimals=decimals)
 
 
 @set_module_as('saiunit.math')
@@ -3533,3 +3535,52 @@ def modf(
     if isinstance(x, Quantity):
         return jax.tree.map(lambda y: Quantity(y, unit=x.unit), jnp.modf(x.mantissa))
     return jnp.modf(x)
+
+
+@set_module_as('saiunit.math')
+def gather(input: jax.Array | Quantity, dim: int, index: jax.Array):
+    """
+    JAX implementation of torch.gather.
+
+    Gathers values along an axis specified by dim, according to index.
+
+    Args:
+        input: The source tensor
+        dim: The axis along which to index
+        index: The indices of elements to gather
+
+    Returns:
+        JAX array with the gathered elements
+
+    Example:
+        >>> input = jnp.array([[1, 2], [3, 4]])
+        >>> index = jnp.array([[0, 0], [1, 0]])
+        >>> gather(input, 1, index)
+        Array([[1, 1],
+               [4, 3]], dtype=int32)
+    """
+    # Normalize dim to be positive
+    ndim = input.ndim
+    if dim < 0:
+        dim = ndim + dim
+
+    # Create index arrays for all dimensions
+    idx_shape = index.shape
+    indices = []
+
+    for i in range(ndim):
+        if i == dim:
+            # Use the provided index for the gather dimension
+            indices.append(index)
+        else:
+            # Create meshgrid indices for other dimensions
+            shape = [1] * ndim
+            shape[i] = idx_shape[i] if i < len(idx_shape) else input.shape[i]
+            idx = jnp.arange(input.shape[i]).reshape(shape)
+            # Broadcast to match index shape
+            broadcast_shape = list(idx_shape)
+            if i < len(idx_shape):
+                broadcast_shape[i] = input.shape[i]
+            indices.append(jnp.broadcast_to(idx, idx_shape))
+
+    return input[tuple(indices)]

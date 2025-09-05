@@ -79,9 +79,9 @@ class TestConstant(unittest.TestCase):
         import saiunit.constants as quantity_constants
         import saiunit._unit_constants as unit_constants
         for c in constants_list:
+            print(c)
             q_c = getattr(quantity_constants, c)
             u_c = getattr(unit_constants, c)
             assert u.math.isclose(
-                q_c.to_decimal(q_c.unit),
-                (1. * u_c).to_decimal(q_c.unit)
+                q_c.to_decimal(q_c.unit), (1. * u_c).to_decimal(q_c.unit)
             ), f"Mismatch between {c} in quantity_constants and unit_constants"

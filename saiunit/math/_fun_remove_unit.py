@@ -97,7 +97,7 @@ def iscomplexobj(
 @set_module_as('saiunit.math')
 def heaviside(
     x1: Union[Quantity, jax.Array],
-    x2: jax.typing.ArrayLike
+    x2: Union[Quantity, jax.typing.ArrayLike]
 ) -> Union[Quantity, jax.Array]:
     """
     Compute the Heaviside step function.
@@ -585,7 +585,7 @@ def less(
     ----------
     x, y : array_like, Quantity
         Input arrays.
-        If ``x1.shape != y.shape``, they must be broadcastable to a common
+        If ``x.shape != y.shape``, they must be broadcastable to a common
         shape (which becomes the shape of the output).
     out : ndarray, None, or tuple of ndarray and None, optional
         A location into which the result is stored. If provided, it must have
@@ -999,9 +999,6 @@ def argmax(
       Input data.
     axis : int, optional
       By default, the index is into the flattened array, otherwise along the specified axis.
-    keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left in the result as dimensions with size one. With this
-      option, the result will broadcast correctly against the input array.
 
     Returns
     -------

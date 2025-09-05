@@ -790,10 +790,7 @@ def _fun_accept_unitless_binary(
                                             f'when scaling "unit_to_scale" is not provided.')
             y = y.to_decimal()
         else:
-            assert isinstance(unit_to_scale, Unit), (
-                f'{func} only support dimensionless input. \n'
-                'When the input is not a Quantity, the "unit_to_scale" parameter should not be provided.'
-            )
+            assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
             y = y.to_decimal(unit_to_scale)
     return func(x, y, *args, **kwargs)
 
@@ -1091,7 +1088,7 @@ def ldexp(
     """
     if isinstance(x, Quantity):
         assert x.dim.is_dimensionless, f'Expected dimensionless array, got {x}'
-        x = x.value
+        x = x.mantissa
     return jnp.ldexp(x, y)
 
 

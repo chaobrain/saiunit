@@ -1,7 +1,7 @@
 name: Publish to PyPI.org
 on:
   release:
-    types: [published]
+    types: [ published ]
 jobs:
   pypi:
     runs-on: ubuntu-latest
@@ -10,8 +10,29 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - run: python setup.py bdist_wheel
-      - name: Publish package
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build setuptools wheel
+      - name: build SAIUnit package
+        run: |
+          python -m build
+      - name: Publish SAIUnit package
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: build BrainUnit package
+        run: |
+          python -m pip install dist/saiunit* jax jaxlib numpy typing_extensions
+          python make_brainunit_setup.py
+          cd ./brainunit
+          python -m build
+      - name: Publish BrainUnit package
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: brainunit/dist/

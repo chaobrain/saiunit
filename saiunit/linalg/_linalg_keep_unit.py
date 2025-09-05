@@ -40,6 +40,7 @@ __all__ = [
     'diagonal', 'matrix_transpose',
 ]
 
+
 @set_module_as('saiunit.linalg')
 def norm(
     x: Union[jax.typing.ArrayLike, Quantity],
@@ -270,17 +271,22 @@ def qr(
         Array(True, dtype=bool)
     """
     if isinstance(a, Quantity):
-        result = jnp.linalg.qr(a.mantissa)
+        result = jnp.linalg.qr(a.mantissa, mode=mode)
+        if mode == "r":
+            return maybe_decimal(Quantity(result, unit=a.unit))
+        else:
+            Q, R = result
+            return Q, maybe_decimal(Quantity(R, unit=a.unit))
     else:
-        result = jnp.linalg.qr(a)
-    try:
-        Q, R = result
-        return Q, maybe_decimal(Quantity(R, unit=a.unit))
-    except:
-        return maybe_decimal(Quantity(result, unit=a.unit))
+        result = jnp.linalg.qr(a, mode=mode)
+        if mode == "r":
+            return result
+        else:
+            return result
 
 
 svd = lax_linalg.svd
+
 
 @set_module_as('saiunit.linalg')
 def svdvals(
@@ -383,7 +389,7 @@ def eigh(
         >>> with jnp.printoptions(precision=3):
         ...   print(v)
         ArrayImpl([[-0.707-0.j   , -0.707+0.j   ],
-                   [ 0.   +0.707j,  0.   -0.707j]], dtype=complex64) * meter
+                   [ 0.   +0.707j,  0.   -0.707j]], dtype=complex64)
     """
     if UPLO is None or UPLO == "L":
         lower = True
@@ -454,8 +460,8 @@ def eigvalsh(
         >>> w
         Array([-1.,  3.], dtype=float32)
     """
-    # TODO: Seems wrong implementation
     return eigh(a, UPLO=UPLO)[0]
+
 
 @set_module_as('saiunit.linalg')
 def matrix_transpose(

@@ -625,7 +625,8 @@ def fftn(
         >>> u.math.allclose(x, u.fft.ifftn(x_fftn))
         Array(True, dtype=bool)
     """
-    n = _calculate_fftn_dimension(a.ndim, axes)
+    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
+    n = _calculate_fftn_dimension(input_ndim, axes)
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
     fftn._unit_change_fun = _unit_change_fun
@@ -730,7 +731,8 @@ def rfftn(
         >>> u.fft.rfftn(x1)
         ArrayImpl([10.+0.j, -2.+2.j, -2.+0.j], dtype=complex64) * meter * second
     """
-    n = _calculate_fftn_dimension(a.ndim, axes)
+    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
+    n = _calculate_fftn_dimension(input_ndim, axes)
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
     rfftn._unit_change_fun = _unit_change_fun
@@ -978,7 +980,8 @@ def ifftn(
         ArrayImpl([[ 2.5 +0.j  ,  0.  -0.58j,  0.  +0.58j],
                    [ 0.17+0.j  , -0.83-0.29j, -0.83+0.29j]], dtype=complex64) * meter / second2
     """
-    n = _calculate_fftn_dimension(a.ndim, axes)
+    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
+    n = _calculate_fftn_dimension(input_ndim, axes)
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
     ifftn._unit_change_fun = _unit_change_fun
@@ -1067,7 +1070,8 @@ def irfftn(
                    [[-2., -2., -2.],
                     [-2., -2., -2.]]], dtype=float32) * meter / second
     """
-    n = _calculate_fftn_dimension(a.ndim, axes)
+    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
+    n = _calculate_fftn_dimension(input_ndim, axes)
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
     irfftn._unit_change_fun = _unit_change_fun
@@ -1188,7 +1192,7 @@ def rfftfreq(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Return sample frequencies for the discrete Fourier transform.
 
-    saiunit implementation of :func:`numpy.fft.fftfreq`. Returns frequencies appropriate
+    saiunit implementation of :func:`numpy.fft.rfftfreq`. Returns frequencies appropriate
     for use with the outputs of :func:`~saiunit.fft.rfft` and
     :func:`~saiunit.fft.irfft`.
 
@@ -1210,8 +1214,8 @@ def rfftfreq(
     Example:
         >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([1, 2, 3, 4]) * u.second
-        >>> u.fft.rfftfreq(4, x)
+        >>> d = 1 * u.second
+        >>> u.fft.rfftfreq(4, d)
         ArrayImpl([0.  , 0.25, 0.5 ], dtype=float32) * hertz
     """
     if isinstance(d, Quantity):

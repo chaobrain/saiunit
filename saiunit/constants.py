@@ -14,12 +14,12 @@
 # ==============================================================================
 
 r"""
-A module providing some physical units as `Quantity` objects. Note that these
-units are not imported by wildcard imports, they
+A module providing some physical constants as `Quantity` objects. Note that these
+constants are not imported by wildcard imports, they
 have to be imported explicitly. You can use ``import ... as ...`` to import them
 with shorter names, e.g.::
 
-    from saiunit.constants import faraday_constant as F
+    from saiunit.constants import faraday as F
 
 The available constants are:
 
@@ -61,18 +61,18 @@ from ._unit_common import (
 from ._unit_constants import speed_unit
 
 __all__ = [
-    'arcmin', 'arcminute', 'arcsec', 'arcsecond', 'atomic_mass', 'au', 'astronomical_unit',
-    'angstrom', 'atm', 'atmosphere', 'avogadro', 'bar', 'blob', 'boltzmann', 'Btu', 'Btu_IT',
+    'acre', 'arcmin', 'arcminute', 'arcsec', 'arcsecond', 'atomic_mass', 'au', 'astronomical_unit',
+    'angstrom', 'atm', 'atmosphere', 'avogadro', 'bar', 'barrel', 'bbl', 'blob', 'boltzmann', 'Btu', 'Btu_IT',
     'Btu_th', 'carat', 'calorie', 'calorie_IT', 'calorie_th', 'day', 'degree', 'degree_Fahrenheit',
     'dyn', 'dyne', 'eV', 'electron_mass', 'electric', 'electronvolt', 'elementary_charge', 'erg',
     'faraday', 'fermi', 'fluid_ounce', 'fluid_ounce_US', 'fluid_ounce_imp', 'foot', 'gas', 'grain',
     'gallon', 'gallon_US', 'gallon_imp', 'gram', 'hectare', 'hour', 'hp', 'horsepower', 'IMF',
-    'inch', 'julian_year', 'kelvin', 'kgf', 'kilogram_force', 'knot', 'lb', 'lbf', 'light_year',
-    'long_ton', 'mach', 'magnetic', 'meter', 'metric_ton', 'micron', 'mil', 'mile', 'minute',
+    'inch', 'julian_year', 'kelvin', 'kgf', 'kilogram_force', 'kmh', 'knot', 'lb', 'lbf', 'light_year',
+    'long_ton', 'mach', 'magnetic', 'meter', 'metric_ton', 'micron', 'mil', 'mile', 'minute', 'mmHg',
     'molar_mass', 'month', 'mph', 'nautical_mile', 'newton', 'ounce', 'oz', 'parsec', 'pica',
-    'point', 'pound', 'psi', 'radian', 'second', 'short_ton', 'slug', 'slinch', 'speed_unit',
+    'point', 'pound', 'pound_force', 'psi', 'radian', 'second', 'short_ton', 'slug', 'slinch', 'speed_unit',
     'stone', 'survey_foot', 'survey_mile', 'torr', 'troy_ounce', 'troy_pound', 'ton_TNT', 'week',
-    'watt', 'year', 'zero_celsius'
+    'watt', 'yard', 'year', 'zero_celsius'
 ]
 
 #: Avogadro constant (http://physics.nist.gov/cgi-bin/cuu/Value?na)
@@ -90,9 +90,9 @@ faraday = np.asarray(96485.33289) * (coulomb / mole)
 #: gas constant (http://physics.nist.gov/cgi-bin/cuu/Value?r)
 gas = np.asarray(8.3144598) * (joule / mole / kelvin)
 #: Magnetic constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu0)
-magnetic = np.asarray(4 * np.pi * 1e-7) * (newton / amp ** 2)
+magnetic = np.asarray(1.25663706212e-6) * (newton / amp ** 2)
 #: Molar mass constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu)
-molar_mass = np.asarray(1.) * (gram / mole)
+molar_mass = np.asarray(1e-3) * (kilogram / mole)
 #: zero degree Celsius
 zero_celsius = np.asarray(273.15) * kelvin
 
@@ -161,7 +161,9 @@ fluid_ounce_imp = np.asarray(2.84130742e-5) * meter3  # Imperial fluid ounce
 bbl = barrel = np.asarray(1.58987294928e2) * meter3  # Barrel (oil)
 
 # ----- Temperature -----
-degree_Fahrenheit = np.asarray(2.55927778e2) * kelvin  # Fahrenheit
+# Note: Fahrenheit is a temperature scale, not a unit. Use conversion functions instead.
+# This constant represents the conversion factor from Fahrenheit to Kelvin degrees
+degree_Fahrenheit = np.asarray(5/9) * kelvin  # Fahrenheit degree size in Kelvin
 
 # ----- Speed -----
 kmh = np.asarray(2.77777778e-1) * speed_unit  # Kilometer per hour
