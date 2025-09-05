@@ -634,6 +634,7 @@ class TestFunKeepUnit(parameterized.TestCase):
             result = bm_fun(q)
             expected = jnp_fun(jnp.array(value))
             assert_quantity(result, expected, unit=unit)
+
     @parameterized.product(
         value=[((1.0, 2.0), (3.0, 4.0)),
                ((1.23, 2.34, 3.45), (4.56, 5.67, 6.78))],
@@ -816,3 +817,36 @@ class TestFunKeepUnitMathFunMisc(parameterized.TestCase):
         result_q = u.math.intersect1d(q1, q2)
         expected_q = jnp.intersect1d(jnp.array([1, 2, 3, 4, 5]), jnp.array([3, 4, 5, 6, 7]))
         assert_quantity(result_q, expected_q, u.second)
+
+
+class TestGather:
+    def test(self):
+        # Test 1: Basic 2D example (matches PyTorch documentation)
+        input_tensor = jnp.array([[1, 2], [3, 4]])
+        index_tensor = jnp.array([[0, 0], [1, 0]])
+        result1 = u.math.gather(input_tensor, 1, index_tensor)
+        print("Test 1:")
+        print("Input:", input_tensor)
+        print("Index:", index_tensor)
+        print("Result:", result1)
+        print()
+
+        # Test 2: 3D example
+        input_3d = jnp.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+        index_3d = jnp.array([[[0, 1], [1, 0]], [[1, 0], [0, 1]]])
+        result2 = u.math.gather(input_3d, 2, index_3d)
+        print("Test 2:")
+        print("Input shape:", input_3d.shape)
+        print("Index shape:", index_3d.shape)
+        print("Result:", result2)
+        print()
+
+        # Test 3: Gather along dim=0
+        result3 = u.math.gather(input_tensor, 0, jnp.array([[1, 0], [0, 1]]))
+        print("Test 3 (dim=0):")
+        print("Result:", result3)
+
+        # Test 4: Gather along dim=0
+        result3 = u.math.gather(input_tensor * u.mV, 0, jnp.array([[1, 0], [0, 1]]))
+        print("Test 3 (dim=0):")
+        print("Result:", result3)
