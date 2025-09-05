@@ -390,10 +390,6 @@ def nanprod(
       default platform integer.  In that case, if `a` is signed then the
       platform integer is used while if `a` is unsigned then an unsigned
       integer of the same precision as the platform integer is used.
-    out : ndarray, optional
-      Alternative output array in which to place the result. It must have
-      the same shape as the expected output, but the type of the output
-      values will be cast if necessary.
     keepdims : bool, optional
       If this is set to True, the axes which are reduced are left in the
       result as dimensions with size one. With this option, the result
@@ -708,7 +704,7 @@ def divmod(
         return Quantity(r[0], unit=x.unit / UNITLESS), Quantity(r[1], unit=x.unit)
     elif isinstance(y, Quantity):
         r = jnp.divmod(x, y.mantissa)
-        return Quantity(r[0], unit=UNITLESS / y.dim), Quantity(r[1], unit=UNITLESS)
+        return Quantity(r[0], unit=UNITLESS / y.unit), Quantity(r[1], unit=UNITLESS)
     else:
         return jnp.divmod(x, y)
 
