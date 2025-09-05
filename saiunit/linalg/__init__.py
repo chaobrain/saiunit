@@ -21,7 +21,7 @@ from ._linalg_remove_unit import *
 from ._linalg_remove_unit import __all__ as _linalg_remove_unit_all
 
 __all__ = (_linalg_change_unit_all +
-              _linalg_keep_unit_all +
+           _linalg_keep_unit_all +
            _linalg_remove_unit_all)
 
 del (_linalg_change_unit_all,
