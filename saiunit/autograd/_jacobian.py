@@ -29,7 +29,6 @@ from jax._src.api import (
     _check_output_dtype_jacfwd
 )
 from jax.api_util import argnums_partial
-from jax.extend import linear_util
 
 from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
 from saiunit._compatible_import import safe_map, wrap_init
@@ -239,7 +238,6 @@ def jacfwd(
     argnums: int | Sequence[int] = 0,
     has_aux: bool = False,
     holomorphic: bool = False,
-    allow_int: bool = False
 ) -> Callable:
     """
     Physical unit-aware version of `jax.jacfwd <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacfwd.html>`_.
@@ -252,7 +250,6 @@ def jacfwd(
             first element is considered the output of the mathematical function to be
             differentiated and the second element is auxiliary data. Default False.
         holomorphic: Optional, bool. Indicates whether ``fun`` is promised to be holomorphic. Default False.
-        allow_int: Optional, bool. Indicates whether integer arguments are allowed. Default False.
 
     Returns:
         A function that computes the Jacobian of ``fun`` through forward-mode automatic differentiation.
@@ -337,7 +334,7 @@ def jacfwd(
     def jacfun(*args, **kwargs):
         f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacfwd')
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
-        jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic, allow_int), dyn_args)
+        jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic), dyn_args)
         if not has_aux:
             pushfwd: Callable = partial(_jvp, f_partial, dyn_args)
             y, jac = jax.vmap(pushfwd, out_axes=(None, -1))(_std_basis(dyn_args))
