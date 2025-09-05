@@ -104,7 +104,7 @@ fluid_ounce = fluid_ounce_US = Unit.create(meter3.dim, name="fluid ounce", dispn
                                            factor=2.95735295625)
 fluid_ounce_imp = Unit.create(meter3.dim, name="imperial fluid ounce", dispname="fl oz imp", scale=meter3.scale - 5,
                               factor=2.84130742)
-bbl = barrel = Unit.create(meter3.dim, name="barrel", dispname="bbl", scale=meter3.scale - 1, factor=1.58987294928)
+bbl = barrel = Unit.create(meter3.dim, name="barrel", dispname="bbl", scale=meter3.scale + 2, factor=1.58987294928)
 
 # ----- Speed -----
 speed_unit = meter / second
