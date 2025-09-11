@@ -22,7 +22,7 @@ import jax.numpy as jnp
 
 from ._fun_array_creation import asarray
 from .._base import UNITLESS, Quantity, maybe_decimal
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
 
@@ -45,6 +45,7 @@ __all__ = [
 # ------------------------------
 
 def _fun_change_unit_unary(val_fun, unit_fun, x, *args, **kwargs):
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         # x = x.factorless()
         r = Quantity(val_fun(x.mantissa, *args, **kwargs), unit=unit_fun(x.unit))
@@ -350,6 +351,7 @@ def prod(
 
       This is a Quantity if the product of the unit of `x` is not dimensionless.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         return x.prod(axis=axis, dtype=dtype, keepdims=keepdims, initial=initial, where=where,
                       promote_integers=promote_integers)
@@ -413,6 +415,7 @@ def nanprod(
 
       This is a Quantity if the product of the unit of `x` is not dimensionless.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         return x.nanprod(axis=axis, dtype=dtype, keepdims=keepdims, initial=initial, where=where)
     else:
@@ -457,6 +460,7 @@ def cumprod(
 
       This is a Quantity if the product of the unit of `x` is not dimensionless.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         return x.cumprod(axis=axis, dtype=dtype)
     else:
@@ -498,6 +502,7 @@ def nancumprod(
 
       This is a Quantity if the product of the unit of `x` is not dimensionless.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         return x.nancumprod(axis=axis, dtype=dtype)
     else:
@@ -512,6 +517,8 @@ cumproduct = cumprod
 
 
 def _fun_change_unit_binary(val_fun, unit_fun, x, y, *args, **kwargs):
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         # x = x.factorless()
         # y = y.factorless()
@@ -696,6 +703,8 @@ def divmod(
       Element-wise remainder from floor division.
       This is a scalar if both `x` and `y` are scalars.
     """
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         r = jnp.divmod(x.mantissa, y.mantissa)
         return Quantity(r[0], unit=x.unit / y.unit), Quantity(r[1], unit=x.unit)
@@ -803,6 +812,8 @@ def power(
 
       This is a Quantity if the unit of `x` raised to the unit of `y` is not dimensionless.
     """
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
     if isinstance(x, Quantity):
         if isinstance(y, Quantity):
             assert y.is_unitless, f'{jnp.power.__name__} only supports scalar exponent'
@@ -881,6 +892,8 @@ def float_power(
 
       This is a Quantity if the unit of `x` raised to the unit of `y` is not dimensionless.
     """
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
     if isinstance(x, Quantity):
         if isinstance(y, Quantity):
             assert y.is_unitless, f'{jnp.float_power.__name__} only supports scalar exponent'
@@ -1017,6 +1030,7 @@ def multi_dot(
     new_arrays = []
     unit = UNITLESS
     for arr in arrays:
+        arr = maybe_custom_array(arr)
         arr = asarray(arr)
         if isinstance(arr, Quantity):
             unit = unit * arr.unit
@@ -1339,6 +1353,7 @@ def matrix_power(
 
       This is a Quantity if the final unit is the product of the unit of `a` and itself, else an array.
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return maybe_decimal(Quantity(jnp.linalg.matrix_power(a.mantissa, n), unit=a.unit ** n))
     else:
@@ -1366,6 +1381,7 @@ def det(
     >>> saiunit.linalg.det(a)
     Array(-2., dtype=float32)
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         a_shape = a.shape
         if len(a_shape) >= 2 and a_shape[-1] == a_shape[-2]:
