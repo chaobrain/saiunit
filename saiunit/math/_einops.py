@@ -33,7 +33,7 @@ from ._fun_array_creation import asarray, zeros_like
 from ._fun_keep_unit import reshape, transpose, expand_dims, tile, where, squeeze
 from ._misc import shape
 from .._base import Quantity, UNITLESS
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 T = TypeVar('T')
 
@@ -565,6 +565,7 @@ def einreduce(
     -------
     out:  tensor of the same type as input
     """
+    x = maybe_custom_array_tree(x)
     shape = _get_shape(x)
     try:
         hashable_axes_lengths = tuple(axes_lengths.items())
@@ -731,6 +732,7 @@ def einshape(
     Returns:
         dict, maps axes names to their lengths
     """
+    x = maybe_custom_array_tree(x)
     _shape = _get_shape(x)
     exp = ParsedExpression(pattern, allow_underscore=True)
     if exp.has_composed_axes():
@@ -1217,7 +1219,7 @@ def einsum(
     #     operands,
     #     is_leaf=lambda x: isinstance(x, Quantity)
     # )
-
+    operands = maybe_custom_array_tree(operands)
     operands = (subscripts, *operands)
     spec = operands[0] if isinstance(operands[0], str) else None
     path_type = 'optimal' if optimize is True else Unoptimized() if optimize is False else optimize

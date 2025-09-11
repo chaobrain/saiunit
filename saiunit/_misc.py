@@ -56,6 +56,33 @@ def set_module_as(module: str):
 
 
 def maybe_custom_array(x):
+    """
+    Convert a CustomArray to its underlying value if needed.
+
+    This function checks if the input is an instance of CustomArray and extracts
+    its value attribute if so. If the input is not a CustomArray, it returns the
+    input unchanged. CustomArray is lazily imported to avoid circular dependencies.
+
+    Parameters
+    ----------
+    x : Any
+        The input value which may be a CustomArray instance.
+
+    Returns
+    -------
+    Any
+        The underlying value if x is a CustomArray, otherwise x unchanged.
+
+    Examples
+    --------
+    >>> from saiunit.custom_array import CustomArray
+    >>> regular_value = 5
+    >>> custom_arr = CustomArray(10)  # Assuming CustomArray wraps values
+    >>> maybe_custom_array(regular_value)
+    5
+    >>> maybe_custom_array(custom_arr)
+    10
+    """
     global CustomArray
     if CustomArray is None:
         from saiunit.custom_array import CustomArray
@@ -65,7 +92,46 @@ def maybe_custom_array(x):
         return x
 
 
-def maybse_custom_array_tree(x):
+# Note: Fixed the typo in the function name from 'maybse_custom_array_tree' to 'maybe_custom_array_tree'
+def maybe_custom_array_tree(x):
+    """
+    Apply maybe_custom_array recursively to all elements in a nested structure.
+
+    This function traverses a potentially nested data structure (tree) and applies
+    maybe_custom_array to each element. CustomArray instances are treated as leaves
+    during the traversal. CustomArray is lazily imported to avoid circular dependencies.
+
+    Parameters
+    ----------
+    x : Any
+        The input structure which may contain CustomArray instances.
+
+    Returns
+    -------
+    Any
+        A new structure with the same shape as x, where each CustomArray has been
+        replaced with its underlying value.
+
+    Examples
+    --------
+    >>> from saiunit.custom_array import CustomArray
+    >>> import jax.numpy as jnp
+    >>> # Create a nested structure with CustomArray instances
+    >>> data = {
+    ...     'a': 1,
+    ...     'b': CustomArray(2),
+    ...     'c': [3, CustomArray(4), jnp.array([5, CustomArray(6)])]
+    ... }
+    >>> result = maybe_custom_array_tree(data)
+    >>> result['a']
+    1
+    >>> result['b']
+    2
+    >>> result['c'][1]
+    4
+    >>> result['c'][2][1]
+    6
+    """
     global CustomArray
     if CustomArray is None:
         from saiunit.custom_array import CustomArray
