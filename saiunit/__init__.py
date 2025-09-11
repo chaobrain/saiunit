@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-__version__ = "0.0.18"
+__version__ = "0.0.19"
 
 from . import _matplotlib_compat
 from . import autograd
@@ -32,6 +32,8 @@ from ._unit_common import __all__ as _common_all
 from ._unit_constants import *
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
+from .custom_array import *
+from .custom_array import __all__ as _array_all
 
 __all__ = (
     [
@@ -45,9 +47,10 @@ __all__ = (
     _common_all +
     _std_units_all +
     _base_all +
+    _array_all +
     _celsius_all
 )
-del _common_all, _std_units_all, _base_all, _celsius_all, _matplotlib_compat
+del _common_all, _std_units_all, _base_all, _celsius_all, _matplotlib_compat, _array_all
 
 # old version compatibility
 avogadro_constant = constants.avogadro

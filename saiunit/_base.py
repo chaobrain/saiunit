@@ -28,7 +28,7 @@ import numpy as np
 from jax.interpreters.partial_eval import DynamicJaxprTracer
 from jax.tree_util import register_pytree_node_class
 
-from ._misc import set_module_as
+from ._misc import set_module_as, maybe_custom_array
 from ._sparse_base import SparseMatrix
 
 __all__ = [
@@ -89,6 +89,7 @@ def compatible_with_equinox(mode: bool = True):
 
 
 def _to_quantity(array) -> 'Quantity':
+    array = maybe_custom_array(array)
     if isinstance(array, Quantity):
         return array
     else:
@@ -2260,7 +2261,6 @@ class Unit:
             iscompound=iscompound,
             is_fullname=is_fullname
         )
-
 
     def __idiv__(self, other):
         raise NotImplementedError("Units cannot be modified in-place")

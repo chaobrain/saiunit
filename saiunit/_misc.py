@@ -14,6 +14,11 @@
 # ==============================================================================
 
 
+import jax
+
+CustomArray = None
+
+
 def set_module_as(module: str):
     """
     A decorator that changes the __module__ attribute of a function.
@@ -42,8 +47,26 @@ def set_module_as(module: str):
     >>> my_function.__module__
     'saiunit.public'
     """
+
     def wrapper(fun: callable):
         fun.__module__ = module
         return fun
 
     return wrapper
+
+
+def maybe_custom_array(x):
+    global CustomArray
+    if CustomArray is None:
+        from saiunit.custom_array import CustomArray
+    if isinstance(x, CustomArray):
+        return x.value
+    else:
+        return x
+
+
+def maybse_custom_array_tree(x):
+    global CustomArray
+    if CustomArray is None:
+        from saiunit.custom_array import CustomArray
+    return jax.tree.map(maybe_custom_array, x, is_leaf=lambda x: isinstance(x, CustomArray))
