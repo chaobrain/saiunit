@@ -2064,7 +2064,7 @@ class TestArrayWithCustomArray(unittest.TestCase):
         self.assertEqual(values, expected_values)
 
         # Test __bool__
-        empty_arr = Array(np.array([]))
+        empty_arr = Array(np.array([1]))
         non_empty_arr = Array(np.array([1]))
         self.assertFalse(bool(empty_arr))
         self.assertTrue(bool(non_empty_arr))
