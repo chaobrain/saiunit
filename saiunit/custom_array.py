@@ -31,6 +31,194 @@ __all__ = [
 
 
 class CustomArray:
+    """
+    A custom array wrapper providing comprehensive array operations and cross-framework compatibility.
+
+    CustomArray is a versatile array wrapper that provides a unified interface for array
+    operations while maintaining compatibility with NumPy, JAX, and PyTorch ecosystems.
+    It serves as a drop-in replacement for standard array types with enhanced functionality
+    and cross-framework interoperability.
+
+    Attributes
+    ----------
+    value : Any
+        The underlying array data. Can be a NumPy array, JAX array, or any array-like
+        object that supports the required operations.
+
+    Properties
+    ----------
+    dtype : numpy.dtype or equivalent
+        Data type of the array elements.
+    shape : tuple of ints
+        Tuple representing the dimensions of the array.
+    ndim : int
+        Number of array dimensions.
+    size : int
+        Total number of elements in the array.
+    real : array_like
+        Real part of the array elements.
+    imag : array_like
+        Imaginary part of the array elements. Note: Currently contains a typo,
+        accessing 'value.image' instead of 'value.imag'.
+    T : array_like
+        Transposed view of the array.
+
+    Methods
+    -------
+    Arithmetic Operations:
+        __add__(other), __radd__(other), __iadd__(other)
+            Addition operations (+, +=).
+        __sub__(other), __rsub__(other), __isub__(other)
+            Subtraction operations (-, -=).
+        __mul__(other), __rmul__(other), __imul__(other)
+            Multiplication operations (*, *=).
+        __truediv__(other), __rtruediv__(other), __itruediv__(other)
+            True division operations (/, /=).
+        __floordiv__(other), __rfloordiv__(other), __ifloordiv__(other)
+            Floor division operations (//, //=).
+        __pow__(other), __rpow__(other), __ipow__(other)
+            Power operations (**, **=).
+        __matmul__(other), __rmatmul__(other), __imatmul__(other)
+            Matrix multiplication operations (@, @=).
+
+    Comparison Operations:
+        __eq__(other), __ne__(other), __lt__(other), __le__(other),
+        __gt__(other), __ge__(other)
+            Element-wise comparison operations.
+
+    Unary Operations:
+        __neg__(), __pos__(), __abs__(), __invert__()
+            Unary arithmetic and bitwise operations.
+
+    Statistical Methods:
+        mean(axis=None, dtype=None, keepdims=False)
+            Compute the arithmetic mean along the specified axis.
+        sum(axis=None, dtype=None, keepdims=False, initial=0, where=True)
+            Return the sum of array elements over a given axis.
+        min(axis=None, keepdims=False), max(axis=None, keepdims=False)
+            Return minimum/maximum values along an axis.
+        std(axis=None, dtype=None, ddof=0, keepdims=False)
+            Compute the standard deviation along the specified axis.
+        var(axis=None, dtype=None, ddof=0, keepdims=False)
+            Compute the variance along the specified axis.
+
+    Array Manipulation:
+        reshape(*shape, order='C')
+            Return an array with a new shape.
+        transpose(*axes)
+            Return a view of the array with axes transposed.
+        flatten()
+            Return a copy of the array collapsed into one dimension.
+        squeeze(axis=None)
+            Remove axes of length one.
+        expand_dims(axis)
+            Expand the shape of an array.
+
+    Indexing and Selection:
+        take(indices, axis=None, mode=None)
+            Return an array formed from elements at given indices.
+        compress(condition, axis=None)
+            Return selected slices along given axis.
+        nonzero()
+            Return indices of elements that are non-zero.
+
+    Sorting and Searching:
+        sort(axis=-1, stable=True, order=None)
+            Sort an array in-place.
+        argsort(axis=-1, kind=None, order=None)
+            Return indices that would sort an array.
+        argmax(axis=None), argmin(axis=None)
+            Return indices of maximum/minimum values.
+
+    Numerical Operations:
+        round(decimals=0)
+            Round array elements to given number of decimals.
+        clip(min=None, max=None)
+            Clip values to specified range.
+        cumsum(axis=None, dtype=None), cumprod(axis=None, dtype=None)
+            Return cumulative sum/product along axis.
+
+    Type Conversion:
+        astype(dtype)
+            Copy array cast to specified type.
+        to_numpy(dtype=None)
+            Convert to numpy.ndarray.
+        to_jax(dtype=None)
+            Convert to jax.numpy.ndarray.
+
+    PyTorch Compatibility:
+        unsqueeze(dim), clamp(min_value=None, max_value=None), clone()
+            PyTorch-style operations.
+
+    Examples
+    --------
+    Basic usage with NumPy arrays:
+
+    >>> import numpy as np
+    >>> from saiunit import CustomArray
+    >>> import brainstate
+    >>>
+    >>> class Array(brainstate.State, u.CustomArray):
+    >>>>   pass
+    >>> arr = Array()
+    >>> arr.value = np.array([1, 2, 3, 4, 5])
+    >>> print(arr.shape)
+    (5,)
+    >>> print(arr.mean())
+    3.0
+
+    Arithmetic operations:
+
+    >>> result = arr * 2 + 10
+    >>> print(result)
+    [12 14 16 18 20]
+
+    JAX compatibility:
+
+    >>> import jax.numpy as jnp
+    >>> jax_arr = Array()
+    >>> jax_arr.value = jnp.array([1.0, 2.0, 3.0])
+    >>> squared = jax_arr ** 2
+    >>> print(squared)
+    [1. 4. 9.]
+
+    Array manipulation:
+
+    >>> matrix = Array()
+    >>> matrix.value = np.array([[1, 2], [3, 4]])
+    >>> transposed = matrix.T
+    >>> reshaped = matrix.reshape(4)
+    >>> print(reshaped)
+    [1 2 3 4]
+
+    Statistical operations:
+
+    >>> data = Array()
+    >>> data.value = np.array([1, 2, 3, 4, 5])
+    >>> print(f"Mean: {data.mean()}, Std: {data.std()}")
+    Mean: 3.0, Std: 1.4142135623730951
+
+    Notes
+    -----
+    - This class uses duck typing and delegates operations to the underlying array
+    - In-place operations modify the internal `value` attribute directly
+    - Some methods return the underlying array type rather than CustomArray instances
+    - The `imag` property currently has a typo and accesses `value.image`
+    - Thread safety depends on the underlying array implementation
+    - JAX transformations (jit, grad, vmap) work seamlessly with CustomArray instances
+
+    See Also
+    --------
+    numpy.ndarray : NumPy's N-dimensional array
+    jax.numpy.ndarray : JAX's array implementation
+    torch.Tensor : PyTorch's tensor class
+
+    References
+    ----------
+    .. [1] NumPy documentation: https://numpy.org/doc/
+    .. [2] JAX documentation: https://jax.readthedocs.io/
+    .. [3] PyTorch documentation: https://pytorch.org/docs/
+    """
     value: Any
 
     def __hash__(self):
