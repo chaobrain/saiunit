@@ -30,7 +30,6 @@ __all__ = [
 ]
 
 
-
 class CustomArray:
     value: Any
 

@@ -17,6 +17,7 @@
 import jax.typing
 
 from ._base import Quantity
+from ._misc import maybe_custom_array
 from ._unit_common import kelvin
 
 __all__ = [
@@ -51,6 +52,7 @@ def celsius2kelvin(celsius: jax.typing.ArrayLike) -> Quantity:
     298.15 * kelvin
 
     """
+    celsius = maybe_custom_array(celsius)
     if isinstance(celsius, Quantity):
         raise TypeError("The input value should be not be a Quantity.")
     return (celsius + 273.15) * kelvin
@@ -82,6 +84,7 @@ def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
     25.0
 
     """
+    value = maybe_custom_array(value)
     if not (isinstance(value, Quantity) and value.unit == kelvin):
         raise TypeError("The input value should be a Quantity with kelvin.")
     return value.mantissa - 273.15
