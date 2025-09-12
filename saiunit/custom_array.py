@@ -746,7 +746,7 @@ class CustomArray:
         return self.value
 
     def __bool__(self) -> bool:
-        return self.value.__bool__()
+        return bool(self.value)
 
     def __float__(self):
         return self.value.__float__()
