@@ -15,14 +15,13 @@
 
 import jax
 import jax.numpy as jnp
-import pytest
 import numpy as np
+import pytest
 from absl.testing import parameterized
 
-import saiunit as u
 import saiunit.math as um
 from saiunit import meter, second, UNITLESS
-from saiunit._base import assert_quantity, Quantity
+from saiunit._base import Quantity
 
 
 class TestActivationFunctions(parameterized.TestCase):
@@ -34,7 +33,7 @@ class TestActivationFunctions(parameterized.TestCase):
         self.test_array = jnp.array([-3.0, -1.0, -0.5, 0.0, 0.5, 1.0, 3.0])
         self.positive_array = jnp.array([0.1, 0.5, 1.0, 2.0, 5.0])
         self.negative_array = jnp.array([-5.0, -2.0, -1.0, -0.5, -0.1])
-        
+
         # Arrays with units for testing unit handling
         self.dimensionless_quantity = self.test_array * UNITLESS
         self.meter_quantity = self.test_array * meter
@@ -198,7 +197,6 @@ class TestActivationFunctions(parameterized.TestCase):
         # Test output is always negative or zero
         assert jnp.all(result <= 0)
 
-
     def test_hard_sigmoid_basic_functionality(self):
         """Test Hard Sigmoid activation function basic functionality."""
         # Test with JAX array
@@ -351,13 +349,13 @@ class TestActivationFunctions(parameterized.TestCase):
         """Test Squareplus activation function functionality."""
         # Test with default b=4
         result = um.squareplus(self.test_array)
-        expected = (self.test_array + jnp.sqrt(self.test_array**2 + 4)) / 2
+        expected = (self.test_array + jnp.sqrt(self.test_array ** 2 + 4)) / 2
         np.testing.assert_allclose(result, expected, rtol=1e-6)
 
         # Test with custom b
         custom_b = 2.0
         result_custom = um.squareplus(self.test_array, b=custom_b)
-        expected_custom = (self.test_array + jnp.sqrt(self.test_array**2 + custom_b)) / 2
+        expected_custom = (self.test_array + jnp.sqrt(self.test_array ** 2 + custom_b)) / 2
         np.testing.assert_allclose(result_custom, expected_custom, rtol=1e-6)
 
         # Test that output is always >= 0
@@ -401,7 +399,7 @@ class TestActivationFunctions(parameterized.TestCase):
     def test_activation_function_shapes(self, func_name):
         """Test that activation functions preserve input shapes."""
         func = getattr(um, func_name)
-        
+
         # Test with 1D array
         input_1d = jnp.array([1.0, 2.0, 3.0])
         result_1d = func(input_1d)
@@ -440,14 +438,14 @@ class TestActivationFunctions(parameterized.TestCase):
     def test_activation_functions_finite_outputs(self, func_name):
         """Test that activation functions produce finite outputs for reasonable inputs."""
         func = getattr(um, func_name)
-        
+
         # Test with various input ranges
         test_ranges = [
             jnp.linspace(-10, 10, 21),
             jnp.array([-100., -10, -1, 0, 1, 10, 100]),
             jnp.array([1e-8, 1e-4, 1e-2, 1e2, 1e4, 1e8])
         ]
-        
+
         for test_range in test_ranges:
             try:
                 result = func(test_range)
@@ -461,9 +459,9 @@ class TestActivationFunctions(parameterized.TestCase):
         """Test activation functions with special input cases."""
         # Test with zero
         zero_input = jnp.array([0.0])
-        
+
         # Functions that should return 0 for input 0
-        zero_output_funcs = ['relu', 'soft_sign', 'silu', 'swish', 'log_sigmoid', 
+        zero_output_funcs = ['relu', 'soft_sign', 'silu', 'swish', 'log_sigmoid',
                              'hard_silu', 'hard_tanh', 'mish']
 
         # Functions that should return 0.5 for input 0
@@ -491,21 +489,21 @@ class TestActivationFunctions(parameterized.TestCase):
     def test_differentiability(self):
         """Test that activation functions are differentiable."""
         test_input = jnp.array([1.0])
-        
+
         # Test functions that should be differentiable everywhere
         differentiable_funcs = ['sigmoid', 'softplus', 'soft_sign', 'silu', 'swish',
-                              'log_sigmoid', 'elu', 'celu', 'selu', 'gelu', 'mish']
-        
+                                'log_sigmoid', 'elu', 'celu', 'selu', 'gelu', 'mish']
+
         for func_name in differentiable_funcs:
             func = getattr(um, func_name)
-            
+
             # Compute gradient
             def test_func(x):
                 return jnp.sum(func(x))
-            
+
             grad_func = jax.grad(test_func)
             gradient = grad_func(test_input)
-            
+
             assert jnp.isfinite(gradient[0]), f"{func_name} gradient is not finite"
 
     def test_edge_cases_glu(self):

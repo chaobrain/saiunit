@@ -33,7 +33,7 @@ from ._fun_array_creation import asarray, zeros_like
 from ._fun_keep_unit import reshape, transpose, expand_dims, tile, where, squeeze
 from ._misc import shape
 from .._base import Quantity, UNITLESS
-from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from .._misc import set_module_as, maybe_custom_array_tree
 
 T = TypeVar('T')
 

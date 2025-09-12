@@ -15,5 +15,6 @@
 
 
 from saiunit.linalg import *
-from saiunit.linalg import __all__
 
+if __name__ == '__main__':
+    eigh

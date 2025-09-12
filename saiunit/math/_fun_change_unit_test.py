@@ -14,7 +14,6 @@
 # ==============================================================================
 
 
-import jax
 import jax.numpy as jnp
 from absl.testing import parameterized
 
@@ -157,4 +156,3 @@ class TestFunChangeUnit(parameterized.TestCase):
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
             assert_quantity(result[0], expected[0], unit=unit1 / unit2)
             assert_quantity(result[1], expected[1], unit=unit1)
-

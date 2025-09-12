@@ -659,7 +659,7 @@ def arange(
     start = maybe_custom_array(start) if start is not None else start
     stop = maybe_custom_array(stop) if stop is not None else stop
     step = maybe_custom_array(step) if step is not None else step
-    
+
     # checking the dimension of the data
     non_none_data = [d for d in (start, stop, step) if d is not None]
     assert len(non_none_data) > 0, 'At least one of start, stop, or step must be provided.'

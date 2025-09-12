@@ -46,6 +46,7 @@ __all__ = [
 
 def _fun_change_unit_unary(val_fun, unit_fun, x, *args, **kwargs):
     x = maybe_custom_array(x)
+    args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
         # x = x.factorless()
         r = Quantity(val_fun(x.mantissa, *args, **kwargs), unit=unit_fun(x.unit))
@@ -519,6 +520,7 @@ cumproduct = cumprod
 def _fun_change_unit_binary(val_fun, unit_fun, x, y, *args, **kwargs):
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
+    args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         # x = x.factorless()
         # y = y.factorless()
