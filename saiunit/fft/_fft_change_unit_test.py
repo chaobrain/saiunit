@@ -169,7 +169,6 @@ class TestFftChangeUnit(parameterized.TestCase):
                 q = d * meter
                 result = bufft_fun(size, q)
 
-
             custom_time_unit = Unit.create(get_or_create_dimension(s=1), "custom_second", "cs", scale=100)
             custom_hertz_unit = Unit.create(get_or_create_dimension(s=-1), "custom_hertz", "ch", scale=-100)
 
