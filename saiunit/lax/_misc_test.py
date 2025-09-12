@@ -18,8 +18,15 @@ import jax.lax as lax
 import jax.numpy as jnp
 from absl.testing import parameterized
 
+import saiunit as u
 import saiunit.lax as ulax
+from saiunit import second, meter
 from saiunit._base import assert_quantity
+
+
+class Array(u.CustomArray):
+    def __init__(self, value):
+        self.value = value
 
 lax_misc = [
     'after_all', 'reduce', 'reduce_precision',
@@ -27,6 +34,67 @@ lax_misc = [
     # getting attribute funcs
     'broadcast_shapes',
 ]
+
+
+class TestLaxMiscWithArrayCustomArray(parameterized.TestCase):
+
+    def test_reduce_operations_with_array(self):
+        operands = jnp.array([1.0, 2.0, 3.0, 4.0]) * meter
+        test_array = Array(operands)
+        
+        assert isinstance(test_array, u.CustomArray)
+        
+        init_values = jnp.array(0.0) * meter
+        init_array = Array(init_values)
+        assert isinstance(init_array, u.CustomArray)
+        
+        computation = lax.add
+        dimensions = [0]
+        
+        reduce_result = ulax.reduce(test_array.value, init_array.value, computation, dimensions)
+        reduce_array = Array(reduce_result)
+        assert isinstance(reduce_array, u.CustomArray)
+        expected = jnp.sum(jnp.array([1.0, 2.0, 3.0, 4.0]))
+        assert_quantity(reduce_array.value, expected)
+
+    def test_reduce_with_custom_computation_array(self):
+        operands = jnp.array([2.0, 4.0, 6.0]) * second
+        test_array = Array(operands)
+        
+        assert isinstance(test_array, u.CustomArray)
+        
+        init_values = jnp.array(1.0) * second
+        init_array = Array(init_values)
+        assert isinstance(init_array, u.CustomArray)
+        
+        computation = lax.mul
+        dimensions = [0]
+        
+        reduce_result = ulax.reduce(test_array.value, init_array.value, computation, dimensions)
+        reduce_array = Array(reduce_result)
+        assert isinstance(reduce_array, u.CustomArray)
+        # Product of [2, 4, 6] starting with 1
+        expected = 2.0 * 4.0 * 6.0 * 1.0
+        # Units: second * (second^3 from multiplication) = second^4
+        # assert_quantity(reduce_array.value, expected, unit=second ** 4)
+        assert_quantity(reduce_array.value, expected)
+
+    def test_array_custom_array_compatibility_with_lax_misc(self):
+        data = jnp.array([1.0, 2.0, 3.0]) * meter
+        test_array = Array(data)
+        
+        assert isinstance(test_array, u.CustomArray)
+        assert hasattr(test_array, 'value')
+        
+        # Test reduce with Array values
+        init_val = jnp.array(0.0) * meter
+        init_array = Array(init_val)
+        
+        result = ulax.reduce(test_array.value, init_array.value, lax.add, [0])
+        result_array = Array(result)
+        
+        assert isinstance(result_array, u.CustomArray)
+        
 
 
 class TestLaxMisc(parameterized.TestCase):

@@ -20,7 +20,7 @@ import jax
 import jax.numpy as jnp
 
 from .._base import Quantity, get_unit
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
     # math funcs remove unit (unary)
@@ -62,10 +62,13 @@ def get_promote_dtypes(
         These arrays have the same shape as the input arrays, with the
         data type of the most precise input.
     """
+    args = maybe_custom_array_tree(args)
     return jnp.promote_types(*jax.tree.leaves(args))
 
 
 def _fun_remove_unit_unary(func, x, *args, **kwargs):
+    x = maybe_custom_array(x)
+    args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
         # x = x.factorless()
         return func(x.mantissa, *args, **kwargs)
@@ -114,6 +117,8 @@ def heaviside(
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
     """
+    x1 = maybe_custom_array(x1)
+    x2 = maybe_custom_array(x2)
     x1 = x1.mantissa if isinstance(x1, Quantity) else x1
     if isinstance(x2, Quantity):
         assert x2.is_unitless, f'Expected unitless array for x2, while got {x2}'
@@ -237,6 +242,8 @@ def digitize(
     indices : ndarray of ints
         Output array of indices, of same shape as `x`.
     """
+    x = maybe_custom_array(x)
+    bins = maybe_custom_array(bins)
     if isinstance(x, Quantity) and isinstance(bins, Quantity):
         bins = bins.in_unit(x.unit).mantissa
         x = x.mantissa
@@ -250,6 +257,7 @@ def digitize(
 
 
 def _fun_logic_unary(func, x, *args, **kwargs):
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         assert x.is_unitless, f'Expected unitless array for {func.__name__}, while got {x}'
     return func(x, *args, **kwargs)
@@ -373,6 +381,9 @@ sometrue = any
 
 
 def _fun_logic_binary(func, x, y, *args, **kwargs):
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
+    args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         # x = x.factorless()
         # y = y.factorless()
@@ -722,6 +733,10 @@ def isclose(
       given tolerance. If both `a` and `b` are scalars, returns a single
       boolean value.
     """
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
+    rtol = maybe_custom_array(rtol)
+    atol = maybe_custom_array(atol)
     unit = get_unit(x)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         y = y.in_unit(x.unit).mantissa
@@ -779,6 +794,10 @@ def allclose(
       Returns True if the two arrays are equal within the given
       tolerance; False otherwise.
     """
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
+    rtol = maybe_custom_array(rtol)
+    atol = maybe_custom_array(atol)
     unit = get_unit(x)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         y = y.in_unit(x.unit)
@@ -1184,6 +1203,8 @@ def flatnonzero(
     res : ndarray
       Output array, containing the indices of the elements of `a.ravel()` that are non-zero.
     """
+    a = maybe_custom_array(a)
+    fill_value = maybe_custom_array(fill_value)
     a_unit = get_unit(a)
     if fill_value is not None:
         fill_value = Quantity(fill_value).in_unit(a_unit).mantissa
@@ -1257,6 +1278,7 @@ def searchsorted(
     out : ndarray
       Array of insertion points with the same shape as `v`.
     """
+    a = maybe_custom_array(a)
     a_unit = get_unit(a)
     v = Quantity(v).in_unit(a_unit).mantissa
     a = Quantity(a).mantissa

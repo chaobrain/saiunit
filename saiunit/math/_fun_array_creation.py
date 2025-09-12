@@ -30,7 +30,7 @@ from .._base import (
     get_unit,
     unit_scale_align_to_first,
 )
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 Shape = Union[int, Sequence[int]]
 
@@ -84,6 +84,7 @@ def full(
       Quantity with the given shape if `fill_value` is a Quantity, else an array.
       Array of `fill_value` with the given shape, dtype, and order.
     """
+    fill_value = maybe_custom_array(fill_value)
     if isinstance(fill_value, Quantity):
         return Quantity(jnp.full(shape, fill_value.mantissa, dtype=dtype), unit=fill_value.unit)
     return jnp.full(shape, fill_value, dtype=dtype)
@@ -318,6 +319,8 @@ def full_like(
     out : quantity or ndarray
       New quantity or array with the same shape and type as `a`, filled with `fill_value`.
     """
+    a = maybe_custom_array(a)
+    fill_value = maybe_custom_array(fill_value)
     if isinstance(fill_value, Quantity):
         if isinstance(a, Quantity):
             fill_value = fill_value.in_unit(a.unit)
@@ -365,6 +368,7 @@ def diag(
       The extracted diagonal or constructed diagonal array.
     """
     assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    v = maybe_custom_array(v)
     if isinstance(v, Quantity):
         if not unit.is_unitless:
             v = v.in_unit(unit)
@@ -403,6 +407,7 @@ def tril(
       Lower triangle of `m`, of the same shape and data-type as `m`.
     """
     assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    m = maybe_custom_array(m)
     if isinstance(m, Quantity):
         if not unit.is_unitless:
             m = m.in_unit(unit)
@@ -434,6 +439,7 @@ def triu(
     tril : lower triangle of an array
     """
     assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    m = maybe_custom_array(m)
     if isinstance(m, Quantity):
         if not unit.is_unitless:
             m = m.in_unit(unit)
@@ -472,6 +478,7 @@ def empty_like(
       Array of uninitialized (arbitrary) data with the same shape and type as `prototype`.
     """
     assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+    prototype = maybe_custom_array(prototype)
     if isinstance(prototype, Quantity):
         if not unit.is_unitless:
             prototype = prototype.in_unit(unit)
@@ -510,6 +517,7 @@ def ones_like(
       Array of ones with the same shape and type as `a`.
     """
     assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         if not unit.is_unitless:
             a = a.in_unit(unit)
@@ -548,6 +556,7 @@ def zeros_like(
       Array of zeros with the same shape and type as `a`.
     """
     assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         if not unit.is_unitless:
             a = a.in_unit(unit)
@@ -646,6 +655,11 @@ def arange(
     out : quantity or array
         Array of evenly spaced values.
     """
+    # apply maybe_custom_array to inputs
+    start = maybe_custom_array(start) if start is not None else start
+    stop = maybe_custom_array(stop) if stop is not None else stop
+    step = maybe_custom_array(step) if step is not None else step
+
     # checking the dimension of the data
     non_none_data = [d for d in (start, stop, step) if d is not None]
     assert len(non_none_data) > 0, 'At least one of start, stop, or step must be provided.'
@@ -705,6 +719,8 @@ def linspace(
     samples : quantity or array
       There are `num` equally spaced samples in the closed interval [`start`, `stop`] or the half-open interval [`start`, `stop`).
     """
+    start = maybe_custom_array(start)
+    stop = maybe_custom_array(stop)
     fail_for_unit_mismatch(
         start,
         stop,
@@ -754,6 +770,8 @@ def logspace(
     samples : quantity or array
       There are `num` equally spaced samples in the closed interval [`start`, `stop`] or the half-open interval [`start`, `stop`).
     """
+    start = maybe_custom_array(start)
+    stop = maybe_custom_array(stop)
     fail_for_unit_mismatch(
         start,
         stop,
@@ -799,6 +817,8 @@ def fill_diagonal(
     out : Quantity or array
       The input array with the diagonal filled.
     """
+    a = maybe_custom_array(a)
+    val = maybe_custom_array(val)
     if isinstance(val, Quantity):
         if isinstance(a, Quantity):
             val = val.in_unit(a.unit)
@@ -844,6 +864,8 @@ def meshgrid(
       the first dimension for x1, the second for x2 and so on.
     """
 
+    # Apply maybe_custom_array to inputs before processing
+    xi = tuple(maybe_custom_array(x) for x in xi)
     args = [asarray(x) for x in xi]
     if not copy:
         raise ValueError("jax.numpy.meshgrid only supports copy=True")
@@ -894,6 +916,7 @@ def vander(
     out : Quantity or array
       Vandermonde matrix. If `increasing` is False, the first column is `x^(N-1)`, the second `x^(N-2)` and so forth.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         assert x.is_unitless, f'x must be unitless for function {vander.__name__}.'
         x = x.mantissa
@@ -931,6 +954,7 @@ def tril_indices_from(
     out : tuple[jax.Array]
       tuple of arrays
     """
+    arr = maybe_custom_array(arr)
     if isinstance(arr, Quantity):
         return jnp.tril_indices_from(arr.mantissa, k=k)
     else:
@@ -960,8 +984,9 @@ def triu_indices_from(
     out : tuple[jax.Array]
       tuple of arrays
     """
+    arr = maybe_custom_array(arr)
     if isinstance(arr, Quantity):
-        return jnp.triu_indices_from(arr.value, k=k)
+        return jnp.triu_indices_from(arr.mantissa, k=k)
     else:
         return jnp.triu_indices_from(arr, k=k)
 
@@ -984,6 +1009,7 @@ def from_numpy(
     Returns:
       The jax array.
     """
+    x = maybe_custom_array(x)
     assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
     if not unit.is_unitless:
         return jnp.array(x) * unit
@@ -1001,6 +1027,7 @@ def as_numpy(x):
     Returns:
       The numpy array.
     """
+    x = maybe_custom_array(x)
     return np.array(x)
 
 
@@ -1015,6 +1042,7 @@ def tree_zeros_like(tree):
     Returns:
       The tree with zeros in each leaf.
     """
+    tree = maybe_custom_array_tree(tree)
     return jax.tree.map(zeros_like, tree)
 
 
@@ -1030,4 +1058,5 @@ def tree_ones_like(tree):
       The tree with ones in each leaf.
 
     """
+    tree = maybe_custom_array_tree(tree)
     return jax.tree.map(ones_like, tree)

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-__version__ = "0.0.18"
+__version__ = "0.1.0"
 
 from . import _matplotlib_compat
 from . import autograd
@@ -27,27 +27,27 @@ from ._base import *
 from ._base import __all__ as _base_all
 from ._celsius import *
 from ._celsius import __all__ as _celsius_all
+from ._misc import maybe_custom_array, maybe_custom_array_tree
 from ._unit_common import *
 from ._unit_common import __all__ as _common_all
 from ._unit_constants import *
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
+from .custom_array import *
+from .custom_array import __all__ as _array_all
 
-__all__ = (
-    [
-        'math',
-        'linalg',
-        'autograd',
-        'fft',
-        'constants',
-        'sparse'
-    ] +
-    _common_all +
-    _std_units_all +
-    _base_all +
-    _celsius_all
-)
-del _common_all, _std_units_all, _base_all, _celsius_all, _matplotlib_compat
+__all__ = [
+    'math',
+    'linalg',
+    'autograd',
+    'fft',
+    'constants',
+    'sparse',
+    'maybe_custom_array',
+    'maybe_custom_array_tree',
+]
+__all__ = __all__ + _common_all + _std_units_all + _base_all + _array_all + _celsius_all
+del _common_all, _std_units_all, _base_all, _celsius_all, _matplotlib_compat, _array_all
 
 # old version compatibility
 avogadro_constant = constants.avogadro

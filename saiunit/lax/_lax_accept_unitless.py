@@ -134,7 +134,10 @@ def collapse(
         An array where dimensions ``[start_dimension, stop_dimension)`` have been
         collapsed (raveled) into a single dimension.
     """
-    return _fun_accept_unitless_unary(lax.collapse, x, start_dimension=start_dimension, stop_dimension=stop_dimension,
+    return _fun_accept_unitless_unary(lax.collapse,
+                                      x,
+                                      start_dimension=start_dimension,
+                                      stop_dimension=stop_dimension,
                                       unit_to_scale=unit_to_scale)
 
 
@@ -146,7 +149,10 @@ def cumlogsumexp(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """Computes a cumulative logsumexp along `axis`."""
-    return _fun_accept_unitless_unary(lax.cumlogsumexp, x, axis, reverse,
+    return _fun_accept_unitless_unary(lax.cumlogsumexp,
+                                      x,
+                                      axis,
+                                      reverse,
                                       unit_to_scale=unit_to_scale)
 
 
@@ -339,7 +345,8 @@ def betainc(
 ) -> jax.Array:
     r"""Elementwise regularized incomplete beta integral."""
     return _fun_accept_unitless_nary(lax.betainc, a, b, x,
-                                     quantity_num=3, unit_to_scale=unit_to_scale)
+                                     quantity_num=3,
+                                     unit_to_scale=unit_to_scale)
 
 
 # Elementwise bit operations (binary)
@@ -378,5 +385,8 @@ def fft(
     fft_lengths: Sequence[int],
     unit_to_scale: Optional[Unit] = None,
 ):
-    return _fun_accept_unitless_unary(lax.fft, x, fft_type, fft_lengths,
+    return _fun_accept_unitless_unary(lax.fft,
+                                      x,
+                                      fft_type,
+                                      fft_lengths,
                                       unit_to_scale=unit_to_scale)

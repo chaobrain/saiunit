@@ -26,6 +26,12 @@ import saiunit.lax as bulax
 from saiunit import meter, second, volt
 from saiunit._base import assert_quantity
 
+
+class Array(bu.CustomArray):
+    def __init__(self, value):
+        self.value = value
+
+
 lax_change_unit_unary = [
     'rsqrt',
 ]
@@ -57,6 +63,137 @@ lax_change_unit_conv_transpose = [
 lax_change_unit_misc = [
     'dot_general',
 ]
+
+
+class TestLaxChangeUnitWithArrayCustomArray(parameterized.TestCase):
+
+    @parameterized.product(
+        value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
+        unit=[meter, second]
+    )
+    def test_lax_change_unit_unary_with_array(self, value, unit):
+        bulax_fun_list = [getattr(bulax, fun) for fun in lax_change_unit_unary]
+        lax_fun_list = [getattr(lax, fun) for fun in lax_change_unit_unary]
+
+        for bulax_fun, lax_fun in zip(bulax_fun_list, lax_fun_list):
+            print(f'fun: {bulax_fun.__name__}')
+
+            result = bulax_fun(jnp.array(value))
+            expected = lax_fun(jnp.array(value))
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, bu.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            q = jnp.array(value) * unit
+            result = bulax_fun(q)
+            expected = lax_fun(jnp.array(value))
+            expected_unit = bulax_fun._unit_change_fun(unit)
+            assert_quantity(result, expected, unit=expected_unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, bu.CustomArray)
+            assert_quantity(array_result.value, expected, unit=expected_unit)
+
+            array_input = Array(q)
+            result = bulax_fun(array_input.value)
+            array_result = Array(result)
+            assert isinstance(array_result, bu.CustomArray)
+            assert_quantity(array_result.value, expected, unit=expected_unit)
+
+    @parameterized.product(
+        value=[((1.123, 2.567, 3.891), (1.23, 2.34, 3.45)),
+               ((1.0, 2.0), (3.0, 4.0))],
+        unit1=[meter, second],
+        unit2=[volt, second]
+    )
+    def test_lax_change_unit_binary_with_array(self, value, unit1, unit2):
+        bulax_fun_list = [getattr(bulax, fun) for fun in lax_change_unit_binary]
+        lax_fun_list = [getattr(lax, fun) for fun in lax_change_unit_binary]
+
+        for bulax_fun, lax_fun in zip(bulax_fun_list, lax_fun_list):
+            print(f'fun: {bulax_fun.__name__}')
+            value1, value2 = value
+
+            result = bulax_fun(jnp.array(value1), jnp.array(value2))
+            expected = lax_fun(jnp.array(value1), jnp.array(value2))
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, bu.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            q1 = jnp.array(value1) * unit1
+            q2 = jnp.array(value2) * unit2
+            result = bulax_fun(q1, q2)
+            expected = lax_fun(jnp.array(value1), jnp.array(value2))
+            expected_unit = bulax_fun._unit_change_fun(bu.get_unit(unit1), bu.get_unit(unit2))
+            assert_quantity(result, expected, unit=expected_unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, bu.CustomArray)
+            assert_quantity(array_result.value, expected, unit=expected_unit)
+
+            array_input1 = Array(q1)
+            array_input2 = Array(q2)
+            result = bulax_fun(array_input1.value, array_input2.value)
+            array_result = Array(result)
+            assert isinstance(array_result, bu.CustomArray)
+            assert_quantity(array_result.value, expected, unit=expected_unit)
+
+    def test_rsqrt_operations_with_array(self):
+        data = jnp.array([4.0, 9.0, 16.0]) * (meter ** 2)
+        test_array = Array(data)
+        
+        assert isinstance(test_array, bu.CustomArray)
+        
+        rsqrt_result = bulax.rsqrt(test_array.value)
+        rsqrt_array = Array(rsqrt_result)
+        assert isinstance(rsqrt_array, bu.CustomArray)
+        expected = lax.rsqrt(jnp.array([4.0, 9.0, 16.0]))
+        assert_quantity(rsqrt_array.value, expected, unit=meter**-1)
+
+    def test_div_mul_operations_with_array(self):
+        data1 = jnp.array([6.0, 8.0, 10.0]) * meter
+        data2 = jnp.array([2.0, 4.0, 5.0]) * second
+        
+        array1 = Array(data1)
+        array2 = Array(data2)
+        
+        assert isinstance(array1, bu.CustomArray)
+        assert isinstance(array2, bu.CustomArray)
+        
+        # Test div
+        div_result = bulax.div(array1.value, array2.value)
+        div_array = Array(div_result)
+        assert isinstance(div_array, bu.CustomArray)
+        expected_div = lax.div(jnp.array([6.0, 8.0, 10.0]), jnp.array([2.0, 4.0, 5.0]))
+        assert_quantity(div_array.value, expected_div, unit=meter / second)
+        
+        # Test mul
+        mul_result = bulax.mul(array1.value, array2.value)
+        mul_array = Array(mul_result)
+        assert isinstance(mul_array, bu.CustomArray)
+        expected_mul = lax.mul(jnp.array([6.0, 8.0, 10.0]), jnp.array([2.0, 4.0, 5.0]))
+        assert_quantity(mul_array.value, expected_mul, unit=meter * second)
+
+    def test_array_custom_array_compatibility_with_lax_change_unit(self):
+        data = jnp.array([4.0, 9.0, 16.0]) * (meter ** 2)
+        test_array = Array(data)
+        
+        assert isinstance(test_array, bu.CustomArray)
+        assert hasattr(test_array, 'value')
+        
+        # Test that we can use the array value in unit-changing lax functions
+        result = bulax.rsqrt(test_array.value)
+        result_array = Array(result)
+        
+        assert isinstance(result_array, bu.CustomArray)
+        
+        # Compare with direct computation
+        direct_result = bulax.rsqrt(data)
+        assert_quantity(result_array.value, direct_result.mantissa, unit=meter**-1)
 
 
 class TestLaxChangeUnit(parameterized.TestCase):
@@ -111,10 +248,10 @@ class TestLaxChangeUnit(parameterized.TestCase):
 
     @parameterized.product(
         value=[(
-            [[[1.0, 2.0], [3.0, 4.0]],
-             [[1.0, 2.0], [3.0, 4.0]]],
-            [[[1.0, 2.0], [3.0, 4.0]],
-             [[1.0, 2.0], [3.0, 4.0]]]
+                [[[1.0, 2.0], [3.0, 4.0]],
+                 [[1.0, 2.0], [3.0, 4.0]]],
+                [[[1.0, 2.0], [3.0, 4.0]],
+                 [[1.0, 2.0], [3.0, 4.0]]]
         )],
         unit1=[meter, second],
         unit2=[volt, second]

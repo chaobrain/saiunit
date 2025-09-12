@@ -20,7 +20,7 @@ import jax
 import jax.numpy as jnp
 
 from .._base import Quantity, Unit
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 __all__ = [
     # math funcs only accept unitless (unary)
@@ -51,6 +51,10 @@ def _fun_accept_unitless_unary(
     unit_to_scale: Optional[Unit] = None,
     **kwargs
 ):
+    x = maybe_custom_array_tree(x)
+    args = maybe_custom_array_tree(args)
+    kwargs = maybe_custom_array_tree(kwargs)
+
     if isinstance(x, Quantity):
         # x = x.factorless()
         if unit_to_scale is None:
@@ -146,6 +150,7 @@ def exprel(
     Returns:
       ``(exp(x) - 1)/x``, computed element-wise.
     """
+    x = maybe_custom_array_tree(x)
     return _fun_accept_unitless_unary(_exprel_v2, x, order=order)
 
 
@@ -771,6 +776,11 @@ def _fun_accept_unitless_binary(
     unit_to_scale: Optional[Unit] = None,
     **kwargs
 ):
+    x = maybe_custom_array_tree(x)
+    y = maybe_custom_array_tree(y)
+    args = maybe_custom_array_tree(args)
+    kwargs = maybe_custom_array_tree(kwargs)
+
     if isinstance(x, Quantity):
         # x = x.factorless()
         if unit_to_scale is None:
@@ -1141,6 +1151,11 @@ def invert(
 
 
 def _fun_unitless_binary(func, x, y, *args, **kwargs):
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
+    args = maybe_custom_array_tree(args)
+    kwargs = maybe_custom_array_tree(kwargs)
+
     if isinstance(x, Quantity):
         # x = x.factorless()
         assert x.dim.is_dimensionless, f'Expected dimensionless array, got {x}'

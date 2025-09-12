@@ -22,11 +22,11 @@ import jax
 from jax import numpy as jnp
 from jax._src.api import _vjp
 from jax.api_util import argnums_partial
-from jax.extend import linear_util
 
-from saiunit._compatible_import import wrap_init
-from saiunit._base import get_unit, maybe_decimal, Quantity, get_mantissa
 from ._misc import _check_callable
+from .._base import get_unit, maybe_decimal, Quantity, get_mantissa
+from .._compatible_import import wrap_init
+from .._misc import maybe_custom_array_tree
 
 __all__ = [
     'vector_grad',
@@ -78,6 +78,7 @@ def vector_grad(
 
     @wraps(func)
     def grad_fun(*args, **kwargs):
+        args, kwargs = maybe_custom_array_tree((args, kwargs))
         f = wrap_init(func, args, kwargs, 'vector_grad')
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
         if has_aux:

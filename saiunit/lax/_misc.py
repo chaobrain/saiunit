@@ -20,7 +20,7 @@ import jax
 from jax import lax
 
 from .._base import Quantity, maybe_decimal
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array
 
 __all__ = [
     'reduce', 'reduce_precision',
@@ -62,6 +62,8 @@ def reduce(
     of these properties during code generation; if either is violated the result
     is undefined.
     """
+    operands = maybe_custom_array(operands)
+    init_values = maybe_custom_array(init_values)
     return lax.reduce(operands, init_values, computation, dimensions)
 
 
@@ -74,6 +76,7 @@ def reduce_precision(
     <https://www.tensorflow.org/xla/operation_semantics#reduceprecision>`_
     operator.
     """
+    operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         return maybe_decimal(lax.reduce_precision(operand.mantissa, exponent_bits, mantissa_bits))
     return lax.reduce_precision(operand, exponent_bits, mantissa_bits)

@@ -33,7 +33,7 @@ from ._fun_array_creation import asarray, zeros_like
 from ._fun_keep_unit import reshape, transpose, expand_dims, tile, where, squeeze
 from ._misc import shape
 from .._base import Quantity, UNITLESS
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array_tree
 
 T = TypeVar('T')
 
@@ -513,8 +513,8 @@ def einreduce(
     Examples for reduce operation:
 
     ```python
-    >>> import brainstate as bst
-    >>> x = bst.random.randn(100, 32, 64)
+    >>> import brainstate as brainstate
+    >>> x = brainstate.random.randn(100, 32, 64)
 
     # perform max-reduction on the first axis
     >>> y = einreduce(x, 't b c -> b c', 'max')
@@ -522,7 +522,7 @@ def einreduce(
     # same as previous, but with clearer axes meaning
     >>> y = einreduce(x, 'time batch channel -> batch channel', 'max')
 
-    >>> x = bst.random.randn(10, 20, 30, 40)
+    >>> x = brainstate.random.randn(10, 20, 30, 40)
 
     # 2d max-pooling with kernel size = 2 * 2 for image processing
     >>> y1 = einreduce(x, 'b c (h1 h2) (w1 w2) -> b c h1 w1', 'max', h2=2, w2=2)
@@ -565,6 +565,7 @@ def einreduce(
     -------
     out:  tensor of the same type as input
     """
+    x = maybe_custom_array_tree(x)
     shape = _get_shape(x)
     try:
         hashable_axes_lengths = tuple(axes_lengths.items())
@@ -595,8 +596,8 @@ def einrearrange(
 
     ```python
     # suppose we have a set of 32 images in "h w c" format (height-width-channel)
-    >>> import brainstate as bst
-    >>> images = [bst.random.randn(30, 40, 3) for _ in range(32)]
+    >>> import brainstate as brainstate
+    >>> images = [brainstate.random.randn(30, 40, 3) for _ in range(32)]
 
     # stack along first (batch) axis, output is a single array
     >>> einrearrange(images, 'b h w c -> b h w c').shape
@@ -658,8 +659,8 @@ def einrepeat(
 
     ```python
     # a grayscale image (of shape height x width)
-    >>> import brainstate as bst
-    >>> image = bst.random.randn(30, 40)
+    >>> import brainstate as brainstate
+    >>> image = brainstate.random.randn(30, 40)
 
     # change it to RGB format by repeating in each channel
     >>> einrepeat(image, 'h w -> h w c', c=3).shape
@@ -731,6 +732,7 @@ def einshape(
     Returns:
         dict, maps axes names to their lengths
     """
+    x = maybe_custom_array_tree(x)
     _shape = _get_shape(x)
     exp = ParsedExpression(pattern, allow_underscore=True)
     if exp.has_composed_axes():
@@ -1217,7 +1219,7 @@ def einsum(
     #     operands,
     #     is_leaf=lambda x: isinstance(x, Quantity)
     # )
-
+    operands = maybe_custom_array_tree(operands)
     operands = (subscripts, *operands)
     spec = operands[0] if isinstance(operands[0], str) else None
     path_type = 'optimal' if optimize is True else Unoptimized() if optimize is False else optimize

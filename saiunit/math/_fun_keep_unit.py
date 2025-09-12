@@ -33,7 +33,7 @@ from .._base import (
     unit_scale_align_to_first,
     maybe_decimal
 )
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
     # sequence inputs
@@ -83,6 +83,7 @@ def _fun_keep_unit_sequence(
     *args,
     **kwargs
 ):
+    args = maybe_custom_array_tree(args)
     leaves, treedef = jax.tree.flatten(args, is_leaf=lambda x: isinstance(x, Quantity))
     # leaves = jax.tree.map(
     #     lambda x: x.factorless() if isinstance(x, Quantity) else x,
@@ -308,6 +309,8 @@ def _fun_keep_unit_return_sequence(
     *args,
     **kwargs
 ):
+    x = maybe_custom_array(x)
+    args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
         r = func(x.mantissa, *args, **kwargs)
         return [maybe_decimal(Quantity(rr, unit=x.unit)) for rr in r]
@@ -1190,10 +1193,11 @@ def remove_diag(x: jax.typing.ArrayLike | Quantity) -> jax.Array | Quantity:
     arr: Array, Quantity
       The matrix without diagonal which has the shape of `(M, N-1)`.
     """
+    x = maybe_custom_array(x)
     unit = UNITLESS
     if isinstance(x, Quantity):
-        x = x.mantissa
         unit = x.unit
+        x = x.mantissa
 
     if x.ndim != 2:
         raise ValueError(f'Only support 2D matrix, while we got a {x.ndim}D array.')
@@ -1265,6 +1269,8 @@ def diagflat(
 
 
 def _fun_keep_unit_unary(func, x, *args, **kwargs):
+    x = maybe_custom_array(x)
+    args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
         return Quantity(func(x.mantissa, *args, **kwargs), unit=x.unit)
     else:
@@ -2242,6 +2248,8 @@ def intersect1d(
       The indices of the first occurrences of the common values in `ar2`.
       Only provided if `return_indices` is True.
     """
+    ar1 = maybe_custom_array(ar1)
+    ar2 = maybe_custom_array(ar2)
     fail_for_dimension_mismatch(ar1, ar2, 'intersect1d')
     unit = UNITLESS
     if isinstance(ar1, Quantity):
@@ -2608,6 +2616,9 @@ def nanquantile(
 # -----------------------------
 
 def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
+    x1 = maybe_custom_array(x1)
+    x2 = maybe_custom_array(x2)
+    args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x1, Quantity) and isinstance(x2, Quantity):
         return Quantity(func(x1.mantissa, x2.in_unit(x1.unit).mantissa, *args, **kwargs), unit=x1.unit)
     elif isinstance(x1, Quantity):
@@ -3559,7 +3570,13 @@ def gather(input: jax.Array | Quantity, dim: int, index: jax.Array):
         Array([[1, 1],
                [4, 3]], dtype=int32)
     """
+    input = maybe_custom_array(input)
     # Normalize dim to be positive
+    if isinstance(input, Quantity):
+        unit = input.unit
+        input = input.mantissa
+    else:
+        unit = UNITLESS
     ndim = input.ndim
     if dim < 0:
         dim = ndim + dim
@@ -3583,4 +3600,7 @@ def gather(input: jax.Array | Quantity, dim: int, index: jax.Array):
                 broadcast_shape[i] = input.shape[i]
             indices.append(jnp.broadcast_to(idx, idx_shape))
 
-    return input[tuple(indices)]
+    result = input[tuple(indices)]
+    if unit.is_unitless:
+        return result
+    return Quantity(result, unit=unit)
