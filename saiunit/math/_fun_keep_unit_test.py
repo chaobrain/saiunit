@@ -22,6 +22,11 @@ import saiunit.math as um
 from saiunit import second, meter, ms
 from saiunit._base import assert_quantity
 
+
+class Array(u.CustomArray):
+    def __init__(self, value):
+        self.value = value
+
 fun_keep_unit_squence_inputs = [
     'row_stack', 'concatenate', 'stack', 'vstack', 'hstack', 'dstack', 'column_stack', 'block', 'append',
 ]
@@ -72,6 +77,239 @@ fun_keep_unit_math_unary_misc = [
 fun_accept_unitless_unary_2_results = [
     'modf',
 ]
+
+
+class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
+
+    @parameterized.product(
+        value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
+        unit=[second, meter]
+    )
+    def test_fun_keep_unit_math_unary_with_array(self, value, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_keep_unit_math_unary]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_keep_unit_math_unary]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            result = bm_fun(jnp.array(value))
+            expected = jnp_fun(jnp.array(value))
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            q = jnp.array(value) * unit
+            result = bm_fun(q)
+            expected = jnp_fun(jnp.array(value))
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+            array_input = Array(q)
+            result = bm_fun(array_input.value)
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+    @parameterized.product(
+        value=[((1.0, 2.0), (3.0, 4.0)),
+               ((1.23, 2.34, 3.45), (4.56, 5.67, 6.78))],
+        unit=[second, meter]
+    )
+    def test_fun_keep_unit_math_binary_with_array(self, value, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_keep_unit_math_binary]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_keep_unit_math_binary]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            x1, x2 = value
+
+            result = bm_fun(jnp.array(x1), jnp.array(x2))
+            expected = jnp_fun(jnp.array(x1), jnp.array(x2))
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            q1 = jnp.array(x1) * unit
+            q2 = jnp.array(x2) * unit
+            result = bm_fun(q1, q2)
+            expected = jnp_fun(jnp.array(x1), jnp.array(x2))
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+            array_input1 = Array(q1)
+            array_input2 = Array(q2)
+            result = bm_fun(array_input1.value, array_input2.value)
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+    def test_fun_keep_unit_array_manipulation_with_array(self):
+        data = jnp.array([1.0, 2.0, 3.0, 4.0]) * meter
+        test_array = Array(data)
+        
+        assert isinstance(test_array, u.CustomArray)
+        assert hasattr(test_array, 'value')
+        assert_quantity(test_array.value, jnp.array([1.0, 2.0, 3.0, 4.0]), unit=meter)
+        
+        reshape_result = um.reshape(test_array.value, (2, 2))
+        reshape_array = Array(reshape_result)
+        assert isinstance(reshape_array, u.CustomArray)
+        assert_quantity(reshape_array.value, jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=meter)
+        
+        flip_result = um.flip(test_array.value)
+        flip_array = Array(flip_result)
+        assert isinstance(flip_array, u.CustomArray)
+        assert_quantity(flip_array.value, jnp.array([4.0, 3.0, 2.0, 1.0]), unit=meter)
+
+    def test_fun_keep_unit_sequence_operations_with_array(self):
+        data1 = jnp.array([1.0, 2.0, 3.0]) * second
+        data2 = jnp.array([4.0, 5.0, 6.0]) * second
+        
+        array1 = Array(data1)
+        array2 = Array(data2)
+        
+        assert isinstance(array1, u.CustomArray)
+        assert isinstance(array2, u.CustomArray)
+        
+        vstack_result = um.vstack((array1.value, array2.value))
+        vstack_array = Array(vstack_result)
+        assert isinstance(vstack_array, u.CustomArray)
+        assert_quantity(vstack_array.value, jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), unit=second)
+        
+        hstack_result = um.hstack((array1.value, array2.value))
+        hstack_array = Array(hstack_result)
+        assert isinstance(hstack_array, u.CustomArray)
+        assert_quantity(hstack_array.value, jnp.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]), unit=second)
+
+    def test_fun_keep_unit_selection_with_array(self):
+        data = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]) * meter
+        test_array = Array(data)
+        
+        assert isinstance(test_array, u.CustomArray)
+        
+        where_result = um.where(test_array.value > 3.0 * meter, test_array.value, 0.0 * meter)
+        where_array = Array(where_result)
+        assert isinstance(where_array, u.CustomArray)
+        assert_quantity(where_array.value, jnp.array([0.0, 0.0, 0.0, 4.0, 5.0]), unit=meter)
+        
+        sort_result = um.sort(test_array.value)
+        sort_array = Array(sort_result)
+        assert isinstance(sort_array, u.CustomArray)
+        assert_quantity(sort_array.value, jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]), unit=meter)
+
+    def test_fun_keep_unit_statistical_operations_with_array(self):
+        data = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]) * second
+        test_array = Array(data)
+        
+        assert isinstance(test_array, u.CustomArray)
+        
+        sum_result = um.sum(test_array.value)
+        sum_array = Array(sum_result)
+        assert isinstance(sum_array, u.CustomArray)
+        assert_quantity(sum_array.value, 15.0, unit=second)
+        
+        mean_result = um.mean(test_array.value)
+        mean_array = Array(mean_result)
+        assert isinstance(mean_array, u.CustomArray)
+        assert_quantity(mean_array.value, 3.0, unit=second)
+        
+        max_result = um.max(test_array.value)
+        max_array = Array(max_result)
+        assert isinstance(max_array, u.CustomArray)
+        assert_quantity(max_array.value, 5.0, unit=second)
+        
+        min_result = um.min(test_array.value)
+        min_array = Array(min_result)
+        assert isinstance(min_array, u.CustomArray)
+        assert_quantity(min_array.value, 1.0, unit=second)
+
+    def test_fun_keep_unit_percentile_quantile_with_array(self):
+        data = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]) * meter
+        test_array = Array(data)
+        
+        assert isinstance(test_array, u.CustomArray)
+        
+        percentile_result = um.percentile(test_array.value, 50)
+        percentile_array = Array(percentile_result)
+        assert isinstance(percentile_array, u.CustomArray)
+        assert_quantity(percentile_array.value, 3.0, unit=meter)
+        
+        quantile_result = um.quantile(test_array.value, 0.5)
+        quantile_array = Array(quantile_result)
+        assert isinstance(quantile_array, u.CustomArray)
+        assert_quantity(quantile_array.value, 3.0, unit=meter)
+
+    def test_fun_keep_unit_broadcasting_with_array(self):
+        data = jnp.array([1.0, 2.0, 3.0]) * second
+        test_array = Array(data)
+        
+        assert isinstance(test_array, u.CustomArray)
+        
+        atleast_2d_result = um.atleast_2d(test_array.value)
+        atleast_2d_array = Array(atleast_2d_result)
+        assert isinstance(atleast_2d_array, u.CustomArray)
+        assert_quantity(atleast_2d_array.value, jnp.array([[1.0, 2.0, 3.0]]), unit=second)
+        
+        expand_dims_result = um.expand_dims(test_array.value, axis=0)
+        expand_dims_array = Array(expand_dims_result)
+        assert isinstance(expand_dims_array, u.CustomArray)
+        assert_quantity(expand_dims_array.value, jnp.array([[1.0, 2.0, 3.0]]), unit=second)
+
+    def test_fun_keep_unit_rounding_functions_with_array(self):
+        data = jnp.array([1.2, 2.7, 3.1, 4.9]) * meter
+        test_array = Array(data)
+        
+        assert isinstance(test_array, u.CustomArray)
+        
+        round_result = um.round(test_array.value)
+        round_array = Array(round_result)
+        assert isinstance(round_array, u.CustomArray)
+        assert_quantity(round_array.value, jnp.array([1.0, 3.0, 3.0, 5.0]), unit=meter)
+        
+        floor_result = um.floor(test_array.value)
+        floor_array = Array(floor_result)
+        assert isinstance(floor_array, u.CustomArray)
+        assert_quantity(floor_array.value, jnp.array([1.0, 2.0, 3.0, 4.0]), unit=meter)
+        
+        ceil_result = um.ceil(test_array.value)
+        ceil_array = Array(ceil_result)
+        assert isinstance(ceil_array, u.CustomArray)
+        assert_quantity(ceil_array.value, jnp.array([2.0, 3.0, 4.0, 5.0]), unit=meter)
+
+    def test_fun_keep_unit_complex_operations_with_array(self):
+        real_data = jnp.array([1.0, 2.0, 3.0]) * second
+        imag_data = jnp.array([4.0, 5.0, 6.0]) * second
+        complex_data = real_data + 1j * imag_data
+        
+        test_array = Array(complex_data)
+        assert isinstance(test_array, u.CustomArray)
+        
+        real_result = um.real(test_array.value)
+        real_array = Array(real_result)
+        assert isinstance(real_array, u.CustomArray)
+        assert_quantity(real_array.value, jnp.array([1.0, 2.0, 3.0]), unit=second)
+        
+        imag_result = um.imag(test_array.value)
+        imag_array = Array(imag_result)
+        assert isinstance(imag_array, u.CustomArray)
+        assert_quantity(imag_array.value, jnp.array([4.0, 5.0, 6.0]), unit=second)
+        
+        abs_result = um.abs(test_array.value)
+        abs_array = Array(abs_result)
+        assert isinstance(abs_array, u.CustomArray)
+        expected_abs = jnp.sqrt(jnp.array([1.0, 2.0, 3.0])**2 + jnp.array([4.0, 5.0, 6.0])**2)
+        assert_quantity(abs_array.value, expected_abs, unit=second)
 
 
 class TestFunKeepUnitSquenceInputs(parameterized.TestCase):
