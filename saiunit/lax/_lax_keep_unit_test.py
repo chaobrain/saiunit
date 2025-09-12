@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 import sys
-import unittest
 
 import brainstate as bst
 import jax.lax as lax
@@ -134,7 +133,6 @@ class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
         result_q = ulax.dynamic_update_slice(array, start_indices=start_indices, update=update)
         assert_quantity(result_q, expected, u.second)
 
-
     @parameterized.product(
         [dict(shape=shape, idxs=idxs, dnums=dnums, slice_sizes=slice_sizes)
          for shape, idxs, dnums, slice_sizes in [
@@ -165,19 +163,19 @@ class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
          ]] if sys.version_info >= (3, 10) else [
             dict(shape=shape, idxs=idxs, dnums=dnums, slice_sizes=slice_sizes)
             for shape, idxs, dnums, slice_sizes in [
-                 ((5,), np.array([[0], [2]]), lax.GatherDimensionNumbers(
-                     offset_dims=(), collapsed_slice_dims=(0,), start_index_map=(0,)),
-                  (1,)),
-                 ((10,), np.array([[0], [0], [0]]), lax.GatherDimensionNumbers(
-                     offset_dims=(1,), collapsed_slice_dims=(), start_index_map=(0,)),
-                  (2,)),
-                 ((10, 5,), np.array([[0], [2], [1]]), lax.GatherDimensionNumbers(
-                     offset_dims=(1,), collapsed_slice_dims=(0,), start_index_map=(0,)),
-                  (1, 3)),
-                 ((10, 5), np.array([[0, 2], [1, 0]]), lax.GatherDimensionNumbers(
-                     offset_dims=(1,), collapsed_slice_dims=(0,), start_index_map=(0, 1)),
-                  (1, 3)),
-         ]],
+                ((5,), np.array([[0], [2]]), lax.GatherDimensionNumbers(
+                    offset_dims=(), collapsed_slice_dims=(0,), start_index_map=(0,)),
+                 (1,)),
+                ((10,), np.array([[0], [0], [0]]), lax.GatherDimensionNumbers(
+                    offset_dims=(1,), collapsed_slice_dims=(), start_index_map=(0,)),
+                 (2,)),
+                ((10, 5,), np.array([[0], [2], [1]]), lax.GatherDimensionNumbers(
+                    offset_dims=(1,), collapsed_slice_dims=(0,), start_index_map=(0,)),
+                 (1, 3)),
+                ((10, 5), np.array([[0, 2], [1, 0]]), lax.GatherDimensionNumbers(
+                    offset_dims=(1,), collapsed_slice_dims=(0,), start_index_map=(0, 1)),
+                 (1, 3)),
+            ]],
     )
     def test_gather(self, shape, idxs, dnums, slice_sizes):
         rand_idxs = bst.random.randint(0., high=max(shape), size=idxs.shape)
@@ -349,22 +347,22 @@ class TestLaxKeepUnit(parameterized.TestCase):
                   scatter_indices_batching_dims=(0,))),
              ((2, 3, 10), np.array([[[0], [1]], [[2], [3]], [[4], [5]]]),
               (3, 2, 3), lax.ScatterDimensionNumbers(
-                 update_window_dims=(2,), inserted_window_dims=(),
-                 scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
-                 scatter_indices_batching_dims=(1, 0)))
+                     update_window_dims=(2,), inserted_window_dims=(),
+                     scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
+                     scatter_indices_batching_dims=(1, 0)))
          ]] if sys.version_info >= (3, 10) else [
             dict(arg_shape=arg_shape, idxs=idxs, update_shape=update_shape,
-              dnums=dnums)
-             for arg_shape, idxs, update_shape, dnums in [
-                 ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
-                     update_window_dims=(), inserted_window_dims=(0,),
-                     scatter_dims_to_operand_dims=(0,))),
-                 ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
-                     update_window_dims=(1,), inserted_window_dims=(),
-                     scatter_dims_to_operand_dims=(0,))),
-                 ((10, 5), np.array([[0], [2], [1]]), (3, 3), lax.ScatterDimensionNumbers(
-                     update_window_dims=(1,), inserted_window_dims=(0,),
-                     scatter_dims_to_operand_dims=(0,))),
+                 dnums=dnums)
+            for arg_shape, idxs, update_shape, dnums in [
+                ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
+                    update_window_dims=(), inserted_window_dims=(0,),
+                    scatter_dims_to_operand_dims=(0,))),
+                ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
+                    update_window_dims=(1,), inserted_window_dims=(),
+                    scatter_dims_to_operand_dims=(0,))),
+                ((10, 5), np.array([[0], [2], [1]]), (3, 3), lax.ScatterDimensionNumbers(
+                    update_window_dims=(1,), inserted_window_dims=(0,),
+                    scatter_dims_to_operand_dims=(0,))),
             ]]
 
     )
@@ -405,23 +403,23 @@ class TestLaxKeepUnit(parameterized.TestCase):
                   scatter_indices_batching_dims=(0,))),
              ((2, 3, 10), np.array([[[0], [1]], [[2], [3]], [[4], [5]]]),
               (3, 2, 3), lax.ScatterDimensionNumbers(
-                 update_window_dims=(2,), inserted_window_dims=(),
-                 scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
-                 scatter_indices_batching_dims=(1, 0)))
+                     update_window_dims=(2,), inserted_window_dims=(),
+                     scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
+                     scatter_indices_batching_dims=(1, 0)))
          ]] if sys.version_info >= (3, 10) else [
             dict(arg_shape=arg_shape, idxs=idxs, update_shape=update_shape,
-              dnums=dnums)
-             for arg_shape, idxs, update_shape, dnums in [
-                 ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
-                     update_window_dims=(), inserted_window_dims=(0,),
-                     scatter_dims_to_operand_dims=(0,))),
-                 ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
-                     update_window_dims=(1,), inserted_window_dims=(),
-                     scatter_dims_to_operand_dims=(0,))),
-                 ((10, 5), np.array([[0], [2], [1]]), (3, 3), lax.ScatterDimensionNumbers(
-                     update_window_dims=(1,), inserted_window_dims=(0,),
-                     scatter_dims_to_operand_dims=(0,))),
-             ]],
+                 dnums=dnums)
+            for arg_shape, idxs, update_shape, dnums in [
+                ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
+                    update_window_dims=(), inserted_window_dims=(0,),
+                    scatter_dims_to_operand_dims=(0,))),
+                ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
+                    update_window_dims=(1,), inserted_window_dims=(),
+                    scatter_dims_to_operand_dims=(0,))),
+                ((10, 5), np.array([[0], [2], [1]]), (3, 3), lax.ScatterDimensionNumbers(
+                    update_window_dims=(1,), inserted_window_dims=(0,),
+                    scatter_dims_to_operand_dims=(0,))),
+            ]],
 
         mode=["clip", "fill", None],
         op=['scatter_add', 'scatter_sub'] if sys.version_info >= (3, 10) else ['scatter_add'],
@@ -470,22 +468,24 @@ class TestLaxKeepUnit(parameterized.TestCase):
                   scatter_indices_batching_dims=(0,))),
              ((2, 3, 10), np.array([[[0], [1]], [[2], [3]], [[4], [5]]]),
               (3, 2, 3), lax.ScatterDimensionNumbers(
-                 update_window_dims=(2,), inserted_window_dims=(),
-                 scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
-                 scatter_indices_batching_dims=(1, 0)))
+                     update_window_dims=(2,), inserted_window_dims=(),
+                     scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
+                     scatter_indices_batching_dims=(1, 0)))
          ]] if sys.version_info >= (3, 10) else [dict(arg_shape=arg_shape, idxs=idxs, update_shape=update_shape,
-              dnums=dnums)
-         for arg_shape, idxs, update_shape, dnums in [
-             ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
-                 update_window_dims=(), inserted_window_dims=(0,),
-                 scatter_dims_to_operand_dims=(0,))),
-             ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
-                 update_window_dims=(1,), inserted_window_dims=(),
-                 scatter_dims_to_operand_dims=(0,))),
-             ((10, 5), np.array([[0], [2], [1]], dtype=np.uint64), (3, 3), lax.ScatterDimensionNumbers(
-                 update_window_dims=(1,), inserted_window_dims=(0,),
-                 scatter_dims_to_operand_dims=(0,))),
-         ]]
+                                                      dnums=dnums)
+                                                 for arg_shape, idxs, update_shape, dnums in [
+                                                     ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
+                                                         update_window_dims=(), inserted_window_dims=(0,),
+                                                         scatter_dims_to_operand_dims=(0,))),
+                                                     ((10,), np.array([[0], [0], [0]]), (3, 2),
+                                                      lax.ScatterDimensionNumbers(
+                                                          update_window_dims=(1,), inserted_window_dims=(),
+                                                          scatter_dims_to_operand_dims=(0,))),
+                                                     ((10, 5), np.array([[0], [2], [1]], dtype=np.uint64), (3, 3),
+                                                      lax.ScatterDimensionNumbers(
+                                                          update_window_dims=(1,), inserted_window_dims=(0,),
+                                                          scatter_dims_to_operand_dims=(0,))),
+                                                 ]]
     )
     def test_scatter_min(self, arg_shape, idxs, update_shape, dnums):
         array = bst.random.random(arg_shape)
@@ -524,23 +524,23 @@ class TestLaxKeepUnit(parameterized.TestCase):
                   scatter_indices_batching_dims=(0,))),
              ((2, 3, 10), np.array([[[0], [1]], [[2], [3]], [[4], [5]]]),
               (3, 2, 3), lax.ScatterDimensionNumbers(
-                 update_window_dims=(2,), inserted_window_dims=(),
-                 scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
-                 scatter_indices_batching_dims=(1, 0)))
+                     update_window_dims=(2,), inserted_window_dims=(),
+                     scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
+                     scatter_indices_batching_dims=(1, 0)))
          ]] if sys.version_info >= (3, 10) else [
             dict(arg_shape=arg_shape, idxs=idxs, update_shape=update_shape,
-              dnums=dnums)
-         for arg_shape, idxs, update_shape, dnums in [
-             ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
-                 update_window_dims=(), inserted_window_dims=(0,),
-                 scatter_dims_to_operand_dims=(0,))),
-             ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
-                 update_window_dims=(1,), inserted_window_dims=(),
-                 scatter_dims_to_operand_dims=(0,))),
-             ((10, 5), np.array([[0], [2], [1]], dtype=np.uint64), (3, 3), lax.ScatterDimensionNumbers(
-                 update_window_dims=(1,), inserted_window_dims=(0,),
-                 scatter_dims_to_operand_dims=(0,))),
-         ]]
+                 dnums=dnums)
+            for arg_shape, idxs, update_shape, dnums in [
+                ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
+                    update_window_dims=(), inserted_window_dims=(0,),
+                    scatter_dims_to_operand_dims=(0,))),
+                ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
+                    update_window_dims=(1,), inserted_window_dims=(),
+                    scatter_dims_to_operand_dims=(0,))),
+                ((10, 5), np.array([[0], [2], [1]], dtype=np.uint64), (3, 3), lax.ScatterDimensionNumbers(
+                    update_window_dims=(1,), inserted_window_dims=(0,),
+                    scatter_dims_to_operand_dims=(0,))),
+            ]]
     )
     def test_scatter_max(self, arg_shape, idxs, update_shape, dnums):
         array = bst.random.random(arg_shape)
@@ -579,23 +579,23 @@ class TestLaxKeepUnit(parameterized.TestCase):
                   scatter_indices_batching_dims=(0,))),
              ((2, 3, 10), np.array([[[0], [1]], [[2], [3]], [[4], [5]]]),
               (3, 2, 3), lax.ScatterDimensionNumbers(
-                 update_window_dims=(2,), inserted_window_dims=(),
-                 scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
-                 scatter_indices_batching_dims=(1, 0)))
+                     update_window_dims=(2,), inserted_window_dims=(),
+                     scatter_dims_to_operand_dims=(2,), operand_batching_dims=(0, 1),
+                     scatter_indices_batching_dims=(1, 0)))
          ]] if sys.version_info >= (3, 10) else [
             dict(arg_shape=arg_shape, idxs=idxs, update_shape=update_shape,
-              dnums=dnums)
-             for arg_shape, idxs, update_shape, dnums in [
-                 ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
-                     update_window_dims=(), inserted_window_dims=(0,),
-                     scatter_dims_to_operand_dims=(0,))),
-                 ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
-                     update_window_dims=(1,), inserted_window_dims=(),
-                     scatter_dims_to_operand_dims=(0,))),
-                 ((10, 5), np.array([[0], [2], [1]], dtype=np.uint64), (3, 3), lax.ScatterDimensionNumbers(
-                     update_window_dims=(1,), inserted_window_dims=(0,),
-                     scatter_dims_to_operand_dims=(0,))),
-             ]]
+                 dnums=dnums)
+            for arg_shape, idxs, update_shape, dnums in [
+                ((5,), np.array([[0], [2]]), (2,), lax.ScatterDimensionNumbers(
+                    update_window_dims=(), inserted_window_dims=(0,),
+                    scatter_dims_to_operand_dims=(0,))),
+                ((10,), np.array([[0], [0], [0]]), (3, 2), lax.ScatterDimensionNumbers(
+                    update_window_dims=(1,), inserted_window_dims=(),
+                    scatter_dims_to_operand_dims=(0,))),
+                ((10, 5), np.array([[0], [2], [1]], dtype=np.uint64), (3, 3), lax.ScatterDimensionNumbers(
+                    update_window_dims=(1,), inserted_window_dims=(0,),
+                    scatter_dims_to_operand_dims=(0,))),
+            ]]
     )
     def test_scatter_apply(self, arg_shape, idxs, update_shape, dnums):
         array = bst.random.random(arg_shape)

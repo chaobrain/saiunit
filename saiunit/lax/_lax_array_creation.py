@@ -18,8 +18,8 @@ from typing import Optional, Union, Sequence
 import jax
 from jax import lax
 
-from saiunit._misc import set_module_as
 from .._base import Unit, Quantity
+from .._misc import set_module_as, maybe_custom_array
 
 Shape = Union[int, Sequence[int]]
 
@@ -38,6 +38,7 @@ def zeros_like_array(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit: Optional[Unit] = None,
 ) -> Union[Quantity, jax.Array]:
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         if unit is not None:
             assert isinstance(unit, Unit), 'unit must be an instance of Unit.'

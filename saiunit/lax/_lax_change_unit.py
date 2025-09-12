@@ -20,7 +20,7 @@ import jax
 from jax import lax
 
 from .._base import Quantity, maybe_decimal, UNITLESS
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array
 from ..math._fun_change_unit import _fun_change_unit_unary, _fun_change_unit_binary
 
 __all__ = [
@@ -235,6 +235,8 @@ def pow(
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise power: :math:`x^y`."""
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
     if isinstance(x, Quantity):
         if isinstance(y, Quantity):
             assert y.is_unitless, f'{jax.lax.pow.__name__} only supports scalar exponent'
@@ -254,6 +256,8 @@ def integer_pow(
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise power: :math:`x^y`, where :math:`y` is a fixed integer."""
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
     if isinstance(x, Quantity):
         if isinstance(y, Quantity):
             assert y.is_unitless, f'{jax.lax.integer_pow.__name__} only supports scalar exponent'
@@ -293,6 +297,8 @@ def rem(
     (remainder by zero or remainder of INT_SMIN with -1)
     produces an implementation defined value.
     """
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         return maybe_decimal(Quantity(lax.rem(x.mantissa, y.mantissa), unit=x.unit))
     elif isinstance(x, Quantity):

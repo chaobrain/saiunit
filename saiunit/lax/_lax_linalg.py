@@ -8,7 +8,7 @@ from jax import lax, Array
 
 from saiunit.lax._lax_change_unit import unit_change
 from .._base import Quantity, maybe_decimal, fail_for_unit_mismatch
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ..math._fun_change_unit import _fun_change_unit_unary
 
 __all__ = [
@@ -86,6 +86,7 @@ def eig(
     If the eigendecomposition fails, then arrays full of NaNs will be returned
     for that batch element.
     """
+    x = maybe_custom_array_tree(x)
     if compute_left_eigenvectors and compute_right_eigenvectors:
         if isinstance(x, Quantity):
             w, vl, vr = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
@@ -163,6 +164,7 @@ def eigh(
         If ``subset_by_index`` is ``None`` then ``d`` is equal to ``n``. Otherwise
         ``d`` is equal to ``subset_by_index[1] - subset_by_index[0]``.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         v, w = lax.linalg.eigh(x.mantissa, lower=lower, symmetrize_input=symmetrize_input,
                                sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index)
@@ -190,6 +192,7 @@ def hessenberg(
         reflector ``taus`` contains the scalar factors of the elementary Householder
         reflectors.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         h, q = lax.linalg.hessenberg(x.mantissa)
         return maybe_decimal(Quantity(h, unit=x.unit)), q
@@ -230,6 +233,7 @@ def lu(
         swaps as a permutation, represented as an int32 array with shape
         ``[..., m]``.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         p, l, u = lax.linalg.lu(x.mantissa)
         return maybe_decimal(Quantity(p, unit=x.unit)), l, u
@@ -255,6 +259,8 @@ def householder_product(
         containing the products of the elementary Householder reflectors.
     """
     # TODO: more proper handling of Quantity?
+    a = maybe_custom_array(a)
+    taus = maybe_custom_array(taus)
     if isinstance(a, Quantity) and isinstance(taus, Quantity):
         return lax.linalg.householder_product(a.mantissa, taus.mantissa)
     elif isinstance(a, Quantity):
@@ -288,6 +294,7 @@ def qdwh(
         and `is_converged`, whose value is `True` when the convergence is achieved
         within the maximum number of iterations.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         u, h, num_iters, is_converged = lax.linalg.qdwh(x.mantissa)
         return u, maybe_decimal(Quantity(h, unit=x.unit)), num_iters, is_converged
@@ -325,6 +332,7 @@ def qr(
         ``full_matrices=True``, or ``[..., min(m, n), n]`` if
         ``full_matrices=False``.
     """
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         q, r = lax.linalg.qr(x.mantissa)
         return q, maybe_decimal(Quantity(r, unit=x.unit))
@@ -339,6 +347,7 @@ def schur(
     sort_eig_vals: bool = False,
     select_callable: Callable[..., Any] | None = None
 ) -> tuple[jax.Array, Quantity | jax.Array]:
+    x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         t, q = lax.linalg.schur(x.mantissa, compute_schur_vectors=compute_schur_vectors,
                                 sort_eig_vals=sort_eig_vals, select_callable=select_callable)
@@ -363,6 +372,7 @@ def svd(
     containing the left singular vectors, the singular values and the adjoint of
     the right singular vectors.
     """
+    x = maybe_custom_array(x)
     if sys.version_info >= (3, 10):
         if isinstance(x, Quantity):
             if compute_uv:
@@ -433,6 +443,8 @@ def triangular_solve(
     Returns:
     A batch of matrices the same shape and dtype as ``b``.
     """
+    a = maybe_custom_array(a)
+    b = maybe_custom_array(b)
     if isinstance(a, Quantity) and isinstance(b, Quantity):
         return maybe_decimal(Quantity(lax.linalg.triangular_solve(a.mantissa, b.mantissa, left_side=left_side,
                                                                   lower=lower, transpose_a=transpose_a,
@@ -479,6 +491,7 @@ def tridiagonal(
     first superdiagonal. ``taus`` contains the scalar factors of the elementary
     Householder reflectors.
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         arr, d, e, taus = lax.linalg.tridiagonal(a.mantissa, lower=lower)
         return maybe_decimal(Quantity(a, unit=a.unit)), maybe_decimal(Quantity(d, unit=a.unit)), \
@@ -516,6 +529,10 @@ def tridiagonal_solve(
     Returns:
         Solution ``X`` of tridiagonal system.
     """
+    dl = maybe_custom_array(dl)
+    d = maybe_custom_array(d)
+    du = maybe_custom_array(du)
+    b = maybe_custom_array(b)
     fail_for_unit_mismatch(dl, d)
     fail_for_unit_mismatch(dl, du)
     if isinstance(b, Quantity):

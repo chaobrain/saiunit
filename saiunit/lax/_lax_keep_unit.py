@@ -23,7 +23,7 @@ from jax import lax
 from jax._src.typing import Shape
 
 from .._base import Quantity, maybe_decimal, has_same_unit
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ..math._fun_keep_unit import _fun_keep_unit_unary, _fun_keep_unit_binary
 
 __all__ = [
@@ -287,6 +287,8 @@ def gather(
         ...            mode=lax.GatherScatterMode.PROMISE_IN_BOUNDS)
         Array([10, 11, 11, 12, 12, 12], dtype=int32)
     """
+    operand = maybe_custom_array(operand)
+    fill_value = maybe_custom_array(fill_value)
     if isinstance(operand, Quantity) and isinstance(fill_value, Quantity):
         return maybe_decimal(
             Quantity(lax.gather(operand.mantissa, start_indices, dimension_numbers, slice_sizes,
@@ -654,6 +656,7 @@ def sort(
     Returns:
         operand : sorted version of the input or inputs.
     """
+    operand = maybe_custom_array_tree(operand)
     # check if operand is a sequence
     if isinstance(operand, Sequence):
         # Convert quantities to mantissas, keeping track of units
@@ -666,10 +669,10 @@ def sort(
             else:
                 mantissas.append(op)
                 units.append(None)
-        
+
         # Sort the mantissas
         sorted_mantissas = lax.sort(mantissas, dimension, is_stable, num_keys)
-        
+
         # Convert back to quantities where applicable
         output = []
         for i, (mantissa, unit) in enumerate(zip(sorted_mantissas, units)):
@@ -680,7 +683,8 @@ def sort(
         return output
     else:
         if isinstance(operand, Quantity):
-            return maybe_decimal(Quantity(lax.sort(operand.mantissa, dimension, is_stable, num_keys), unit=operand.unit))
+            return maybe_decimal(
+                Quantity(lax.sort(operand.mantissa, dimension, is_stable, num_keys), unit=operand.unit))
         return lax.sort(operand, dimension, is_stable, num_keys)
 
 
@@ -692,6 +696,8 @@ def sort_key_val(
     is_stable: bool = True
 ) -> tuple[Union[Quantity, jax.Array], Union[Quantity, jax.Array]]:
     """Sorts ``keys`` along ``dimension`` and applies the same permutation to ``values``."""
+    keys = maybe_custom_array(keys)
+    values = maybe_custom_array(values)
     if isinstance(keys, Quantity) and isinstance(values, Quantity):
         k, v = lax.sort_key_val(keys.mantissa, values.mantissa, dimension, is_stable)
         return maybe_decimal(Quantity(k, unit=keys.unit)), maybe_decimal(Quantity(v, unit=values.unit))
@@ -753,6 +759,8 @@ def _fun_lax_scatter(
     unique_indices,
     mode
 ) -> Union[Quantity, jax.Array]:
+    operand = maybe_custom_array(operand)
+    updates = maybe_custom_array(updates)
     if isinstance(operand, Quantity) and isinstance(updates, Quantity):
         assert has_same_unit(operand,
                              updates), f'operand(unit:{operand.unit}) and updates(unit:{updates.unit}) do not have same unit'
@@ -1150,6 +1158,7 @@ def scatter_apply(
     Returns:
         An array containing the result of applying `func` to `operand` at the given indices.
     """
+    operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         return maybe_decimal(Quantity(lax.scatter_apply(operand.mantissa, scatter_indices, func, dimension_numbers,
                                                         update_shape=update_shape,
@@ -1284,6 +1293,9 @@ def clamp(
     x & \text{otherwise}
     \end{cases}`.
     """
+    min = maybe_custom_array(min)
+    x = maybe_custom_array(x)
+    max = maybe_custom_array(max)
     if all(isinstance(i, Quantity) for i in (min, x, max)):
         unit = min.unit
         return maybe_decimal(Quantity(lax.clamp(min.mantissa, x.to_decimal(unit), max.to_decimal(unit)), unit=unit))
@@ -1347,6 +1359,7 @@ def approx_max_k(
     >>> db = jax.numpy.array(np.random.rand(1024, 64))
     >>> dot_products, neighbors = mips(qy, db, k=10)
     """
+    operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         r = lax.approx_max_k(operand.mantissa, k, reduction_dimension, recall_target, reduction_input_size_override,
                              aggregate_to_topk)
@@ -1411,6 +1424,7 @@ def approx_min_k(
     ``qy^2 - 2 dot(qy, db^T) + db^2`` for performance reason. The former uses less
     arithmetic and produces the same set of neighbors.
     """
+    operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         r = lax.approx_min_k(operand.mantissa, k, reduction_dimension, recall_target, reduction_input_size_override,
                              aggregate_to_topk)
@@ -1446,6 +1460,7 @@ def top_k(
         >>> indices
         Array([4, 0, 2], dtype=int32)
     """
+    operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         r = lax.top_k(operand.mantissa, k)
         return maybe_decimal(Quantity(r[0], unit=operand.unit)), r[1]
