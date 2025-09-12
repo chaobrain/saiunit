@@ -22,7 +22,7 @@ import jax.numpy as jnp
 from jax import Array
 
 from .._base import Quantity, maybe_decimal
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array
 from ..lax import _lax_linalg as lax_linalg
 from ..math._fun_keep_unit import (
     _fun_keep_unit_unary, trace, diagonal
@@ -270,6 +270,7 @@ def qr(
         >>> u.math.allclose(Q @ R, a)
         Array(True, dtype=bool)
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         result = jnp.linalg.qr(a.mantissa, mode=mode)
         if mode == "r":
@@ -347,6 +348,7 @@ def eig(
         Array([[ 0.70710677+0.j, -0.70710677+0.j],
                [ 0.70710677+0.j,  0.70710677+0.j]], dtype=complex64)
     """
+    a = maybe_custom_array(a)
     return lax_linalg.eig(a, compute_left_eigenvectors=False)
 
 
@@ -391,6 +393,7 @@ def eigh(
         ArrayImpl([[-0.707-0.j   , -0.707+0.j   ],
                    [ 0.   +0.707j,  0.   -0.707j]], dtype=complex64)
     """
+    a = maybe_custom_array(a)
     if UPLO is None or UPLO == "L":
         lower = True
     elif UPLO == "U":

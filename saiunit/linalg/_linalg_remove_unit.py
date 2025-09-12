@@ -21,7 +21,7 @@ import jax
 import jax.numpy as jnp
 
 from .._base import Quantity
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array
 from ..math._fun_remove_unit import _fun_remove_unit_unary
 
 __all__ = [
@@ -156,6 +156,7 @@ def slogdet(
         >>> jnp.exp(logabsdet)  # Absolute value of determinant
         Array(2., dtype=float32)
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return jnp.linalg.slogdet(a.mantissa, method=method)
     return jnp.linalg.slogdet(a, method=method)

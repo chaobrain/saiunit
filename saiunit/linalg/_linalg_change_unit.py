@@ -21,7 +21,7 @@ import jax
 import jax.numpy as jnp
 
 from .._base import Quantity, maybe_decimal, UNITLESS
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array
 from ..math._fun_change_unit import (
     dot, multi_dot, vdot, vecdot, inner,
     outer, kron, matmul, tensordot,
@@ -250,6 +250,8 @@ def lstsq(
         ...   print(x)
         ArrayImpl([-4. ,  4.5], dtype=float32) * meter / second
     """
+    a = maybe_custom_array(a)
+    b = maybe_custom_array(b)
     if isinstance(a, Quantity) and isinstance(b, Quantity):
         r = jnp.linalg.lstsq(a.mantissa, b.mantissa, rcond=rcond, numpy_resid=numpy_resid)
         return maybe_decimal(Quantity(r[0], unit=b.unit / a.unit)), r[1], r[2], r[3]
