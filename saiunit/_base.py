@@ -28,7 +28,7 @@ import numpy as np
 from jax.interpreters.partial_eval import DynamicJaxprTracer
 from jax.tree_util import register_pytree_node_class
 
-from ._misc import set_module_as, maybe_custom_array
+from ._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ._sparse_base import SparseMatrix
 
 __all__ = [
@@ -997,6 +997,7 @@ def get_dim(obj) -> Dimension:
     dim : Dimension
         The physical dimensions of the `obj`.
     """
+    obj = maybe_custom_array(obj)
     if isinstance(obj, Unit):
         return obj.dim
     if isinstance(obj, Dimension):
@@ -1024,6 +1025,7 @@ def get_unit(obj) -> Unit:
     unit : Unit
         The physical unit of the `obj`.
     """
+    obj = maybe_custom_array(obj)
     if isinstance(obj, Unit):
         return obj
     if isinstance(obj, Quantity):
@@ -1055,6 +1057,7 @@ def get_mantissa(obj):
     get_dim
     get_unit
     """
+    obj = maybe_custom_array(obj)
     try:
         return obj.mantissa
     except AttributeError:
@@ -1104,6 +1107,8 @@ def have_same_dim(obj1, obj2) -> bool:
     #   should only add a small amount of unnecessary computation for cases in
     #   which this function returns False which very likely leads to a
     #   DimensionMismatchError anyway.
+    obj1 = maybe_custom_array(obj1)
+    obj2 = maybe_custom_array(obj2)
     dim1 = get_dim(obj1)
     dim2 = get_dim(obj2)
     return (dim1 is dim2) or (dim1 == dim2)
@@ -1124,6 +1129,8 @@ def has_same_unit(obj1, obj2) -> bool:
     same : `bool`
         ``True`` if `obj1` and `obj2` have the same unit.
     """
+    obj1 = maybe_custom_array(obj1)
+    obj2 = maybe_custom_array(obj2)
     unit1 = get_unit(obj1)
     unit2 = get_unit(obj2)
     return unit1 == unit2
@@ -1453,6 +1460,7 @@ def is_dimensionless(obj: Union['Quantity', 'Unit', 'Dimension', jax.typing.Arra
     dimensionless : `bool`
         ``True`` if `obj` is dimensionless.
     """
+    obj = maybe_custom_array(obj)
     if isinstance(obj, Dimension):
         return obj.is_dimensionless
     return _to_quantity(obj).dim.is_dimensionless
@@ -1473,6 +1481,7 @@ def is_unitless(obj: Union['Quantity', 'Unit', jax.typing.ArrayLike]) -> bool:
     unitless : `bool`
         ``True`` if `obj` is unitless.
     """
+    obj = maybe_custom_array(obj)
     assert not isinstance(obj, Dimension), f"Dimension objects are not unitless or not, but got {obj}"
     return _to_quantity(obj).is_unitless
 
@@ -2500,6 +2509,9 @@ class Quantity(Generic[A]):
     ):
 
         with jax.ensure_compile_time_eval():  # inside JIT, this can avoid to trace the constant mantissa value
+
+            # Handle custom arrays in the mantissa tree structure
+            mantissa = maybe_custom_array_tree(mantissa)
 
             if isinstance(mantissa, Unit):
                 assert unit is UNITLESS, "Cannot create a Quantity object with a unit and a mantissa that is a Unit object."
