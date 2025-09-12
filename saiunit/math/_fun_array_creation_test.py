@@ -23,6 +23,11 @@ import saiunit.math as um
 from saiunit import second, meter
 from saiunit._base import assert_quantity
 
+
+class Array(u.CustomArray):
+    def __init__(self, value):
+        self.value = value
+
 fun_array_creation_given_shape = [
     'empty', 'ones', 'zeros',
 ]
@@ -65,6 +70,222 @@ fun_array_creation_other = [
     'tree_ones_like',
     'tree_zeros_like',
 ]
+
+
+class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
+
+    @parameterized.product(
+        shape=[(1,), (2, 3), (4, 5, 6)],
+        unit=[second, meter]
+    )
+    def test_fun_array_creation_given_shape_with_array(self, shape, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_array_creation_given_shape]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_array_creation_given_shape]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            result = bm_fun(shape)
+            expected = jnp_fun(shape)
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            result = bm_fun(shape, unit=unit)
+            expected = jnp_fun(shape)
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+    @parameterized.product(
+        shape=[(1,), (2, 3), (4, 5, 6)],
+        unit=[second, meter],
+        fill_value=[-1., 1.]
+    )
+    def test_fun_array_creation_given_shape_fill_value_with_array(self, shape, unit, fill_value):
+        bm_fun_list = [getattr(um, fun) for fun in fun_array_creation_given_shape_fill_value]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_array_creation_given_shape_fill_value]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            result = bm_fun(shape, fill_value=fill_value)
+            expected = jnp_fun(shape, fill_value=fill_value)
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            result = bm_fun(shape, fill_value=fill_value * unit)
+            expected = jnp_fun(shape, fill_value=fill_value)
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+    @parameterized.product(
+        value=[1, 10, 100],
+        unit=[second, meter]
+    )
+    def test_fun_array_creation_given_int_with_array(self, value, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_array_creation_given_int]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_array_creation_given_int]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            result = bm_fun(value)
+            expected = jnp_fun(value)
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            result = bm_fun(value, unit=unit)
+            expected = jnp_fun(value)
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+    @parameterized.product(
+        array=[jnp.array([1.0, 2.0]), jnp.array([[1.0, 2.0], [3.0, 4.0]])],
+        unit=[second, meter]
+    )
+    def test_fun_array_creation_given_array_with_array(self, array, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_array_creation_given_array]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_array_creation_given_array]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            result = bm_fun(array)
+            expected = jnp_fun(array)
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            result = bm_fun(array, unit=unit)
+            expected = jnp_fun(array)
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+    @parameterized.product(
+        array=[jnp.array([1.0, 2.0]), jnp.array([[1.0, 2.0], [3.0, 4.0]])],
+        unit=[second, meter],
+        fill_value=[-1., 1.]
+    )
+    def test_fun_array_creation_given_array_fill_value_with_array(self, array, unit, fill_value):
+        bm_fun_list = [getattr(um, fun) for fun in fun_array_creation_given_array_fill_value]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_array_creation_given_array_fill_value]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            result = bm_fun(array, fill_value=fill_value)
+            expected = jnp_fun(array, fill_value=fill_value)
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            result = bm_fun(array * unit, fill_value=fill_value * unit)
+            expected = jnp_fun(array, fill_value=fill_value)
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+            with pytest.raises(AssertionError):
+                result = bm_fun(array, fill_value=fill_value * unit)
+
+    @parameterized.product(
+        unit=[second, meter],
+    )
+    def test_fun_array_creation_asarray_with_array(self, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_array_creation_asarray]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_array_creation_asarray]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            result = bm_fun([1, 2, 3])
+            expected = jnp_fun([1, 2, 3])
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected)
+
+            result = bm_fun([1, 2, 3] * unit)
+            expected = jnp_fun([1, 2, 3])
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+            result = bm_fun([1 * unit, 2 * unit, 3 * unit])
+            expected = jnp_fun([1, 2, 3])
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+            result = bm_fun(1 * unit)
+            expected = jnp_fun(1)
+            assert_quantity(result, expected, unit=unit)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.value, expected, unit=unit)
+
+            with pytest.raises(u.UnitMismatchError):
+                result = bm_fun(1 * unit, unit=u.volt)
+
+    def test_array_custom_array_compatibility(self):
+        test_array = Array(jnp.array([1.0, 2.0, 3.0]) * meter)
+        
+        assert isinstance(test_array, u.CustomArray)
+        assert hasattr(test_array, 'value')
+        assert_quantity(test_array.value, jnp.array([1.0, 2.0, 3.0]), unit=meter)
+        
+        result = um.zeros_like(test_array.value)
+        array_result = Array(result)
+        assert isinstance(array_result, u.CustomArray)
+        assert_quantity(array_result.value, jnp.zeros(3), unit=meter)
+
+    def test_array_creation_with_custom_array_input(self):
+        original_data = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * second
+        test_array = Array(original_data)
+        
+        result = um.ones_like(test_array.value)
+        expected = jnp.ones((2, 2))
+        assert_quantity(result, expected, unit=second)
+        
+        array_result = Array(result)
+        assert isinstance(array_result, u.CustomArray)
+        assert_quantity(array_result.value, expected, unit=second)
+        
+        result = um.empty_like(test_array.value)
+        array_result = Array(result)
+        assert isinstance(array_result, u.CustomArray)
+        assert array_result.value.shape == (2, 2)
+        assert u.get_unit(array_result.value) == second
 
 
 class TestFunArrayCreation(parameterized.TestCase):
