@@ -20,8 +20,9 @@ from typing import (Any, Sequence, Callable)
 
 import jax
 
-from saiunit._base import get_mantissa, get_unit, Quantity, maybe_decimal
 from ._misc import _ensure_index
+from .._base import get_mantissa, get_unit, Quantity, maybe_decimal
+from .._misc import maybe_custom_array_tree
 
 __all__ = [
     'value_and_grad',
@@ -85,6 +86,8 @@ def value_and_grad(
 
     @wraps(fun)
     def value_and_grad_fun(*args, **kwargs):
+        args, kwargs = maybe_custom_array_tree((args, kwargs))
+
         # autograd as usual
         ((_, (loss, auxiliary_data)), gradient) = fun_transformed(*args, **kwargs)
 
@@ -150,11 +153,13 @@ def grad(
 
     @wraps(fun)
     def grad_f(*args, **kwargs):
+        args, kwargs = maybe_custom_array_tree((args, kwargs))
         _, g = value_and_grad_f(*args, **kwargs)
         return g
 
     @wraps(fun)
     def grad_f_aux(*args, **kwargs):
+        args, kwargs = maybe_custom_array_tree((args, kwargs))
         (_, aux), g = value_and_grad_f(*args, **kwargs)
         return g, aux
 

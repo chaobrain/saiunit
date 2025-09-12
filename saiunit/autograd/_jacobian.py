@@ -30,9 +30,10 @@ from jax._src.api import (
 )
 from jax.api_util import argnums_partial
 
-from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
-from saiunit._compatible_import import safe_map, wrap_init
 from ._misc import _ensure_index, _check_callable
+from .._base import Quantity, maybe_decimal, get_magnitude, get_unit
+from .._compatible_import import safe_map, wrap_init
+from .._misc import maybe_custom_array_tree
 
 __all__ = [
     'jacrev',
@@ -141,6 +142,7 @@ def jacrev(
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
+        args, kwargs = maybe_custom_array_tree((args, kwargs))
         f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacrev')
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
         jax.tree.map(partial(_check_input_dtype_jacrev, holomorphic, allow_int), dyn_args)
@@ -332,6 +334,7 @@ def jacfwd(
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
+        args, kwargs = maybe_custom_array_tree((args, kwargs))
         f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacfwd')
         f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
         jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic), dyn_args)
