@@ -35,6 +35,7 @@ from ._unit_constants import *
 from ._unit_constants import __all__ as _constants_all
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
+from saiunit.custom_array import CustomArray
 
 __all__ = (
     [
@@ -43,7 +44,8 @@ __all__ = (
         'autograd',
         'fft',
         'constants',
-        'sparse'
+        'sparse',
+        'CustomArray',
     ] +
     _common_all +
     _std_units_all +
