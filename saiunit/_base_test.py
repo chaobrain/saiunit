@@ -47,6 +47,11 @@ from saiunit._unit_common import *
 from saiunit._unit_shortcuts import kHz, ms, mV, nS
 
 
+class Array(u.CustomArray):
+    def __init__(self, value):
+        self.value = value
+
+
 class Test_get_dim:
     def test_get_dimension_from_dimension_object(self):
         # Create a dimension object
@@ -1773,3 +1778,359 @@ class TestJit:
 
         f(a=3 * u.mV)
         f(a=brainstate.random.rand(10) * u.mV)
+
+
+class TestArrayWithCustomArray(unittest.TestCase):
+    """Test Array class that inherits from saiunit.CustomArray"""
+    
+    def setUp(self):
+        """Set up test fixtures with various Array instances"""
+        # Basic Array instances
+        self.array_scalar = Array(5.0)
+        self.array_1d = Array(np.array([1.0, 2.0, 3.0]))
+        self.array_2d = Array(np.array([[1, 2], [3, 4]]))
+        
+        # JAX arrays
+        self.jax_array = Array(jnp.array([1.0, 2.0, 3.0]))
+        
+        # Arrays with physical units
+        self.voltage_array = Array(np.array([1.0, 2.0, 3.0])) * mV
+        self.current_array = Array(np.array([10.0, 20.0, 30.0])) * nS
+        self.time_array = Array(np.array([1.0, 2.0, 3.0])) * ms
+        
+        # Complex arrays
+        self.complex_array = Array(np.array([1+2j, 3+4j, 5+6j]))
+
+    def test_array_properties(self):
+        """Test basic properties of Array with CustomArray"""
+        # Test dtype
+        self.assertEqual(self.array_1d.dtype, np.float64)
+        self.assertTrue(np.issubdtype(self.array_2d.dtype, np.integer))
+        
+        # Test shape
+        self.assertEqual(self.array_1d.shape, (3,))
+        self.assertEqual(self.array_2d.shape, (2, 2))
+        
+        # Test ndim
+        self.assertEqual(self.array_1d.ndim, 1)
+        self.assertEqual(self.array_2d.ndim, 2)
+        
+        # Test size
+        self.assertEqual(self.array_1d.size, 3)
+        self.assertEqual(self.array_2d.size, 4)
+
+    def test_array_arithmetic_operations(self):
+        """Test arithmetic operations with Array and CustomArray"""
+        arr = Array(np.array([1.0, 2.0, 3.0]))
+        
+        # Test addition
+        result_add = arr + 2.0
+        expected_add = np.array([3.0, 4.0, 5.0])
+        np.testing.assert_array_equal(result_add, expected_add)
+        
+        # Test reverse addition
+        result_radd = 2.0 + arr
+        np.testing.assert_array_equal(result_radd, expected_add)
+        
+        # Test subtraction
+        result_sub = arr - 1.0
+        expected_sub = np.array([0.0, 1.0, 2.0])
+        np.testing.assert_array_equal(result_sub, expected_sub)
+        
+        # Test multiplication
+        result_mul = arr * 2.0
+        expected_mul = np.array([2.0, 4.0, 6.0])
+        np.testing.assert_array_equal(result_mul, expected_mul)
+        
+        # Test division
+        result_div = arr / 2.0
+        expected_div = np.array([0.5, 1.0, 1.5])
+        np.testing.assert_array_equal(result_div, expected_div)
+        
+        # Test power
+        result_pow = arr ** 2
+        expected_pow = np.array([1.0, 4.0, 9.0])
+        np.testing.assert_array_equal(result_pow, expected_pow)
+
+    def test_array_inplace_operations(self):
+        """Test in-place operations with Array and CustomArray"""
+        # Test +=
+        arr = Array(np.array([1.0, 2.0, 3.0]))
+        arr += 1.0
+        np.testing.assert_array_equal(arr.value, np.array([2.0, 3.0, 4.0]))
+        
+        # Test -=
+        arr -= 1.0
+        np.testing.assert_array_equal(arr.value, np.array([1.0, 2.0, 3.0]))
+        
+        # Test *=
+        arr *= 2.0
+        np.testing.assert_array_equal(arr.value, np.array([2.0, 4.0, 6.0]))
+        
+        # Test /=
+        arr /= 2.0
+        np.testing.assert_array_equal(arr.value, np.array([1.0, 2.0, 3.0]))
+
+    def test_array_comparison_operations(self):
+        """Test comparison operations with Array and CustomArray"""
+        arr1 = Array(np.array([1.0, 2.0, 3.0]))
+        arr2 = Array(np.array([2.0, 2.0, 2.0]))
+        
+        # Test equality
+        result_eq = arr1 == 2.0
+        expected_eq = np.array([False, True, False])
+        np.testing.assert_array_equal(result_eq, expected_eq)
+        
+        # Test inequality
+        result_ne = arr1 != 2.0
+        expected_ne = np.array([True, False, True])
+        np.testing.assert_array_equal(result_ne, expected_ne)
+        
+        # Test less than
+        result_lt = arr1 < arr2
+        expected_lt = np.array([True, False, False])
+        np.testing.assert_array_equal(result_lt, expected_lt)
+        
+        # Test greater than
+        result_gt = arr1 > arr2
+        expected_gt = np.array([False, False, True])
+        np.testing.assert_array_equal(result_gt, expected_gt)
+
+    def test_array_with_units(self):
+        """Test Array with physical units"""
+        # Test voltage operations
+        voltage1 = Array(np.array([1.0, 2.0])) * mV
+        voltage2 = Array(np.array([3.0, 4.0])) * mV
+        
+        # Addition of same units
+        voltage_sum = voltage1 + voltage2
+        expected_sum = np.array([4.0, 6.0])
+        np.testing.assert_array_almost_equal(voltage_sum.mantissa, expected_sum)
+        self.assertEqual(voltage_sum.unit, mV)
+        
+        # Multiplication with scalar
+        voltage_scaled = voltage1 * 2.0
+        expected_scaled = np.array([2.0, 4.0])
+        np.testing.assert_array_almost_equal(voltage_scaled.mantissa, expected_scaled)
+        self.assertEqual(voltage_scaled.unit, mV)
+        
+        # Unit conversion
+        voltage_in_v = voltage1.to(volt)
+        expected_in_v = np.array([0.001, 0.002])
+        np.testing.assert_array_almost_equal(voltage_in_v.mantissa, expected_in_v)
+
+    def test_array_statistical_methods(self):
+        """Test statistical methods with Array and CustomArray"""
+        arr = Array(np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
+        
+        # Test mean
+        mean_val = arr.mean()
+        self.assertEqual(float(mean_val), 3.0)
+        
+        # Test sum
+        sum_val = arr.sum()
+        self.assertEqual(float(sum_val), 15.0)
+        
+        # Test min and max
+        min_val = arr.min()
+        max_val = arr.max()
+        self.assertEqual(float(min_val), 1.0)
+        self.assertEqual(float(max_val), 5.0)
+        
+        # Test std and var
+        std_val = arr.std()
+        var_val = arr.var()
+        self.assertAlmostEqual(float(std_val), np.std([1, 2, 3, 4, 5]), places=6)
+        self.assertAlmostEqual(float(var_val), np.var([1, 2, 3, 4, 5]), places=6)
+
+    def test_array_manipulation_methods(self):
+        """Test array manipulation methods"""
+        arr = Array(np.array([1, 2, 3, 4, 5, 6]))
+        
+        # Test reshape
+        reshaped = arr.reshape(2, 3)
+        self.assertEqual(reshaped.shape, (2, 3))
+        np.testing.assert_array_equal(reshaped, np.array([[1, 2, 3], [4, 5, 6]]))
+        
+        # Test transpose
+        arr_2d = Array(np.array([[1, 2], [3, 4]]))
+        transposed = arr_2d.T
+        expected_t = np.array([[1, 3], [2, 4]])
+        np.testing.assert_array_equal(transposed, expected_t)
+        
+        # Test flatten
+        flattened = arr_2d.flatten()
+        np.testing.assert_array_equal(flattened, np.array([1, 2, 3, 4]))
+        
+        # Test squeeze
+        arr_squeezable = Array(np.array([[[1, 2, 3]]]))
+        squeezed = arr_squeezable.squeeze()
+        np.testing.assert_array_equal(squeezed, np.array([1, 2, 3]))
+
+    def test_array_indexing_and_slicing(self):
+        """Test indexing and slicing operations"""
+        arr = Array(np.array([10, 20, 30, 40, 50]))
+        
+        # Test basic indexing
+        self.assertEqual(arr[0], 10)
+        self.assertEqual(arr[-1], 50)
+        
+        # Test slicing
+        slice_result = arr[1:4]
+        expected_slice = np.array([20, 30, 40])
+        np.testing.assert_array_equal(slice_result, expected_slice)
+        
+        # Test boolean indexing
+        mask = arr > 25
+        filtered = arr[mask]
+        expected_filtered = np.array([30, 40, 50])
+        np.testing.assert_array_equal(filtered, expected_filtered)
+        
+        # Test assignment
+        arr_copy = Array(np.array([10, 20, 30, 40, 50]))
+        arr_copy[1:3] = 99
+        expected_assigned = np.array([10, 99, 99, 40, 50])
+        np.testing.assert_array_equal(arr_copy.value, expected_assigned)
+
+    def test_jax_compatibility(self):
+        """Test JAX compatibility with Array and CustomArray"""
+        jax_arr = Array(jnp.array([1.0, 2.0, 3.0]))
+        
+        # Test basic operations
+        result = jax_arr * 2.0
+        expected = jnp.array([2.0, 4.0, 6.0])
+        np.testing.assert_array_equal(result, expected)
+        
+        # Test JAX transformations
+        @jax.jit
+        def square_array(x):
+            return x * x
+        
+        squared = square_array(jax_arr)
+        expected_squared = jnp.array([1.0, 4.0, 9.0])
+        np.testing.assert_array_equal(squared, expected_squared)
+        
+        # Test grad (simple function)
+        @jax.grad
+        def sum_squares(x):
+            return jnp.sum(x * x)
+        
+        grad_result = sum_squares(jax_arr)
+        expected_grad = jnp.array([2.0, 4.0, 6.0])
+        np.testing.assert_array_equal(grad_result, expected_grad)
+
+    def test_array_with_physical_quantities(self):
+        """Test Array with comprehensive physical quantity operations"""
+        # Create physical quantities with Array
+        position = Array(np.array([1.0, 2.0, 3.0])) * meter
+        time_vals = Array(np.array([1.0, 2.0, 3.0])) * second
+        
+        # Test velocity calculation (position / time)
+        velocity = position / time_vals
+        expected_unit = meter / second
+        self.assertEqual(velocity.unit.dim, expected_unit.dim)
+
+        # Ohm's law: R = V / I
+        voltage = Array(np.array([1.0, 2.0])) * mV
+        current = Array(np.array([10.0, 20.0])) * nS
+        resistance = voltage * current
+        self.assertTrue(resistance.unit.dim == u.mA.dim)
+
+    def test_array_error_handling(self):
+        """Test error handling with Array and CustomArray"""
+        arr = Array(np.array([1.0, 2.0, 3.0]))
+        
+        # Test incompatible operations
+        with self.assertRaises(TypeError):
+            arr + "string"
+        
+        # Test unit mismatch
+        voltage = Array(np.array([1.0])) * mV
+        time_val = Array(np.array([1.0])) * ms
+        
+        with self.assertRaises(u.UnitMismatchError):
+            voltage + time_val  # Can't add voltage to time
+
+    def test_array_special_methods(self):
+        """Test special methods and protocols"""
+        arr = Array(np.array([1, 2, 3]))
+
+        # Test __len__
+        self.assertEqual(len(arr), 3)
+
+        # Test __iter__
+        values = [x for x in arr]
+        expected_values = [1, 2, 3]
+        self.assertEqual(values, expected_values)
+
+        # Test __bool__
+        empty_arr = Array(np.array([]))
+        non_empty_arr = Array(np.array([1]))
+        self.assertFalse(bool(empty_arr))
+        self.assertTrue(bool(non_empty_arr))
+
+        # Test __hash__ (if array is scalar)
+        scalar_arr = Array(5)
+        hash_val = hash(scalar_arr)
+        self.assertIsInstance(hash_val, int)
+
+    def test_array_numpy_compatibility(self):
+        """Test NumPy compatibility and conversion methods"""
+        arr = Array(np.array([1.0, 2.0, 3.0]))
+        
+        # Test to_numpy method
+        numpy_result = arr.to_numpy()
+        self.assertIsInstance(numpy_result, np.ndarray)
+        np.testing.assert_array_equal(numpy_result, np.array([1.0, 2.0, 3.0]))
+        
+        # Test __array__ protocol
+        numpy_converted = np.array(arr)
+        np.testing.assert_array_equal(numpy_converted, np.array([1.0, 2.0, 3.0]))
+        
+        # Test with numpy functions
+        sin_result = np.sin(arr)
+        expected_sin = np.sin(np.array([1.0, 2.0, 3.0]))
+        np.testing.assert_array_almost_equal(sin_result, expected_sin)
+
+    def test_array_pytorch_style_methods(self):
+        """Test PyTorch-style methods in Array with CustomArray"""
+        arr = Array(np.array([1.0, 2.0, 3.0]))
+        
+        # Test unsqueeze (expand_dims)
+        unsqueezed = arr.unsqueeze(0)
+        self.assertEqual(unsqueezed.shape, (1, 3))
+        
+        # Test clamp
+        clamped = arr.clamp(min_value=1.5, max_value=2.5)
+        expected_clamped = np.array([1.5, 2.0, 2.5])
+        np.testing.assert_array_equal(clamped, expected_clamped)
+        
+        # Test clone
+        cloned = arr.clone()
+        np.testing.assert_array_equal(cloned, arr.value)
+        self.assertIsNot(cloned, arr.value)  # Different objects
+
+    def test_array_advanced_operations(self):
+        """Test advanced array operations"""
+        arr = Array(np.array([[1, 2], [3, 4]]))
+        
+        # Test matrix multiplication
+        result_matmul = arr @ arr
+        expected_matmul = np.array([[7, 10], [15, 22]])
+        np.testing.assert_array_equal(result_matmul, expected_matmul)
+        
+        # Test dot product
+        vec1 = Array(np.array([1, 2, 3]))
+        vec2 = Array(np.array([4, 5, 6]))
+        dot_result = vec1.dot(vec2)
+        expected_dot = 32  # 1*4 + 2*5 + 3*6
+        self.assertEqual(float(dot_result), expected_dot)
+        
+        # Test cumulative operations
+        cumsum_result = vec1.cumsum()
+        expected_cumsum = np.array([1, 3, 6])
+        np.testing.assert_array_equal(cumsum_result, expected_cumsum)
+        
+        cumprod_result = vec1.cumprod()
+        expected_cumprod = np.array([1, 2, 6])
+        np.testing.assert_array_equal(cumprod_result, expected_cumprod)

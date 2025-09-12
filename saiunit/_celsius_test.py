@@ -226,6 +226,3 @@ class TestArrayCelsius(unittest.TestCase):
         result = temp_matrix_1 @ temp_matrix_2
         np.testing.assert_array_equal(result, temp_matrix_1.value)
 
-
-if __name__ == '__main__':
-    unittest.main()
