@@ -513,8 +513,8 @@ def einreduce(
     Examples for reduce operation:
 
     ```python
-    >>> import brainstate as bst
-    >>> x = bst.random.randn(100, 32, 64)
+    >>> import brainstate as brainstate
+    >>> x = brainstate.random.randn(100, 32, 64)
 
     # perform max-reduction on the first axis
     >>> y = einreduce(x, 't b c -> b c', 'max')
@@ -522,7 +522,7 @@ def einreduce(
     # same as previous, but with clearer axes meaning
     >>> y = einreduce(x, 'time batch channel -> batch channel', 'max')
 
-    >>> x = bst.random.randn(10, 20, 30, 40)
+    >>> x = brainstate.random.randn(10, 20, 30, 40)
 
     # 2d max-pooling with kernel size = 2 * 2 for image processing
     >>> y1 = einreduce(x, 'b c (h1 h2) (w1 w2) -> b c h1 w1', 'max', h2=2, w2=2)
@@ -596,8 +596,8 @@ def einrearrange(
 
     ```python
     # suppose we have a set of 32 images in "h w c" format (height-width-channel)
-    >>> import brainstate as bst
-    >>> images = [bst.random.randn(30, 40, 3) for _ in range(32)]
+    >>> import brainstate as brainstate
+    >>> images = [brainstate.random.randn(30, 40, 3) for _ in range(32)]
 
     # stack along first (batch) axis, output is a single array
     >>> einrearrange(images, 'b h w c -> b h w c').shape
@@ -659,8 +659,8 @@ def einrepeat(
 
     ```python
     # a grayscale image (of shape height x width)
-    >>> import brainstate as bst
-    >>> image = bst.random.randn(30, 40)
+    >>> import brainstate as brainstate
+    >>> image = brainstate.random.randn(30, 40)
 
     # change it to RGB format by repeating in each channel
     >>> einrepeat(image, 'h w -> h w c', c=3).shape
