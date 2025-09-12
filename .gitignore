@@ -234,3 +234,4 @@ cython_debug/
 /brainunit/docs/
 /brainunit/pyproject.toml
 /brainunit/setup.py
+/.claude/
