@@ -36,23 +36,20 @@ from ._unit_constants import __all__ as _constants_all
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
 from saiunit.custom_array import CustomArray
+from saiunit._misc import maybe_custom_array, maybe_custom_array_tree
 
-__all__ = (
-    [
-        'math',
-        'linalg',
-        'autograd',
-        'fft',
-        'constants',
-        'sparse',
-        'CustomArray',
-    ] +
-    _common_all +
-    _std_units_all +
-    _base_all +
-    _constants_all +
-    _celsius_all
-)
+__all__ = [
+    'math',
+    'linalg',
+    'autograd',
+    'fft',
+    'constants',
+    'sparse',
+    'CustomArray',
+    'maybe_custom_array',
+    'maybe_custom_array_tree',
+]
+__all__ = __all__ + _common_all + _std_units_all + _base_all + _constants_all + _celsius_all
 del _common_all, _std_units_all, _base_all, _celsius_all, _constants_all, saiunit
 
 # old version compatibility
