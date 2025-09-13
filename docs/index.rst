@@ -188,6 +188,7 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
 
    advanced_tutorials/combining_and_defining.ipynb
    advanced_tutorials/mechanism.ipynb
+   advanced_tutorials/custom_array.ipynb
    FAQs
 
 
