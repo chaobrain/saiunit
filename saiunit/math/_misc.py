@@ -87,38 +87,41 @@ __all__ = [
     'bartlett', 'blackman', 'hamming', 'hanning', 'kaiser',
 ]
 
-bool_ = jnp.bool_
-uint2 = jnp.uint2
-uint4 = jnp.uint4
-uint8 = jnp.uint8
-uint16 = jnp.uint16
-uint32 = jnp.uint32
-uint64 = jnp.uint64
-int2 = jnp.int2
-int4 = jnp.int4
-int8 = jnp.int8
-int16 = jnp.int16
-int32 = jnp.int32
-int64 = jnp.int64
-float4_e2m1fn = jnp.float4_e2m1fn
-float8_e3m4 = jnp.float8_e3m4
-float8_e4m3 = jnp.float8_e4m3
-float8_e8m0fnu = jnp.float8_e8m0fnu
-float8_e4m3fn = jnp.float8_e4m3fn
-float8_e4m3fnuz = jnp.float8_e4m3fnuz
-float8_e5m2 = jnp.float8_e5m2
-float8_e5m2fnuz = jnp.float8_e5m2fnuz
-float8_e4m3b11fnuz = jnp.float8_e4m3b11fnuz
-bfloat16 = jnp.bfloat16
-float16 = jnp.float16
-float32 = single = jnp.float32
-float64 = double = jnp.float64
-complex64 = csingle = jnp.complex64
-complex128 = cdouble = jnp.complex128
-int_ = jnp.int_
-uint = jnp.uint
-float_ = jnp.float_
-complex_ = jnp.complex_
+try:
+    bool_ = jnp.bool_
+    uint2 = jnp.uint2
+    uint4 = jnp.uint4
+    uint8 = jnp.uint8
+    uint16 = jnp.uint16
+    uint32 = jnp.uint32
+    uint64 = jnp.uint64
+    int2 = jnp.int2
+    int4 = jnp.int4
+    int8 = jnp.int8
+    int16 = jnp.int16
+    int32 = jnp.int32
+    int64 = jnp.int64
+    float4_e2m1fn = jnp.float4_e2m1fn
+    float8_e3m4 = jnp.float8_e3m4
+    float8_e4m3 = jnp.float8_e4m3
+    float8_e8m0fnu = jnp.float8_e8m0fnu
+    float8_e4m3fn = jnp.float8_e4m3fn
+    float8_e4m3fnuz = jnp.float8_e4m3fnuz
+    float8_e5m2 = jnp.float8_e5m2
+    float8_e5m2fnuz = jnp.float8_e5m2fnuz
+    float8_e4m3b11fnuz = jnp.float8_e4m3b11fnuz
+    bfloat16 = jnp.bfloat16
+    float16 = jnp.float16
+    float32 = single = jnp.float32
+    float64 = double = jnp.float64
+    complex64 = csingle = jnp.complex64
+    complex128 = cdouble = jnp.complex128
+    int_ = jnp.int_
+    uint = jnp.uint
+    float_ = jnp.float_
+    complex_ = jnp.complex_
+except:
+    pass
 
 
 def _removechars(s, chars):
