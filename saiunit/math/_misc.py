@@ -26,11 +26,48 @@ from .._base import (Unit,
                      Quantity,
                      get_unit,
                      is_unitless)
-from .._misc import set_module_as
+from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 T = TypeVar("T")
 
 __all__ = [
+    'bool_',
+    'uint2',
+    'uint4',
+    'uint8',
+    'uint16',
+    'uint32',
+    'uint64',
+    'int2',
+    'int4',
+    'int8',
+    'int16',
+    'int32',
+    'int64',
+    'float4_e2m1fn',
+    'float8_e3m4',
+    'float8_e4m3',
+    'float8_e8m0fnu',
+    'float8_e4m3fn',
+    'float8_e4m3fnuz',
+    'float8_e5m2',
+    'float8_e5m2fnuz',
+    'float8_e4m3b11fnuz',
+    'bfloat16',
+    'float16',
+    'float32',
+    'float64',
+    'complex64',
+    'complex128',
+    'int_',
+    'uint',
+    'float_',
+    'complex_',
+    'single',
+    'double',
+    'csingle',
+    'cdouble',
+
     # constants
     'e', 'pi', 'inf', 'nan', 'euler_gamma', 'inexact',
 
@@ -49,6 +86,39 @@ __all__ = [
     # window funcs
     'bartlett', 'blackman', 'hamming', 'hanning', 'kaiser',
 ]
+
+bool_ = jnp.bool_
+uint2 = jnp.uint2
+uint4 = jnp.uint4
+uint8 = jnp.uint8
+uint16 = jnp.uint16
+uint32 = jnp.uint32
+uint64 = jnp.uint64
+int2 = jnp.int2
+int4 = jnp.int4
+int8 = jnp.int8
+int16 = jnp.int16
+int32 = jnp.int32
+int64 = jnp.int64
+float4_e2m1fn = jnp.float4_e2m1fn
+float8_e3m4 = jnp.float8_e3m4
+float8_e4m3 = jnp.float8_e4m3
+float8_e8m0fnu = jnp.float8_e8m0fnu
+float8_e4m3fn = jnp.float8_e4m3fn
+float8_e4m3fnuz = jnp.float8_e4m3fnuz
+float8_e5m2 = jnp.float8_e5m2
+float8_e5m2fnuz = jnp.float8_e5m2fnuz
+float8_e4m3b11fnuz = jnp.float8_e4m3b11fnuz
+bfloat16 = jnp.bfloat16
+float16 = jnp.float16
+float32 = single = jnp.float32
+float64 = double = jnp.float64
+complex64 = csingle = jnp.complex64
+complex128 = cdouble = jnp.complex128
+int_ = jnp.int_
+uint = jnp.uint
+float_ = jnp.float_
+complex_ = jnp.complex_
 
 
 def _removechars(s, chars):
@@ -84,6 +154,7 @@ def is_quantity(x: Any) -> bool:
     bool
         A boolean value indicating if x is a Quantity.
     """
+    x = maybe_custom_array(x)
     return isinstance(x, Quantity)
 
 
@@ -113,6 +184,7 @@ def result_type(*args):
     Returns:
       dtype: dtype
     """
+    args = maybe_custom_array_tree(args)
     return jnp.result_type(*jax.tree.leaves(args))
 
 
@@ -127,6 +199,7 @@ def ndim(a: Union[Quantity, jax.typing.ArrayLike]) -> int:
     Returns:
       Union[jax.Array, Quantity]: int
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.ndim
     else:
@@ -144,6 +217,7 @@ def isreal(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
     Returns:
       Union[jax.Array, Quantity]: boolean array
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isreal
     else:
@@ -161,6 +235,7 @@ def isscalar(a: Union[Quantity, jax.typing.ArrayLike]) -> bool:
     Returns:
       Union[jax.Array, Quantity]: boolean array
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isscalar
     else:
@@ -178,6 +253,7 @@ def isfinite(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
     Returns:
       Union[jax.Array, Quantity]: boolean array
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isfinite
     else:
@@ -195,6 +271,7 @@ def isinf(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
     Returns:
       Union[jax.Array, Quantity]: boolean array
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isinf
     else:
@@ -212,6 +289,7 @@ def isnan(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
     Returns:
       Union[jax.Array, Quantity]: boolean array
     """
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isnan
     else:
@@ -252,6 +330,7 @@ def shape(a: Union[Quantity, jax.typing.ArrayLike]) -> tuple[int, ...]:
     ()
 
     """
+    a = maybe_custom_array(a)
     if isinstance(a, (Quantity, jax.Array, np.ndarray)):
         return a.shape
     else:
@@ -292,6 +371,7 @@ def size(a: Union[Quantity, jax.typing.ArrayLike], axis: int = None) -> int:
     >>> saiunit.math.size(a, 0)
     2
     """
+    a = maybe_custom_array(a)
     if isinstance(a, (Quantity, jax.Array, np.ndarray)):
         if axis is None:
             return a.size
@@ -303,16 +383,18 @@ def size(a: Union[Quantity, jax.typing.ArrayLike], axis: int = None) -> int:
 
 @set_module_as('saiunit.math')
 def finfo(a: Union[Quantity, jax.typing.ArrayLike]) -> jnp.finfo:
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
-        return jnp.finfo(a.value)
+        return jnp.finfo(a.mantissa)
     else:
         return jnp.finfo(a)
 
 
 @set_module_as('saiunit.math')
 def iinfo(a: Union[Quantity, jax.typing.ArrayLike]) -> jnp.iinfo:
+    a = maybe_custom_array(a)
     if isinstance(a, Quantity):
-        return jnp.iinfo(a.value)
+        return jnp.iinfo(a.mantissa)
     else:
         return jnp.iinfo(a)
 
@@ -343,6 +425,7 @@ def get_dtype(a):
     """
     Get the dtype of a.
     """
+    a = maybe_custom_array(a)
     if hasattr(a, 'dtype'):
         return a.dtype
     else:
@@ -376,6 +459,7 @@ def is_float(array):
     Returns:
       A boolean value indicating if the array is a floating point array.
     """
+    array = maybe_custom_array(array)
     return jnp.issubdtype(get_dtype(array), jnp.floating)
 
 
@@ -390,6 +474,7 @@ def is_int(array):
     Returns:
       A boolean value indicating if the array is an integer array.
     """
+    array = maybe_custom_array(array)
     return jnp.issubdtype(get_dtype(array), jnp.integer)
 
 
@@ -444,6 +529,7 @@ def gradient(
       corresponding to the derivatives of f with respect to each dimension.
       Each derivative has the same shape as f.
     """
+    f, varargs = maybe_custom_array_tree((f, varargs))
     if edge_order is not None:
         raise NotImplementedError("The 'edge_order' argument to jnp.gradient is not supported.")
 
@@ -457,7 +543,7 @@ def gradient(
         if isinstance(unit, Unit) and unit.is_unitless:
             return jnp.gradient(f, varargs[0], axis=axis)
         else:
-            return [Quantity(r, unit=unit) for r in jnp.gradient(f.mantissa, varargs[0].mantissa, axis=axis)]
+            return [Quantity(r, unit=unit) for r in jnp.gradient(f.mantissa, Quantity(varargs[0]).mantissa, axis=axis)]
     else:
         unit_list = [get_unit(f) / get_unit(v) for v in varargs]
         f = f.mantissa if isinstance(f, Quantity) else f
