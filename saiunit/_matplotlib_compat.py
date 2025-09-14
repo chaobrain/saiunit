@@ -38,10 +38,13 @@ if matplotlib_installed:
         @staticmethod
         def convert(val, unit, axis):
             val = Quantity(val)
-            # check dimension
-            fail_for_dimension_mismatch(val.unit, unit)
-            # check unit
-            return val.to(unit).mantissa
+            if val.size > 0:
+                # check dimension
+                fail_for_dimension_mismatch(val.unit, unit)
+                # check unit
+                return val.to(unit).mantissa
+            else:
+                return []
 
         @staticmethod
         def default_units(x, axis):
