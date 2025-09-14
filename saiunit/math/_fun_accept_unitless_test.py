@@ -26,7 +26,7 @@ from saiunit._base import assert_quantity
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 
 fun_accept_unitless_unary = [
@@ -158,7 +158,7 @@ class TestFunAcceptUnitless(parameterized.TestCase):
 
             q = value * meter
             # result = bm_fun(q.astype(jnp.int32).to_value())
-            # expected = jnp_fun(jnp.array(value))
+            # expected = jnp_fun(jnp.array(data))
             # assert_quantity(result, expected)
 
             with pytest.raises(AssertionError):
@@ -243,7 +243,7 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
         # Test with plain Array (no units)
         try:
             result = fun(self.array_1d)
-            expected = jnp_fun(self.array_1d.value)
+            expected = jnp_fun(self.array_1d.data)
             assert_quantity(result, expected)
         except (ValueError, OverflowError) as e:
             # Some functions may have domain restrictions
@@ -274,17 +274,17 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
         """Test exponential functions specifically with Array."""
         # Test exp with Array
         result_exp = u.math.exp(self.array_1d)
-        expected_exp = jnp.exp(self.array_1d.value)
+        expected_exp = jnp.exp(self.array_1d.data)
         assert_quantity(result_exp, expected_exp)
 
         # Test exp2 with Array
         result_exp2 = u.math.exp2(self.array_1d)
-        expected_exp2 = jnp.exp2(self.array_1d.value)
+        expected_exp2 = jnp.exp2(self.array_1d.data)
         assert_quantity(result_exp2, expected_exp2)
 
         # Test expm1 with Array
         result_expm1 = u.math.expm1(self.array_1d)
-        expected_expm1 = jnp.expm1(self.array_1d.value)
+        expected_expm1 = jnp.expm1(self.array_1d.data)
         assert_quantity(result_expm1, expected_expm1)
 
         # Test with Array having voltage units
@@ -300,68 +300,68 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
 
         # Test log with Array
         result_log = u.math.log(pos_array)
-        expected_log = jnp.log(pos_array.value)
+        expected_log = jnp.log(pos_array.data)
         assert_quantity(result_log, expected_log)
 
         # Test log10 with Array
         result_log10 = u.math.log10(pos_array)
-        expected_log10 = jnp.log10(pos_array.value)
+        expected_log10 = jnp.log10(pos_array.data)
         assert_quantity(result_log10, expected_log10)
 
         # Test log1p with Array
         result_log1p = u.math.log1p(self.array_1d)
-        expected_log1p = jnp.log1p(self.array_1d.value)
+        expected_log1p = jnp.log1p(self.array_1d.data)
         assert_quantity(result_log1p, expected_log1p)
 
         # Test log2 with Array
         result_log2 = u.math.log2(pos_array)
-        expected_log2 = jnp.log2(pos_array.value)
+        expected_log2 = jnp.log2(pos_array.data)
         assert_quantity(result_log2, expected_log2)
 
     def test_trigonometric_functions_with_array_custom_array(self):
         """Test trigonometric functions with Array."""
         # Test sin, cos, tan with angle Array
         result_sin = u.math.sin(self.angle_array)
-        expected_sin = jnp.sin(self.angle_array.value)
+        expected_sin = jnp.sin(self.angle_array.data)
         assert_quantity(result_sin, expected_sin)
 
         result_cos = u.math.cos(self.angle_array)
-        expected_cos = jnp.cos(self.angle_array.value)
+        expected_cos = jnp.cos(self.angle_array.data)
         assert_quantity(result_cos, expected_cos)
 
         result_tan = u.math.tan(self.angle_array)
-        expected_tan = jnp.tan(self.angle_array.value)
+        expected_tan = jnp.tan(self.angle_array.data)
         assert_quantity(result_tan, expected_tan)
 
         # Test inverse trigonometric functions
         unit_array = Array(jnp.array([-0.9, -0.5, 0.0, 0.5, 0.9]))
 
         result_arcsin = u.math.arcsin(unit_array)
-        expected_arcsin = jnp.arcsin(unit_array.value)
+        expected_arcsin = jnp.arcsin(unit_array.data)
         assert_quantity(result_arcsin, expected_arcsin)
 
         result_arccos = u.math.arccos(unit_array)
-        expected_arccos = jnp.arccos(unit_array.value)
+        expected_arccos = jnp.arccos(unit_array.data)
         assert_quantity(result_arccos, expected_arccos)
 
     def test_hyperbolic_functions_with_array_custom_array(self):
         """Test hyperbolic functions with Array."""
         # Test sinh, cosh, tanh
         result_sinh = u.math.sinh(self.array_1d)
-        expected_sinh = jnp.sinh(self.array_1d.value)
+        expected_sinh = jnp.sinh(self.array_1d.data)
         assert_quantity(result_sinh, expected_sinh)
 
         result_cosh = u.math.cosh(self.array_1d)
-        expected_cosh = jnp.cosh(self.array_1d.value)
+        expected_cosh = jnp.cosh(self.array_1d.data)
         assert_quantity(result_cosh, expected_cosh)
 
         result_tanh = u.math.tanh(self.array_1d)
-        expected_tanh = jnp.tanh(self.array_1d.value)
+        expected_tanh = jnp.tanh(self.array_1d.data)
         assert_quantity(result_tanh, expected_tanh)
 
         # Test inverse hyperbolic functions
         result_arcsinh = u.math.arcsinh(self.array_1d)
-        expected_arcsinh = jnp.arcsinh(self.array_1d.value)
+        expected_arcsinh = jnp.arcsinh(self.array_1d.data)
         assert_quantity(result_arcsinh, expected_arcsinh)
 
     def test_angle_conversion_functions_with_array_custom_array(self):
@@ -372,21 +372,21 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
 
         # Degrees to radians
         result_deg2rad = u.math.deg2rad(degree_array)
-        expected_deg2rad = jnp.deg2rad(degree_array.value)
+        expected_deg2rad = jnp.deg2rad(degree_array.data)
         assert_quantity(result_deg2rad, expected_deg2rad)
 
         # Radians to degrees
         result_rad2deg = u.math.rad2deg(radian_array)
-        expected_rad2deg = jnp.rad2deg(radian_array.value)
+        expected_rad2deg = jnp.rad2deg(radian_array.data)
         assert_quantity(result_rad2deg, expected_rad2deg)
 
         # Test degrees and radians aliases
         result_degrees = u.math.degrees(radian_array)
-        expected_degrees = jnp.degrees(radian_array.value)
+        expected_degrees = jnp.degrees(radian_array.data)
         assert_quantity(result_degrees, expected_degrees)
 
         result_radians = u.math.radians(degree_array)
-        expected_radians = jnp.radians(degree_array.value)
+        expected_radians = jnp.radians(degree_array.data)
         assert_quantity(result_radians, expected_radians)
 
     @parameterized.named_parameters(
@@ -403,7 +403,7 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
         # Test with plain Arrays (no units)
         try:
             result = fun(array1, array2)
-            expected = jnp_fun(array1.value, array2.value)
+            expected = jnp_fun(array1.data, array2.data)
             assert_quantity(result, expected)
         except (ValueError, OverflowError) as e:
             pytest.skip(f"Function {fun_name} failed with domain error: {e}")
@@ -434,11 +434,11 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
 
         # Test hypot with Arrays
         result_hypot = u.math.hypot(array_x, array_y)
-        expected_hypot = jnp.hypot(array_x.value, array_y.value)
+        expected_hypot = jnp.hypot(array_x.data, array_y.data)
         assert_quantity(result_hypot, expected_hypot)
 
         # Verify mathematical correctness
-        expected_manual = jnp.sqrt(array_x.value ** 2 + array_y.value ** 2)
+        expected_manual = jnp.sqrt(array_x.data ** 2 + array_y.data ** 2)
         assert jnp.allclose(result_hypot, expected_manual)
 
     def test_arctan2_with_array_custom_array(self):
@@ -448,7 +448,7 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
 
         # Test arctan2 with Arrays
         result_arctan2 = u.math.arctan2(array_y, array_x)
-        expected_arctan2 = jnp.arctan2(array_y.value, array_x.value)
+        expected_arctan2 = jnp.arctan2(array_y.data, array_x.data)
         assert_quantity(result_arctan2, expected_arctan2)
 
     def test_logaddexp_functions_with_array_custom_array(self):
@@ -458,12 +458,12 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
 
         # Test logaddexp
         result_logaddexp = u.math.logaddexp(array1, array2)
-        expected_logaddexp = jnp.logaddexp(array1.value, array2.value)
+        expected_logaddexp = jnp.logaddexp(array1.data, array2.data)
         assert_quantity(result_logaddexp, expected_logaddexp)
 
         # Test logaddexp2
         result_logaddexp2 = u.math.logaddexp2(array1, array2)
-        expected_logaddexp2 = jnp.logaddexp2(array1.value, array2.value)
+        expected_logaddexp2 = jnp.logaddexp2(array1.data, array2.data)
         assert_quantity(result_logaddexp2, expected_logaddexp2)
 
     def test_ldexp_with_array_custom_array(self):
@@ -473,13 +473,13 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
 
         # Test ldexp with Arrays
         result_ldexp = u.math.ldexp(mantissa_array, exponent_array)
-        expected_ldexp = jnp.ldexp(mantissa_array.value, exponent_array.value)
+        expected_ldexp = jnp.ldexp(mantissa_array.data, exponent_array.data)
         assert_quantity(result_ldexp, expected_ldexp)
 
         # Test with Array having units (first argument only)
         meter_array = mantissa_array * meter
         result_ldexp_units = u.math.ldexp(meter_array.to_decimal(meter), exponent_array)
-        expected_ldexp_units = jnp.ldexp(mantissa_array.value, exponent_array.value)
+        expected_ldexp_units = jnp.ldexp(mantissa_array.data, exponent_array.data)
         assert_quantity(result_ldexp_units, expected_ldexp_units)
 
     @parameterized.named_parameters(
@@ -492,12 +492,12 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
 
         # Test with integer Array
         result = fun(self.int_array1)
-        expected = jnp_fun(self.int_array1.value)
+        expected = jnp_fun(self.int_array1.data)
         assert_quantity(result, expected)
 
         # Test with boolean Array
         result_bool = fun(self.bool_array1)
-        expected_bool = jnp_fun(self.bool_array1.value)
+        expected_bool = jnp_fun(self.bool_array1.data)
         assert_quantity(result_bool, expected_bool)
 
         # Test that Arrays with units raise error
@@ -518,16 +518,16 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
             shift_array1 = Array(jnp.array([8, 16, 32]))
             shift_array2 = Array(jnp.array([1, 2, 1]))
             result = fun(shift_array1, shift_array2)
-            expected = jnp_fun(shift_array1.value, shift_array2.value)
+            expected = jnp_fun(shift_array1.data, shift_array2.data)
             assert_quantity(result, expected)
         else:
             result = fun(self.int_array1, self.int_array2)
-            expected = jnp_fun(self.int_array1.value, self.int_array2.value)
+            expected = jnp_fun(self.int_array1.data, self.int_array2.data)
             assert_quantity(result, expected)
 
         # Test with boolean Arrays
         result_bool = fun(self.bool_array1, self.bool_array2)
-        expected_bool = jnp_fun(self.bool_array1.value, self.bool_array2.value)
+        expected_bool = jnp_fun(self.bool_array1.data, self.bool_array2.data)
         assert_quantity(result_bool, expected_bool)
 
     def test_statistical_functions_with_array_custom_array(self):
@@ -538,20 +538,20 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
         # Test corrcoef if available
         if hasattr(u.math, 'corrcoef'):
             result_corrcoef = u.math.corrcoef(array1, array2)
-            expected_corrcoef = jnp.corrcoef(array1.value, array2.value)
+            expected_corrcoef = jnp.corrcoef(array1.data, array2.data)
             assert_quantity(result_corrcoef, expected_corrcoef)
 
         # Test cov if available
         if hasattr(u.math, 'cov'):
             result_cov = u.math.cov(array1, array2)
-            expected_cov = jnp.cov(array1.value, array2.value)
+            expected_cov = jnp.cov(array1.data, array2.data)
             assert_quantity(result_cov, expected_cov)
 
     def test_array_custom_array_inheritance_verification(self):
         """Test that Array properly inherits from CustomArray in unitless functions."""
         # Verify inheritance
         assert isinstance(self.array_1d, u.CustomArray)
-        assert hasattr(self.array_1d, 'value')
+        assert hasattr(self.array_1d, 'data')
         assert hasattr(self.array_1d, 'shape')
         assert hasattr(self.array_1d, 'dtype')
 
@@ -587,12 +587,12 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
         # Test functions that work with complex numbers
         if hasattr(u.math, 'angle'):
             result_angle = u.math.angle(complex_array)
-            expected_angle = jnp.angle(complex_array.value)
+            expected_angle = jnp.angle(complex_array.data)
             assert_quantity(result_angle, expected_angle)
 
         # Test exp with complex Array
         result_exp_complex = u.math.exp(complex_array)
-        expected_exp_complex = jnp.exp(complex_array.value)
+        expected_exp_complex = jnp.exp(complex_array.data)
         assert_quantity(result_exp_complex, expected_exp_complex)
 
     def test_array_broadcasting_in_unitless_functions(self):
@@ -602,7 +602,7 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
 
         # Test broadcasting in binary functions
         result_hypot = u.math.hypot(array_scalar, array_1d)
-        expected_hypot = jnp.hypot(array_scalar.value, array_1d.value)
+        expected_hypot = jnp.hypot(array_scalar.data, array_1d.data)
         assert_quantity(result_hypot, expected_hypot)
 
         # Verify broadcasting preserved shapes correctly

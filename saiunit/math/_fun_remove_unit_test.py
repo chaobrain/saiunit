@@ -28,7 +28,7 @@ from saiunit._base import assert_quantity
 
 class Array(bu.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 fun_remove_unit_unary = [
     'signbit', 'sign',
@@ -90,7 +90,7 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = jnp.array(value) * unit
             result = bm_fun(q)
@@ -99,13 +99,13 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             array_input = Array(q)
-            result = bm_fun(array_input.value)
+            result = bm_fun(array_input.data)
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
     @parameterized.product(
         value=[((1.0, 2.0), (3.0, 4.0)),
@@ -126,7 +126,7 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q1 = jnp.array(x1) * unit
             q2 = jnp.array(x2) * unit
@@ -136,14 +136,14 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             array_input1 = Array(q1)
             array_input2 = Array(q2)
-            result = bm_fun(array_input1.value, array_input2.value)
+            result = bm_fun(array_input1.data, array_input2.data)
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
     @parameterized.product(
         value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
@@ -162,7 +162,7 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = jnp.array(value) * unit
             result = bm_fun(q)
@@ -171,30 +171,30 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             array_input = Array(q)
-            result = bm_fun(array_input.value)
+            result = bm_fun(array_input.data)
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
     def test_fun_remove_unit_sign_operations_with_array(self):
         data = jnp.array([-2.0, -1.0, 0.0, 1.0, 2.0]) * bu.meter
         test_array = Array(data)
         
         assert isinstance(test_array, bu.CustomArray)
-        assert hasattr(test_array, 'value')
+        assert hasattr(test_array, 'data')
         
-        sign_result = bm.sign(test_array.value)
+        sign_result = bm.sign(test_array.data)
         sign_array = Array(sign_result)
         assert isinstance(sign_array, bu.CustomArray)
-        assert_quantity(sign_array.value, jnp.array([-1.0, -1.0, 0.0, 1.0, 1.0]))
+        assert_quantity(sign_array.data, jnp.array([-1.0, -1.0, 0.0, 1.0, 1.0]))
         
-        signbit_result = bm.signbit(test_array.value)
+        signbit_result = bm.signbit(test_array.data)
         signbit_array = Array(signbit_result)
         assert isinstance(signbit_array, bu.CustomArray)
-        assert_quantity(signbit_array.value, jnp.array([True, True, False, False, False]))
+        assert_quantity(signbit_array.data, jnp.array([True, True, False, False, False]))
 
     def test_fun_remove_unit_comparison_operations_with_array(self):
         data1 = jnp.array([1.0, 2.0, 3.0]) * bu.second
@@ -206,20 +206,20 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(array1, bu.CustomArray)
         assert isinstance(array2, bu.CustomArray)
         
-        equal_result = bm.equal(array1.value, array2.value)
+        equal_result = bm.equal(array1.data, array2.data)
         equal_array = Array(equal_result)
         assert isinstance(equal_array, bu.CustomArray)
-        assert_quantity(equal_array.value, jnp.array([False, True, False]))
+        assert_quantity(equal_array.data, jnp.array([False, True, False]))
         
-        greater_result = bm.greater(array1.value, array2.value)
+        greater_result = bm.greater(array1.data, array2.data)
         greater_array = Array(greater_result)
         assert isinstance(greater_array, bu.CustomArray)
-        assert_quantity(greater_array.value, jnp.array([False, False, True]))
+        assert_quantity(greater_array.data, jnp.array([False, False, True]))
         
-        less_result = bm.less(array1.value, array2.value)
+        less_result = bm.less(array1.data, array2.data)
         less_array = Array(less_result)
         assert isinstance(less_array, bu.CustomArray)
-        assert_quantity(less_array.value, jnp.array([True, False, False]))
+        assert_quantity(less_array.data, jnp.array([True, False, False]))
 
     def test_fun_remove_unit_indexing_operations_with_array(self):
         data = jnp.array([3.0, 1.0, 4.0, 2.0, 5.0]) * bu.meter
@@ -227,20 +227,20 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array, bu.CustomArray)
         
-        argsort_result = bm.argsort(test_array.value)
+        argsort_result = bm.argsort(test_array.data)
         argsort_array = Array(argsort_result)
         assert isinstance(argsort_array, bu.CustomArray)
-        assert_quantity(argsort_array.value, jnp.array([1, 3, 0, 2, 4]))
+        assert_quantity(argsort_array.data, jnp.array([1, 3, 0, 2, 4]))
         
-        argmax_result = bm.argmax(test_array.value)
+        argmax_result = bm.argmax(test_array.data)
         argmax_array = Array(argmax_result)
         assert isinstance(argmax_array, bu.CustomArray)
-        assert_quantity(argmax_array.value, 4)
+        assert_quantity(argmax_array.data, 4)
         
-        argmin_result = bm.argmin(test_array.value)
+        argmin_result = bm.argmin(test_array.data)
         argmin_array = Array(argmin_result)
         assert isinstance(argmin_array, bu.CustomArray)
-        assert_quantity(argmin_array.value, 1)
+        assert_quantity(argmin_array.data, 1)
 
     def test_fun_remove_unit_searchsorted_with_array(self):
         sorted_data = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]) * bu.second
@@ -252,10 +252,10 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(sorted_array, bu.CustomArray)
         assert isinstance(values_array, bu.CustomArray)
         
-        searchsorted_result = bm.searchsorted(sorted_array.value, values_array.value)
+        searchsorted_result = bm.searchsorted(sorted_array.data, values_array.data)
         searchsorted_array = Array(searchsorted_result)
         assert isinstance(searchsorted_array, bu.CustomArray)
-        assert_quantity(searchsorted_array.value, jnp.array([2, 3, 4]))
+        assert_quantity(searchsorted_array.data, jnp.array([2, 3, 4]))
 
     def test_fun_remove_unit_nonzero_operations_with_array(self):
         data = jnp.array([0.0, 1.0, 0.0, 2.0, 0.0]) * bu.meter
@@ -263,16 +263,16 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array, bu.CustomArray)
         
-        nonzero_result = bm.nonzero(test_array.value)
+        nonzero_result = bm.nonzero(test_array.data)
         assert len(nonzero_result) == 1
         nonzero_array = Array(nonzero_result[0])
         assert isinstance(nonzero_array, bu.CustomArray)
-        assert_quantity(nonzero_array.value, jnp.array([1, 3]))
+        assert_quantity(nonzero_array.data, jnp.array([1, 3]))
         
-        count_nonzero_result = bm.count_nonzero(test_array.value)
+        count_nonzero_result = bm.count_nonzero(test_array.data)
         count_nonzero_array = Array(count_nonzero_result)
         assert isinstance(count_nonzero_array, bu.CustomArray)
-        assert_quantity(count_nonzero_array.value, 2)
+        assert_quantity(count_nonzero_array.data, 2)
 
     def test_fun_remove_unit_digitize_with_array(self):
         data = jnp.array([0.2, 1.5, 2.8, 3.1]) * bu.meter
@@ -284,10 +284,10 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(data_array, bu.CustomArray)
         assert isinstance(bins_array, bu.CustomArray)
         
-        digitize_result = bm.digitize(data_array.value, bins_array.value)
+        digitize_result = bm.digitize(data_array.data, bins_array.data)
         digitize_array = Array(digitize_result)
         assert isinstance(digitize_array, bu.CustomArray)
-        assert_quantity(digitize_array.value, jnp.array([1, 2, 3, 4]))
+        assert_quantity(digitize_array.data, jnp.array([1, 2, 3, 4]))
 
     def test_fun_remove_unit_heaviside_with_array(self):
         x_data = jnp.array([-1.0, 0.0, 1.0]) * bu.second
@@ -299,10 +299,10 @@ class TestFunRemoveUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(x_array, bu.CustomArray)
         assert isinstance(h_array, bu.CustomArray)
         
-        heaviside_result = bm.heaviside(x_array.value, h_array.value)
+        heaviside_result = bm.heaviside(x_array.data, h_array.data)
         heaviside_array = Array(heaviside_result)
         assert isinstance(heaviside_array, bu.CustomArray)
-        assert_quantity(heaviside_array.value, jnp.array([0.0, 0.5, 1.0]))
+        assert_quantity(heaviside_array.data, jnp.array([0.0, 0.5, 1.0]))
 
 
 class TestFunRemoveUnit(parameterized.TestCase):

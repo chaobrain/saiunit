@@ -24,7 +24,13 @@ import saiunit as u
 
 
 class Array(brainstate.State, u.CustomArray):
-    pass
+    @property
+    def data(self):
+        return self.value
+
+    @data.setter
+    def data(self, value):
+        self.value = value
 
 
 class TestArray(unittest.TestCase):

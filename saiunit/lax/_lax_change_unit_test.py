@@ -29,7 +29,7 @@ from saiunit._base import assert_quantity
 
 class Array(bu.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 
 lax_change_unit_unary = [
@@ -84,7 +84,7 @@ class TestLaxChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = jnp.array(value) * unit
             result = bulax_fun(q)
@@ -94,13 +94,13 @@ class TestLaxChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected, unit=expected_unit)
+            assert_quantity(array_result.data, expected, unit=expected_unit)
 
             array_input = Array(q)
-            result = bulax_fun(array_input.value)
+            result = bulax_fun(array_input.data)
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected, unit=expected_unit)
+            assert_quantity(array_result.data, expected, unit=expected_unit)
 
     @parameterized.product(
         value=[((1.123, 2.567, 3.891), (1.23, 2.34, 3.45)),
@@ -122,7 +122,7 @@ class TestLaxChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q1 = jnp.array(value1) * unit1
             q2 = jnp.array(value2) * unit2
@@ -133,14 +133,14 @@ class TestLaxChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected, unit=expected_unit)
+            assert_quantity(array_result.data, expected, unit=expected_unit)
 
             array_input1 = Array(q1)
             array_input2 = Array(q2)
-            result = bulax_fun(array_input1.value, array_input2.value)
+            result = bulax_fun(array_input1.data, array_input2.data)
             array_result = Array(result)
             assert isinstance(array_result, bu.CustomArray)
-            assert_quantity(array_result.value, expected, unit=expected_unit)
+            assert_quantity(array_result.data, expected, unit=expected_unit)
 
     def test_rsqrt_operations_with_array(self):
         data = jnp.array([4.0, 9.0, 16.0]) * (meter ** 2)
@@ -148,11 +148,11 @@ class TestLaxChangeUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array, bu.CustomArray)
         
-        rsqrt_result = bulax.rsqrt(test_array.value)
+        rsqrt_result = bulax.rsqrt(test_array.data)
         rsqrt_array = Array(rsqrt_result)
         assert isinstance(rsqrt_array, bu.CustomArray)
         expected = lax.rsqrt(jnp.array([4.0, 9.0, 16.0]))
-        assert_quantity(rsqrt_array.value, expected, unit=meter**-1)
+        assert_quantity(rsqrt_array.data, expected, unit=meter ** -1)
 
     def test_div_mul_operations_with_array(self):
         data1 = jnp.array([6.0, 8.0, 10.0]) * meter
@@ -165,35 +165,35 @@ class TestLaxChangeUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(array2, bu.CustomArray)
         
         # Test div
-        div_result = bulax.div(array1.value, array2.value)
+        div_result = bulax.div(array1.data, array2.data)
         div_array = Array(div_result)
         assert isinstance(div_array, bu.CustomArray)
         expected_div = lax.div(jnp.array([6.0, 8.0, 10.0]), jnp.array([2.0, 4.0, 5.0]))
-        assert_quantity(div_array.value, expected_div, unit=meter / second)
+        assert_quantity(div_array.data, expected_div, unit=meter / second)
         
         # Test mul
-        mul_result = bulax.mul(array1.value, array2.value)
+        mul_result = bulax.mul(array1.data, array2.data)
         mul_array = Array(mul_result)
         assert isinstance(mul_array, bu.CustomArray)
         expected_mul = lax.mul(jnp.array([6.0, 8.0, 10.0]), jnp.array([2.0, 4.0, 5.0]))
-        assert_quantity(mul_array.value, expected_mul, unit=meter * second)
+        assert_quantity(mul_array.data, expected_mul, unit=meter * second)
 
     def test_array_custom_array_compatibility_with_lax_change_unit(self):
         data = jnp.array([4.0, 9.0, 16.0]) * (meter ** 2)
         test_array = Array(data)
         
         assert isinstance(test_array, bu.CustomArray)
-        assert hasattr(test_array, 'value')
+        assert hasattr(test_array, 'data')
         
-        # Test that we can use the array value in unit-changing lax functions
-        result = bulax.rsqrt(test_array.value)
+        # Test that we can use the array data in unit-changing lax functions
+        result = bulax.rsqrt(test_array.data)
         result_array = Array(result)
         
         assert isinstance(result_array, bu.CustomArray)
         
         # Compare with direct computation
         direct_result = bulax.rsqrt(data)
-        assert_quantity(result_array.value, direct_result.mantissa, unit=meter**-1)
+        assert_quantity(result_array.data, direct_result.mantissa, unit=meter ** -1)
 
 
 class TestLaxChangeUnit(parameterized.TestCase):

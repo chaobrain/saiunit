@@ -28,7 +28,7 @@ from saiunit._base import Quantity
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 
 
@@ -553,12 +553,12 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test ReLU activation function with Array using CustomArray."""
         # Test basic ReLU functionality
         result = um.relu(self.array_test_data)
-        expected = jnp.maximum(self.array_test_data.value, 0)
+        expected = jnp.maximum(self.array_test_data.data, 0)
         np.testing.assert_allclose(result, expected, rtol=1e-6)
         
         # Test with 2D Array
         result_2d = um.relu(self.array_2d)
-        expected_2d = jnp.maximum(self.array_2d.value, 0)
+        expected_2d = jnp.maximum(self.array_2d.data, 0)
         np.testing.assert_allclose(result_2d, expected_2d, rtol=1e-6)
         
         # Test with dimensionless Array quantity
@@ -578,7 +578,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test Sigmoid activation function with Array using CustomArray."""
         # Test basic sigmoid functionality
         result = um.sigmoid(self.array_test_data)
-        expected = 1 / (1 + jnp.exp(-self.array_test_data.value))
+        expected = 1 / (1 + jnp.exp(-self.array_test_data.data))
         np.testing.assert_allclose(result, expected, rtol=1e-6)
         
         # Verify sigmoid properties
@@ -598,7 +598,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test Softplus activation function with Array using CustomArray."""
         # Test basic softplus functionality
         result = um.softplus(self.array_test_data)
-        expected = jnp.log(1 + jnp.exp(self.array_test_data.value))
+        expected = jnp.log(1 + jnp.exp(self.array_test_data.data))
         np.testing.assert_allclose(result, expected, rtol=1e-6)
         
         # Verify softplus is always positive
@@ -621,8 +621,8 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         np.testing.assert_allclose(silu_result, swish_result, rtol=1e-6)
         
         # Verify mathematical definition: x * sigmoid(x)
-        sigmoid_vals = 1 / (1 + jnp.exp(-self.array_test_data.value))
-        expected = self.array_test_data.value * sigmoid_vals
+        sigmoid_vals = 1 / (1 + jnp.exp(-self.array_test_data.data))
+        expected = self.array_test_data.data * sigmoid_vals
         np.testing.assert_allclose(silu_result, expected, rtol=1e-6)
         
         # Test with dimensionless Array quantity
@@ -635,7 +635,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         result = um.sparse_plus(self.array_test_data)
         
         # Verify piecewise definition for Array values
-        for i, x in enumerate(self.array_test_data.value):
+        for i, x in enumerate(self.array_test_data.data):
             if x <= -1:
                 assert result[i] == 0
             elif x >= 1:
@@ -699,7 +699,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         def sigmoid_sum(x):
             return jnp.sum(um.sigmoid(x))
         
-        grad_result = sigmoid_sum(self.array_test_data.value)
+        grad_result = sigmoid_sum(self.array_test_data.data)
         assert jnp.all(jnp.isfinite(grad_result))
 
     def test_elu_with_array_custom_array(self):
@@ -707,7 +707,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         # Test with default alpha
         result = um.elu(self.array_test_data)
         
-        for i, x in enumerate(self.array_test_data.value):
+        for i, x in enumerate(self.array_test_data.data):
             if x > 0:
                 assert abs(result[i] - x) < 1e-6
             else:
@@ -718,7 +718,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         custom_alpha = 2.0
         result_custom = um.elu(self.array_test_data, alpha=custom_alpha)
         
-        for i, x in enumerate(self.array_test_data.value):
+        for i, x in enumerate(self.array_test_data.data):
             if x > 0:
                 assert abs(result_custom[i] - x) < 1e-6
             else:
@@ -762,8 +762,8 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         result = um.mish(self.array_test_data)
         
         # Verify mathematical definition: x * tanh(softplus(x))
-        softplus_vals = jnp.log(1 + jnp.exp(self.array_test_data.value))
-        expected = self.array_test_data.value * jnp.tanh(softplus_vals)
+        softplus_vals = jnp.log(1 + jnp.exp(self.array_test_data.data))
+        expected = self.array_test_data.data * jnp.tanh(softplus_vals)
         np.testing.assert_allclose(result, expected, rtol=1e-6)
         
         # Test with dimensionless Array
@@ -776,7 +776,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test Squareplus activation function with Array using CustomArray."""
         # Test with default b=4
         result = um.squareplus(self.array_test_data)
-        expected = (self.array_test_data.value + jnp.sqrt(self.array_test_data.value ** 2 + 4)) / 2
+        expected = (self.array_test_data.data + jnp.sqrt(self.array_test_data.data ** 2 + 4)) / 2
         np.testing.assert_allclose(result, expected, rtol=1e-6)
         
         # Test that output is always >= 0
@@ -785,7 +785,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         # Test with custom b
         custom_b = 2.0
         result_custom = um.squareplus(self.array_test_data, b=custom_b)
-        expected_custom = (self.array_test_data.value + jnp.sqrt(self.array_test_data.value ** 2 + custom_b)) / 2
+        expected_custom = (self.array_test_data.data + jnp.sqrt(self.array_test_data.data ** 2 + custom_b)) / 2
         np.testing.assert_allclose(result_custom, expected_custom, rtol=1e-6)
 
     def test_glu_with_array_custom_array(self):
@@ -797,8 +797,8 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         result = um.glu(test_array_even)
         
         # Verify GLU computation: first_half * sigmoid(second_half)
-        first_half = test_array_even.value[:, :2]
-        second_half = test_array_even.value[:, 2:]
+        first_half = test_array_even.data[:, :2]
+        second_half = test_array_even.data[:, 2:]
         expected = first_half * (1 / (1 + jnp.exp(-second_half)))
         
         np.testing.assert_allclose(result, expected, rtol=1e-6)
@@ -887,7 +887,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(self.array_test_data, u.CustomArray)
         
         # Test that CustomArray methods work
-        assert hasattr(self.array_test_data, 'value')
+        assert hasattr(self.array_test_data, 'data')
         assert hasattr(self.array_test_data, 'shape')
         assert hasattr(self.array_test_data, 'dtype')
         

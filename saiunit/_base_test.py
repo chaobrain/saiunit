@@ -49,7 +49,7 @@ from saiunit._unit_shortcuts import kHz, ms, mV, nS
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 
 class Test_get_dim:
@@ -865,7 +865,7 @@ class TestQuantity(unittest.TestCase):
             q_ar = value * unit
             for func in indice_funcs:
                 test_ar = func(q_ar)
-                # Compare it to the result on the same value without units
+                # Compare it to the result on the same data without units
                 comparison_ar = func(value)
                 test_ar = u.math.asarray(test_ar)
                 comparison_ar = np.asarray(comparison_ar)
@@ -974,8 +974,8 @@ class TestQuantity(unittest.TestCase):
         x.at[20].get()  # out-of-bounds indices clipped
         x.at[20].get(mode='fill')  # out-of-bounds indices filled with NaN
         with self.assertRaises(u.UnitMismatchError):
-            x.at[20].get(mode='fill', fill_value=-1)  # custom fill value
-        x.at[20].get(mode='fill', fill_value=-1 * u.mV)  # custom fill value
+            x.at[20].get(mode='fill', fill_value=-1)  # custom fill data
+        x.at[20].get(mode='fill', fill_value=-1 * u.mV)  # custom fill data
 
     def test_to(self):
         x = jnp.arange(5.0) * u.mV
@@ -1295,8 +1295,8 @@ class TestHelperFunctions(unittest.TestCase):
         @u.check_dims(result=second.dim)
         def b_function(return_second):
             """
-            Return a value in seconds if return_second is True, otherwise return
-            a value in volt.
+            Return a data in seconds if return_second is True, otherwise return
+            a data in volt.
             """
             if return_second:
                 return 5 * second
@@ -1330,8 +1330,8 @@ class TestHelperFunctions(unittest.TestCase):
         @u.check_dims(result=(second.dim, volt.dim))
         def d_function(true_result):
             """
-            Return a value in seconds if return_second is True, otherwise return
-            a value in volt.
+            Return a data in seconds if return_second is True, otherwise return
+            a data in volt.
             """
             if true_result:
                 return 5 * second, 3 * volt
@@ -1348,8 +1348,8 @@ class TestHelperFunctions(unittest.TestCase):
         @u.check_dims(result={'u': second.dim, 'v': (volt.dim, metre.dim)})
         def d_function2(true_result):
             """
-            Return a value in seconds if return_second is True, otherwise return
-            a value in volt.
+            Return a data in seconds if return_second is True, otherwise return
+            a data in volt.
             """
             if true_result == 0:
                 return {'u': 5 * second, 'v': (3 * volt, 2 * metre)}
@@ -1404,8 +1404,8 @@ class TestHelperFunctions(unittest.TestCase):
         @check_units(result=second)
         def b_function(return_second):
             """
-            Return a value in seconds if return_second is True, otherwise return
-            a value in volt.
+            Return a data in seconds if return_second is True, otherwise return
+            a data in volt.
             """
             if return_second:
                 return 5 * second
@@ -1436,8 +1436,8 @@ class TestHelperFunctions(unittest.TestCase):
         @check_units(result=(second, volt))
         def d_function(true_result):
             """
-            Return a value in seconds if return_second is True, otherwise return
-            a value in volt.
+            Return a data in seconds if return_second is True, otherwise return
+            a data in volt.
             """
             if true_result:
                 return 5 * second, 3 * volt
@@ -1454,8 +1454,8 @@ class TestHelperFunctions(unittest.TestCase):
         @check_units(result={'u': second, 'v': (volt, metre)})
         def d_function2(true_result):
             """
-            Return a value in seconds if return_second is True, otherwise return
-            a value in volt.
+            Return a data in seconds if return_second is True, otherwise return
+            a data in volt.
             """
             if true_result == 0:
                 return {'u': 5 * second, 'v': (3 * volt, 2 * metre)}
@@ -1502,8 +1502,8 @@ class TestHelperFunctions(unittest.TestCase):
         @u.assign_units(result=second)
         def b_function():
             """
-            Return a value in seconds if return_second is True, otherwise return
-            a value in volt.
+            Return a data in seconds if return_second is True, otherwise return
+            a data in volt.
             """
             return 5
 
@@ -1537,8 +1537,8 @@ class TestHelperFunctions(unittest.TestCase):
         @u.assign_units(result={'u': second, 'v': (volt, metre)})
         def d_function2(true_result):
             """
-            Return a value in seconds if return_second is True, otherwise return
-            a value in volt.
+            Return a data in seconds if return_second is True, otherwise return
+            a data in volt.
             """
             if true_result == 0:
                 return {'u': 5, 'v': (3, 2)}
@@ -1857,19 +1857,19 @@ class TestArrayWithCustomArray(unittest.TestCase):
         # Test +=
         arr = Array(np.array([1.0, 2.0, 3.0]))
         arr += 1.0
-        np.testing.assert_array_equal(arr.value, np.array([2.0, 3.0, 4.0]))
+        np.testing.assert_array_equal(arr.data, np.array([2.0, 3.0, 4.0]))
         
         # Test -=
         arr -= 1.0
-        np.testing.assert_array_equal(arr.value, np.array([1.0, 2.0, 3.0]))
+        np.testing.assert_array_equal(arr.data, np.array([1.0, 2.0, 3.0]))
         
         # Test *=
         arr *= 2.0
-        np.testing.assert_array_equal(arr.value, np.array([2.0, 4.0, 6.0]))
+        np.testing.assert_array_equal(arr.data, np.array([2.0, 4.0, 6.0]))
         
         # Test /=
         arr /= 2.0
-        np.testing.assert_array_equal(arr.value, np.array([1.0, 2.0, 3.0]))
+        np.testing.assert_array_equal(arr.data, np.array([1.0, 2.0, 3.0]))
 
     def test_array_comparison_operations(self):
         """Test comparison operations with Array and CustomArray"""
@@ -1990,7 +1990,7 @@ class TestArrayWithCustomArray(unittest.TestCase):
         arr_copy = Array(np.array([10, 20, 30, 40, 50]))
         arr_copy[1:3] = 99
         expected_assigned = np.array([10, 99, 99, 40, 50])
-        np.testing.assert_array_equal(arr_copy.value, expected_assigned)
+        np.testing.assert_array_equal(arr_copy.data, expected_assigned)
 
     def test_jax_compatibility(self):
         """Test JAX compatibility with Array and CustomArray"""
@@ -2101,14 +2101,14 @@ class TestArrayWithCustomArray(unittest.TestCase):
         self.assertEqual(unsqueezed.shape, (1, 3))
         
         # Test clamp
-        clamped = arr.clamp(min_value=1.5, max_value=2.5)
+        clamped = arr.clamp(min_data=1.5, max_data=2.5)
         expected_clamped = np.array([1.5, 2.0, 2.5])
         np.testing.assert_array_equal(clamped, expected_clamped)
         
         # Test clone
         cloned = arr.clone()
-        np.testing.assert_array_equal(cloned, arr.value)
-        self.assertIsNot(cloned, arr.value)  # Different objects
+        np.testing.assert_array_equal(cloned, arr.data)
+        self.assertIsNot(cloned, arr.data)  # Different objects
 
     def test_array_advanced_operations(self):
         """Test advanced array operations"""

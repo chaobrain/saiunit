@@ -26,7 +26,7 @@ from saiunit._base import assert_quantity
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 fun_array_creation_given_shape = [
     'empty', 'ones', 'zeros',
@@ -91,7 +91,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             result = bm_fun(shape, unit=unit)
             expected = jnp_fun(shape)
@@ -99,7 +99,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
     @parameterized.product(
         shape=[(1,), (2, 3), (4, 5, 6)],
@@ -119,7 +119,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             result = bm_fun(shape, fill_value=fill_value * unit)
             expected = jnp_fun(shape, fill_value=fill_value)
@@ -127,7 +127,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
     @parameterized.product(
         value=[1, 10, 100],
@@ -146,7 +146,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             result = bm_fun(value, unit=unit)
             expected = jnp_fun(value)
@@ -154,7 +154,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
     @parameterized.product(
         array=[jnp.array([1.0, 2.0]), jnp.array([[1.0, 2.0], [3.0, 4.0]])],
@@ -173,7 +173,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             result = bm_fun(array, unit=unit)
             expected = jnp_fun(array)
@@ -181,7 +181,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
     @parameterized.product(
         array=[jnp.array([1.0, 2.0]), jnp.array([[1.0, 2.0], [3.0, 4.0]])],
@@ -201,7 +201,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             result = bm_fun(array * unit, fill_value=fill_value * unit)
             expected = jnp_fun(array, fill_value=fill_value)
@@ -209,7 +209,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
             with pytest.raises(AssertionError):
                 result = bm_fun(array, fill_value=fill_value * unit)
@@ -228,7 +228,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             result = bm_fun([1, 2, 3] * unit)
             expected = jnp_fun([1, 2, 3])
@@ -236,7 +236,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
             result = bm_fun([1 * unit, 2 * unit, 3 * unit])
             expected = jnp_fun([1, 2, 3])
@@ -244,7 +244,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
             result = bm_fun(1 * unit)
             expected = jnp_fun(1)
@@ -252,7 +252,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
             with pytest.raises(u.UnitMismatchError):
                 result = bm_fun(1 * unit, unit=u.volt)
@@ -261,31 +261,31 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
         test_array = Array(jnp.array([1.0, 2.0, 3.0]) * meter)
         
         assert isinstance(test_array, u.CustomArray)
-        assert hasattr(test_array, 'value')
-        assert_quantity(test_array.value, jnp.array([1.0, 2.0, 3.0]), unit=meter)
+        assert hasattr(test_array, 'data')
+        assert_quantity(test_array.data, jnp.array([1.0, 2.0, 3.0]), unit=meter)
         
-        result = um.zeros_like(test_array.value)
+        result = um.zeros_like(test_array.data)
         array_result = Array(result)
         assert isinstance(array_result, u.CustomArray)
-        assert_quantity(array_result.value, jnp.zeros(3), unit=meter)
+        assert_quantity(array_result.data, jnp.zeros(3), unit=meter)
 
     def test_array_creation_with_custom_array_input(self):
         original_data = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * second
         test_array = Array(original_data)
         
-        result = um.ones_like(test_array.value)
+        result = um.ones_like(test_array.data)
         expected = jnp.ones((2, 2))
         assert_quantity(result, expected, unit=second)
         
         array_result = Array(result)
         assert isinstance(array_result, u.CustomArray)
-        assert_quantity(array_result.value, expected, unit=second)
+        assert_quantity(array_result.data, expected, unit=second)
         
-        result = um.empty_like(test_array.value)
+        result = um.empty_like(test_array.data)
         array_result = Array(result)
         assert isinstance(array_result, u.CustomArray)
-        assert array_result.value.shape == (2, 2)
-        assert u.get_unit(array_result.value) == second
+        assert array_result.data.shape == (2, 2)
+        assert u.get_unit(array_result.data) == second
 
 
 class TestFunArrayCreation(parameterized.TestCase):

@@ -25,7 +25,7 @@ import saiunit as u
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 
 def test_jacrev_simple_function():
@@ -180,19 +180,19 @@ def test_jacrev_with_array_custom_array():
     # Test with Array containing unitless values
     x_array = Array(jnp.array(3.0))
     assert isinstance(x_array, u.CustomArray)
-    jac = jac_fn(x_array.value)
+    jac = jac_fn(x_array.data)
     jac_array = Array(jac)
     assert isinstance(jac_array, u.CustomArray)
-    assert jnp.allclose(jac_array.value, jnp.array([6.0]))
+    assert jnp.allclose(jac_array.data, jnp.array([6.0]))
 
     # Test with Array containing unit values
     x_unit = jnp.array(3.0) * u.ms
     x_array_unit = Array(x_unit)
     assert isinstance(x_array_unit, u.CustomArray)
-    jac = jac_fn(x_array_unit.value)
+    jac = jac_fn(x_array_unit.data)
     jac_array = Array(jac)
     assert isinstance(jac_array, u.CustomArray)
-    assert u.math.allclose(jac_array.value, jnp.array([6.0]) * u.ms)
+    assert u.math.allclose(jac_array.data, jnp.array([6.0]) * u.ms)
 
 
 def test_jacfwd_with_array_custom_array():
@@ -204,19 +204,19 @@ def test_jacfwd_with_array_custom_array():
     # Test with Array containing unitless values
     x_array = Array(jnp.array(3.0))
     assert isinstance(x_array, u.CustomArray)
-    jac = jac_fn(x_array.value)
+    jac = jac_fn(x_array.data)
     jac_array = Array(jac)
     assert isinstance(jac_array, u.CustomArray)
-    assert jnp.allclose(jac_array.value, jnp.array([6.0]))
+    assert jnp.allclose(jac_array.data, jnp.array([6.0]))
 
     # Test with Array containing unit values
     x_unit = jnp.array(3.0) * u.ms
     x_array_unit = Array(x_unit)
     assert isinstance(x_array_unit, u.CustomArray)
-    jac = jac_fn(x_array_unit.value)
+    jac = jac_fn(x_array_unit.data)
     jac_array = Array(jac)
     assert isinstance(jac_array, u.CustomArray)
-    assert u.math.allclose(jac_array.value, jnp.array([6.0]) * u.ms)
+    assert u.math.allclose(jac_array.data, jnp.array([6.0]) * u.ms)
 
 
 def test_jacobian_multiple_args_with_array():
@@ -234,15 +234,15 @@ def test_jacobian_multiple_args_with_array():
     assert isinstance(x_array, u.CustomArray)
     assert isinstance(y_array, u.CustomArray)
     
-    jac = jac_fn(x_array.value, y_array.value)
+    jac = jac_fn(x_array.data, y_array.data)
     jac0_array = Array(jac[0])
     jac1_array = Array(jac[1])
     
     assert isinstance(jac0_array, u.CustomArray)
     assert isinstance(jac1_array, u.CustomArray)
     
-    assert u.math.allclose(jac0_array.value, u.math.diag(y))
-    assert u.math.allclose(jac1_array.value, u.math.diag(x))
+    assert u.math.allclose(jac0_array.data, u.math.diag(y))
+    assert u.math.allclose(jac1_array.data, u.math.diag(x))
 
 
 def test_jacobian_with_aux_array():
@@ -256,14 +256,14 @@ def test_jacobian_with_aux_array():
     x_array = Array(x_unit)
     assert isinstance(x_array, u.CustomArray)
     
-    jac, aux = jac_fn(x_array.value)
+    jac, aux = jac_fn(x_array.data)
     jac_array = Array(jac)
     aux_array = Array(aux)
     
     assert isinstance(jac_array, u.CustomArray)
     assert isinstance(aux_array, u.CustomArray)
-    assert u.math.allclose(jac_array.value, jnp.array([6.0]) * u.ms)
-    assert u.math.allclose(aux_array.value, jnp.array(3.0) * u.ms)
+    assert u.math.allclose(jac_array.data, jnp.array([6.0]) * u.ms)
+    assert u.math.allclose(aux_array.data, jnp.array(3.0) * u.ms)
 
 
 def test_jacobian_vector_inputs_with_array():
@@ -277,12 +277,12 @@ def test_jacobian_vector_inputs_with_array():
     x_array = Array(x)
     assert isinstance(x_array, u.CustomArray)
     
-    jac = jac_fn(x_array.value)
+    jac = jac_fn(x_array.data)
     jac_array = Array(jac)
     assert isinstance(jac_array, u.CustomArray)
     
     expected = 2.0 * jnp.array([1.0, 2.0, 3.0]) * u.mA
-    assert u.math.allclose(jac_array.value, expected)
+    assert u.math.allclose(jac_array.data, expected)
 
 
 def test_array_custom_array_compatibility_with_jacobian():
@@ -290,21 +290,21 @@ def test_array_custom_array_compatibility_with_jacobian():
     test_array = Array(data)
     
     assert isinstance(test_array, u.CustomArray)
-    assert hasattr(test_array, 'value')
+    assert hasattr(test_array, 'data')
     
     def test_function(x):
         return u.math.sum(x ** 3)
     
     # Test jacrev with Array
     jac_fn = u.autograd.jacrev(test_function)
-    result = jac_fn(test_array.value)
+    result = jac_fn(test_array.data)
     result_array = Array(result)
     
     assert isinstance(result_array, u.CustomArray)
     
     # Compare with direct computation
     direct_result = jac_fn(data)
-    assert u.math.allclose(result_array.value, direct_result)
+    assert u.math.allclose(result_array.data, direct_result)
 
 
 if __name__ == "__main__":

@@ -776,8 +776,8 @@ def _fun_accept_unitless_binary(
     unit_to_scale: Optional[Unit] = None,
     **kwargs
 ):
-    x = maybe_custom_array_tree(x)
-    y = maybe_custom_array_tree(y)
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
     args = maybe_custom_array_tree(args)
     kwargs = maybe_custom_array_tree(kwargs)
 
@@ -904,7 +904,7 @@ def logaddexp2(
 @set_module_as('saiunit.math')
 def corrcoef(
     x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    y: Union[jax.typing.ArrayLike, Quantity] = None,
     rowvar: bool = True,
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:

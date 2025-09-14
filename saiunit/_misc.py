@@ -87,7 +87,7 @@ def maybe_custom_array(x):
     if CustomArray is None:
         from saiunit.custom_array import CustomArray
     if isinstance(x, CustomArray):
-        return x.value
+        return x.data
     else:
         return x
 
