@@ -26,7 +26,7 @@ from saiunit._base import assert_quantity
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 
 def test_exprel():
@@ -74,14 +74,14 @@ class TestMiscWithArrayCustomArray:
         test_array = Array(x_values)
 
         assert isinstance(test_array, u.CustomArray)
-        assert hasattr(test_array, 'value')
+        assert hasattr(test_array, 'data')
 
-        exprel_result = math.exprel(test_array.value)
+        exprel_result = math.exprel(test_array.data)
         exprel_array = Array(exprel_result)
         assert isinstance(exprel_array, u.CustomArray)
 
         expected = exprel(np.asarray(x_values))
-        assert jnp.allclose(exprel_array.value, expected, rtol=1e-6)
+        assert jnp.allclose(exprel_array.data, expected, rtol=1e-6)
 
     def test_exprel_with_unitless_array(self):
         x_values = jnp.array([0.0, 1e-15, 1e-12, 1e-9, 1.0, 10.0])
@@ -89,12 +89,12 @@ class TestMiscWithArrayCustomArray:
 
         assert isinstance(test_array, u.CustomArray)
 
-        exprel_result = math.exprel(test_array.value)
+        exprel_result = math.exprel(test_array.data)
         exprel_array = Array(exprel_result)
         assert isinstance(exprel_array, u.CustomArray)
 
         expected = exprel(np.asarray(x_values))
-        assert jnp.allclose(exprel_array.value, expected, rtol=1e-6)
+        assert jnp.allclose(exprel_array.data, expected, rtol=1e-6)
 
     def test_exprel_with_different_dtypes_array(self):
         # Test with float64 Array
@@ -104,12 +104,12 @@ class TestMiscWithArrayCustomArray:
 
             assert isinstance(test_array_64, u.CustomArray)
 
-            exprel_result_64 = math.exprel(test_array_64.value)
+            exprel_result_64 = math.exprel(test_array_64.data)
             exprel_array_64 = Array(exprel_result_64)
             assert isinstance(exprel_array_64, u.CustomArray)
 
             expected_64 = exprel(np.asarray(x64))
-            assert jnp.allclose(exprel_array_64.value, expected_64, rtol=1e-6)
+            assert jnp.allclose(exprel_array_64.data, expected_64, rtol=1e-6)
 
         # Test with float32 Array
         with brainstate.environ.context(precision=32):
@@ -118,12 +118,12 @@ class TestMiscWithArrayCustomArray:
 
             assert isinstance(test_array_32, u.CustomArray)
 
-            exprel_result_32 = math.exprel(test_array_32.value)
+            exprel_result_32 = math.exprel(test_array_32.data)
             exprel_array_32 = Array(exprel_result_32)
             assert isinstance(exprel_array_32, u.CustomArray)
 
             expected_32 = exprel(np.asarray(x32))
-            assert jnp.allclose(exprel_array_32.value, expected_32, rtol=1e-6)
+            assert jnp.allclose(exprel_array_32.data, expected_32, rtol=1e-6)
 
     def test_exprel_with_negative_values_array(self):
         with brainstate.environ.context(precision=64):
@@ -132,12 +132,12 @@ class TestMiscWithArrayCustomArray:
 
             assert isinstance(test_array_neg, u.CustomArray)
 
-            exprel_result_neg = math.exprel(test_array_neg.value)
+            exprel_result_neg = math.exprel(test_array_neg.data)
             exprel_array_neg = Array(exprel_result_neg)
             assert isinstance(exprel_array_neg, u.CustomArray)
 
             expected_neg = exprel(np.asarray(x_neg))
-            assert jnp.allclose(exprel_array_neg.value, expected_neg, rtol=1e-6)
+            assert jnp.allclose(exprel_array_neg.data, expected_neg, rtol=1e-6)
 
     def test_exprel_with_zero_array(self):
         x_zero = jnp.array([0.0, 0.0, 0.0])
@@ -145,13 +145,13 @@ class TestMiscWithArrayCustomArray:
 
         assert isinstance(test_array_zero, u.CustomArray)
 
-        exprel_result_zero = math.exprel(test_array_zero.value)
+        exprel_result_zero = math.exprel(test_array_zero.data)
         exprel_array_zero = Array(exprel_result_zero)
         assert isinstance(exprel_array_zero, u.CustomArray)
 
         # exprel(0) should be 1.0
         expected_zero = jnp.ones_like(x_zero)
-        assert jnp.allclose(exprel_array_zero.value, expected_zero)
+        assert jnp.allclose(exprel_array_zero.data, expected_zero)
 
     def test_exprel_with_large_values_array(self):
         with brainstate.environ.context(precision=64):
@@ -160,13 +160,13 @@ class TestMiscWithArrayCustomArray:
 
             assert isinstance(test_array_large, u.CustomArray)
 
-            exprel_result_large = math.exprel(test_array_large.value)
+            exprel_result_large = math.exprel(test_array_large.data)
             exprel_array_large = Array(exprel_result_large)
             assert isinstance(exprel_array_large, u.CustomArray)
 
             expected_large = exprel(np.asarray(x_large))
             # For large values, exprel(x) ≈ exp(x) / x
-            assert jnp.allclose(exprel_array_large.value, expected_large, rtol=1e-6)
+            assert jnp.allclose(exprel_array_large.data, expected_large, rtol=1e-6)
 
     def test_exprel_with_small_values_array(self):
         with brainstate.environ.context(precision=64):
@@ -175,13 +175,13 @@ class TestMiscWithArrayCustomArray:
 
             assert isinstance(test_array_small, u.CustomArray)
 
-            exprel_result_small = math.exprel(test_array_small.value)
+            exprel_result_small = math.exprel(test_array_small.data)
             exprel_array_small = Array(exprel_result_small)
             assert isinstance(exprel_array_small, u.CustomArray)
 
             expected_small = exprel(np.asarray(x_small))
             # For small values, exprel(x) ≈ 1 + x/2 + x²/6 + ...
-            assert jnp.allclose(exprel_array_small.value, expected_small, rtol=1e-12)
+            assert jnp.allclose(exprel_array_small.data, expected_small, rtol=1e-12)
 
     def test_exprel_array_properties(self):
         x_values = jnp.array([0.1, 0.5, 1.0, 2.0])
@@ -189,37 +189,37 @@ class TestMiscWithArrayCustomArray:
 
         assert isinstance(test_array, u.CustomArray)
 
-        exprel_result = math.exprel(test_array.value)
+        exprel_result = math.exprel(test_array.data)
         exprel_array = Array(exprel_result)
 
         # Verify that exprel_array maintains CustomArray properties
         assert isinstance(exprel_array, u.CustomArray)
-        assert hasattr(exprel_array, 'value')
-        assert exprel_array.value.shape == x_values.shape
-        assert exprel_array.value.dtype == x_values.dtype
+        assert hasattr(exprel_array, 'data')
+        assert exprel_array.data.shape == x_values.shape
+        assert exprel_array.data.dtype == x_values.dtype
 
         # Verify mathematical property: exprel(x) = (exp(x) - 1) / x for x != 0
         for i, x_val in enumerate(x_values):
             if x_val != 0:
                 expected_val = (jnp.exp(x_val) - 1) / x_val
-                assert jnp.allclose(exprel_array.value[i], expected_val, rtol=1e-6)
+                assert jnp.allclose(exprel_array.data[i], expected_val, rtol=1e-6)
 
     def test_array_custom_array_compatibility_with_exprel(self):
         x_data = jnp.array([0.0, 0.1, 1.0, 10.0])
         test_array = Array(x_data)
 
         assert isinstance(test_array, u.CustomArray)
-        assert hasattr(test_array, 'value')
+        assert hasattr(test_array, 'data')
 
-        # Test that we can use the array value in exprel function
-        result = math.exprel(test_array.value)
+        # Test that we can use the array data in exprel function
+        result = math.exprel(test_array.data)
         result_array = Array(result)
 
         assert isinstance(result_array, u.CustomArray)
 
         # Compare with direct computation
         direct_result = math.exprel(x_data)
-        assert jnp.allclose(result_array.value, direct_result)
+        assert jnp.allclose(result_array.data, direct_result)
 
 
 def test_constants_and_dtype_aliases():

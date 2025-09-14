@@ -26,7 +26,7 @@ import saiunit as u
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 
 def test_value_and_grad_simple():
@@ -120,27 +120,27 @@ def test_value_and_grad_with_array_custom_array():
     # Test with Array containing unitless values
     x_array = Array(jnp.array(3.0))
     assert isinstance(x_array, u.CustomArray)
-    value, grad = value_and_grad_fn(x_array.value)
+    value, grad = value_and_grad_fn(x_array.data)
     
     value_array = Array(value)
     grad_array = Array(grad)
     assert isinstance(value_array, u.CustomArray)
     assert isinstance(grad_array, u.CustomArray)
-    assert value_array.value == 9.0
-    assert grad_array.value == 6.0
+    assert value_array.data == 9.0
+    assert grad_array.data == 6.0
     
     # Test with Array containing unit values
     x_unit = jnp.array(3.0) * u.ms
     x_array_unit = Array(x_unit)
     assert isinstance(x_array_unit, u.CustomArray)
-    value, grad = value_and_grad_fn(x_array_unit.value)
+    value, grad = value_and_grad_fn(x_array_unit.data)
     
     value_array = Array(value)
     grad_array = Array(grad)
     assert isinstance(value_array, u.CustomArray)
     assert isinstance(grad_array, u.CustomArray)
-    assert u.math.allclose(value_array.value, 9.0 * u.ms ** 2)
-    assert u.math.allclose(grad_array.value, 6.0 * u.ms)
+    assert u.math.allclose(value_array.data, 9.0 * u.ms ** 2)
+    assert u.math.allclose(grad_array.data, 6.0 * u.ms)
 
 
 def test_grad_with_array_custom_array():
@@ -152,19 +152,19 @@ def test_grad_with_array_custom_array():
     # Test with Array containing unitless values
     x_array = Array(jnp.array(3.0))
     assert isinstance(x_array, u.CustomArray)
-    grad = grad_fn(x_array.value)
+    grad = grad_fn(x_array.data)
     grad_array = Array(grad)
     assert isinstance(grad_array, u.CustomArray)
-    assert grad_array.value == 6.0
+    assert grad_array.data == 6.0
     
     # Test with Array containing unit values
     x_unit = jnp.array(3.0) * u.mvolt
     x_array_unit = Array(x_unit)
     assert isinstance(x_array_unit, u.CustomArray)
-    grad = grad_fn(x_array_unit.value)
+    grad = grad_fn(x_array_unit.data)
     grad_array = Array(grad)
     assert isinstance(grad_array, u.CustomArray)
-    assert u.math.allclose(grad_array.value, 6.0 * u.mvolt)
+    assert u.math.allclose(grad_array.data, 6.0 * u.mvolt)
 
 
 def test_value_and_grad_multiple_args_with_array():
@@ -182,7 +182,7 @@ def test_value_and_grad_multiple_args_with_array():
     assert isinstance(x_array, u.CustomArray)
     assert isinstance(y_array, u.CustomArray)
     
-    value, grad = value_and_grad_fn(x_array.value, y_array.value)
+    value, grad = value_and_grad_fn(x_array.data, y_array.data)
     value_array = Array(value)
     grad0_array = Array(grad[0])
     grad1_array = Array(grad[1])
@@ -190,9 +190,9 @@ def test_value_and_grad_multiple_args_with_array():
     assert isinstance(value_array, u.CustomArray)
     assert isinstance(grad0_array, u.CustomArray)
     assert isinstance(grad1_array, u.CustomArray)
-    assert u.math.allclose(value_array.value, 12.0 * u.ms * u.mV)
-    assert u.math.allclose(grad0_array.value, 4.0 * u.mV)
-    assert u.math.allclose(grad1_array.value, 3.0 * u.ms)
+    assert u.math.allclose(value_array.data, 12.0 * u.ms * u.mV)
+    assert u.math.allclose(grad0_array.data, 4.0 * u.mV)
+    assert u.math.allclose(grad1_array.data, 3.0 * u.ms)
 
 
 def test_value_and_grad_with_aux_array():
@@ -206,7 +206,7 @@ def test_value_and_grad_with_aux_array():
     x_array = Array(x_unit)
     assert isinstance(x_array, u.CustomArray)
     
-    (value, aux), grad = value_and_grad_fn(x_array.value)
+    (value, aux), grad = value_and_grad_fn(x_array.data)
     value_array = Array(value)
     aux_array = Array(aux)
     grad_array = Array(grad)
@@ -214,9 +214,9 @@ def test_value_and_grad_with_aux_array():
     assert isinstance(value_array, u.CustomArray)
     assert isinstance(aux_array, u.CustomArray)
     assert isinstance(grad_array, u.CustomArray)
-    assert u.math.allclose(value_array.value, 9.0 * u.mV ** 2)
-    assert u.math.allclose(aux_array.value, 9.0 * u.mV)
-    assert u.math.allclose(grad_array.value, 6.0 * u.mV)
+    assert u.math.allclose(value_array.data, 9.0 * u.mV ** 2)
+    assert u.math.allclose(aux_array.data, 9.0 * u.mV)
+    assert u.math.allclose(grad_array.data, 6.0 * u.mV)
 
 
 def test_grad_multiple_args_with_array():
@@ -234,14 +234,14 @@ def test_grad_multiple_args_with_array():
     assert isinstance(x_array, u.CustomArray)
     assert isinstance(y_array, u.CustomArray)
     
-    grad = grad_fn(x_array.value, y_array.value)
+    grad = grad_fn(x_array.data, y_array.data)
     grad0_array = Array(grad[0])
     grad1_array = Array(grad[1])
     
     assert isinstance(grad0_array, u.CustomArray)
     assert isinstance(grad1_array, u.CustomArray)
-    assert u.math.allclose(grad0_array.value, 4.0 * u.mV)
-    assert u.math.allclose(grad1_array.value, 3.0 * u.UNITLESS)
+    assert u.math.allclose(grad0_array.data, 4.0 * u.mV)
+    assert u.math.allclose(grad1_array.data, 3.0 * u.UNITLESS)
 
 
 def test_array_custom_array_compatibility_with_value_and_grad():
@@ -249,14 +249,14 @@ def test_array_custom_array_compatibility_with_value_and_grad():
     test_array = Array(data)
     
     assert isinstance(test_array, u.CustomArray)
-    assert hasattr(test_array, 'value')
+    assert hasattr(test_array, 'data')
     
     def test_function(x):
         return x ** 3
     
     # Test value_and_grad with Array
     value_and_grad_fn = u.autograd.value_and_grad(test_function)
-    value, grad = value_and_grad_fn(test_array.value)
+    value, grad = value_and_grad_fn(test_array.data)
     value_array = Array(value)
     grad_array = Array(grad)
     
@@ -265,8 +265,8 @@ def test_array_custom_array_compatibility_with_value_and_grad():
     
     # Compare with direct computation
     direct_value, direct_grad = value_and_grad_fn(data)
-    assert u.math.allclose(value_array.value, direct_value)
-    assert u.math.allclose(grad_array.value, direct_grad)
+    assert u.math.allclose(value_array.data, direct_value)
+    assert u.math.allclose(grad_array.data, direct_grad)
 
 
 if __name__ == "__main__":

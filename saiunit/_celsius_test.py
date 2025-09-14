@@ -39,7 +39,7 @@ def test2():
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 
 class TestArrayCelsius(unittest.TestCase):
@@ -145,16 +145,16 @@ class TestArrayCelsius(unittest.TestCase):
 
         # Increase all temperatures by 5 degrees
         temps += 5
-        np.testing.assert_array_equal(temps.value, np.array([25, 30, 35]))
+        np.testing.assert_array_equal(temps.data, np.array([25, 30, 35]))
 
         # Decrease by 10 degrees
         temps -= 10
-        np.testing.assert_array_equal(temps.value, np.array([15, 20, 25]))
+        np.testing.assert_array_equal(temps.data, np.array([15, 20, 25]))
 
         # Apply cooling factor
         temps *= 0.9
         expected = np.array([13.5, 18.0, 22.5])
-        np.testing.assert_array_almost_equal(temps.value, expected, decimal=1)
+        np.testing.assert_array_almost_equal(temps.data, expected, decimal=1)
 
     def test_temperature_array_methods(self):
         # Test various array methods with temperature data
@@ -172,12 +172,12 @@ class TestArrayCelsius(unittest.TestCase):
 
         # Test copy
         temps_copy = temps.copy()
-        np.testing.assert_array_equal(temps.value, temps_copy)
+        np.testing.assert_array_equal(temps.data, temps_copy)
 
         # Test fill with constant temperature
         constant_temp = Array(np.zeros(5))
         constant_temp.fill(22)
-        np.testing.assert_array_equal(constant_temp.value, np.array([22, 22, 22, 22, 22]))
+        np.testing.assert_array_equal(constant_temp.data, np.array([22, 22, 22, 22, 22]))
 
     def test_jax_temperature_operations(self):
         # Test JAX operations with temperature data
@@ -224,5 +224,5 @@ class TestArrayCelsius(unittest.TestCase):
         temp_matrix_1 = Array(np.array([[20, 25], [30, 35]]))
         temp_matrix_2 = Array(np.array([[1, 0], [0, 1]]))  # Identity matrix
         result = temp_matrix_1 @ temp_matrix_2
-        np.testing.assert_array_equal(result, temp_matrix_1.value)
+        np.testing.assert_array_equal(result, temp_matrix_1.data)
 

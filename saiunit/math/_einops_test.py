@@ -26,7 +26,7 @@ from saiunit.math._einops_parsing import EinopsError
 
 class Array(bu.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 REDUCTIONS = ("min", "max", "sum", "mean", "prod")
 
@@ -542,7 +542,7 @@ class TestEinopsWithArrayCustomArray:
         
         # Test identity transformation
         result_identity = einrearrange(self.array_2d, "h w -> h w")
-        assert jnp.array_equal(result_identity, self.array_2d.value)
+        assert jnp.array_equal(result_identity, self.array_2d.data)
         
         # Test with 3D Array
         result_3d = einrearrange(self.array_3d, "batch h w -> batch (h w)")
@@ -554,7 +554,7 @@ class TestEinopsWithArrayCustomArray:
         # Test ellipsis identity
         for pattern in identity_patterns:
             result = einrearrange(self.array_5d, pattern)
-            assert jnp.array_equal(result, self.array_5d.value), f"Failed for pattern: {pattern}"
+            assert jnp.array_equal(result, self.array_5d.data), f"Failed for pattern: {pattern}"
         
         # Test ellipsis equivalences
         for pattern1, pattern2 in equivalent_rearrange_patterns:
@@ -653,7 +653,7 @@ class TestEinopsWithArrayCustomArray:
         # Test that flatten and reshape are consistent
         flattened = einrearrange(self.array_4d, "a b c d -> (a b c d)")
         reshaped = einrearrange(flattened, "(a b c d) -> a b c d", a=2, b=3, c=4, d=5)
-        assert jnp.array_equal(reshaped, self.array_4d.value)
+        assert jnp.array_equal(reshaped, self.array_4d.data)
 
     def test_einops_with_complex_patterns_array(self):
         """Test einops with complex patterns using Array."""
@@ -678,12 +678,12 @@ class TestEinopsWithArrayCustomArray:
         for reduction in reductions_to_test:
             # Test complete reduction
             result_complete = einreduce(test_array, "h w ->", reduction=reduction)
-            numpy_result = getattr(test_array.value, reduction)()
+            numpy_result = getattr(test_array.data, reduction)()
             assert jnp.allclose(result_complete, numpy_result), f"Failed for reduction: {reduction}"
             
             # Test partial reduction
             result_partial = einreduce(test_array, "h w -> h", reduction=reduction)
-            numpy_partial = getattr(test_array.value, reduction)(axis=1)
+            numpy_partial = getattr(test_array.data, reduction)(axis=1)
             assert jnp.allclose(result_partial, numpy_partial), f"Failed for partial reduction: {reduction}"
 
     def test_einops_with_array_list_inputs(self):
@@ -728,8 +728,8 @@ class TestEinopsWithArrayCustomArray:
         assert result_perm.shape == expected_perm_shape
         
         # Verify element preservation
-        assert test_3d.value[0, 1, 1] == result_perm[1, 0, 1]
-        assert test_3d.value[1, 0, 0] == result_perm[0, 1, 0]
+        assert test_3d.data[0, 1, 1] == result_perm[1, 0, 1]
+        assert test_3d.data[1, 0, 0] == result_perm[0, 1, 0]
 
     def test_array_error_handling(self):
         """Test error handling with Array in einops operations."""
@@ -757,7 +757,7 @@ class TestEinopsWithArrayCustomArray:
         
         # Test outer product
         result_outer = bu.math.einsum('i,j->ij', array_a, array_b)
-        expected_outer = jnp.outer(array_a.value, array_b.value)
+        expected_outer = jnp.outer(array_a.data, array_b.data)
         assert jnp.allclose(result_outer, expected_outer)
         
         # Test with units
@@ -772,7 +772,7 @@ class TestEinopsWithArrayCustomArray:
         """Test that Array properly inherits CustomArray properties in einops."""
         # Verify inheritance
         assert isinstance(self.array_2d, bu.CustomArray)
-        assert hasattr(self.array_2d, 'value')
+        assert hasattr(self.array_2d, 'data')
         assert hasattr(self.array_2d, 'shape')
         assert hasattr(self.array_2d, 'dtype')
         

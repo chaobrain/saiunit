@@ -27,7 +27,7 @@ from saiunit._base import assert_quantity, Unit, get_or_create_dimension
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 fft_change_1d = [
     'fft', 'ifft',
@@ -76,7 +76,7 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = jnp.array(value) * unit
             result = ufft_fun(q, axis=axis, norm=norm)
@@ -85,13 +85,13 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(array_result.data, expected, unit=ufft_fun._unit_change_fun(unit))
 
             array_input = Array(q)
-            result = ufft_fun(array_input.value, axis=axis, norm=norm)
+            result = ufft_fun(array_input.data, axis=axis, norm=norm)
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(array_result.data, expected, unit=ufft_fun._unit_change_fun(unit))
 
     @parameterized.product(
         value_axes_s=[
@@ -119,7 +119,7 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = jnp.array(value) * unit
             result = ufft_fun(q, s=s, axes=axes, norm=norm)
@@ -128,13 +128,13 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(array_result.data, expected, unit=ufft_fun._unit_change_fun(unit))
 
             array_input = Array(q)
-            result = ufft_fun(array_input.value, s=s, axes=axes, norm=norm)
+            result = ufft_fun(array_input.data, s=s, axes=axes, norm=norm)
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(array_result.data, expected, unit=ufft_fun._unit_change_fun(unit))
 
     @parameterized.product(
         value_axes_s=[
@@ -162,7 +162,7 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = jnp.array(value) * unit
             result = ufft_fun(q, s=s, axes=axes, norm=norm)
@@ -171,13 +171,13 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(array_result.data, expected, unit=ufft_fun._unit_change_fun(unit))
 
             array_input = Array(q)
-            result = ufft_fun(array_input.value, s=s, axes=axes, norm=norm)
+            result = ufft_fun(array_input.data, s=s, axes=axes, norm=norm)
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(array_result.data, expected, unit=ufft_fun._unit_change_fun(unit))
 
     @parameterized.product(
         size=[9, 10, 101, 102],
@@ -198,7 +198,7 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = d * second
             result = bufft_fun(size, q)
@@ -207,13 +207,13 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=u.hertz)
+            assert_quantity(array_result.data, expected, unit=u.hertz)
 
             array_input = Array(q)
-            result = bufft_fun(size, array_input.value)
+            result = bufft_fun(size, array_input.data)
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=u.hertz)
+            assert_quantity(array_result.data, expected, unit=u.hertz)
 
     def test_fft_1d_operations_with_array(self):
         # Test FFT and IFFT operations with Array
@@ -223,18 +223,18 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(test_array_1d, u.CustomArray)
         
         # Test fft
-        fft_result = ufft.fft(test_array_1d.value, axis=-1)
+        fft_result = ufft.fft(test_array_1d.data, axis=-1)
         fft_array = Array(fft_result)
         assert isinstance(fft_array, u.CustomArray)
         expected = jnpfft.fft(jnp.array([1.0, 2.0, 3.0, 4.0]), axis=-1)
-        assert_quantity(fft_array.value, expected, unit=ufft.fft._unit_change_fun(meter))
+        assert_quantity(fft_array.data, expected, unit=ufft.fft._unit_change_fun(meter))
         
         # Test ifft
-        ifft_result = ufft.ifft(test_array_1d.value, axis=-1)
+        ifft_result = ufft.ifft(test_array_1d.data, axis=-1)
         ifft_array = Array(ifft_result)
         assert isinstance(ifft_array, u.CustomArray)
         expected = jnpfft.ifft(jnp.array([1.0, 2.0, 3.0, 4.0]), axis=-1)
-        assert_quantity(ifft_array.value, expected, unit=ufft.ifft._unit_change_fun(meter))
+        assert_quantity(ifft_array.data, expected, unit=ufft.ifft._unit_change_fun(meter))
 
     def test_fft_2d_operations_with_array(self):
         # Test 2D FFT operations with Array
@@ -244,18 +244,18 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(test_array_2d, u.CustomArray)
         
         # Test fft2
-        fft2_result = ufft.fft2(test_array_2d.value, axes=(0, 1))
+        fft2_result = ufft.fft2(test_array_2d.data, axes=(0, 1))
         fft2_array = Array(fft2_result)
         assert isinstance(fft2_array, u.CustomArray)
         expected = jnpfft.fft2(jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), axes=(0, 1))
-        assert_quantity(fft2_array.value, expected, unit=ufft.fft2._unit_change_fun(second))
+        assert_quantity(fft2_array.data, expected, unit=ufft.fft2._unit_change_fun(second))
         
         # Test ifft2
-        ifft2_result = ufft.ifft2(test_array_2d.value, axes=(0, 1))
+        ifft2_result = ufft.ifft2(test_array_2d.data, axes=(0, 1))
         ifft2_array = Array(ifft2_result)
         assert isinstance(ifft2_array, u.CustomArray)
         expected = jnpfft.ifft2(jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), axes=(0, 1))
-        assert_quantity(ifft2_array.value, expected, unit=ufft.ifft2._unit_change_fun(second))
+        assert_quantity(ifft2_array.data, expected, unit=ufft.ifft2._unit_change_fun(second))
 
     def test_rfft_operations_with_array(self):
         # Test real FFT operations with Array
@@ -265,18 +265,18 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(test_array, u.CustomArray)
         
         # Test rfft
-        rfft_result = ufft.rfft(test_array.value, axis=-1)
+        rfft_result = ufft.rfft(test_array.data, axis=-1)
         rfft_array = Array(rfft_result)
         assert isinstance(rfft_array, u.CustomArray)
         expected = jnpfft.rfft(jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]), axis=-1)
-        assert_quantity(rfft_array.value, expected, unit=ufft.rfft._unit_change_fun(meter))
+        assert_quantity(rfft_array.data, expected, unit=ufft.rfft._unit_change_fun(meter))
         
         # Test irfft
-        irfft_result = ufft.irfft(test_array.value, axis=-1)
+        irfft_result = ufft.irfft(test_array.data, axis=-1)
         irfft_array = Array(irfft_result)
         assert isinstance(irfft_array, u.CustomArray)
         expected = jnpfft.irfft(jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]), axis=-1)
-        assert_quantity(irfft_array.value, expected, unit=ufft.irfft._unit_change_fun(meter))
+        assert_quantity(irfft_array.data, expected, unit=ufft.irfft._unit_change_fun(meter))
 
     def test_fftfreq_operations_with_array(self):
         # Test frequency operations with Array
@@ -288,35 +288,35 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(d_array, u.CustomArray)
         
         # Test fftfreq
-        fftfreq_result = ufft.fftfreq(n, d_array.value)
+        fftfreq_result = ufft.fftfreq(n, d_array.data)
         fftfreq_array = Array(fftfreq_result)
         assert isinstance(fftfreq_array, u.CustomArray)
         expected = jnpfft.fftfreq(n, d_val)
-        assert_quantity(fftfreq_array.value, expected, unit=u.hertz)
+        assert_quantity(fftfreq_array.data, expected, unit=u.hertz)
         
         # Test rfftfreq
-        rfftfreq_result = ufft.rfftfreq(n, d_array.value)
+        rfftfreq_result = ufft.rfftfreq(n, d_array.data)
         rfftfreq_array = Array(rfftfreq_result)
         assert isinstance(rfftfreq_array, u.CustomArray)
         expected = jnpfft.rfftfreq(n, d_val)
-        assert_quantity(rfftfreq_array.value, expected, unit=u.hertz)
+        assert_quantity(rfftfreq_array.data, expected, unit=u.hertz)
 
     def test_array_custom_array_compatibility_with_fft_change_unit(self):
         data = jnp.array([[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]) * second
         test_array = Array(data)
         
         assert isinstance(test_array, u.CustomArray)
-        assert hasattr(test_array, 'value')
+        assert hasattr(test_array, 'data')
         
         # Test fftn with Array
-        result = ufft.fftn(test_array.value, axes=(0, 1))
+        result = ufft.fftn(test_array.data, axes=(0, 1))
         result_array = Array(result)
         
         assert isinstance(result_array, u.CustomArray)
         
         # Compare with direct computation
         direct_result = ufft.fftn(data, axes=(0, 1))
-        assert_quantity(result_array.value, direct_result.mantissa, unit=ufft.fftn._unit_change_fun(second))
+        assert_quantity(result_array.data, direct_result.mantissa, unit=ufft.fftn._unit_change_fun(second))
 
 
 class TestFftChangeUnit(parameterized.TestCase):
@@ -328,7 +328,7 @@ class TestFftChangeUnit(parameterized.TestCase):
     def test_time_freq_map(self):
         from saiunit.fft._fft_change_unit import _time_freq_map
         for v1, v2 in _time_freq_map.values():
-            # print(key.scale, value.scale)
+            # print(key.scale, data.scale)
             assert v1.scale == -v2.scale
 
     @parameterized.product(

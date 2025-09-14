@@ -25,7 +25,7 @@ from saiunit._base import assert_quantity
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 fft_keep_unit = [
     'fftshift', 'ifftshift',
@@ -58,7 +58,7 @@ class TestFftKeepUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = jnp.array(value) * unit
             result = ufft_fun(q, axes=axes)
@@ -67,13 +67,13 @@ class TestFftKeepUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
             array_input = Array(q)
-            result = ufft_fun(array_input.value, axes=axes)
+            result = ufft_fun(array_input.data, axes=axes)
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
     def test_fftshift_operations_with_array(self):
         # Test 1D fftshift
@@ -82,11 +82,11 @@ class TestFftKeepUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array_1d, u.CustomArray)
         
-        fftshift_result = ufft.fftshift(test_array_1d.value)
+        fftshift_result = ufft.fftshift(test_array_1d.data)
         fftshift_array = Array(fftshift_result)
         assert isinstance(fftshift_array, u.CustomArray)
         expected = jnpfft.fftshift(jnp.array([1, 2, 3, 4, 5]))
-        assert_quantity(fftshift_array.value, expected, unit=meter)
+        assert_quantity(fftshift_array.data, expected, unit=meter)
         
         # Test 2D fftshift
         data_2d = jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) * second
@@ -94,11 +94,11 @@ class TestFftKeepUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array_2d, u.CustomArray)
         
-        fftshift_result = ufft.fftshift(test_array_2d.value, axes=(0, 1))
+        fftshift_result = ufft.fftshift(test_array_2d.data, axes=(0, 1))
         fftshift_array = Array(fftshift_result)
         assert isinstance(fftshift_array, u.CustomArray)
         expected = jnpfft.fftshift(jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), axes=(0, 1))
-        assert_quantity(fftshift_array.value, expected, unit=second)
+        assert_quantity(fftshift_array.data, expected, unit=second)
 
     def test_ifftshift_operations_with_array(self):
         # Test 1D ifftshift
@@ -107,11 +107,11 @@ class TestFftKeepUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array_1d, u.CustomArray)
         
-        ifftshift_result = ufft.ifftshift(test_array_1d.value)
+        ifftshift_result = ufft.ifftshift(test_array_1d.data)
         ifftshift_array = Array(ifftshift_result)
         assert isinstance(ifftshift_array, u.CustomArray)
         expected = jnpfft.ifftshift(jnp.array([1, 2, 3, 4, 5]))
-        assert_quantity(ifftshift_array.value, expected, unit=meter)
+        assert_quantity(ifftshift_array.data, expected, unit=meter)
         
         # Test 2D ifftshift
         data_2d = jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) * second
@@ -119,11 +119,11 @@ class TestFftKeepUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array_2d, u.CustomArray)
         
-        ifftshift_result = ufft.ifftshift(test_array_2d.value, axes=0)
+        ifftshift_result = ufft.ifftshift(test_array_2d.data, axes=0)
         ifftshift_array = Array(ifftshift_result)
         assert isinstance(ifftshift_array, u.CustomArray)
         expected = jnpfft.ifftshift(jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), axes=0)
-        assert_quantity(ifftshift_array.value, expected, unit=second)
+        assert_quantity(ifftshift_array.data, expected, unit=second)
 
     def test_fft_shift_inverse_operations_with_array(self):
         # Test that fftshift and ifftshift are inverse operations
@@ -133,32 +133,32 @@ class TestFftKeepUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(test_array, u.CustomArray)
         
         # fftshift -> ifftshift should recover original
-        shifted = ufft.fftshift(test_array.value)
+        shifted = ufft.fftshift(test_array.data)
         shifted_array = Array(shifted)
         assert isinstance(shifted_array, u.CustomArray)
         
-        recovered = ufft.ifftshift(shifted_array.value)
+        recovered = ufft.ifftshift(shifted_array.data)
         recovered_array = Array(recovered)
         assert isinstance(recovered_array, u.CustomArray)
         
-        assert_quantity(recovered_array.value, jnp.array([1, 2, 3, 4, 5, 6]), unit=meter)
+        assert_quantity(recovered_array.data, jnp.array([1, 2, 3, 4, 5, 6]), unit=meter)
 
     def test_array_custom_array_compatibility_with_fft_keep_unit(self):
         data = jnp.array([[1, 2, 3, 4], [5, 6, 7, 8]]) * second
         test_array = Array(data)
         
         assert isinstance(test_array, u.CustomArray)
-        assert hasattr(test_array, 'value')
+        assert hasattr(test_array, 'data')
         
         # Test fftshift with Array
-        result = ufft.fftshift(test_array.value, axes=1)
+        result = ufft.fftshift(test_array.data, axes=1)
         result_array = Array(result)
         
         assert isinstance(result_array, u.CustomArray)
         
         # Compare with direct computation
         direct_result = ufft.fftshift(data, axes=1)
-        assert_quantity(result_array.value, direct_result.mantissa, unit=second)
+        assert_quantity(result_array.data, direct_result.mantissa, unit=second)
 
 
 class TestFftKeepUnit(parameterized.TestCase):

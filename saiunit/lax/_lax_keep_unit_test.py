@@ -29,7 +29,7 @@ from saiunit._base import assert_quantity
 
 class Array(u.CustomArray):
     def __init__(self, value):
-        self.value = value
+        self.data = value
 
 lax_array_manipulation = [
     'slice', 'dynamic_slice', 'dynamic_update_slice', 'gather',
@@ -82,7 +82,7 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q = jnp.array(value) * unit
             result = ulax_fun(q)
@@ -91,13 +91,13 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
             array_input = Array(q)
-            result = ulax_fun(array_input.value)
+            result = ulax_fun(array_input.data)
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
     @parameterized.product(
         value=[((1.0, 2.0), (3.0, 4.0)),
@@ -118,7 +118,7 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected)
+            assert_quantity(array_result.data, expected)
 
             q1 = jnp.array(x1) * unit
             q2 = jnp.array(x2) * unit
@@ -128,14 +128,14 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
             array_input1 = Array(q1)
             array_input2 = Array(q2)
-            result = ulax_fun(array_input1.value, array_input2.value)
+            result = ulax_fun(array_input1.data, array_input2.data)
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.value, expected, unit=unit)
+            assert_quantity(array_result.data, expected, unit=unit)
 
     def test_slice_operations_with_array(self):
         data = jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) * meter
@@ -143,11 +143,11 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array, u.CustomArray)
         
-        slice_result = ulax.slice(test_array.value, start_indices=(0, 1), limit_indices=(2, 3))
+        slice_result = ulax.slice(test_array.data, start_indices=(0, 1), limit_indices=(2, 3))
         slice_array = Array(slice_result)
         assert isinstance(slice_array, u.CustomArray)
         expected = lax.slice(jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), start_indices=(0, 1), limit_indices=(2, 3))
-        assert_quantity(slice_array.value, expected, unit=meter)
+        assert_quantity(slice_array.data, expected, unit=meter)
 
     def test_dynamic_slice_with_array(self):
         data = jnp.array([1, 2, 3, 4, 5]) * second
@@ -155,11 +155,11 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array, u.CustomArray)
         
-        dynamic_slice_result = ulax.dynamic_slice(test_array.value, start_indices=(1,), slice_sizes=(3,))
+        dynamic_slice_result = ulax.dynamic_slice(test_array.data, start_indices=(1,), slice_sizes=(3,))
         dynamic_slice_array = Array(dynamic_slice_result)
         assert isinstance(dynamic_slice_array, u.CustomArray)
         expected = lax.dynamic_slice(jnp.array([1, 2, 3, 4, 5]), start_indices=(1,), slice_sizes=(3,))
-        assert_quantity(dynamic_slice_array.value, expected, unit=second)
+        assert_quantity(dynamic_slice_array.data, expected, unit=second)
 
     def test_sort_operations_with_array(self):
         data = jnp.array([3, 1, 4, 1, 5, 9, 2, 6]) * meter
@@ -167,11 +167,11 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array, u.CustomArray)
         
-        sort_result = ulax.sort(test_array.value, dimension=0)
+        sort_result = ulax.sort(test_array.data, dimension=0)
         sort_array = Array(sort_result)
         assert isinstance(sort_array, u.CustomArray)
         expected = lax.sort(jnp.array([3, 1, 4, 1, 5, 9, 2, 6]), dimension=0)
-        assert_quantity(sort_array.value, expected, unit=meter)
+        assert_quantity(sort_array.data, expected, unit=meter)
 
     def test_broadcast_operations_with_array(self):
         data = jnp.array([1, 2]) * second
@@ -179,11 +179,11 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
         
         assert isinstance(test_array, u.CustomArray)
         
-        broadcast_result = ulax.broadcast(test_array.value, sizes=(3,))
+        broadcast_result = ulax.broadcast(test_array.data, sizes=(3,))
         broadcast_array = Array(broadcast_result)
         assert isinstance(broadcast_array, u.CustomArray)
         expected = lax.broadcast(jnp.array([1, 2]), sizes=(3,))
-        assert_quantity(broadcast_array.value, expected, unit=second)
+        assert_quantity(broadcast_array.data, expected, unit=second)
 
     def test_clamp_operations_with_array(self):
         min_val = jnp.array(0.0) * meter
@@ -198,32 +198,32 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
         assert isinstance(operand_array, u.CustomArray)
         assert isinstance(max_array, u.CustomArray)
         
-        clamp_result = ulax.clamp(min_array.value, operand_array.value, max_array.value)
+        clamp_result = ulax.clamp(min_array.data, operand_array.data, max_array.data)
         clamp_array = Array(clamp_result)
         assert isinstance(clamp_array, u.CustomArray)
         expected = lax.clamp(jnp.array(0.0), jnp.array([-1.0, 0.5, 2.0]), jnp.array(1.0))
-        assert_quantity(clamp_array.value, expected, unit=meter)
+        assert_quantity(clamp_array.data, expected, unit=meter)
 
     def test_array_custom_array_compatibility_with_lax(self):
         data = jnp.array([1.0, 2.0, 3.0, 4.0]) * meter
         test_array = Array(data)
         
         assert isinstance(test_array, u.CustomArray)
-        assert hasattr(test_array, 'value')
+        assert hasattr(test_array, 'data')
         
         # Test cumsum with Array
-        cumsum_result = ulax.cumsum(test_array.value)
+        cumsum_result = ulax.cumsum(test_array.data)
         cumsum_array = Array(cumsum_result)
         assert isinstance(cumsum_array, u.CustomArray)
         expected = lax.cumsum(jnp.array([1.0, 2.0, 3.0, 4.0]))
-        assert_quantity(cumsum_array.value, expected, unit=meter)
+        assert_quantity(cumsum_array.data, expected, unit=meter)
         
         # Test neg with Array
-        neg_result = ulax.neg(test_array.value)
+        neg_result = ulax.neg(test_array.data)
         neg_array = Array(neg_result)
         assert isinstance(neg_array, u.CustomArray)
         expected = lax.neg(jnp.array([1.0, 2.0, 3.0, 4.0]))
-        assert_quantity(neg_array.value, expected, unit=meter)
+        assert_quantity(neg_array.data, expected, unit=meter)
 
 
 class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
