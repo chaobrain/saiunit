@@ -3053,7 +3053,7 @@ class Quantity(Generic[A]):
 
     @property
     def isscalar(self) -> bool:
-        return is_scalar_type(self)
+        return self.ndim == 0
 
     @property
     def isfinite(self) -> jax.Array:

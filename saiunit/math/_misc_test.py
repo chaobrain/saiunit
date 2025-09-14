@@ -20,6 +20,8 @@ from scipy.special import exprel
 
 import saiunit as u
 from saiunit import math
+from saiunit import meter, second
+from saiunit._base import assert_quantity
 
 
 class Array(u.CustomArray):
@@ -218,3 +220,130 @@ class TestMiscWithArrayCustomArray:
         # Compare with direct computation
         direct_result = math.exprel(x_data)
         assert jnp.allclose(result_array.value, direct_result)
+
+
+def test_constants_and_dtype_aliases():
+    assert u.math.e == np.e
+    assert u.math.pi == np.pi
+    assert u.math.inf == np.inf
+    assert np.isnan(u.math.nan)
+    assert u.math.euler_gamma == np.euler_gamma
+    assert u.math.dtype(jnp.float32) == jnp.dtype(jnp.float32)
+    arr = jnp.zeros((2, 1))[..., u.math.newaxis]
+    assert arr.shape == (2, 1, 1)
+    assert u.math.inexact is jnp.inexact
+
+
+def test_is_quantity():
+    q = jnp.array([1., 2.]) * meter
+    a = jnp.array([1., 2.])
+    assert u.math.is_quantity(q)
+    assert not u.math.is_quantity(a)
+
+
+def test_ndim_shape_size_on_arrays_and_quantities():
+    a = jnp.arange(6).reshape(2, 3)
+    q = a * second
+    assert u.math.ndim(a) == 2
+    assert u.math.ndim(q) == 2
+    assert u.math.shape(a) == (2, 3)
+    assert u.math.shape(q) == (2, 3)
+    assert u.math.size(a) == 6
+    assert u.math.size(q) == 6
+    assert u.math.size(a, 1) == 3
+    assert u.math.size(q, 0) == 2
+    assert u.math.shape(0) == ()
+    assert u.math.size(0) == 1
+
+
+def test_predicates_isreal_isscalar_isfinite_isinf_isnan():
+    a = jnp.array([1 + 0j, 1 + 1j])
+    q = a * meter
+    np.testing.assert_array_equal(u.math.isreal(a), jnp.isreal(a))
+    np.testing.assert_array_equal(u.math.isreal(q), jnp.isreal(a))
+
+    assert u.math.isscalar(3.0)
+    assert u.math.isscalar(3 * meter)
+    assert not u.math.isscalar(jnp.array([3.0]))
+
+    a = jnp.array([0.0, jnp.inf, -jnp.inf, jnp.nan])
+    q = a * meter
+    np.testing.assert_array_equal(u.math.isfinite(a), jnp.isfinite(a))
+    np.testing.assert_array_equal(u.math.isfinite(q), jnp.isfinite(a))
+    np.testing.assert_array_equal(u.math.isinf(a), jnp.isinf(a))
+    np.testing.assert_array_equal(u.math.isinf(q), jnp.isinf(a))
+    np.testing.assert_array_equal(u.math.isnan(a), jnp.isnan(a))
+    np.testing.assert_array_equal(u.math.isnan(q), jnp.isnan(a))
+
+
+def test_finfo_iinfo_with_quantities_and_dtypes():
+    qf = jnp.array([0.0], dtype=jnp.float32) * meter
+    qi = jnp.array([0], dtype=jnp.int32) * meter
+    assert u.math.finfo(qf).dtype == jnp.finfo(jnp.float32).dtype
+    assert u.math.iinfo(qi).dtype == jnp.iinfo(jnp.int32).dtype
+    assert u.math.finfo(jnp.float64).dtype == jnp.finfo(jnp.float64).dtype
+    assert u.math.iinfo(jnp.int16).dtype == jnp.iinfo(jnp.int16).dtype
+
+
+def test_broadcast_shapes_and_result_type_issubdtype():
+    assert u.math.broadcast_shapes((2, 1), (1, 3)) == (2, 3)
+    assert u.math.issubdtype(jnp.float32, jnp.floating)
+    assert not u.math.issubdtype(jnp.int32, jnp.floating)
+    x = jnp.array([1, 2], dtype=jnp.int32) * meter
+    y = jnp.array([1.0], dtype=jnp.float64)
+    assert u.math.result_type(x, y) == jnp.result_type(x.mantissa, y)
+
+
+def test_get_dtype_and_is_float_is_int():
+    a = jnp.array([1., 2., 3.])
+    q = a * second
+    assert u.math.get_dtype(a) == a.dtype
+    assert u.math.get_dtype(q) == a.dtype
+    assert u.math.is_float(a)
+    assert u.math.is_float(q)
+
+    ai = jnp.array([1, 2, 3])
+    qi = ai * meter
+    assert u.math.is_int(ai)
+    assert u.math.is_int(qi)
+
+    with brainstate.environ.context(precision=64):
+        assert u.math.get_dtype(True) is bool
+        assert u.math.get_dtype(3) == brainstate.environ.ditype()
+        assert u.math.get_dtype(3.0) == brainstate.environ.dftype()
+        # assert u.math.get_dtype(3 + 0j) == brainstate.environ.dctype()
+
+
+def test_gradient_quantity_no_spacing_returns_quantity():
+    f = jnp.array([0.0, 1.0, 4.0, 9.0], dtype=jnp.float32) * meter
+    g = u.math.gradient(f)
+    assert isinstance(g, u.Quantity)
+    assert_quantity(g, jnp.gradient(f.mantissa), unit=meter)
+
+
+def test_gradient_with_unit_spacing_and_multi_axis():
+    f = jnp.arange(12.0, dtype=jnp.float64).reshape(3, 4) * meter
+    dy = 0.5 * second
+    dx = 2.0 * second
+    gy, gx = u.math.gradient(f, dy, dx)
+    assert isinstance(gy, u.Quantity) and isinstance(gx, u.Quantity)
+    assert_quantity(gy, jnp.gradient(f.mantissa, dy.mantissa, axis=0), unit=meter / second)
+    assert_quantity(gx, jnp.gradient(f.mantissa, dx.mantissa, axis=1), unit=meter / second)
+
+
+def test_gradient_edge_order_not_supported():
+    f = jnp.array([0.0, 1.0, 4.0]) * meter
+    try:
+        u.math.gradient(f, edge_order=2)
+        assert False, "Expected NotImplementedError for edge_order"
+    except NotImplementedError:
+        pass
+
+
+def test_window_functions_shapes():
+    n = 8
+    np.testing.assert_allclose(u.math.bartlett(n), jnp.bartlett(n))
+    np.testing.assert_allclose(u.math.blackman(n), jnp.blackman(n))
+    np.testing.assert_allclose(u.math.hamming(n), jnp.hamming(n))
+    np.testing.assert_allclose(u.math.hanning(n), jnp.hanning(n))
+    np.testing.assert_allclose(u.math.kaiser(n, 14.0), jnp.kaiser(n, 14.0))
