@@ -336,7 +336,7 @@ class TestArray2(unittest.TestCase):
             return jnp.sum(x * x)
 
         grad_result = sum_squares(arr)
-        self.assertIsInstance(grad_result, jax.Array)
+        self.assertIsInstance(grad_result, Array)
         np.testing.assert_array_equal(grad_result, jnp.array([2.0, 4.0, 6.0]))
 
     def test_edge_cases(self):
