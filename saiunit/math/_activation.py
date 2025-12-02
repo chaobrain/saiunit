@@ -60,7 +60,6 @@ def relu(
         >>> saiunit.math.relu(jax.numpy.array([-2., -1., -0.5, 0, 0.5, 1., 2.]))
         Array([0. , 0. , 0. , 0. , 0.5, 1. , 2. ], dtype=float32)
     """
-    x = maybe_custom_array(x)
     return _fun_keep_unit_unary(nn.relu, x)
 
 
@@ -91,7 +90,6 @@ def relu6(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.relu6, x)
 
 
@@ -112,7 +110,6 @@ def sigmoid(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.sigmoid, x)
 
 
@@ -133,7 +130,6 @@ def softplus(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.softplus, x)
 
 
@@ -161,7 +157,6 @@ def sparse_plus(
     Args:
         x: input (float)
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.sparse_plus, x)
 
 
@@ -194,7 +189,6 @@ def sparse_sigmoid(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.sparse_sigmoid, x)
 
 
@@ -215,7 +209,6 @@ def soft_sign(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.soft_sign, x)
 
 
@@ -238,7 +231,6 @@ def silu(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.silu, x)
 
 
@@ -261,7 +253,6 @@ def swish(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.silu, x)
 
 
@@ -282,7 +273,6 @@ def log_sigmoid(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.log_sigmoid, x)
 
 
@@ -332,7 +322,6 @@ def hard_sigmoid(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.hard_sigmoid, x)
 
 
@@ -356,7 +345,6 @@ def hard_silu(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.hard_silu, x)
 
 
@@ -384,7 +372,6 @@ def hard_tanh(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.hard_tanh, x)
 
 
@@ -410,7 +397,6 @@ def elu(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.elu, x, alpha=alpha)
 
 
@@ -440,7 +426,6 @@ def celu(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.celu, x, alpha=alpha)
 
 
@@ -471,7 +456,6 @@ def selu(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.selu, x)
 
 
@@ -501,7 +485,6 @@ def gelu(
         x: input array
         approximate: whether to use the approximate or exact formulation.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.gelu, x, approximate=approximate)
 
 
@@ -529,7 +512,6 @@ def glu(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.glu, x, axis=axis)
 
 
@@ -551,7 +533,6 @@ def squareplus(
         x : input array
         b : smoothness parameter
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.squareplus, x, b=b)
 
 
@@ -576,5 +557,4 @@ def mish(
     Returns:
         An array.
     """
-    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(nn.mish, x)

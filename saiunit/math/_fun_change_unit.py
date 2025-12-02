@@ -354,10 +354,19 @@ def prod(
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
-        return x.prod(axis=axis, dtype=dtype, keepdims=keepdims, initial=initial, where=where,
+        return x.prod(axis=axis,
+                      dtype=dtype,
+                      keepdims=keepdims,
+                      initial=initial,
+                      where=where,
                       promote_integers=promote_integers)
     else:
-        return jnp.prod(x, axis=axis, dtype=dtype, keepdims=keepdims, initial=initial, where=where,
+        return jnp.prod(x,
+                        axis=axis,
+                        dtype=dtype,
+                        keepdims=keepdims,
+                        initial=initial,
+                        where=where,
                         promote_integers=promote_integers)
 
 
@@ -418,9 +427,18 @@ def nanprod(
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
-        return x.nanprod(axis=axis, dtype=dtype, keepdims=keepdims, initial=initial, where=where)
+        return x.nanprod(axis=axis,
+                         dtype=dtype,
+                         keepdims=keepdims,
+                         initial=initial,
+                         where=where)
     else:
-        return jnp.nanprod(x, axis=axis, dtype=dtype, keepdims=keepdims, initial=initial, where=where)
+        return jnp.nanprod(x,
+                           axis=axis,
+                           dtype=dtype,
+                           keepdims=keepdims,
+                           initial=initial,
+                           where=where)
 
 
 product = prod

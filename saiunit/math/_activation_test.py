@@ -26,6 +26,7 @@ from saiunit._base import Quantity
 
 
 
+@jax.tree_util.register_pytree_node_class
 class Array(u.CustomArray):
     def __init__(self, value):
         self.data = value

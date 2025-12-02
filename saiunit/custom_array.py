@@ -980,3 +980,11 @@ class CustomArray:
 
     def double(self):
         return math.asarray(self.data, dtype=jnp.float64)
+
+    def tree_flatten(self):
+        return (self.data,), None
+
+    @classmethod
+    def tree_unflatten(cls, aux_data, flat_contents):
+        return cls(*flat_contents)
+
