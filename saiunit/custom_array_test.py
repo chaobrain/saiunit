@@ -23,6 +23,7 @@ import numpy as np
 import saiunit as u
 
 
+@jax.tree_util.register_pytree_node_class
 class Array(brainstate.State, u.CustomArray):
     @property
     def data(self):
