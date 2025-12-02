@@ -29,18 +29,13 @@ def make(root_dir):
     brainunit_dir = os.path.abspath(os.path.join(root_dir, 'brainunit'))
     os.makedirs(brainunit_dir, exist_ok=True)
 
-    # def create_brainunit_setup():
     # pyproject
     with open(os.path.join(brainunit_dir, 'pyproject.toml.template'), 'r') as f:
         pyproject = f.read()
+    pyproject = pyproject.replace('version = ""', f'version = "{saiunit.__version__}"')
+    pyproject = pyproject.replace('saiunit==', f'saiunit=={saiunit.__version__}')
     with open(os.path.join(brainunit_dir, 'pyproject.toml'), 'w') as f:
-        f.write(pyproject.replace('saiunit==', f'saiunit=={saiunit.__version__}'))
-
-    # setup
-    with open(os.path.join(brainunit_dir, 'setup.py.template'), 'r') as f:
-        setup = f.read()
-    with open(os.path.join(brainunit_dir, 'setup.py'), 'w') as f:
-        f.write(setup.replace('version=,', f'version="{saiunit.__version__}",'))
+        f.write(pyproject)
 
 
 if __name__ == '__main__':

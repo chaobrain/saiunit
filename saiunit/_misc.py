@@ -70,7 +70,7 @@ def maybe_custom_array(x):
 
     Returns
     -------
-    Any
+    ArrayLikje
         The underlying value if x is a CustomArray, otherwise x unchanged.
 
     Examples

@@ -51,7 +51,7 @@ def _fun_accept_unitless_unary(
     unit_to_scale: Optional[Unit] = None,
     **kwargs
 ):
-    x = maybe_custom_array_tree(x)
+    x = maybe_custom_array(x)
     args = maybe_custom_array_tree(args)
     kwargs = maybe_custom_array_tree(kwargs)
 
@@ -150,7 +150,7 @@ def exprel(
     Returns:
       ``(exp(x) - 1)/x``, computed element-wise.
     """
-    x = maybe_custom_array_tree(x)
+    x = maybe_custom_array(x)
     return _fun_accept_unitless_unary(_exprel_v2, x, order=order)
 
 
@@ -1096,6 +1096,7 @@ def ldexp(
 
       This is a Quantity if the product of the square of the unit of `x` and the unit of `y` is not dimensionless.
     """
+    x, y = maybe_custom_array_tree((x, y))
     if isinstance(x, Quantity):
         assert x.dim.is_dimensionless, f'Expected dimensionless array, got {x}'
         x = x.mantissa
