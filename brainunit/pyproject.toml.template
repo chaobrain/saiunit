@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "numpy", 'jax', 'jaxlib', ]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 
@@ -14,11 +14,9 @@ exclude = [
     "brainunit/__init__.py"
 ]
 
-[tool.setuptools.dynamic]
-version = {attr = "saiunit.__version__"}
-
 [project]
 name = "brainunit"
+version = &
 description = "Physical Units and Unit-Aware Mathematical System for General-Purpose Brain Dynamics Modeling"
 readme = 'README.md'
 license = 'Apache-2.0'
