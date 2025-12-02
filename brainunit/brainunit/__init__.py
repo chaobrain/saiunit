@@ -17,6 +17,7 @@
 import saiunit
 
 __version__ = saiunit.__version__
+__version_info__ = saiunit.__version_info__
 
 from . import autograd
 from . import constants

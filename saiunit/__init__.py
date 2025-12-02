@@ -14,6 +14,7 @@
 # ==============================================================================
 
 __version__ = "0.1.2"
+__version_info__ = (0, 1, 2)
 
 from . import _matplotlib_compat
 from . import autograd
