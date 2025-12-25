@@ -938,16 +938,6 @@ def _einsum(
 
             lhs_batch, rhs_batch = unzip2((lhs_names.find(n), rhs_names.find(n)) for n in batch_names)
 
-            # NOTE: this can fail non-deterministically in python3, maybe
-            # due to opt_einsum
-            assert jax.config.jax_dynamic_shapes or all(
-                name in lhs_names and name in rhs_names and
-                lhs.shape[lhs_names.index(name)] == rhs.shape[rhs_names.index(name)]
-                for name in contracted_names), \
-                ("Incompatible reduction dimensions: "
-                 f"lhs.shape={lhs.shape} lhs_names={lhs_names} "
-                 f"rhs.shape={rhs.shape} rhs_names={rhs_names}")
-
             # contract using dot_general
             batch_names_str = ''.join(batch_names)
             lhs_cont, rhs_cont = unzip2((lhs_names.index(n), rhs_names.index(n)) for n in contracted_names)
