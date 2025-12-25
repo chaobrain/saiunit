@@ -1,5 +1,10 @@
 # Release Notes
 
+## Version 0.1.3
+
+- Compatible with `jax>=0.8.2`
+
+
 ## Version 0.1.2
 
 - Renamed ``CustomArray.value`` to ``CustomArray.data`` for API consistency
