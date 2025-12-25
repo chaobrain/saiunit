@@ -17,7 +17,7 @@
 import saiunit
 
 __version__ = saiunit.__version__
-__version_info__ = saiunit.__version_info__
+__version_info__ = tuple(map(int, __version__.split(".")))
 
 from . import autograd
 from . import constants
