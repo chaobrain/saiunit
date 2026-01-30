@@ -117,15 +117,17 @@ def _exprel_v2(x, *, order: int = 2):
         threshold = 1e-3
 
     assert order in [0, 1, 2, 3], 'The approximation order should be 0, 1, 2, or 3.'
+    cond = jnp.abs(x) <= threshold
+    x_cond = jnp.where(cond, threshold, x)  # to avoid division by zero
     if order == 0:
-        return jax.numpy.where(jnp.abs(x) <= threshold, 1., jnp.expm1(x) / x)
+        return jax.numpy.where(cond, 1., jnp.expm1(x) / x_cond)
     elif order == 1:
-        return jax.numpy.where(jnp.abs(x) <= threshold, 1. + x / 2., jnp.expm1(x) / x)
+        return jax.numpy.where(cond, 1. + x / 2., jnp.expm1(x) / x_cond)
     elif order == 2:
-        return jax.numpy.where(jnp.abs(x) <= threshold, 1. + x / 2. + x * x / 6., jnp.expm1(x) / x)
+        return jax.numpy.where(cond, 1. + x / 2. + x * x / 6., jnp.expm1(x) / x_cond)
     elif order == 3:
         x2 = x * x
-        return jax.numpy.where(jnp.abs(x) <= threshold, 1. + x / 2. + x2 / 6. + x2 * x / 24., jnp.expm1(x) / x)
+        return jax.numpy.where(cond, 1. + x / 2. + x2 / 6. + x2 * x / 24., jnp.expm1(x) / x_cond)
     else:
         raise ValueError(f'Unsupported approximation level {order}.')
 
