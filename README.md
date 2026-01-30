@@ -80,7 +80,7 @@ jax.vmap(f)(u.math.arange(0. * u.mV, 10. * u.mV, 1. * u.mV))
 
 ## Installation
 
-``saiunit`` has been well tested on ``python>=3.9`` + ``jax>=0.4.30`` environments, and can be installed on Windows, Linux, and MacOS.
+``saiunit`` has been well tested on ``python>=3.10`` + ``jax>=0.4.30`` environments, and can be installed on Windows, Linux, and MacOS.
 
 You can install ``saiunit`` via pip:
 

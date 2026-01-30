@@ -74,7 +74,7 @@ In summary, while NEURON's virtual unit system simplifies basic unit conversions
 `saiunit` can be installed on Windows, macOS, and Linux operating systems. The following software and hardware requirements are recommended for optimal performance:
 
 - ``jax>=0.4.30``
-- ``python>=3.9``
+- ``python>=3.10``
 
 
 
