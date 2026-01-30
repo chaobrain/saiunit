@@ -198,7 +198,7 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    :maxdepth: 1
    :caption: API Documentation
 
-   apis/changelog.md
+   ../changelog.md
    apis/saiunit.rst
    apis/saiunit.autograd.rst
    apis/saiunit.math.rst
