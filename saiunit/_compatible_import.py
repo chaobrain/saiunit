@@ -24,12 +24,18 @@ __all__ = [
     'safe_map',
     'unzip2',
     'wrap_init',
+    'Primitive',
 ]
 
 T = TypeVar("T")
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
+
+if jax.__version_info__ < (0, 4, 38):
+    from jax.core import Primitive
+else:
+    from jax.extend.core import Primitive
 
 
 def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):

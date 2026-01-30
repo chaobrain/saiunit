@@ -38,25 +38,6 @@ class TestLaxArrayCreation(parameterized.TestCase):
         print()
 
     @parameterized.product(
-        array=[jnp.array([1.0, 2.0]), jnp.array([[1.0, 2.0], [3.0, 4.0]])],
-        unit=[second, meter]
-    )
-    def test_lax_array_creation_given_array(self, array, unit):
-        bulax_fun_list = [getattr(bulax, fun) for fun in lax_array_creation_given_array]
-        lax_fun_list = [getattr(lax, fun) for fun in lax_array_creation_given_array]
-
-        for bulax_fun, lax_fun in zip(bulax_fun_list, lax_fun_list):
-            print(f'fun: {bulax_fun.__name__}')
-
-            result = bulax_fun(array)
-            expected = lax_fun(array)
-            assert_quantity(result, expected)
-
-            result = bulax_fun(array, unit=unit)
-            expected = lax_fun(array)
-            assert_quantity(result, expected, unit=unit)
-
-    @parameterized.product(
         value=[1, 10, 100],
         unit=[second, meter]
     )

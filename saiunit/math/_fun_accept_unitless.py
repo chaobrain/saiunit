@@ -19,12 +19,13 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
+from ._exprel import exprel as _exprel_impl, set_exprel_order
 from .._base import Quantity, Unit
 from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 __all__ = [
     # math funcs only accept unitless (unary)
-    'exprel', 'exp', 'exp2', 'expm1', 'log', 'log10', 'log1p', 'log2',
+    'exprel', 'set_exprel_order', 'exp', 'exp2', 'expm1', 'log', 'log10', 'log1p', 'log2',
     'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan',
     'arctanh', 'cos', 'cosh', 'sin', 'sinc', 'sinh', 'tan',
     'tanh', 'deg2rad', 'rad2deg', 'degrees', 'radians', 'angle', 'frexp',
@@ -76,65 +77,9 @@ def _fun_accept_unitless_unary(
         return func(x, *args, **kwargs)
 
 
-def _exprel_v1(x):  # This approximation has problems of the gradient vanishing at x=0
-    # following the implementation of exprel from scipy.special
-    x = jnp.asarray(x)
-    dtype = x.dtype
-
-    # Adjust the tolerance based on the dtype of x
-    if dtype == jnp.float64:
-        small_threshold = 1e-16
-        big_threshold = 717
-    elif dtype == jnp.float32:
-        small_threshold = 1e-8
-        big_threshold = 100
-    elif dtype == jnp.float16:
-        small_threshold = 1e-4
-        big_threshold = 10
-    else:
-        small_threshold = 1e-4
-        big_threshold = 10
-
-    small = jnp.abs(x) < small_threshold
-    big = x > big_threshold
-    origin = jnp.expm1(x) / x
-    return jnp.where(small, 1.0, jnp.where(big, jnp.inf, origin))
-
-
-def _exprel_v2(x, *, order: int = 2):
-    x = jnp.asarray(x)
-    dtype = x.dtype
-    assert jnp.issubdtype(dtype, jnp.floating), f'The input array must contain real numbers. Got {x}'
-
-    # Adjust the tolerance based on the dtype of x
-    if dtype == jnp.float64:
-        threshold = 1e-8
-    elif dtype == jnp.float32:
-        threshold = 1e-5
-    elif dtype in [jnp.float16, jnp.bfloat16]:
-        threshold = 1e-3
-    else:
-        threshold = 1e-3
-
-    assert order in [0, 1, 2, 3], 'The approximation order should be 0, 1, 2, or 3.'
-    if order == 0:
-        return jax.numpy.where(jnp.abs(x) <= threshold, 1., jnp.expm1(x) / x)
-    elif order == 1:
-        return jax.numpy.where(jnp.abs(x) <= threshold, 1. + x / 2., jnp.expm1(x) / x)
-    elif order == 2:
-        return jax.numpy.where(jnp.abs(x) <= threshold, 1. + x / 2. + x * x / 6., jnp.expm1(x) / x)
-    elif order == 3:
-        x2 = x * x
-        return jax.numpy.where(jnp.abs(x) <= threshold, 1. + x / 2. + x2 / 6. + x2 * x / 24., jnp.expm1(x) / x)
-    else:
-        raise ValueError(f'Unsupported approximation level {order}.')
-
-
 @set_module_as('saiunit.math')
 def exprel(
     x: Union[Quantity, jax.typing.ArrayLike],
-    *,
-    order: int = 2
 ) -> jax.Array:
     """
     Relative error exponential, ``(exp(x) - 1)/x``.
@@ -143,15 +88,21 @@ def exprel(
     suffer from catastrophic loss of precision. ``exprel(x)`` is implemented to avoid the loss of
     precision that occurs when ``x`` is near zero.
 
+    The threshold for switching between Taylor series and direct computation is adaptive
+    based on the input dtype for optimal numerical stability.
+
     Args:
       x: ndarray. Input array. ``x`` must contain real numbers.
-      order: int. The approximation level of the function. The higher the level, the more accurate the result.
 
     Returns:
       ``(exp(x) - 1)/x``, computed element-wise.
+
+    Notes:
+      Use ``saiunit.math.set_exprel_order(n)`` to control the Taylor series order (default: 5).
+      Higher values provide better accuracy near x=0 but require more computation.
     """
     x = maybe_custom_array(x)
-    return _fun_accept_unitless_unary(_exprel_v2, x, order=order)
+    return _fun_accept_unitless_unary(_exprel_impl, x)
 
 
 @set_module_as('saiunit.math')

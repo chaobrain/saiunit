@@ -17,6 +17,7 @@ from typing import Optional, Union, Sequence
 
 import jax
 from jax import lax
+import jax.numpy as jnp
 
 from .._base import Unit, Quantity
 from .._misc import set_module_as, maybe_custom_array
@@ -28,7 +29,8 @@ __all__ = [
     'zeros_like_array',
 
     # array creation(misc)
-    'iota', 'broadcasted_iota',
+    'iota',
+    'broadcasted_iota',
 ]
 
 
@@ -43,13 +45,13 @@ def zeros_like_array(
         if unit is not None:
             assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
             x = x.in_unit(unit)
-        return Quantity(lax.zeros_like_array(x.mantissa), unit=x.unit)
+        return Quantity(jnp.zeros_like(x.mantissa), unit=x.unit)
     else:
         if unit is not None:
             assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
-            return lax.zeros_like_array(x) * unit
+            return jnp.zeros_like(x) * unit
         else:
-            return lax.zeros_like_array(x)
+            return jnp.zeros_like(x)
 
 
 # array creation (misc)

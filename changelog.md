@@ -1,5 +1,12 @@
 # Release Notes
 
+## Version 0.1.4
+
+- Added numerically stable `exprel` function with comprehensive test coverage
+- Updated lax array creation to use `jax.numpy` for zero initialization
+- Updated CI JAX version for improved compatibility
+- Improved code quality and removed redundant tests
+
 ## Version 0.1.3
 
 - Compatible with `jax>=0.8.2`

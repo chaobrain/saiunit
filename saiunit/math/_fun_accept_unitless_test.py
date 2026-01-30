@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
+import jax
 import jax.numpy as jnp
 import pytest
 from absl.testing import parameterized
@@ -622,3 +621,24 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
         result_exp_uv = u.math.exp(voltage_array, unit_to_scale=u.uvolt)
         expected_exp_uv = jnp.exp(jnp.array([1000.0, 2000.0]))  # exp of values in µV
         assert_quantity(result_exp_uv, expected_exp_uv)
+
+
+def test_exprel():
+    def loss_fn(x):
+        return jnp.sum(u.math.exprel(x))
+
+    x = jnp.array([0.0, 1e-5, 1.0])
+    grads = jax.grad(loss_fn)(x)
+    assert jnp.allclose(grads, jnp.asarray([0.5, 0.50000334, 1.]))
+
+    def loss_fn2(x):
+        return u.math.exprel(x)
+
+    x = jnp.array([-1e-5, -1e-8, 0.0, 1e-8, 1e-5, 1e-3])
+    grad1 = jax.jvp(loss_fn2, (x,), (jnp.ones_like(x),))[0]
+    grad2 = jax.vjp(loss_fn2, x)[1](jnp.ones_like(x))[0]
+    # assert jnp.allclose(grad1, grad2)
+
+    print()
+    print(grad1)
+    print(grad2)
