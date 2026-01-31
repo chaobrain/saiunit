@@ -235,3 +235,4 @@ cython_debug/
 /brainunit/pyproject.toml
 /brainunit/setup.py
 /.claude/
+/dev/replace_all.py
