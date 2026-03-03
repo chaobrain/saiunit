@@ -388,6 +388,33 @@ class TestFftChangeUnit(parameterized.TestCase):
             expected = ufft_fun(jnp.array(value), s=s, axes=axes, norm=norm)
             assert_quantity(result, expected, unit=ufft_fun._unit_change_fun(unit))
 
+    def test_fft_change_nd_uses_s_length_when_axes_none(self):
+        value = jnp.array([[[1., 2., 3., 4.], [5., 6., 7., 8.], [9., 10., 11., 12.]],
+                           [[13., 14., 15., 16.], [17., 18., 19., 20.], [21., 22., 23., 24.]]])
+        q = value * meter
+        s = (4,)
+
+        assert_quantity(
+            ufft.fftn(q, s=s),
+            jnpfft.fftn(value, s=s),
+            unit=meter * second
+        )
+        assert_quantity(
+            ufft.rfftn(q, s=s),
+            jnpfft.rfftn(value, s=s),
+            unit=meter * second
+        )
+        assert_quantity(
+            ufft.ifftn(q, s=s),
+            jnpfft.ifftn(value, s=s),
+            unit=meter / second
+        )
+        assert_quantity(
+            ufft.irfftn(q, s=s),
+            jnpfft.irfftn(value, s=s),
+            unit=meter / second
+        )
+
     @parameterized.product(
         value_axes_s=[
             ([[1, 2, 3], [4, 5, 6]], (0, 1), (3, 2)),
@@ -440,7 +467,7 @@ class TestFftChangeUnit(parameterized.TestCase):
             expected = jnpfft_fun(size, d)
             assert_quantity(result, expected, unit=u.hertz)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 q = d * meter
                 result = bufft_fun(size, q)
 

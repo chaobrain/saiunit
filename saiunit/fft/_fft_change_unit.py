@@ -58,10 +58,16 @@ Shape = Sequence[int]
 # return original unit * time unit
 # --------------------------------
 
-def _calculate_fftn_dimension(input_dim: int, axes: Sequence[int] | None = None) -> int:
-    if axes is None:
-        return input_dim
-    return len(axes)
+def _calculate_fftn_dimension(
+    input_dim: int,
+    s: Shape | None = None,
+    axes: Sequence[int] | None = None
+) -> int:
+    if axes is not None:
+        return len(axes)
+    if s is not None:
+        return len(s)
+    return input_dim
 
 
 @unit_change(lambda u: u * second)
@@ -625,7 +631,7 @@ def fftn(
         Array(True, dtype=bool)
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
-    n = _calculate_fftn_dimension(input_ndim, axes)
+    n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
     fftn._unit_change_fun = _unit_change_fun
@@ -643,7 +649,7 @@ def rfftn(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a multidimensional discrete Fourier transform of a real-valued array.
 
-    JAX implementation of :func:`numpy.fft.rfftn`.
+    saiunit implementation of :func:`numpy.fft.rfftn`.
 
     Args:
         a: real-valued input quantity or array.
@@ -731,7 +737,7 @@ def rfftn(
         ArrayImpl([10.+0.j, -2.+2.j, -2.+0.j], dtype=complex64) * meter * second
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
-    n = _calculate_fftn_dimension(input_ndim, axes)
+    n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
     rfftn._unit_change_fun = _unit_change_fun
@@ -980,7 +986,7 @@ def ifftn(
                    [ 0.17+0.j  , -0.83-0.29j, -0.83+0.29j]], dtype=complex64) * meter / second2
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
-    n = _calculate_fftn_dimension(input_ndim, axes)
+    n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
     ifftn._unit_change_fun = _unit_change_fun
@@ -1070,7 +1076,7 @@ def irfftn(
                     [-2., -2., -2.]]], dtype=float32) * meter / second
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
-    n = _calculate_fftn_dimension(input_ndim, axes)
+    n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
     irfftn._unit_change_fun = _unit_change_fun
@@ -1107,7 +1113,7 @@ _time_freq_map = {
 }
 
 
-def _find_closet_scale(scale):
+def _find_closest_scale(scale):
     values = list(_time_freq_map.keys())
 
     diff = np.abs(np.array(values) - scale)
@@ -1116,10 +1122,19 @@ def _find_closet_scale(scale):
     if all(diff > 3):
         return scale
 
-    # find the closet index
-    closet_index = diff.argmin()
+    # find the closest index
+    closest_index = diff.argmin()
 
-    return values[closet_index]
+    return values[closest_index]
+
+
+# Backward-compatible alias for internal callers.
+_find_closet_scale = _find_closest_scale
+
+
+def _validate_time_spacing(d: Quantity) -> None:
+    if d.dim != second.dim:
+        raise TypeError(f"Expected time unit, got {d.unit}")
 
 
 @set_module_as('saiunit.fft')
@@ -1158,8 +1173,8 @@ def fftfreq(
         ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
     """
     if isinstance(d, Quantity):
-        assert d.dim == second.dim, f"Expected time unit, got {d.unit}"
-        time_scale = _find_closet_scale(d.unit.scale)
+        _validate_time_spacing(d)
+        time_scale = _find_closest_scale(d.unit.scale)
         try:
             time_unit, freq_unit = _time_freq_map[time_scale]
         except KeyError:
@@ -1210,8 +1225,8 @@ def rfftfreq(
         ArrayImpl([0.  , 0.25, 0.5 ], dtype=float32) * hertz
     """
     if isinstance(d, Quantity):
-        assert d.dim == second.dim, f"Expected time unit, got {d.unit}"
-        time_scale = _find_closet_scale(d.unit.scale)
+        _validate_time_spacing(d)
+        time_scale = _find_closest_scale(d.unit.scale)
         try:
             time_unit, freq_unit = _time_freq_map[time_scale]
         except KeyError:
