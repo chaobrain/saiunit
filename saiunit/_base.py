@@ -499,7 +499,8 @@ class Dimension:
         >>> length = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])  # meter
         >>> area = length * length  # meter²
         """
-        assert isinstance(value, Dimension), "Can only divide by a Dimension object"
+        if not isinstance(value, Dimension):
+            raise TypeError("Can only multiply by a Dimension object")
         return get_or_create_dimension(self._dims + value._dims)
 
     def __div__(self, value: 'Dimension'):
@@ -531,7 +532,8 @@ class Dimension:
         >>> time = get_or_create_dimension([0, 0, 1, 0, 0, 0, 0])  # second
         >>> acceleration = length_time / time  # meter/second²
         """
-        assert isinstance(value, Dimension), "Can only divide by a Dimension object"
+        if not isinstance(value, Dimension):
+            raise TypeError("Can only divide by a Dimension object")
         return get_or_create_dimension(self._dims - value._dims)
 
     def __truediv__(self, value: 'Dimension'):
@@ -1441,7 +1443,8 @@ def array_with_unit(
     >>> array_with_unit(0.001, volt)
     1. * mvolt
     """
-    assert isinstance(unit, Unit), f'Expected instance of Unit, but got {unit}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'Expected instance of Unit, but got {unit}')
     return Quantity(mantissa, unit=unit, dtype=dtype)
 
 
@@ -1482,7 +1485,8 @@ def is_unitless(obj: Union['Quantity', 'Unit', jax.typing.ArrayLike]) -> bool:
         ``True`` if `obj` is unitless.
     """
     obj = maybe_custom_array(obj)
-    assert not isinstance(obj, Dimension), f"Dimension objects are not unitless or not, but got {obj}"
+    if isinstance(obj, Dimension):
+        raise TypeError(f"Dimension objects are not unitless or not, but got {obj}")
     return _to_quantity(obj).is_unitless
 
 
@@ -1583,8 +1587,8 @@ def _wrap_function_remove_unit(func):
 
 
 def _assert_same_base(u1, u2):
-    assert u1.has_same_base(u2), (f"Currently, we only support units have different bases. "
-                                  f"But we got {u1.base} != {u1.base}.")
+    if not u1.has_same_base(u2):
+        raise TypeError(f"Cannot operate on units with different bases. Got {u1.base} != {u2.base}.")
 
 
 def _find_standard_unit(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bool, bool]:
@@ -1790,7 +1794,8 @@ class Unit:
         # The physical unit dimensions of this unit
         if dim is None:
             dim = DIMENSIONLESS
-        assert isinstance(dim, Dimension), f'Expected instance of Dimension, but got {dim}'
+        if not isinstance(dim, Dimension):
+            raise TypeError(f'Expected instance of Dimension, but got {dim}')
         self._dim = dim
 
         # The name of this unit
@@ -2335,7 +2340,8 @@ class Unit:
 
     def __add__(self, other: 'Unit') -> 'Unit':
         # self + other
-        assert isinstance(other, Unit), f"Expected a Unit, but got {other}"
+        if not isinstance(other, Unit):
+            raise TypeError(f"Expected a Unit, but got {other}")
         if self.has_same_dim(other):
             if self.has_same_magnitude(other):
                 return self.copy()
@@ -2352,7 +2358,8 @@ class Unit:
 
     def __sub__(self, other: 'Unit') -> 'Unit':
         # self - other
-        assert isinstance(other, Unit), f"Expected a Unit, but got {other}"
+        if not isinstance(other, Unit):
+            raise TypeError(f"Expected a Unit, but got {other}")
         if self.has_same_dim(other):
             if self.has_same_magnitude(other):
                 return self.copy()
@@ -2387,7 +2394,7 @@ class Unit:
         else:
             return False
 
-    def __neq__(self, other) -> bool:
+    def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
     def __reduce__(self):
@@ -2409,6 +2416,15 @@ class Unit:
 
 def _to_unit(*args):
     return Unit(*args)
+
+
+def _quantity_with_unit(mantissa, unit):
+    """Private reconstruction helper for Quantity pickling.
+
+    Must live at module level *without* ``@set_module_as`` so that pickle can
+    locate it as ``saiunit._base._quantity_with_unit``.
+    """
+    return Quantity(mantissa, unit=unit)
 
 
 UNITLESS = Unit()
@@ -2514,7 +2530,8 @@ class Quantity(Generic[A]):
             mantissa = maybe_custom_array_tree(mantissa)
 
             if isinstance(mantissa, Unit):
-                assert unit is UNITLESS, "Cannot create a Quantity object with a unit and a mantissa that is a Unit object."
+                if unit is not UNITLESS:
+                    raise ValueError("Cannot create a Quantity object with a unit and a mantissa that is a Unit object.")
                 unit = mantissa
                 mantissa = 1.
 
@@ -2810,7 +2827,8 @@ class Quantity(Generic[A]):
         Returns:
           The decimal number of the quantity based on the given unit.
         """
-        assert isinstance(unit, Unit), f"Expected a Unit, but got {unit}."
+        if not isinstance(unit, Unit):
+            raise TypeError(f"Expected a Unit, but got {unit}.")
         if not unit.has_same_dim(self.unit):
             raise UnitMismatchError(
                 f"Cannot convert to the decimal number using a unit with different "
@@ -2839,7 +2857,8 @@ class Quantity(Generic[A]):
         Returns:
             The new quantity with the given unit.
         """
-        assert isinstance(unit, Unit), f"Expected a Unit, but got {unit}."
+        if not isinstance(unit, Unit):
+            raise TypeError(f"Expected a Unit, but got {unit}.")
         if not unit.has_same_dim(self.unit):
             if err_msg is None:
                 raise UnitMismatchError(f"Cannot convert to a unit with different dimensions.", self.unit, unit)
@@ -3060,7 +3079,7 @@ class Quantity(Generic[A]):
         return jnp.isfinite(self.mantissa)
 
     @property
-    def isinfnite(self) -> jax.Array:
+    def isinfinite(self) -> jax.Array:
         return jnp.isinf(self.mantissa)
 
     @property
@@ -3082,7 +3101,10 @@ class Quantity(Generic[A]):
         Returns:
           int: The hash value of the Quantity object.
         """
-        return hash((self.mantissa, self.unit))
+        try:
+            return hash((np.asarray(self.mantissa).tobytes(), self.unit))
+        except Exception:
+            return hash((id(self.mantissa), self.unit))
 
     def __repr__(self) -> str:
         return self.repr_in_unit(python_code=True)
@@ -3131,7 +3153,8 @@ class Quantity(Generic[A]):
             return Quantity(self.mantissa, unit=self.unit)
         elif isinstance(index, tuple):
             for x in index:
-                assert not isinstance(x, Quantity), "Array indices must be integers or slices, not Array"
+                if isinstance(x, Quantity):
+                    raise TypeError("Array indices must be integers or slices, not Array")
         elif isinstance(index, Quantity):
             raise TypeError("Array indices must be integers or slices, not Array")
         return Quantity(self.mantissa[index], unit=self.unit)
@@ -3612,7 +3635,8 @@ class Quantity(Generic[A]):
             except (ImportError, ModuleNotFoundError):
                 pass
         if isinstance(oc, Quantity):
-            assert oc.is_unitless, f"Cannot calculate {self} ** {oc}, the exponent has to be dimensionless"
+            if not oc.is_unitless:
+                raise ValueError(f"Cannot calculate {self} ** {oc}, the exponent has to be dimensionless")
             oc = oc.mantissa
         r = Quantity(jnp.array(self.mantissa) ** oc, unit=self.unit ** oc)
         return maybe_decimal(r)
@@ -3620,7 +3644,8 @@ class Quantity(Generic[A]):
     def __rpow__(self, oc):
         # oc ** self
         # self = self.factorless()
-        assert self.is_unitless, f"Cannot calculate {oc} ** {self}, the exponent has to be dimensionless"
+        if not self.is_unitless:
+            raise ValueError(f"Cannot calculate {oc} ** {self}, the exponent has to be dimensionless")
         return oc ** self.mantissa
 
     def __ipow__(self, oc):
@@ -3669,7 +3694,8 @@ class Quantity(Generic[A]):
         # self << oc
         # self = self.factorless()
         if isinstance(oc, Quantity):
-            assert oc.is_unitless, "The shift amount must be dimensionless"
+            if not oc.is_unitless:
+                raise ValueError("The shift amount must be dimensionless")
             oc = oc.mantissa
         r = Quantity(self.mantissa << oc, unit=self.unit)
         return maybe_decimal(r)
@@ -3677,7 +3703,8 @@ class Quantity(Generic[A]):
     def __rlshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
         # oc << self
         # self = self.factorless()
-        assert self.is_unitless, "The shift amount must be dimensionless"
+        if not self.is_unitless:
+            raise ValueError("The shift amount must be dimensionless")
         return oc << self.mantissa
 
     def __ilshift__(self, oc) -> 'Quantity':
@@ -3691,7 +3718,8 @@ class Quantity(Generic[A]):
         # self >> oc
         # self = self.factorless()
         if isinstance(oc, Quantity):
-            assert oc.is_unitless, "The shift amount must be dimensionless"
+            if not oc.is_unitless:
+                raise ValueError("The shift amount must be dimensionless")
             oc = oc.mantissa
         r = Quantity(self.mantissa >> oc, unit=self.unit)
         return maybe_decimal(r)
@@ -3699,7 +3727,8 @@ class Quantity(Generic[A]):
     def __rrshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
         # oc >> self
         # self = self.factorless()
-        assert self.is_unitless, "The shift amount must be dimensionless"
+        if not self.is_unitless:
+            raise ValueError("The shift amount must be dimensionless")
         return oc >> self.mantissa
 
     def __irshift__(self, oc) -> 'Quantity':
@@ -3719,16 +3748,23 @@ class Quantity(Generic[A]):
         # self = self.factorless()
         return Quantity(self.mantissa.__round__(ndigits), unit=self.unit)
 
-    # def __reduce__(self):
-    #     """
-    #     Method used by Pickle object serialization.
-    #
-    #     Returns
-    #     -------
-    #     tuple
-    #         The tuple of the class and the arguments required to reconstruct the object.
-    #     """
-    #     return array_with_unit, (self.mantissa, self.unit, None)
+    def __reduce__(self):
+        """
+        Method used by Pickle object serialization.
+
+        Returns ``(array_with_unit, (mantissa, unit))`` so that
+        ``pickle.loads(pickle.dumps(q))`` reconstructs an identical Quantity
+        without bypassing ``__init__`` validation.  Using ``array_with_unit``
+        (rather than ``Quantity`` directly) mirrors the pattern used by
+        ``Unit.__reduce__`` and avoids issues with ``__slots__``.
+
+        Returns
+        -------
+        tuple
+            ``(callable, args)`` such that ``callable(*args)`` reconstructs
+            the object.
+        """
+        return _quantity_with_unit, (self.mantissa, self.unit)
 
     # ----------------------- #
     #      NumPy methods      #
@@ -4425,7 +4461,8 @@ class _IndexUpdateHelper:
     __slots__ = ("quantity",)
 
     def __init__(self, quantity: Quantity):
-        assert isinstance(quantity, Quantity), f"quantity must be a Quantity object, but got {quantity}"
+        if not isinstance(quantity, Quantity):
+            raise TypeError(f"quantity must be a Quantity object, but got {quantity}")
         self.quantity = quantity
 
     def __getitem__(self, index: Any) -> _IndexUpdateRef:
@@ -4569,7 +4606,7 @@ class _IndexUpdateRef:
         values = Quantity(values)
         return Quantity(
             self.mantissa_at[self.index].divide(
-                values,
+                values.mantissa,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
                 mode=mode
@@ -4592,7 +4629,8 @@ class _IndexUpdateRef:
         :mod:indexed assignment <numpy.doc.indexing>` ``x[idx] **= y``.
 
         """
-        assert isinstance(values, int), f"values must be an integer, but got {values}"
+        if not isinstance(values, int):
+            raise TypeError(f"values must be an integer, but got {values}")
         return Quantity(
             self.mantissa_at[self.index].power(
                 values,
