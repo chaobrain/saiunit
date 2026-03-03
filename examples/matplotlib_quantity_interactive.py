@@ -2,7 +2,7 @@
 Interactive Matplotlib example with saiunit.Quantity axes and data.
 
 Run:
-    python examples/quantity_matplotlib_interactive.py
+    python examples/matplotlib_quantity_interactive.py
 """
 
 from __future__ import annotations
