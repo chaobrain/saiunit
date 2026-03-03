@@ -18,7 +18,7 @@ from __future__ import annotations
 import inspect
 import operator
 from functools import partial
-from typing import Any
+from typing import Any, Callable, Sequence
 
 from .._compatible_import import concrete_or_error
 
@@ -32,6 +32,52 @@ def _ensure_index(x: Any) -> int | tuple[int, ...]:
         return operator.index(x)
     except TypeError:
         return tuple(map(operator.index, x))
+
+
+def _argnums_partial(
+    fun: Callable,
+    argnums: int | Sequence[int],
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> tuple[int | tuple[int, ...], Callable, tuple[Any, ...]]:
+    """
+    Build a function that accepts only differentiable positional args.
+
+    This avoids depending on JAX private internals while preserving argnums
+    semantics (including negative indices).
+    """
+    argnums = _ensure_index(argnums)
+    nargs = len(args)
+
+    def _normalize_index(i: int) -> int:
+        i = i + nargs if i < 0 else i
+        if i < 0 or i >= nargs:
+            raise ValueError(f'argnums index {i} is out of bounds for {nargs} positional args.')
+        return i
+
+    if isinstance(argnums, int):
+        normalized_argnums: int | tuple[int, ...] = _normalize_index(argnums)
+        argnums_tuple = (normalized_argnums,)
+    else:
+        argnums_tuple = tuple(_normalize_index(i) for i in argnums)
+        if len(argnums_tuple) == 0:
+            raise ValueError('argnums must be non-empty.')
+        if len(set(argnums_tuple)) != len(argnums_tuple):
+            raise ValueError(f'argnums must not contain duplicate entries, got {argnums}.')
+        normalized_argnums = argnums_tuple
+
+    dynamic_args = tuple(args[i] for i in argnums_tuple)
+    static_args = list(args)
+
+    def partial_fun(*dyn_args):
+        if len(dyn_args) != len(argnums_tuple):
+            raise TypeError(f'Expected {len(argnums_tuple)} differentiated args, got {len(dyn_args)}.')
+        merged_args = list(static_args)
+        for idx, value in zip(argnums_tuple, dyn_args):
+            merged_args[idx] = value
+        return fun(*merged_args, **kwargs)
+
+    return normalized_argnums, partial_fun, dynamic_args
 
 
 def _isgeneratorfunction(fun):

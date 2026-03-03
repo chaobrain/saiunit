@@ -63,6 +63,25 @@ def test_jacrev_function2():
     )
 
 
+def test_jacrev_function2_list_argnums():
+    def simple_function(x, y):
+        return x * y
+
+    jac_fn = u.autograd.jacrev(simple_function, argnums=[0, 1])
+
+    x = bst.random.rand(3) * u.ohm
+    y = bst.random.rand(3) * u.mA
+    jac = jac_fn(x, y)
+    assert u.math.allclose(
+        jac[0],
+        u.math.diag(y)
+    )
+    assert u.math.allclose(
+        jac[1],
+        u.math.diag(x)
+    )
+
+
 def test_jacrev_function3():
     def simple_function(inputs):
         o1 = inputs['x'] * inputs['y']
@@ -141,6 +160,25 @@ def test_jacfwd_function2():
         return x * y
 
     jac_fn = u.autograd.jacfwd(simple_function, argnums=(0, 1))
+
+    x = bst.random.rand(3) * u.ohm
+    y = bst.random.rand(3) * u.mA
+    jac = jac_fn(x, y)
+    assert u.math.allclose(
+        jac[0],
+        u.math.diag(y)
+    )
+    assert u.math.allclose(
+        jac[1],
+        u.math.diag(x)
+    )
+
+
+def test_jacfwd_function2_list_argnums():
+    def simple_function(x, y):
+        return x * y
+
+    jac_fn = u.autograd.jacfwd(simple_function, argnums=[0, 1])
 
     x = bst.random.rand(3) * u.ohm
     y = bst.random.rand(3) * u.mA

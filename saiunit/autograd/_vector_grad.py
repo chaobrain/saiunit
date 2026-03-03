@@ -20,23 +20,8 @@ from typing import Callable, Sequence
 
 import jax
 from jax import numpy as jnp
-from jax.api_util import argnums_partial
-
-# _vjp is a trace-level primitive that accepts WrappedFun from argnums_partial.
-# In JAX 0.9+ WrappedFun has no __call__, so the public jax.vjp cannot be used.
-try:
-    from jax._src.api import _vjp
-except ImportError:
-    def _vjp(fun, *primals, has_aux=False):
-        raise ImportError(
-            "saiunit.autograd.vector_grad requires jax._src.api._vjp which is "
-            "not available in this JAX version. Please open an issue at "
-            "https://github.com/chaoming0625/saiunit/issues"
-        )
-
-from ._misc import _check_callable
+from ._misc import _check_callable, _argnums_partial, _ensure_index
 from saiunit._base import get_unit, maybe_decimal, Quantity, get_mantissa
-from saiunit._compatible_import import wrap_init
 from saiunit._misc import maybe_custom_array_tree
 
 __all__ = [
@@ -86,16 +71,16 @@ def vector_grad(
     """
 
     _check_callable(func)
+    argnums = _ensure_index(argnums)
 
     @wraps(func)
     def grad_fun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
-        f = wrap_init(func, args, kwargs, 'vector_grad')
-        f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
+        argnums_, f_partial, dyn_args = _argnums_partial(func, argnums, args, kwargs)
         if has_aux:
-            y, vjp_fn, aux = _vjp(f_partial, *dyn_args, has_aux=True)
+            y, vjp_fn, aux = jax.vjp(f_partial, *dyn_args, has_aux=True)
         else:
-            y, vjp_fn = _vjp(f_partial, *dyn_args)
+            y, vjp_fn = jax.vjp(f_partial, *dyn_args)
         leaves, tree = jax.tree.flatten(y)
         if unit_aware:
             if len(leaves) != 1:
@@ -105,10 +90,10 @@ def vector_grad(
                 )
         tangents = jax.tree.unflatten(tree, [jnp.ones(l.shape, dtype=l.dtype) for l in leaves])
         grads = vjp_fn(tangents)
-        if isinstance(argnums, int):
+        if isinstance(argnums_, int):
             grads = grads[0]
         if unit_aware:
-            args_to_grad = jax.tree.map(lambda i: args[i], argnums)
+            args_to_grad = jax.tree.map(lambda i: args[i], argnums_)
             r_unit = get_unit(y)
             grads = jax.tree.map(
                 lambda arg, grad: maybe_decimal(

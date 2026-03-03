@@ -21,34 +21,9 @@ from typing import (Sequence, Callable, Any)
 import jax
 import numpy as np
 from jax import numpy as jnp
-from jax.api_util import argnums_partial
-
-# _vjp and _jvp are trace-level primitives that accept WrappedFun objects from
-# argnums_partial. In JAX 0.9+ WrappedFun has no __call__, so the public
-# jax.vjp / jax.jvp cannot be used here.  These internal functions are also
-# necessary for the vmap(jvp) composition used in jacfwd (same as JAX's own
-# jacfwd implementation).  Wrap in try/except for forward-compatibility.
-try:
-    from jax._src.api import _vjp, _jvp
-except ImportError:
-    def _vjp(fun, *primals, has_aux=False):
-        raise ImportError(
-            "saiunit.autograd.jacrev/vector_grad requires jax._src.api._vjp "
-            "which is not available in this JAX version. Please open an issue at "
-            "https://github.com/chaoming0625/saiunit/issues"
-        )
-
-
-    def _jvp(fun, primals, tangents, has_aux=False):
-        raise ImportError(
-            "saiunit.autograd.jacfwd requires jax._src.api._jvp which is not "
-            "available in this JAX version. Please open an issue at "
-            "https://github.com/chaoming0625/saiunit/issues"
-        )
-
-from ._misc import _ensure_index, _check_callable
+from ._misc import _ensure_index, _check_callable, _argnums_partial
 from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
-from saiunit._compatible_import import safe_map, wrap_init
+from saiunit._compatible_import import safe_map
 from saiunit._misc import maybe_custom_array_tree
 
 
@@ -220,24 +195,24 @@ def jacrev(
     1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
     """
     _check_callable(fun)
+    argnums = _ensure_index(argnums)
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
-        f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacrev')
-        f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
+        argnums_, f_partial, dyn_args = _argnums_partial(fun, argnums, args, kwargs)
         jax.tree.map(partial(_check_input_dtype_jacrev, holomorphic, allow_int), dyn_args)
         if not has_aux:
-            y, pullback = _vjp(f_partial, *dyn_args)
+            y, pullback = jax.vjp(f_partial, *dyn_args)
         else:
-            y, pullback, aux = _vjp(f_partial, *dyn_args, has_aux=True)
+            y, pullback, aux = jax.vjp(f_partial, *dyn_args, has_aux=True)
         jax.tree.map(partial(_check_output_dtype_jacrev, holomorphic), y)
         jac = jax.vmap(pullback)(_std_basis(y))
-        jac = jac[0] if isinstance(argnums, int) else jac
+        jac = jac[0] if isinstance(argnums_, int) else jac
         jac_tree = jax.tree.map(partial(_jacrev_unravel, y, is_leaf=_is_quantity),
                                 jac,
                                 is_leaf=_is_quantity)
-        example_args = dyn_args[0] if isinstance(argnums, int) else dyn_args
+        example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
         jac_tree = _tree_transpose(outer=example_args, inner=y, pytree_to_transpose=jac_tree)
         if not has_aux:
             return jac_tree
@@ -416,17 +391,16 @@ def jacfwd(
     @wraps(fun)
     def jacfun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
-        f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacfwd')
-        f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
+        argnums_, f_partial, dyn_args = _argnums_partial(fun, argnums, args, kwargs)
         jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic), dyn_args)
         if not has_aux:
-            pushfwd: Callable = partial(_jvp, f_partial, dyn_args)
+            pushfwd: Callable = partial(jax.jvp, f_partial, dyn_args)
             y, jac = jax.vmap(pushfwd, out_axes=(None, -1))(_std_basis(dyn_args))
         else:
-            pushfwd: Callable = partial(_jvp, f_partial, dyn_args, has_aux=True)
+            pushfwd: Callable = partial(jax.jvp, f_partial, dyn_args, has_aux=True)
             y, jac, aux = jax.vmap(pushfwd, out_axes=(None, -1, None))(_std_basis(dyn_args))
         jax.tree.map(partial(_check_output_dtype_jacfwd, holomorphic), y)
-        example_args = dyn_args[0] if isinstance(argnums, int) else dyn_args
+        example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
         jac_tree = jax.tree.map(partial(_jacfwd_unravel, example_args, is_leaf=_is_quantity),
                                 jac,
                                 is_leaf=_is_quantity)

@@ -74,6 +74,17 @@ def test_vector_grad_multiple_args():
         assert u.math.allclose(grad[1], jnp.array([3.0, 4.0]) * ux)
 
 
+def test_vector_grad_multiple_args_list_argnums():
+    def multi_arg_function(x, y):
+        return x * y
+
+    vector_grad_fn = u.autograd.vector_grad(multi_arg_function, argnums=[0, 1])
+    grad = vector_grad_fn(jnp.array([3.0, 4.0]) * u.ms,
+                          jnp.array([5.0, 6.0]) * u.mV)
+    assert u.math.allclose(grad[0], jnp.array([5.0, 6.0]) * u.mV)
+    assert u.math.allclose(grad[1], jnp.array([3.0, 4.0]) * u.ms)
+
+
 def test_vector_grad_with_aux():
     def function_with_aux(x):
         return x ** 2, u.math.sum(x * 3)
