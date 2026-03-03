@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -382,3 +382,14 @@ class TestLinalgChangeUnit(parameterized.TestCase):
         assert jax.jit(lambda x, y, z: (x @ y) @ z).lower(x, y, z).cost_analysis()['flops'] == 600000.0
         assert jax.jit(lambda x, y, z: x @ (y @ z)).lower(x, y, z).cost_analysis()['flops'] == 30000.0
         assert jax.jit(bu.linalg.multi_dot).lower([x, y, z]).cost_analysis()['flops'] == 30000.0
+
+    def test_cholesky_supports_symmetrize_input(self):
+        a = jnp.array([[2.0, 1.0], [1.0, 2.0]])
+
+        result = bulinalg.cholesky(a, symmetrize_input=False)
+        expected = jnp.linalg.cholesky(a, symmetrize_input=False)
+        assert_quantity(result, expected)
+
+        q = a * meter * meter
+        result = bulinalg.cholesky(q, symmetrize_input=False)
+        assert_quantity(result, expected, unit=meter)

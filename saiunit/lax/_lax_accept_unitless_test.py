@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
                 expected = lax_fun(q.to_decimal(unit2scale))
                 assert_quantity(result, expected)
 
-                with pytest.raises(AssertionError):
+                with pytest.raises(TypeError):
                     result = bulax_fun(q)
 
                 with pytest.raises(bu.UnitMismatchError):
@@ -110,7 +110,7 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
             expected = lax_fun(q1.to_decimal(bu.dametre), q2.to_decimal(bu.dametre))
             assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bulax_fun(q1, q2)
 
             with pytest.raises(bu.UnitMismatchError):
@@ -137,7 +137,7 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
             # expected = jnp_fun(jnp.array(value1), jnp.array(value2))
             # assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bulax_fun(q1, q2)
 
     @parameterized.product(
@@ -162,7 +162,7 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
         expected = lax_fun(q1.to_decimal(bu.dametre), q2.to_decimal(bu.dametre), q3.to_decimal(bu.dametre))
         assert_quantity(result, expected)
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result = bulax_fun(q1, q2, q3)
 
         with pytest.raises(bu.UnitMismatchError):
@@ -187,7 +187,7 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
         expected = lax_fun(q1.to_decimal(bu.dametre), value2)
         assert_quantity(result, expected)
 
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result = bulax_fun(q1, value2)
 
         with pytest.raises(bu.UnitMismatchError):

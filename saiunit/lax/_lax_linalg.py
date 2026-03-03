@@ -1,15 +1,29 @@
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from __future__ import annotations
 
-import sys
 from typing import Union, Callable, Any
 
 import jax
 from jax import lax, Array
 
 from saiunit.lax._lax_change_unit import unit_change
-from .._base import Quantity, maybe_decimal, fail_for_unit_mismatch
-from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
-from ..math._fun_change_unit import _fun_change_unit_unary
+from saiunit._base import Quantity, maybe_decimal, fail_for_unit_mismatch
+from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from saiunit.math._fun_change_unit import _fun_change_unit_unary
 
 __all__ = [
     # linear algebra unary
@@ -373,32 +387,18 @@ def svd(
     the right singular vectors.
     """
     x = maybe_custom_array(x)
-    if sys.version_info >= (3, 10):
-        if isinstance(x, Quantity):
-            if compute_uv:
-                u, s, vh = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
-                                          subset_by_index=subset_by_index, algorithm=algorithm)
-                return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
-            else:
-                s = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
-                                   subset_by_index=subset_by_index, algorithm=algorithm)
-                return maybe_decimal(Quantity(s, unit=x.unit))
+    if isinstance(x, Quantity):
+        if compute_uv:
+            u, s, vh = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
+                                      subset_by_index=subset_by_index, algorithm=algorithm)
+            return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
         else:
-            return lax.linalg.svd(x, full_matrices=full_matrices, compute_uv=compute_uv,
-                                  subset_by_index=subset_by_index, algorithm=algorithm)
+            s = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
+                               subset_by_index=subset_by_index, algorithm=algorithm)
+            return maybe_decimal(Quantity(s, unit=x.unit))
     else:
-        if isinstance(x, Quantity):
-            if compute_uv:
-                u, s, vh = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
-                                          subset_by_index=subset_by_index)
-                return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
-            else:
-                s = lax.linalg.svd(x.mantissa, full_matrices=full_matrices, compute_uv=compute_uv,
-                                   subset_by_index=subset_by_index)
-                return maybe_decimal(Quantity(s, unit=x.unit))
-        else:
-            return lax.linalg.svd(x, full_matrices=full_matrices, compute_uv=compute_uv,
-                                  subset_by_index=subset_by_index)
+        return lax.linalg.svd(x, full_matrices=full_matrices, compute_uv=compute_uv,
+                              subset_by_index=subset_by_index, algorithm=algorithm)
 
 
 @set_module_as('saiunit.lax')

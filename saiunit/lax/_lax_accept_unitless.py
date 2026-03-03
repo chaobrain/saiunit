@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ from typing import Union, Optional, Callable, Sequence
 import jax
 from jax import lax
 
-from .._base import Quantity, Unit
-from .._misc import set_module_as
-from ..math._fun_accept_unitless import _fun_accept_unitless_unary, _fun_accept_unitless_binary, _fun_unitless_binary
+from saiunit._base import Quantity, Unit
+from saiunit._misc import set_module_as
+from saiunit.math._fun_accept_unitless import _fun_accept_unitless_unary, _fun_accept_unitless_binary, _fun_unitless_binary
 
 __all__ = [
     # math funcs only accept unitless (unary)
@@ -322,14 +322,16 @@ def _fun_accept_unitless_nary(
     for arg in args:
         if isinstance(arg, Quantity):
             if unit_to_scale is None:
-                assert arg.dim.is_dimensionless, (
-                    f'{func} only support dimensionless input. But we got {arg}. \n'
-                    f'If you want to scale the input, please provide the "unit_to_scale" parameter. Or '
-                    f'convert the input to a dimensionless Quantity manually.'
-                )
+                if not arg.dim.is_dimensionless:
+                    raise TypeError(
+                        f'{func.__name__} only supports dimensionless input, but got {arg}. '
+                        f'Pass "unit_to_scale=<Unit>" to scale before applying {func.__name__}, '
+                        f'or convert the input to dimensionless first.'
+                    )
                 new_args.append(arg.to_decimal())
             else:
-                assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
+                if not isinstance(unit_to_scale, Unit):
+                    raise TypeError(f'unit_to_scale should be a Unit instance. Got {unit_to_scale}')
                 new_args.append(arg.to_decimal(unit_to_scale))
         else:
             new_args.append(arg)

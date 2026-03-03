@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import numpy as np
 from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 
 from ._fun_array_creation import asarray
-from .._base import (
+from saiunit._base import (
     Quantity,
     fail_for_dimension_mismatch,
     get_unit,
@@ -33,7 +33,7 @@ from .._base import (
     unit_scale_align_to_first,
     maybe_decimal
 )
-from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
     # sequence inputs
@@ -1171,9 +1171,11 @@ def unflatten(
       The returned tensor has one more dimension than the input tensor.
       The returned tensor shares the same underlying data with this tensor.
     """
-    assert x.ndim > axis, ('The dimension to be unflattened should '
-                           'be less than the tensor dimension. '
-                           f'Got {axis} and {x.ndim}.')
+    if x.ndim <= axis:
+        raise ValueError(
+            f'unflatten requires "axis" to be less than x.ndim, '
+            f'but got axis={axis} and x.ndim={x.ndim}.'
+        )
     shape = x.shape
     new_shape = shape[:axis] + tuple(sizes) + shape[axis + 1:]
     return _fun_keep_unit_unary(jnp.reshape, x, shape=new_shape)
@@ -2431,7 +2433,11 @@ def percentile(
       Output array.
     """
     if isinstance(q, Quantity):
-        assert q.is_unitless, 'Percentile should be unitless.'
+        if not q.is_unitless:
+            raise TypeError(
+                f'percentile requires "q" to be dimensionless (a percentage 0-100), '
+                f'but got q with unit={q.unit}. Pass a plain number or dimensionless Quantity for q.'
+            )
         q = q.mantissa
     return _fun_keep_unit_unary(
         jnp.percentile, a, q=q, axis=axis, method=method, keepdims=keepdims,
@@ -2489,7 +2495,11 @@ def nanpercentile(
       Output array.
     """
     if isinstance(q, Quantity):
-        assert q.is_unitless, 'Percentile should be unitless.'
+        if not q.is_unitless:
+            raise TypeError(
+                f'nanpercentile requires "q" to be dimensionless (a percentage 0-100), '
+                f'but got q with unit={q.unit}. Pass a plain number or dimensionless Quantity for q.'
+            )
         q = q.mantissa
     return _fun_keep_unit_unary(
         jnp.nanpercentile, a, q=q, axis=axis, method=method, keepdims=keepdims,
@@ -2547,7 +2557,11 @@ def quantile(
       Output array.
     """
     if isinstance(q, Quantity):
-        assert q.is_unitless, 'Percentile should be unitless.'
+        if not q.is_unitless:
+            raise TypeError(
+                f'quantile requires "q" to be dimensionless (a quantile between 0 and 1), '
+                f'but got q with unit={q.unit}. Pass a plain number or dimensionless Quantity for q.'
+            )
         q = q.mantissa
     return _fun_keep_unit_unary(
         jnp.quantile, a, q=q, axis=axis, method=method, keepdims=keepdims
@@ -2605,7 +2619,11 @@ def nanquantile(
       Output array.
     """
     if isinstance(q, Quantity):
-        assert q.is_unitless, 'Percentile should be unitless.'
+        if not q.is_unitless:
+            raise TypeError(
+                f'nanquantile requires "q" to be dimensionless (a quantile between 0 and 1), '
+                f'but got q with unit={q.unit}. Pass a plain number or dimensionless Quantity for q.'
+            )
         q = q.mantissa
     return _fun_keep_unit_unary(
         jnp.nanquantile, a, q=q, axis=axis, method=method, keepdims=keepdims,
@@ -2622,10 +2640,20 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
     if isinstance(x1, Quantity) and isinstance(x2, Quantity):
         return Quantity(func(x1.mantissa, x2.in_unit(x1.unit).mantissa, *args, **kwargs), unit=x1.unit)
     elif isinstance(x1, Quantity):
-        assert x1.is_unitless, f'Expected unitless array when x2 is not Quantity, while got {x1}'
+        if not x1.is_unitless:
+            raise TypeError(
+                f'Expected "x1" to be dimensionless when "x2" is a plain array, '
+                f'but got x1 with unit={x1.unit}. '
+                f'Either pass a Quantity for x2 with matching units, or strip the unit from x1.'
+            )
         return func(x1.mantissa, x2, *args, **kwargs)
     elif isinstance(x2, Quantity):
-        assert x2.is_unitless, f'Expected unitless array when x1 is not Quantity, while got {x2}'
+        if not x2.is_unitless:
+            raise TypeError(
+                f'Expected "x2" to be dimensionless when "x1" is a plain array, '
+                f'but got x2 with unit={x2.unit}. '
+                f'Either pass a Quantity for x1 with matching units, or strip the unit from x2.'
+            )
         return func(x1, x2.mantissa, *args, **kwargs)
     else:
         return func(x1, x2, *args, **kwargs)
@@ -3111,7 +3139,12 @@ def compress(
       A new array that has the same number of dimensions as `a`, and the same shape as `a` with axis `axis` removed.
     """
     if isinstance(condition, Quantity):
-        assert condition.is_unitless, 'condition must be unitless.'
+        if not condition.is_unitless:
+            raise TypeError(
+                f'compress requires "condition" to be dimensionless (a boolean mask), '
+                f'but got condition with unit={condition.unit}. '
+                f'Strip the unit from condition before passing it to compress.'
+            )
         condition = condition.mantissa
     a_unit = get_unit(a)
     if fill_value is not None:
@@ -3151,7 +3184,12 @@ def extract(
       The extracted elements. The shape of `res` is the same as that of `condition`.
     """
     if isinstance(condition, Quantity):
-        assert condition.is_unitless, 'condition must be unitless.'
+        if not condition.is_unitless:
+            raise TypeError(
+                f'extract requires "condition" to be dimensionless (a boolean mask), '
+                f'but got condition with unit={condition.unit}. '
+                f'Strip the unit from condition before passing it to extract.'
+            )
         condition = condition.mantissa
     a_unit = get_unit(arr)
     if fill_value is not None:
@@ -3260,7 +3298,12 @@ def select(
       `condlist` is True.
     """
     for cond in condlist:
-        assert not isinstance(cond, Quantity), "condlist should not contain Quantity."
+        if isinstance(cond, Quantity):
+            raise TypeError(
+                f'select requires all elements of "condlist" to be plain boolean arrays, '
+                f'but got a Quantity with unit={cond.unit}. '
+                f'Strip units from all condition arrays before passing them to select.'
+            )
     return _fun_keep_unit_sequence(functools.partial(jnp.select, condlist), choicelist, default=default)
 
 
@@ -3299,20 +3342,43 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None):
     choose
     nonzero : The function that is called when x and y are omitted
     """
-    assert not isinstance(condition, Quantity), "condition should not be a Quantity."
+    if isinstance(condition, Quantity):
+        raise TypeError(
+            f'where requires "condition" to be a plain boolean array, not a Quantity. '
+            f'Got condition with unit={condition.unit}. '
+            f'Strip the unit from condition before passing it to where.'
+        )
     if x is None and y is None:
-        assert not isinstance(fill_value, Quantity), "fill_value should not be a Quantity."
+        if isinstance(fill_value, Quantity):
+            raise TypeError(
+                f'where requires "fill_value" to be a plain scalar when x and y are not provided, '
+                f'but got fill_value with unit={fill_value.unit}.'
+            )
         return jnp.where(condition, size=size, fill_value=fill_value)
 
-    assert size is None and fill_value is None, "size and fill_value are only supported when x and y are not None."
+    if size is not None or fill_value is not None:
+        raise ValueError(
+            f'where does not support "size" or "fill_value" when x and y are provided. '
+            f'Got size={size}, fill_value={fill_value}.'
+        )
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         y = y.in_unit(x.unit)
         return Quantity(jnp.where(condition, x.mantissa, y.mantissa), unit=x.unit)
     elif isinstance(x, Quantity):
-        assert x.is_unitless, 'x must be unitless when y is not a Quantity.'
+        if not x.is_unitless:
+            raise TypeError(
+                f'where requires "x" to be dimensionless when "y" is a plain array, '
+                f'but got x with unit={x.unit}. '
+                f'Either pass a Quantity for y with matching units, or strip the unit from x.'
+            )
         x = x.mantissa
     elif isinstance(y, Quantity):
-        assert y.is_unitless, 'y must be unitless when x is not a Quantity.'
+        if not y.is_unitless:
+            raise TypeError(
+                f'where requires "y" to be dimensionless when "x" is a plain array, '
+                f'but got y with unit={y.unit}. '
+                f'Either pass a Quantity for x with matching units, or strip the unit from y.'
+            )
         y = y.mantissa
     return jnp.where(condition, x, y)
 
@@ -3524,7 +3590,7 @@ def fix(
     -------
     out : jax.Array
     """
-    return _fun_keep_unit_unary(jnp.fix, x)
+    return _fun_keep_unit_unary(jnp.trunc, x)
 
 
 @set_module_as('saiunit.math')

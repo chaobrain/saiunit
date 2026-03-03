@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import jax
 import jax.numpy as jnp
 
 from ._exprel import exprel as _exprel_impl, set_exprel_order
-from .._base import Quantity, Unit
-from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
+from saiunit._base import Quantity, Unit
+from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 __all__ = [
     # math funcs only accept unitless (unary)
@@ -45,6 +45,43 @@ __all__ = [
 # math funcs only accept unitless (unary)
 # ---------------------------------------
 
+
+def _func_name(func: Callable) -> str:
+    return getattr(func, '__name__', repr(func))
+
+
+def _quantity_summary(x: Quantity) -> str:
+    return f"Quantity(unit={x.unit}, dim={x.dim})"
+
+
+def _dimensionless_required_message(func: Callable, x: Quantity, arg_name: str = 'x') -> str:
+    name = _func_name(func)
+    summary = _quantity_summary(x)
+    return (
+        f'{name} requires a dimensionless "{arg_name}" when "unit_to_scale" is not provided. '
+        f'Got {summary}. '
+        f'Pass "unit_to_scale=<Unit>" to scale before applying {name}, or convert explicitly to '
+        f'a dimensionless value first.'
+    )
+
+
+def _invalid_unit_to_scale_type_message(func: Callable, unit_to_scale: Any) -> str:
+    name = _func_name(func)
+    return (
+        f'{name} expects "unit_to_scale" to be a Unit instance, but got '
+        f'{type(unit_to_scale).__name__}: {unit_to_scale!r}.'
+    )
+
+
+def _unit_to_scale_without_quantity_message(func: Callable, x: Any) -> str:
+    name = _func_name(func)
+    return (
+        f'{name} received "unit_to_scale" but input "x" is not a Quantity '
+        f'(got type {type(x).__name__}). '
+        f'Remove "unit_to_scale" or pass a Quantity input.'
+    )
+
+
 def _fun_accept_unitless_unary(
     func: Callable,
     x: jax.typing.ArrayLike | Quantity,
@@ -59,21 +96,17 @@ def _fun_accept_unitless_unary(
     if isinstance(x, Quantity):
         # x = x.factorless()
         if unit_to_scale is None:
-            assert x.dim.is_dimensionless, (
-                f'{func} only support dimensionless input. But we got {x}. \n'
-                f'If you want to scale the input, please provide the "unit_to_scale" parameter. Or '
-                f'convert the input to a dimensionless Quantity manually.'
-            )
+            if not x.dim.is_dimensionless:
+                raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
             x = x.to_decimal()
             return func(x, *args, **kwargs)
         else:
-            assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
+            if not isinstance(unit_to_scale, Unit):
+                raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
             return func(x.to_decimal(unit_to_scale), *args, **kwargs)
     else:
-        assert unit_to_scale is None, (
-            f'{func} only support dimensionless input. \n'
-            'When the input is not a Quantity, the "unit_to_scale" parameter should not be provided.'
-        )
+        if unit_to_scale is not None:
+            raise TypeError(_unit_to_scale_without_quantity_message(func, x))
         return func(x, *args, **kwargs)
 
 
@@ -735,23 +768,22 @@ def _fun_accept_unitless_binary(
     if isinstance(x, Quantity):
         # x = x.factorless()
         if unit_to_scale is None:
-            assert x.dim.is_dimensionless, (
-                f'{func} only support dimensionless input. But we got {x}. \n'
-                f'If you want to scale the input, please provide the "unit_to_scale" parameter. Or '
-                f'convert the input to a dimensionless Quantity manually.'
-            )
+            if not x.dim.is_dimensionless:
+                raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
             x = x.to_decimal()
         else:
-            assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
+            if not isinstance(unit_to_scale, Unit):
+                raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
             x = x.to_decimal(unit_to_scale)
     if isinstance(y, Quantity):
         # y = y.factorless()
         if unit_to_scale is None:
-            assert y.dim.is_dimensionless, (f'Input should be dimensionless for the function "{func}" '
-                                            f'when scaling "unit_to_scale" is not provided.')
+            if not y.dim.is_dimensionless:
+                raise TypeError(_dimensionless_required_message(func, y, arg_name='y'))
             y = y.to_decimal()
         else:
-            assert isinstance(unit_to_scale, Unit), f'unit_to_scale should be a Unit instance. Got {unit_to_scale}'
+            if not isinstance(unit_to_scale, Unit):
+                raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
             y = y.to_decimal(unit_to_scale)
     return func(x, y, *args, **kwargs)
 
@@ -1049,7 +1081,8 @@ def ldexp(
     """
     x, y = maybe_custom_array_tree((x, y))
     if isinstance(x, Quantity):
-        assert x.dim.is_dimensionless, f'Expected dimensionless array, got {x}'
+        if not x.dim.is_dimensionless:
+            raise TypeError(_dimensionless_required_message(jnp.ldexp, x, arg_name='x'))
         x = x.mantissa
     return jnp.ldexp(x, y)
 
@@ -1110,11 +1143,13 @@ def _fun_unitless_binary(func, x, y, *args, **kwargs):
 
     if isinstance(x, Quantity):
         # x = x.factorless()
-        assert x.dim.is_dimensionless, f'Expected dimensionless array, got {x}'
+        if not x.dim.is_dimensionless:
+            raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
         x = x.to_decimal()
     if isinstance(y, Quantity):
         # y = y.factorless()
-        assert y.dim.is_dimensionless, f'Expected dimensionless array, got {y}'
+        if not y.dim.is_dimensionless:
+            raise TypeError(_dimensionless_required_message(func, y, arg_name='y'))
         y = y.to_decimal()
     return func(x, y, *args, **kwargs)
 

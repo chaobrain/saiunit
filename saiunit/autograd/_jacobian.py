@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,20 +20,76 @@ from typing import (Sequence, Callable, Any)
 
 import jax
 import numpy as np
-from jax._src.api import (
-    _jvp,
-    _vjp,
-    _check_input_dtype_jacrev,
-    _check_output_dtype_jacrev,
-    _check_input_dtype_jacfwd,
-    _check_output_dtype_jacfwd
-)
-from jax.api_util import argnums_partial
+from jax import numpy as jnp
+from ._misc import _ensure_index, _check_callable, _argnums_partial
+from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
+from saiunit._compatible_import import safe_map
+from saiunit._misc import maybe_custom_array_tree
 
-from ._misc import _ensure_index, _check_callable
-from .._base import Quantity, maybe_decimal, get_magnitude, get_unit
-from .._compatible_import import safe_map, wrap_init
-from .._misc import maybe_custom_array_tree
+
+# ---------------------------------------------------------------------------
+# Dtype-validation helpers (inlined from jax._src.api to avoid private API)
+# ---------------------------------------------------------------------------
+
+def _get_leaf_dtype(x):
+    try:
+        return x.dtype
+    except AttributeError:
+        return np.result_type(x)
+
+
+def _check_input_dtype_jacrev(holomorphic: bool, allow_int: bool, x) -> None:
+    dtype = _get_leaf_dtype(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                "jacrev with holomorphic=True requires inputs with complex dtype, "
+                f"got {dtype}."
+            )
+    elif not allow_int and not np.issubdtype(dtype, np.floating):
+        raise TypeError(
+            f"jacrev requires real-valued inputs (not {dtype}); "
+            "use allow_int=True to differentiate through integer values."
+        )
+
+
+def _check_output_dtype_jacrev(holomorphic: bool, x) -> None:
+    dtype = _get_leaf_dtype(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                "jacrev with holomorphic=True requires outputs with complex dtype, "
+                f"got {dtype}."
+            )
+    elif not np.issubdtype(dtype, np.floating):
+        raise TypeError(f"jacrev requires real-valued outputs (not {dtype}).")
+
+
+def _check_input_dtype_jacfwd(holomorphic: bool, x) -> None:
+    dtype = _get_leaf_dtype(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                "jacfwd with holomorphic=True requires inputs with complex dtype, "
+                f"got {dtype}."
+            )
+    elif not np.issubdtype(dtype, np.inexact):
+        raise TypeError(
+            f"jacfwd requires real- or complex-valued inputs (not {dtype})."
+        )
+
+
+def _check_output_dtype_jacfwd(holomorphic: bool, x) -> None:
+    dtype = _get_leaf_dtype(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                "jacfwd with holomorphic=True requires outputs with complex dtype, "
+                f"got {dtype}."
+            )
+    elif not np.issubdtype(dtype, np.floating):
+        raise TypeError(f"jacfwd requires real-valued outputs (not {dtype}).")
+
 
 __all__ = [
     'jacrev',
@@ -139,24 +195,24 @@ def jacrev(
     1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
     """
     _check_callable(fun)
+    argnums = _ensure_index(argnums)
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
-        f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacrev')
-        f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
+        argnums_, f_partial, dyn_args = _argnums_partial(fun, argnums, args, kwargs)
         jax.tree.map(partial(_check_input_dtype_jacrev, holomorphic, allow_int), dyn_args)
         if not has_aux:
-            y, pullback = _vjp(f_partial, *dyn_args)
+            y, pullback = jax.vjp(f_partial, *dyn_args)
         else:
-            y, pullback, aux = _vjp(f_partial, *dyn_args, has_aux=True)
+            y, pullback, aux = jax.vjp(f_partial, *dyn_args, has_aux=True)
         jax.tree.map(partial(_check_output_dtype_jacrev, holomorphic), y)
         jac = jax.vmap(pullback)(_std_basis(y))
-        jac = jac[0] if isinstance(argnums, int) else jac
+        jac = jac[0] if isinstance(argnums_, int) else jac
         jac_tree = jax.tree.map(partial(_jacrev_unravel, y, is_leaf=_is_quantity),
                                 jac,
                                 is_leaf=_is_quantity)
-        example_args = dyn_args[0] if isinstance(argnums, int) else dyn_args
+        example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
         jac_tree = _tree_transpose(outer=example_args, inner=y, pytree_to_transpose=jac_tree)
         if not has_aux:
             return jac_tree
@@ -335,17 +391,16 @@ def jacfwd(
     @wraps(fun)
     def jacfun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
-        f = wrap_init(fun, args, kwargs, 'saiunit.autograd.jacfwd')
-        f_partial, dyn_args = argnums_partial(f, argnums, args, require_static_args_hashable=False)
+        argnums_, f_partial, dyn_args = _argnums_partial(fun, argnums, args, kwargs)
         jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic), dyn_args)
         if not has_aux:
-            pushfwd: Callable = partial(_jvp, f_partial, dyn_args)
+            pushfwd: Callable = partial(jax.jvp, f_partial, dyn_args)
             y, jac = jax.vmap(pushfwd, out_axes=(None, -1))(_std_basis(dyn_args))
         else:
-            pushfwd: Callable = partial(_jvp, f_partial, dyn_args, has_aux=True)
+            pushfwd: Callable = partial(jax.jvp, f_partial, dyn_args, has_aux=True)
             y, jac, aux = jax.vmap(pushfwd, out_axes=(None, -1, None))(_std_basis(dyn_args))
         jax.tree.map(partial(_check_output_dtype_jacfwd, holomorphic), y)
-        example_args = dyn_args[0] if isinstance(argnums, int) else dyn_args
+        example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
         jac_tree = jax.tree.map(partial(_jacfwd_unravel, example_args, is_leaf=_is_quantity),
                                 jac,
                                 is_leaf=_is_quantity)
@@ -419,7 +474,7 @@ def _split(x, indices, axis):
     elif isinstance(x, Quantity):
         return x.split(indices, axis)
     else:
-        return x._split(indices, axis)
+        return jnp.split(x, indices, axis)
 
 
 def _is_quantity(x):

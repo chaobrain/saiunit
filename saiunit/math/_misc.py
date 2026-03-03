@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +22,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from .._base import (Unit,
-                     Quantity,
-                     get_unit,
-                     is_unitless)
-from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
+from saiunit._base import Unit, Quantity, get_unit, is_unitless
+from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 T = TypeVar("T")
 

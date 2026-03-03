@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -734,15 +734,15 @@ class TestEinopsWithArrayCustomArray:
     def test_array_error_handling(self):
         """Test error handling with Array in einops operations."""
         # Test dimension mismatch
-        with pytest.raises(Exception):  # Should raise EinopsError or similar
+        with pytest.raises(EinopsError):
             einrearrange(self.array_2d, "a b c -> a b c")  # Wrong number of axes
-        
+
         # Test invalid reduction
-        with pytest.raises(Exception):
+        with pytest.raises(EinopsError):
             einreduce(self.array_2d, "h w -> h", reduction="invalid_reduction")
-        
+
         # Test incompatible reshape
-        with pytest.raises(Exception):
+        with pytest.raises(EinopsError):
             einrearrange(self.array_2d, "h w -> (h w c)", c=7)  # 6 elements can't fit into multiple of 7
 
     def test_array_with_einsum_operations(self):

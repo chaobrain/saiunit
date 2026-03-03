@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ from typing import Union
 import jax
 import jax.numpy as jnp
 
-from .._base import Quantity, maybe_decimal, UNITLESS
-from .._misc import set_module_as, maybe_custom_array
-from ..math._fun_change_unit import (
+from saiunit._base import Quantity, maybe_decimal, UNITLESS
+from saiunit._misc import set_module_as, maybe_custom_array
+from saiunit.math._fun_change_unit import (
     dot, multi_dot, vdot, vecdot, inner,
     outer, kron, matmul, tensordot,
     matrix_power, det, cross, unit_change, _fun_change_unit_unary, _fun_change_unit_binary
@@ -52,7 +52,8 @@ __all__ = [
 def cholesky(
     a: Union[jax.typing.ArrayLike, Quantity],
     *,
-    upper: bool = False
+    upper: bool = False,
+    symmetrize_input: bool = True,
 ) -> Union[Quantity, jax.Array]:
     """Compute the Cholesky decomposition of a matrix.
 
@@ -78,6 +79,8 @@ def cholesky(
             Must have shape ``(..., N, N)``.
         upper: if True, compute the upper Cholesky decomposition `L`. if False
             (default), compute the lower Cholesky decomposition `U`.
+        symmetrize_input: if True (default), symmetrize the input before decomposition
+            for improved autodiff behavior.
 
     Returns:
         quantity of shape ``(..., N, N)`` representing the Cholesky decomposition
@@ -113,7 +116,8 @@ def cholesky(
     return _fun_change_unit_unary(jnp.linalg.cholesky,
                                   lambda u: u ** 0.5,
                                   a,
-                                  upper=upper)
+                                  upper=upper,
+                                  symmetrize_input=symmetrize_input)
 
 
 @unit_change(lambda x, y: y / x)

@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ minute = Unit.create(second.dim, name="minute", dispname="min", scale=second.sca
 hour = Unit.create(second.dim, name="hour", dispname="h", scale=second.scale + 3, factor=3.600)
 day = Unit.create(second.dim, name="day", dispname="d", scale=second.scale + 4, factor=8.6400)
 week = Unit.create(second.dim, name="week", dispname="wk", scale=second.scale + 5, factor=6.04800)
-month = Unit.create(second.dim, name="month", dispname="mo", scale=second.scale + 6, factor=2.629746)
+month = Unit.create(second.dim, name="month", dispname="mon", scale=second.scale + 6, factor=2.629746)
 year = Unit.create(second.dim, name="year", dispname="yr", scale=second.scale + 7, factor=3.1556952)
 julian_year = Unit.create(second.dim, name="julian year", dispname="julian yr", scale=second.scale + 7, factor=3.15576)
 

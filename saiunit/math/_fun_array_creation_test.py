@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
             assert isinstance(array_result, u.CustomArray)
             assert_quantity(array_result.data, expected, unit=unit)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(array, fill_value=fill_value * unit)
 
     @parameterized.product(
@@ -387,7 +387,7 @@ class TestFunArrayCreation(parameterized.TestCase):
             expected = jnp_fun(array, fill_value=fill_value)
             assert_quantity(result, expected, unit=unit)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(array, fill_value=fill_value * unit)
 
     @parameterized.product(
@@ -500,7 +500,7 @@ class TestFunArrayCreation(parameterized.TestCase):
                 expected = jnp_fun(jnp.array([1, 2, 3]), 3)
                 assert_quantity(result, expected, unit=unit)
 
-                with pytest.raises(AssertionError):
+                with pytest.raises(TypeError):
                     result = bm_fun(jnp.array([1, 2, 3]) * unit, 3)
 
     @parameterized.product(

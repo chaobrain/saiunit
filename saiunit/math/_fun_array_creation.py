@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import Array
 
-from .._base import (
+from saiunit._base import (
     Quantity,
     Unit,
     UNITLESS,
@@ -30,7 +30,7 @@ from .._base import (
     get_unit,
     unit_scale_align_to_first,
 )
-from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
+from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 Shape = Union[int, Sequence[int]]
 
@@ -122,7 +122,8 @@ def eye(
       An array where all elements are equal to zero, except for the `k`-th
       diagonal, whose values are equal to one.
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'eye requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
         return jnp.eye(N, M, k, dtype=dtype) * unit
     else:
@@ -156,7 +157,8 @@ def identity(
       `n` x `n` quantity or array with its main diagonal set to one,
       and all other elements 0.
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'identity requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
         return jnp.identity(n, dtype=dtype) * unit
     else:
@@ -196,7 +198,8 @@ def tri(
       quantity or array with its lower triangle filled with ones and zero elsewhere;
       in other words ``T[i,j] == 1`` for ``j <= i + k``, 0 otherwise.
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'tri requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
         return jnp.tri(N, M, k, dtype=dtype) * unit
     else:
@@ -226,7 +229,8 @@ def empty(
     out : quantity or ndarray
       quantity or array of uninitialized (arbitrary) data of the given shape, dtype, and order.
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'empty requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
         return jnp.empty(shape, dtype=dtype) * unit
     else:
@@ -256,7 +260,8 @@ def ones(
     out : quantity or ndarray
       Array of ones with the given shape, dtype, and order.
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'ones requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
         return jnp.ones(shape, dtype=dtype) * unit
     else:
@@ -286,7 +291,8 @@ def zeros(
     out : quantity or ndarray
       Array of zeros with the given shape, dtype, and order.
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'zeros requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
         return jnp.zeros(shape, dtype=dtype) * unit
     else:
@@ -329,14 +335,24 @@ def full_like(
                 unit=a.unit
             )
         else:
-            assert fill_value.is_unitless, 'fill_value must be unitless when a is not a Quantity.'
+            if not fill_value.is_unitless:
+                raise TypeError(
+                    f'full_like requires "fill_value" to be dimensionless when "a" is a plain array, '
+                    f'but got fill_value with unit={fill_value.unit}. '
+                    f'Either pass a plain number as fill_value or wrap "a" as a Quantity.'
+                )
             return Quantity(
                 jnp.full_like(a, fill_value.mantissa, dtype=dtype, shape=shape),
                 unit=fill_value.unit
             )
     else:
         if isinstance(a, Quantity):
-            assert a.is_unitless, 'a must be unitless when fill_value is not a Quantity.'
+            if not a.is_unitless:
+                raise TypeError(
+                    f'full_like requires "a" to be dimensionless when "fill_value" is a plain value, '
+                    f'but got a with unit={a.unit}. '
+                    f'Either pass a Quantity as fill_value or use a plain array for "a".'
+                )
             return jnp.full_like(a.mantissa, fill_value, dtype=dtype, shape=shape)
         else:
             return jnp.full_like(a, fill_value, dtype=dtype, shape=shape)
@@ -367,7 +383,8 @@ def diag(
     out : quantity or ndarray
       The extracted diagonal or constructed diagonal array.
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'diag requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     v = maybe_custom_array(v)
     if isinstance(v, Quantity):
         if not unit.is_unitless:
@@ -406,7 +423,8 @@ def tril(
     out : quantity or ndarray
       Lower triangle of `m`, of the same shape and data-type as `m`.
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'tril requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     m = maybe_custom_array(m)
     if isinstance(m, Quantity):
         if not unit.is_unitless:
@@ -438,7 +456,8 @@ def triu(
     --------
     tril : lower triangle of an array
     """
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'triu requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     m = maybe_custom_array(m)
     if isinstance(m, Quantity):
         if not unit.is_unitless:
@@ -477,7 +496,8 @@ def empty_like(
     out : quantity or ndarray
       Array of uninitialized (arbitrary) data with the same shape and type as `prototype`.
     """
-    assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'empty_like requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     prototype = maybe_custom_array(prototype)
     if isinstance(prototype, Quantity):
         if not unit.is_unitless:
@@ -516,7 +536,8 @@ def ones_like(
     out : quantity or ndarray
       Array of ones with the same shape and type as `a`.
     """
-    assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'ones_like requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         if not unit.is_unitless:
@@ -555,7 +576,8 @@ def zeros_like(
     out : quantity or ndarray
       Array of zeros with the same shape and type as `a`.
     """
-    assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'zeros_like requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         if not unit.is_unitless:
@@ -609,7 +631,8 @@ def asarray(
 
     # get unit
     if unit is not None and not leaf_unit.is_unitless:
-        assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+        if not isinstance(unit, Unit):
+            raise TypeError(f'asarray requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
         leaves = [leaf.in_unit(unit) for leaf in leaves]
     else:
         unit = leaf_unit
@@ -662,7 +685,8 @@ def arange(
 
     # checking the dimension of the data
     non_none_data = [d for d in (start, stop, step) if d is not None]
-    assert len(non_none_data) > 0, 'At least one of start, stop, or step must be provided.'
+    if len(non_none_data) == 0:
+        raise ValueError('arange requires at least one of start, stop, or step to be provided.')
     d1 = non_none_data[0]
     for d2 in non_none_data[1:]:
         fail_for_unit_mismatch(
@@ -918,10 +942,16 @@ def vander(
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
-        assert x.is_unitless, f'x must be unitless for function {vander.__name__}.'
+        if not x.is_unitless:
+            raise TypeError(
+                f'vander requires "x" to be dimensionless, '
+                f'but got x with unit={x.unit}. '
+                f'Pass "unit_to_scale" or strip the unit before calling vander.'
+            )
         x = x.mantissa
     r = jnp.vander(x, N=N, increasing=increasing)
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'vander requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
         return Quantity(r, unit=unit)
     else:
@@ -1010,7 +1040,8 @@ def from_numpy(
       The jax array.
     """
     x = maybe_custom_array(x)
-    assert isinstance(unit, Unit), f'unit must be an instance of Unit, got {type(unit)}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'from_numpy requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
         return jnp.array(x) * unit
     return jnp.array(x)

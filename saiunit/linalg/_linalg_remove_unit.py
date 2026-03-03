@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ from typing import (Union, Optional)
 import jax
 import jax.numpy as jnp
 
-from .._base import Quantity
-from .._misc import set_module_as, maybe_custom_array
-from ..math._fun_remove_unit import _fun_remove_unit_unary
+from saiunit._base import Quantity
+from saiunit._misc import set_module_as, maybe_custom_array
+from saiunit.math._fun_remove_unit import _fun_remove_unit_unary
 
 __all__ = [
     # Norms and other numbers

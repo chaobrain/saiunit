@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -132,7 +132,11 @@ class ParsedExpression:
     def flat_axes_order(self) -> List:
         result = []
         for composed_axis in self.composition:
-            assert isinstance(composed_axis, list), 'does not work with ellipsis'
+            if not isinstance(composed_axis, list):
+                raise EinopsError(
+                    'flat_axes_order does not support expressions containing ellipsis ("..."). '
+                    'Remove the ellipsis from the pattern or use a different accessor.'
+                )
             for axis in composed_axis:
                 result.append(axis)
         return result

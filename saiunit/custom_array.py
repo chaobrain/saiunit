@@ -1,4 +1,4 @@
-# Copyright 2025 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2025 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
 # ==============================================================================
 
 
+import operator
 from typing import Any, Optional, Union, Sequence
 
-import operator
 import jax.numpy as jnp
 import jax.typing
 import numpy as np
-from saiunit import math
 
+from saiunit import math
 
 ArrayLike = jax.typing.ArrayLike
 
@@ -44,111 +44,6 @@ class CustomArray:
     data : Any
         The underlying array data. Can be a NumPy array, JAX array, or any array-like
         object that supports the required operations.
-
-    Properties
-    ----------
-    dtype : numpy.dtype or equivalent
-        Data type of the array elements.
-    shape : tuple of ints
-        Tuple representing the dimensions of the array.
-    ndim : int
-        Number of array dimensions.
-    size : int
-        Total number of elements in the array.
-    real : array_like
-        Real part of the array elements.
-    imag : array_like
-        Imaginary part of the array elements. Note: Currently contains a typo,
-        accessing 'data.image' instead of 'data.imag'.
-    T : array_like
-        Transposed view of the array.
-
-    Methods
-    -------
-    Arithmetic Operations:
-        __add__(other), __radd__(other), __iadd__(other)
-            Addition operations (+, +=).
-        __sub__(other), __rsub__(other), __isub__(other)
-            Subtraction operations (-, -=).
-        __mul__(other), __rmul__(other), __imul__(other)
-            Multiplication operations (*, *=).
-        __truediv__(other), __rtruediv__(other), __itruediv__(other)
-            True division operations (/, /=).
-        __floordiv__(other), __rfloordiv__(other), __ifloordiv__(other)
-            Floor division operations (//, //=).
-        __pow__(other), __rpow__(other), __ipow__(other)
-            Power operations (**, **=).
-        __matmul__(other), __rmatmul__(other), __imatmul__(other)
-            Matrix multiplication operations (@, @=).
-
-    Comparison Operations:
-        __eq__(other), __ne__(other), __lt__(other), __le__(other),
-        __gt__(other), __ge__(other)
-            Element-wise comparison operations.
-
-    Unary Operations:
-        __neg__(), __pos__(), __abs__(), __invert__()
-            Unary arithmetic and bitwise operations.
-
-    Statistical Methods:
-        mean(axis=None, dtype=None, keepdims=False)
-            Compute the arithmetic mean along the specified axis.
-        sum(axis=None, dtype=None, keepdims=False, initial=0, where=True)
-            Return the sum of array elements over a given axis.
-        min(axis=None, keepdims=False), max(axis=None, keepdims=False)
-            Return minimum/maximum datas along an axis.
-        std(axis=None, dtype=None, ddof=0, keepdims=False)
-            Compute the standard deviation along the specified axis.
-        var(axis=None, dtype=None, ddof=0, keepdims=False)
-            Compute the variance along the specified axis.
-
-    Array Manipulation:
-        reshape(*shape, order='C')
-            Return an array with a new shape.
-        transpose(*axes)
-            Return a view of the array with axes transposed.
-        flatten()
-            Return a copy of the array collapsed into one dimension.
-        squeeze(axis=None)
-            Remove axes of length one.
-        expand_dims(axis)
-            Expand the shape of an array.
-
-    Indexing and Selection:
-        take(indices, axis=None, mode=None)
-            Return an array formed from elements at given indices.
-        compress(condition, axis=None)
-            Return selected slices along given axis.
-        nonzero()
-            Return indices of elements that are non-zero.
-
-    Sorting and Searching:
-        sort(axis=-1, stable=True, order=None)
-            Sort an array in-place.
-        argsort(axis=-1, kind=None, order=None)
-            Return indices that would sort an array.
-        argmax(axis=None), argmin(axis=None)
-            Return indices of maximum/minimum datas.
-
-    Numerical Operations:
-        round(decimals=0)
-            Round array elements to given number of decimals.
-        clip(min=None, max=None)
-            Clip datas to specified range.
-        cumsum(axis=None, dtype=None), cumprod(axis=None, dtype=None)
-            Return cumulative sum/product along axis.
-
-    Type Conversion:
-        astype(dtype)
-            Copy array cast to specified type.
-        to_numpy(dtype=None)
-            Convert to numpy.ndarray.
-        to_jax(dtype=None)
-            Convert to jax.numpy.ndarray.
-
-    PyTorch Compatibility:
-        unsqueeze(dim), clamp(min_data=None, max_data=None), clone()
-            PyTorch-style operations.
 
     Examples
     --------
@@ -203,7 +98,6 @@ class CustomArray:
     - This class uses duck typing and delegates operations to the underlying array
     - In-place operations modify the internal `data` attribute directly
     - Some methods return the underlying array type rather than CustomArray instances
-    - The `imag` property currently has a typo and accesses `data.image`
     - Thread safety depends on the underlying array implementation
     - JAX transformations (jit, grad, vmap) work seamlessly with CustomArray instances
 
@@ -240,7 +134,7 @@ class CustomArray:
 
     @property
     def imag(self):
-        return self.data.image
+        return self.data.imag
 
     @property
     def real(self):
@@ -254,8 +148,29 @@ class CustomArray:
     def T(self):
         return self.data.T
 
+    @property
+    def mT(self):
+        """Transpose the last two dimensions (for batched matrix operations)."""
+        return jnp.swapaxes(self.data, -1, -2)
+
+    @property
+    def nbytes(self):
+        """Total bytes consumed by the array elements."""
+        return self.data.nbytes
+
+    @property
+    def itemsize(self):
+        """Length of one array element in bytes."""
+        return self.data.itemsize
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.data})"
+
+    def __str__(self) -> str:
+        return str(self.data)
+
     def __format__(self, format_spec: str) -> str:
-        return format(self.data)
+        return format(self.data, format_spec)
 
     def __iter__(self):
         """Solve the issue of DeviceArray.__iter__.
@@ -350,9 +265,6 @@ class CustomArray:
         # a *= b
         self.data = self.data * oc
         return self
-
-    def __rdiv__(self, oc):
-        return oc / self.data
 
     def __truediv__(self, oc):
         return self.data / oc
@@ -695,7 +607,7 @@ class CustomArray:
         return self.data.transpose(*axes)
 
     def tile(self, reps):
-        return self.data.tile(reps)
+        return math.tile(self.data, reps)
 
     def var(self, axis=None, dtype=None, ddof=0, keepdims=False):
         """Returns the variance of the array elements, along given axis."""
@@ -724,8 +636,7 @@ class CustomArray:
 
     def numpy(self, dtype=None):
         """Convert to numpy.ndarray."""
-        # warnings.warn('Deprecated since 2.1.12. Please use ".to_numpy()" instead.', DeprecationWarning)
-        return np.asarray(self.data, dtype=dtype)
+        return self.to_numpy(dtype=dtype)
 
     def to_numpy(self, dtype=None):
         """Convert to numpy.ndarray."""
@@ -786,7 +697,7 @@ class CustomArray:
         return math.expand_dims(self.data, axis)
 
     def expand_as(self, array: ArrayLike) -> ArrayLike:
-        return math.broadcast_to(self.data, array)
+        return math.broadcast_to(self.data, jnp.asarray(array).shape)
 
     def pow(self, index: int):
         return self.data ** index
@@ -917,7 +828,7 @@ class CustomArray:
         if min_data is None, then no lower bound,
         if max_data is None, then no upper bound.
         """
-        self.clamp(min_data, max_data)
+        self.data = math.clip(self.data, min_data, max_data)
         return self
 
     def clone(self) -> ArrayLike:
@@ -945,18 +856,25 @@ class CustomArray:
         base = l_tar - l_ori
         sizes_list = list(sizes)
         if base < 0:
-            raise ValueError(f'the number of sizes provided ({len(sizes)}) must be greater or equal to the number of '
-                             f'dimensions in the tensor ({len(self.shape)})')
+            raise ValueError(
+                f'the number of sizes provided ({len(sizes)}) '
+                f'must be greater or equal to the number of '
+                f'dimensions in the tensor ({len(self.shape)})'
+            )
         for i, v in enumerate(sizes[:base]):
             if v < 0:
                 raise ValueError(
-                    f'The expanded size of the tensor ({v}) isn\'t allowed in a leading, non-existing dimension {i + 1}')
+                    f'The expanded size of the tensor ({v}) '
+                    f'isn\'t allowed in a leading, non-existing dimension {i + 1}'
+                )
         for i, v in enumerate(self.shape):
             sizes_list[base + i] = v if sizes_list[base + i] == -1 else sizes_list[base + i]
             if v != 1 and sizes_list[base + i] != v:
                 raise ValueError(
-                    f'The expanded size of the tensor ({sizes_list[base + i]}) must match the existing size ({v}) at non-singleton '
-                    f'dimension {i}.  Target sizes: {sizes}.  Tensor sizes: {self.shape}')
+                    f'The expanded size of the tensor ({sizes_list[base + i]}) '
+                    f'must match the existing size ({v}) at non-singleton '
+                    f'dimension {i}.  Target sizes: {sizes}.  Tensor sizes: {self.shape}'
+                )
         return math.broadcast_to(self.data, tuple(sizes_list))
 
     def zero_(self):
@@ -987,4 +905,3 @@ class CustomArray:
     @classmethod
     def tree_unflatten(cls, aux_data, flat_contents):
         return cls(*flat_contents)
-

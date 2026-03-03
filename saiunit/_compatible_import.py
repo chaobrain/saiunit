@@ -1,4 +1,4 @@
-# Copyright 2025 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2025 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ __all__ = [
     'unzip2',
     'wrap_init',
     'Primitive',
+    'concrete_or_error',
 ]
 
 T = TypeVar("T")
@@ -36,6 +37,19 @@ if jax.__version_info__ < (0, 4, 38):
     from jax.core import Primitive
 else:
     from jax.extend.core import Primitive
+
+# concrete_or_error: still lives in jax.core for now; provide a shim if removed.
+try:
+    from jax.core import concrete_or_error
+except ImportError:
+    def concrete_or_error(typ, val, context=""):
+        """Minimal shim used when jax.core.concrete_or_error is unavailable."""
+        if typ is None:
+            return val
+        try:
+            return typ(val)
+        except Exception:
+            return val
 
 
 def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):
@@ -56,7 +70,8 @@ else:
         args = list(map(list, args))
         n = len(args[0])
         for arg in args[1:]:
-            assert len(arg) == n, f'length mismatch: {list(map(len, args))}'
+            if len(arg) != n:
+                raise ValueError(f'safe_map: length mismatch: {list(map(len, args))}')
         return list(map(f, *args))
 
 

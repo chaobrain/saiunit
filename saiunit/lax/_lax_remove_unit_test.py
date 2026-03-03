@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,8 +81,8 @@ class TestLaxRemoveUnit(parameterized.TestCase):
             expected = lax_fun(jnp.array(x1), jnp.array(x2))
             assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bulax_fun(jnp.array(x1), q2)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bulax_fun(q1, jnp.array(x2))

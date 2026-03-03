@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-from __future__ import annotations
-
 import numbers
 import operator
+import re
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps, partial
-from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict, cast, TypeVar, Generic
+from collections.abc import Callable, Sequence
+from typing import Any, cast
 
 import jax
 import jax.numpy as jnp
@@ -66,14 +66,13 @@ __all__ = [
     'get_or_create_dimension',
 ]
 
-StaticScalar = Union[
-    np.bool_, np.number,  # NumPy scalar types
-    bool, int, float, complex,  # Python scalar types
-]
+StaticScalar = (
+    np.bool_ | np.number |  # NumPy scalar types
+    bool | int | float | complex  # Python scalar types
+)
 PyTree = Any
 _all_slice = slice(None, None, None)
 compat_with_equinox = False
-A = TypeVar('A')
 
 
 def compatible_with_equinox(mode: bool = True):
@@ -98,7 +97,7 @@ def _to_quantity(array) -> 'Quantity':
 
 def _assert_not_quantity(array):
     if isinstance(array, Quantity):
-        raise ValueError('Input array should not be an instance of Array.')
+        raise ValueError('Input array should not be an instance of Quantity.')
     return array
 
 
@@ -153,7 +152,7 @@ def get_dim_for_display(d):
 
 @set_module_as('saiunit')
 def assert_quantity(
-    q: Union['Quantity', jax.typing.ArrayLike],
+    q: 'Quantity | jax.typing.ArrayLike',
     mantissa: jax.typing.ArrayLike,
     unit: 'Unit' = None
 ):
@@ -201,7 +200,7 @@ def assert_quantity(
 # SI dimensions (see table at the top of the file) and various descriptions,
 # each description maps to an index i, and the power of each dimension
 # is stored in the variable dims[i].
-_dim2index = {
+_dim2index: dict[str, int] = {
     "Length": 0,
     "length": 0,
     "metre": 0,
@@ -499,7 +498,8 @@ class Dimension:
         >>> length = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])  # meter
         >>> area = length * length  # meter²
         """
-        assert isinstance(value, Dimension), "Can only divide by a Dimension object"
+        if not isinstance(value, Dimension):
+            raise TypeError("Can only multiply by a Dimension object")
         return get_or_create_dimension(self._dims + value._dims)
 
     def __div__(self, value: 'Dimension'):
@@ -531,7 +531,8 @@ class Dimension:
         >>> time = get_or_create_dimension([0, 0, 1, 0, 0, 0, 0])  # second
         >>> acceleration = length_time / time  # meter/second²
         """
-        assert isinstance(value, Dimension), "Can only divide by a Dimension object"
+        if not isinstance(value, Dimension):
+            raise TypeError("Can only divide by a Dimension object")
         return get_or_create_dimension(self._dims - value._dims)
 
     def __truediv__(self, value: 'Dimension'):
@@ -808,6 +809,10 @@ class Dimension:
         return self.hash
 
 
+# Cache for get_or_create_dimension — maps tuple(dims) -> Dimension
+_dimension_cache: dict[tuple, 'Dimension'] = {}
+
+
 @set_module_as('saiunit')
 def get_or_create_dimension(*args, **kwds) -> Dimension:
     """
@@ -852,7 +857,8 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
     e.g. length, metre, and m all refer to the same thing here.
     """
     if len(args):
-        assert len(args) == 1, "Only one argument allowed"
+        if len(args) != 1:
+            raise TypeError(f"get_or_create_dimension() takes at most 1 positional argument, got {len(args)}")
         # initialisation by list
         dims = args[0]
         try:
@@ -868,7 +874,12 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
             dims[_dim2index[k]] = kwds[k]
 
     dims = np.asarray(dims)
+    key = tuple(dims)
+    cached = _dimension_cache.get(key)
+    if cached is not None:
+        return cached
     new_dim = Dimension(dims)
+    _dimension_cache[key] = new_dim
     return new_dim
 
 
@@ -915,14 +926,10 @@ class DimensionMismatchError(Exception):
             s += f" (unit is {get_dim_for_display(self.dims[0])}"
         elif len(self.dims) == 2:
             d1, d2 = self.dims
-            s += (
-                f" (units are {get_dim_for_display(d1)} and {get_dim_for_display(d2)}"
-            )
+            s += f" (units are {get_dim_for_display(d1)} and {get_dim_for_display(d2)}"
         else:
-            s += (
-                " (units are"
-                f" {' '.join([f'({get_dim_for_display(d)})' for d in self.dims])}"
-            )
+            parts = ", ".join(get_dim_for_display(d) for d in self.dims)
+            s += f" (units are {parts}"
         if len(self.dims):
             s += ")."
         return s
@@ -950,7 +957,7 @@ class UnitMismatchError(Exception):
 
     def __init__(self, description, *units):
         super().__init__(description, *units)
-        self.units: Tuple = units
+        self.units: tuple = units
         self.desc = description
 
     def __repr__(self):
@@ -965,14 +972,9 @@ class UnitMismatchError(Exception):
             s += f" (unit is {self.units[0]}"
         elif len(self.units) == 2:
             d1, d2 = self.units
-            s += (
-                f" (units are {d1} and {d2} "
-            )
+            s += f" (units are {d1} and {d2}"
         else:
-            s += (
-                " (units are"
-                f" {' '.join([f'({d})' for d in self.units])} "
-            )
+            s += f" (units are {' '.join([f'({d})' for d in self.units])}"
         if len(self.units):
             s += ")."
         return s
@@ -1011,7 +1013,7 @@ def get_dim(obj) -> Dimension:
 
 
 @set_module_as('saiunit')
-def get_unit(obj) -> Unit:
+def get_unit(obj) -> 'Unit':
     """
     Return the unit of any object that has them.
 
@@ -1149,7 +1151,7 @@ def fail_for_dimension_mismatch(
         The object to compare. If `obj2` is ``None``, assume it to be
         dimensionless
     error_message : str, optional
-        An error message that is used in the DimensionMismatchError
+        An error message that is used in the UnitMismatchError
     error_arrays : dict mapping str to `Array`, optional
         Arrays in this dictionary will be converted using the `_short_str`
         helper method and inserted into the ``error_message`` (which should
@@ -1167,7 +1169,7 @@ def fail_for_dimension_mismatch(
 
     Raises
     ------
-    DimensionMismatchError
+    UnitMismatchError
         If the dimensions of `obj1` and `obj2` do not match (or, if `obj2` is
         ``None``, in case `obj1` is not dimensionsless).
 
@@ -1219,7 +1221,7 @@ def fail_for_dimension_mismatch(
 @set_module_as('saiunit')
 def fail_for_unit_mismatch(
     obj1, obj2=None, error_message=None, **error_arrays
-) -> Tuple['Unit', 'Unit']:
+) -> 'tuple[Unit, Unit]':
     """
     Compare the dimensions of two objects.
 
@@ -1229,7 +1231,7 @@ def fail_for_unit_mismatch(
         The object to compare. If `obj2` is ``None``, assume it to be
         dimensionless
     error_message : str, optional
-        An error message that is used in the DimensionMismatchError
+        An error message that is used in the UnitMismatchError
     error_arrays : dict mapping str to `Array`, optional
         Arrays in this dictionary will be converted using the `_short_str`
         helper method and inserted into the ``error_message`` (which should
@@ -1247,7 +1249,7 @@ def fail_for_unit_mismatch(
 
     Raises
     ------
-    DimensionMismatchError
+    UnitMismatchError
         If the dimensions of `obj1` and `obj2` do not match (or, if `obj2` is
         ``None``, in case `obj1` is not dimensionsless).
 
@@ -1282,13 +1284,14 @@ def fail_for_unit_mismatch(
 
 @set_module_as('saiunit')
 def display_in_unit(
-    x: jax.typing.ArrayLike | 'Quantity',
+    x: 'jax.typing.ArrayLike | Quantity',
     u: 'Unit' = None,
-    precision: Optional[int] = None,
-    python_code: bool = True
+    precision: int | None = None,
 ) -> str:
     """
     Display a value in a certain unit with a given precision.
+
+    Returns the canonical ``"value unit"`` format.
 
     Parameters
     ----------
@@ -1299,8 +1302,6 @@ def display_in_unit(
     precision : `int`, optional
         The number of digits of precision (in the given unit, see Examples).
         If no value is given, numpy's `get_printoptions` value is used.
-    python_code: `bool`, optional
-
 
     Returns
     -------
@@ -1314,10 +1315,6 @@ def display_in_unit(
     '3000. mV'
     >>> display_in_unit(123123 * msecond, second, 2)
     '123.12 s'
-    >>> display_in_unit(10 * uA/cm**2, nA/um**2)
-    '1.00000000e-04 nA/(um^2)'
-    >>> display_in_unit(10 * mV, ohm * amp)
-    '0.01 ohm A'
     >>> display_in_unit(10 * nS, ohm) # doctest: +NORMALIZE_WHITESPACE
     ...                       # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
@@ -1332,14 +1329,14 @@ def display_in_unit(
     x = _to_quantity(x)
     if u is not None:
         x = x.in_unit(u)
-    return x.repr_in_unit(precision=precision, python_code=python_code)
+    return x.repr_in_unit(precision=precision)
 
 
 @set_module_as('saiunit')
 def maybe_decimal(
-    val: Union['Quantity', jax.typing.ArrayLike],
-    unit: Optional['Unit'] = None
-) -> Union[jax.Array, 'Quantity']:
+    val: 'Quantity | jax.typing.ArrayLike',
+    unit: 'Unit | None' = None
+) -> 'jax.Array | Quantity':
     """
     Convert a quantity to a decimal number if it is a dimensionless quantity.
 
@@ -1365,7 +1362,7 @@ def maybe_decimal(
 
 
 @set_module_as('saiunit')
-def unit_scale_align_to_first(*args) -> List['Quantity']:
+def unit_scale_align_to_first(*args) -> 'list[Quantity]':
     """
     Align the unit units of all arguments to the first one.
 
@@ -1412,7 +1409,7 @@ def unit_scale_align_to_first(*args) -> List['Quantity']:
 def array_with_unit(
     mantissa,
     unit: 'Unit',
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: jax.typing.DTypeLike | None = None
 ) -> 'Quantity':
     """
     Create a new `Array` with the given dimensions. Calls
@@ -1441,12 +1438,13 @@ def array_with_unit(
     >>> array_with_unit(0.001, volt)
     1. * mvolt
     """
-    assert isinstance(unit, Unit), f'Expected instance of Unit, but got {unit}'
+    if not isinstance(unit, Unit):
+        raise TypeError(f'Expected instance of Unit, but got {unit}')
     return Quantity(mantissa, unit=unit, dtype=dtype)
 
 
 @set_module_as('saiunit')
-def is_dimensionless(obj: Union['Quantity', 'Unit', 'Dimension', jax.typing.ArrayLike]) -> bool:
+def is_dimensionless(obj: 'Quantity | Unit | Dimension | jax.typing.ArrayLike') -> bool:
     """
     Test if a value is dimensionless or not.
 
@@ -1467,7 +1465,7 @@ def is_dimensionless(obj: Union['Quantity', 'Unit', 'Dimension', jax.typing.Arra
 
 
 @set_module_as('saiunit')
-def is_unitless(obj: Union['Quantity', 'Unit', jax.typing.ArrayLike]) -> bool:
+def is_unitless(obj: 'Quantity | Unit | jax.typing.ArrayLike') -> bool:
     """
     Test if a value is unitless or not.
 
@@ -1482,7 +1480,8 @@ def is_unitless(obj: Union['Quantity', 'Unit', jax.typing.ArrayLike]) -> bool:
         ``True`` if `obj` is unitless.
     """
     obj = maybe_custom_array(obj)
-    assert not isinstance(obj, Dimension), f"Dimension objects are not unitless or not, but got {obj}"
+    if isinstance(obj, Dimension):
+        raise TypeError(f"Dimension objects are not unitless or not, but got {obj}")
     return _to_quantity(obj).is_unitless
 
 
@@ -1520,8 +1519,7 @@ def _wrap_function_keep_unit(func):
     ``sum`` to work as expected with additional ``axis`` etc. arguments.
     """
 
-    def f(x: Quantity, *args, **kwds):  # pylint: disable=C0111
-        # x = x.factorless()
+    def f(x: 'Quantity', *args, **kwds):  # pylint: disable=C0111
         return Quantity(func(x.mantissa, *args, **kwds), unit=x.unit)
 
     f._arg_units = [None]
@@ -1547,7 +1545,7 @@ def _wrap_function_change_unit(func, unit_fun):
 
     def f(x, *args, **kwds):  # pylint: disable=C0111
         assert isinstance(x, Quantity), "Only Quantity objects can be passed to this function"
-        # x = x.factorless()
+        x = x.factorless()
         return maybe_decimal(Quantity(func(x.mantissa, *args, **kwds), unit=unit_fun(x.unit, x.unit)))
 
     f._arg_units = [None]
@@ -1571,7 +1569,6 @@ def _wrap_function_remove_unit(func):
 
     def f(x, *args, **kwds):  # pylint: disable=C0111
         assert isinstance(x, Quantity), "Only Quantity objects can be passed to this function"
-        # x = x.factorless()
         return func(x.mantissa, *args, **kwds)
 
     f._arg_units = [None]
@@ -1583,37 +1580,56 @@ def _wrap_function_remove_unit(func):
 
 
 def _assert_same_base(u1, u2):
-    assert u1.has_same_base(u2), (f"Currently, we only support units have different bases. "
-                                  f"But we got {u1.base} != {u1.base}.")
+    if not u1.has_same_base(u2):
+        raise TypeError(f"Cannot operate on units with different bases. Got {u1.base} != {u2.base}.")
 
 
-def _find_standard_unit(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bool, bool]:
+def _find_standard_unit(
+    dim: Dimension,
+    base,
+    scale,
+    factor,
+    for_composition: bool = False,
+) -> tuple[str | None, str | None, bool, bool]:
     """
     Find a standard unit for the given dimension, base, scale, and factor.
 
-    :param dim:
-    :param base:
-    :param scale:
-    :return: Name, is full name, is dimensionless.
+    Parameters
+    ----------
+    for_composition : bool
+        When True, keys that are *ambiguous* (i.e. have >=2 registered
+        aliases with distinct display names, e.g. hertz vs becquerel)
+        are skipped so that they are never auto-substituted during
+        unit arithmetic.  This is detected automatically at
+        registration time—no hardcoded list.
+
+    Returns
+    -------
+    (name, dispname, is_fullname, is_dimensionless)
     """
     if dim == DIMENSIONLESS:
-        return None, False, True
+        return None, None, False, True
     if isinstance(base, (int, float)):
         if isinstance(scale, (int, float)):
             if isinstance(factor, (int, float)):
                 key = (dim, scale, base, factor)
                 if key in _standard_units:
-                    u_name = _standard_units[key].name
-                    return u_name, True, False
+                    if for_composition and key in _ambiguous_keys:
+                        pass  # skip – ambiguous, fall through
+                    else:
+                        u = _standard_units[key]
+                        return u.name, u.dispname, True, False
 
         key = (dim, 0, base, 1.0)
         if key in _standard_units:
-            u_name = _standard_units[key].name
-            return u_name, False, False
-    return None, False, False
+            if for_composition and key in _ambiguous_keys:
+                return None, None, False, False
+            u = _standard_units[key]
+            return u.name, u.dispname, False, False
+    return None, None, False, False
 
 
-def _find_a_name(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bool]:
+def _find_a_name(dim: Dimension, base, scale, factor) -> tuple[str | None, bool]:
     if dim == DIMENSIONLESS:
         u_name = f"Unit({base}^{scale})"
         return u_name, False
@@ -1645,7 +1661,49 @@ def _find_a_name(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bo
     return None, True
 
 
-_standard_units: Dict[Tuple, 'Unit'] = {}
+_standard_units: 'dict[tuple, Unit]' = {}
+_standard_unit_aliases: 'dict[tuple, list[Unit]]' = {}
+
+# ---------------------------------------------------------------------------
+# Ambiguous-key detection
+#
+# A dimension key is "ambiguous" when >=2 registered aliases have
+# **different display names** (dispname).  Spelling variants like
+# meter/metre share the same dispname ("m") so they are NOT flagged.
+# Genuine semantic collisions like hertz/becquerel ("Hz" vs "Bq") ARE
+# flagged automatically—no hardcoded list required.
+#
+# Ambiguous keys are never auto-substituted during unit composition
+# (mul / div / pow / reverse) so that e.g. joule/kg never silently
+# becomes sievert.
+# ---------------------------------------------------------------------------
+_ambiguous_keys: set = set()
+
+
+def _standard_unit_preference_score(unit: 'Unit') -> int:
+    """
+    Return a preference score for choosing canonical display aliases.
+
+    Lower is better.  Deterministic: on ties the name that sorts first
+    alphabetically wins (via ``_select_preferred_standard_unit``).
+    """
+    name = unit.name.lower() if isinstance(unit.name, str) else ""
+    score = 0
+    # Prefer frequency over radioactivity for s^-1
+    if "hertz" in name:
+        score -= 10
+    return score
+
+
+def _select_preferred_standard_unit(units: 'list[Unit]') -> 'Unit':
+    """Pick the preferred alias – deterministic (score, then alpha)."""
+    return min(
+        units,
+        key=lambda u: (
+            _standard_unit_preference_score(u),
+            u.name.lower() if isinstance(u.name, str) else "",
+        ),
+    )
 
 
 def add_standard_unit(u: 'Unit'):
@@ -1655,7 +1713,120 @@ def add_standard_unit(u: 'Unit'):
         isinstance(u.factor, (int, float))
     ):
         key = (u.dim, u.scale, u.base, u.factor)
-        _standard_units[key] = u
+        aliases = _standard_unit_aliases.setdefault(key, [])
+        aliases.append(u)
+        _standard_units[key] = _select_preferred_standard_unit(aliases)
+
+        # Auto-detect ambiguity: >=2 distinct display names → ambiguous
+        dispnames = {a.dispname for a in aliases if isinstance(a.dispname, str)}
+        if len(dispnames) >= 2:
+            _ambiguous_keys.add(key)
+
+
+# ---------------------------------------------------------------------------
+# Display-parts helpers – canonical, sorted factored-unit representation
+# ---------------------------------------------------------------------------
+
+def _get_display_parts(unit: 'Unit'):
+    """Return the display-parts list for *unit*.
+
+    Each element is ``(name, dispname, exponent)``.
+    """
+    if getattr(unit, '_display_parts', None) is not None:
+        return list(unit._display_parts)
+    return [(unit.name, unit.dispname, 1)]
+
+
+def _merge_display_parts(parts_a, parts_b):
+    """Merge two part-lists, combine same-name entries, drop zeros, sort."""
+    merged: dict[str, tuple] = {}
+    for name, disp, exp in list(parts_a) + list(parts_b):
+        if name in merged:
+            _, old_disp, old_exp = merged[name]
+            merged[name] = (name, disp, old_exp + exp)
+        else:
+            merged[name] = (name, disp, exp)
+    result = [(n, d, e) for n, d, e in merged.values() if e != 0]
+    # positive exponents first (alphabetical), then negative (alphabetical)
+    result.sort(key=lambda x: (0 if x[2] > 0 else 1, x[0].lower()))
+    return result
+
+
+_RE_DISPNAME_EXP = re.compile(r'^(.+)\^(-?\d+(?:\.\d+)?)$')
+
+
+def _normalise_display_parts(parts):
+    """Normalise display parts: decompose stacked exponents, drop zeros, sort.
+
+    If a dispname already contains an exponent (e.g. ``'m^2'``), fold that
+    exponent into the part's own exponent so that ``('meter2', 'm^2', 3)``
+    becomes ``('meter2', 'm', 6)`` instead of rendering as ``m^2^3``.
+    """
+    result = []
+    for name, disp, exp in parts:
+        if exp == 0:
+            continue
+        m = _RE_DISPNAME_EXP.match(disp)
+        if m:
+            base_disp = m.group(1)
+            inner_exp = float(m.group(2))
+            disp = base_disp
+            exp = inner_exp * exp
+        result.append((name, disp, exp))
+    # Merge entries that now share the same base dispname
+    merged: dict[str, tuple] = {}
+    for name, disp, exp in result:
+        if disp in merged:
+            _, old_disp, old_exp = merged[disp]
+            merged[disp] = (name, disp, old_exp + exp)
+        else:
+            merged[disp] = (name, disp, exp)
+    result = [(n, d, e) for n, d, e in merged.values() if e != 0]
+    result.sort(key=lambda x: (0 if x[2] > 0 else 1, x[0].lower()))
+    return result
+
+
+def _fmt_exp(exp):
+    """Format an exponent value, using int form when possible."""
+    return str(int(exp)) if exp == int(exp) else str(exp)
+
+
+def _format_display_parts(parts) -> str:
+    """Render a parts-list as a canonical unit string.
+
+    The canonical format uses dispname symbols (e.g. ``mV``, ``Hz``),
+    ``^`` for exponentiation, `` * `` for multiplication, and `` / ``
+    for division.  This single format is both human-readable and
+    machine-parseable:
+
+        mV
+        J / kg
+        nA / cm^2
+        mS * nA / cm^2
+        m / (kg * s^2)
+    """
+    if not parts:
+        return "1"
+
+    numerator = [(n, d, e) for n, d, e in parts if e > 0]
+    denominator = [(n, d, -e) for n, d, e in parts if e < 0]
+
+    def _fmt_term(name, dispname, exp):
+        if exp == 1:
+            return dispname
+        return f"{dispname}^{_fmt_exp(exp)}"
+
+    num_str = " * ".join(_fmt_term(n, d, e) for n, d, e in numerator) if numerator else "1"
+
+    if not denominator:
+        return num_str
+
+    if len(denominator) == 1:
+        den_str = _fmt_term(*denominator[0])
+    else:
+        inner = " * ".join(_fmt_term(n, d, e) for n, d, e in denominator)
+        den_str = f"({inner})"
+    return f"{num_str} / {den_str}"
 
 
 class Unit:
@@ -1760,7 +1931,7 @@ class Unit:
     """
 
     __module__ = "saiunit"
-    __slots__ = ["_dim", "_base", "_scale", "_factor", "_dispname", "_name", "iscompound", "is_fullname"]
+    __slots__ = ["_dim", "_base", "_scale", "_factor", "_dispname", "_name", "is_fullname", "_hash", "_display_parts"]
     __array_priority__ = 1000
 
     def __init__(
@@ -1771,8 +1942,8 @@ class Unit:
         factor: jax.typing.ArrayLike = 1.,
         name: str = None,
         dispname: str = None,
-        iscompound: bool = False,
-        is_fullname: bool = True
+        is_fullname: bool = True,
+        display_parts=None,
     ):
         # The base for this unit (as the base of the exponent), i.e.
         # a base of 10 means 10^3, for a "k" prefix.
@@ -1783,14 +1954,15 @@ class Unit:
         self._scale = scale
 
         # The factor for this unit (as the conversion factor), i.e.
-        # a factor of cal = 4.18400 means 1 cal = 4.18400 J, 
+        # a factor of cal = 4.18400 means 1 cal = 4.18400 J,
         # where 4.18400 is the factor.
         self._factor = factor
 
         # The physical unit dimensions of this unit
         if dim is None:
             dim = DIMENSIONLESS
-        assert isinstance(dim, Dimension), f'Expected instance of Dimension, but got {dim}'
+        if not isinstance(dim, Dimension):
+            raise TypeError(f'Expected instance of Dimension, but got {dim}')
         self._dim = dim
 
         # The name of this unit
@@ -1806,11 +1978,15 @@ class Unit:
         # The display name of this unit
         self._dispname = (name if dispname is None else dispname)
 
-        # Whether this unit is a combination of other units
-        self.iscompound = iscompound
-
         # whether the name is the full name
         self.is_fullname = is_fullname
+
+        # cached hash (computed lazily)
+        self._hash = None
+
+        # Canonical display components: list of (name, dispname, exponent).
+        # None for simple (non-compound) units.
+        self._display_parts = display_parts
 
     @property
     def factor(self) -> float:
@@ -1865,7 +2041,7 @@ class Unit:
         return self._dim
 
     @dim.setter
-    def dim(self, *args):
+    def dim(self, value):
         # Do not support setting the unit directly
         raise NotImplementedError(
             "Cannot set the dimension of a Quantity object directly,"
@@ -1880,7 +2056,19 @@ class Unit:
         Returns:
           bool: True if the array does not have unit.
         """
-        return self.dim.is_dimensionless and self.scale == 0
+        return self.dim.is_dimensionless and self.scale == 0 and self.factor == 1.0
+
+    @property
+    def should_display_unit(self) -> bool:
+        """Whether the unit should be shown in formatted output.
+
+        Returns True for all non-unitless units, and also for dimensionless
+        units that carry a meaningful registered name (e.g. radian, steradian).
+        """
+        if not self.is_unitless:
+            return True
+        # Dimensionless but with a registered display name (e.g. rad, sr)
+        return self.is_fullname and self._canonical_str() != '1'
 
     @property
     def name(self):
@@ -1925,15 +2113,14 @@ class Unit:
             return _standard_units[key]
 
         # using temporary units
-        name, is_fullname, dimless = _find_standard_unit(self.dim, self.base, self.scale, 1.0)
+        name, dispname, is_fullname, dimless = _find_standard_unit(self.dim, self.base, self.scale, 1.0)
         return Unit(
             dim=self.dim,
             scale=self.scale,
             base=self.base,
             factor=1.,
             name=name,
-            dispname=name,
-            iscompound=self.iscompound,
+            dispname=dispname,
             is_fullname=is_fullname,
         )
 
@@ -1948,7 +2135,6 @@ class Unit:
             factor=self.factor,
             name=self.name,
             dispname=self.dispname,
-            iscompound=self.iscompound,
             is_fullname=self.is_fullname,
         )
 
@@ -1960,23 +2146,22 @@ class Unit:
             factor=deepcopy(self.factor),
             name=deepcopy(self.name),
             dispname=deepcopy(self.dispname),
-            iscompound=deepcopy(self.iscompound),
             is_fullname=deepcopy(self.is_fullname),
         )
 
     def __hash__(self):
-        return hash(
-            (
-                self.dim,
-                self.factor,
-                self.base,
-                self.scale,
-                self.name,
-                self.dispname,
-                self.iscompound,
-                self.is_fullname
+        if self._hash is None:
+            self._hash = hash(
+                (
+                    self.dim,
+                    self.factor,
+                    self.base,
+                    self.scale,
+                    self.name,
+                    self.dispname,
+                )
             )
-        )
+        return self._hash
 
     def has_same_magnitude(self, other: 'Unit') -> bool:
         """
@@ -2093,6 +2278,11 @@ class Unit:
         u : `Unit`
             The new unit.
         """
+        if scalefactor not in _siprefixes:
+            raise ValueError(
+                f"Unknown SI prefix {scalefactor!r}. "
+                f"Valid prefixes are: {list(_siprefixes.keys())}"
+            )
         name = scalefactor + baseunit.name
         dispname = scalefactor + baseunit.dispname
         scale = _siprefixes[scalefactor] + baseunit.scale
@@ -2107,64 +2297,80 @@ class Unit:
         add_standard_unit(u)
         return u
 
-    def __repr__(self) -> str:
-        if self.is_fullname:
-            return self.name
-        if self.dim.is_dimensionless:
-            return f'Unit({self.base}^{self.scale})'
-        else:
-            if self.factor == 1.:
-                if self.scale == 0:
-                    return f'{self.name}'
-                else:
-                    return f'{self.base}^{self.scale} * {self.name}'
-            else:
-                if self.scale == 0:
-                    return f'{self.factor} * {self.name}'
-                else:
-                    return f'{self.factor} * {self.base}^{self.scale} * {self.name}'
+    def _canonical_str(self) -> str:
+        """Return the canonical display string for this unit.
 
-    def __str__(self) -> str:
+        Uses dispname symbols (``mV``, ``Hz``, ``kg``), ``^`` for
+        exponentiation, `` * `` for multiplication, and `` / `` for
+        division.  The result is both human-readable and
+        machine-parseable.
+        """
+        if self._display_parts is not None:
+            return _format_display_parts(self._display_parts)
         if self.is_fullname:
             return self.dispname
         if self.dim.is_dimensionless:
-            return f'Unit({self.base}^{self.scale})'
-        else:
-            if self.factor == 1.:
-                if self.scale == 0:
-                    return f'{self.dispname}'
-                else:
-                    return f'{self.base}^{self.scale} * {self.dispname}'
+            if self.scale == 0 and self.factor == 1.:
+                return '1'
+            elif self.factor == 1.:
+                return f'{self.base}^{_fmt_exp(self.scale)}'
+            elif self.scale == 0:
+                return str(self.factor)
             else:
-                if self.scale == 0:
-                    return f'{self.factor} * {self.dispname}'
-                else:
-                    return f'{self.factor} * {self.base}^{self.scale} * {self.dispname}'
+                return f'{self.factor} * {self.base}^{_fmt_exp(self.scale)}'
+        # Anonymous unit — build a descriptive string from components
+        if self.factor == 1.:
+            if self.scale == 0:
+                return f'{self.dispname}'
+            else:
+                return f'{self.base}^{self.scale} * {self.dispname}'
+        else:
+            if self.scale == 0:
+                return f'{self.factor} * {self.dispname}'
+            else:
+                return f'{self.factor} * {self.base}^{self.scale} * {self.dispname}'
 
-    def __mul__(self, other) -> 'Unit' | Quantity:
+    def __repr__(self) -> str:
+        s = self._canonical_str()
+        return f"Unit(\"{s}\")"
+
+    def __str__(self) -> str:
+        return self._canonical_str()
+
+    def __mul__(self, other) -> 'Unit | Quantity':
         # self * other
         if isinstance(other, Unit):
             _assert_same_base(self, other)
             scale = self.scale + other.scale
             dim = self.dim * other.dim
             factor = self.factor * other.factor
-            name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-            dispname = name
-            iscompound = False
-            if name is None and not dimless and not is_fullname and self.is_fullname and other.is_fullname:
-                name = f"{self.name} * {other.name}"
-                dispname = f"{self.dispname} * {other.dispname}"
-                iscompound = True
-                is_fullname = True
+
+            # Dimensionless → no compound display
+            if dim == DIMENSIONLESS:
+                return Unit(dim, scale=scale, base=self.base, factor=factor)
+
+            # Both named → deterministic compound via display_parts
+            if self.is_fullname and other.is_fullname:
+                parts = _merge_display_parts(
+                    _get_display_parts(self),
+                    _get_display_parts(other),
+                )
+                canonical = _format_display_parts(parts)
+                return Unit(
+                    dim, scale=scale, base=self.base, factor=factor,
+                    name=canonical, dispname=canonical,
+                    is_fullname=True,
+                    display_parts=parts,
+                )
+
+            # Fallback: standard-unit lookup
+            name, dispname, is_fullname, _ = _find_standard_unit(
+                dim, self.base, scale, factor
+            )
             return Unit(
-                dim,
-                scale=scale,
-                base=self.base,
-                factor=self.factor,
-                name=name,
-                dispname=dispname,
-                iscompound=iscompound,
-                is_fullname=is_fullname
+                dim, scale=scale, base=self.base, factor=factor,
+                name=name, dispname=dispname,
+                is_fullname=is_fullname,
             )
 
         elif isinstance(other, Quantity):
@@ -2179,7 +2385,7 @@ class Unit:
         else:
             return Quantity(other, unit=self)
 
-    def __rmul__(self, other) -> 'Unit' | Quantity:
+    def __rmul__(self, other) -> 'Unit | Quantity':
         # other * self
         if isinstance(other, Unit):
             return other.__mul__(self)
@@ -2200,41 +2406,39 @@ class Unit:
             scale = self.scale - other.scale
             dim = self.dim / other.dim
             factor = self.factor / other.factor
-            name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-            dispname = name
-            iscompound = False
-            if name is None and not dimless and not is_fullname and self.is_fullname and other.is_fullname:
-                if self.iscompound:
-                    dispname = f"({self.dispname})"
-                    name = f"({self.name})"
-                else:
-                    dispname = self.dispname
-                    name = self.name
-                dispname += "/"
-                name += " / "
-                if other.iscompound:
-                    dispname += f"({other.dispname})"
-                    name += f"({other.name})"
-                else:
-                    dispname += other.dispname
-                    name += other.name
-                iscompound = True
-                is_fullname = True
+
+            # Dimensionless → no compound display
+            if dim == DIMENSIONLESS:
+                return Unit(dim, scale=scale, base=self.base, factor=factor)
+
+            # Both named → deterministic compound via display_parts
+            if self.is_fullname and other.is_fullname:
+                other_parts = [(n, d, -e) for n, d, e in _get_display_parts(other)]
+                parts = _merge_display_parts(
+                    _get_display_parts(self), other_parts,
+                )
+                canonical = _format_display_parts(parts)
+                return Unit(
+                    dim, base=self.base, scale=scale, factor=factor,
+                    name=canonical, dispname=canonical,
+                    is_fullname=True,
+                    display_parts=parts,
+                )
+
+            # Fallback: standard-unit lookup
+            name, dispname, is_fullname, _ = _find_standard_unit(
+                dim, self.base, scale, factor
+            )
             return Unit(
-                dim,
-                base=self.base,
-                scale=scale,
-                factor=factor,
-                name=name,
-                dispname=dispname,
-                iscompound=iscompound,
-                is_fullname=is_fullname
+                dim, base=self.base, scale=scale, factor=factor,
+                name=name, dispname=dispname,
+                is_fullname=is_fullname,
             )
 
         else:
             raise TypeError(f"unit {self} cannot divide by a non-unit {other}")
 
-    def __rdiv__(self, other) -> 'Unit' | Quantity:
+    def __rdiv__(self, other) -> 'Unit | Quantity':
         # other / self
         if isinstance(other, Unit):
             return other.__div__(self)
@@ -2249,26 +2453,36 @@ class Unit:
         dim = self.dim ** -1
         scale = -self.scale
         factor = 1. / self.factor
-        name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-        dispname = name
-        iscompound = False
-        if name is None and not dimless and not is_fullname and self.is_fullname:
-            if self.iscompound:
-                dispname = f"({self.dispname})"
-                name = f"({self.name})"
-            else:
-                dispname = self.dispname
-                name = self.name
-            iscompound = True
+
+        # Standard-unit lookup — allowed for reverse() because it is a
+        # single-operand transform where the preference system correctly
+        # picks hertz over becquerel, etc.
+        name, dispname, is_fullname, dimless = _find_standard_unit(
+            dim, self.base, scale, factor
+        )
+        if is_fullname:
+            return Unit(
+                dim, base=self.base, scale=scale, factor=factor,
+                name=name, dispname=dispname,
+                is_fullname=True,
+            )
+
+        # Build from display_parts (negate exponents)
+        if self.is_fullname:
+            parts = [(n, d, -e) for n, d, e in _get_display_parts(self)]
+            parts = _normalise_display_parts(parts)
+            canonical = _format_display_parts(parts)
+            return Unit(
+                dim, base=self.base, scale=scale, factor=factor,
+                name=canonical, dispname=canonical,
+                is_fullname=True,
+                display_parts=parts,
+            )
+
         return Unit(
-            dim,
-            base=self.base,
-            scale=scale,
-            factor=factor,
-            name=name,
-            dispname=dispname,
-            iscompound=iscompound,
-            is_fullname=is_fullname
+            dim, base=self.base, scale=scale, factor=factor,
+            name=name, dispname=dispname,
+            is_fullname=is_fullname,
         )
 
     def __idiv__(self, other):
@@ -2300,28 +2514,33 @@ class Unit:
             dim = self.dim ** other
             scale = self.scale * other
             factor = self.factor ** other
-            name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-            dispname = name
-            iscompound = False
-            if name is None and not dimless and not is_fullname and self.is_fullname:
-                if self.iscompound:
-                    dispname = f"({self.dispname})"
-                    name = f"({self.name})"
-                else:
-                    dispname = self.dispname
-                    name = self.name
-                dispname += f"^{str(other)}"
-                name += f" ** {repr(other)}"
-                iscompound = True
+
+            if dim == DIMENSIONLESS:
+                return Unit(dim, scale=scale, base=self.base, factor=factor)
+
+            # Named source → build from display_parts (multiply exponents).
+            # This avoids ambiguous standard-unit aliases (e.g. m^3→kl,
+            # (m/s)^2→Gy) and keeps display consistent with __mul__/__div__.
+            if self.is_fullname:
+                src_parts = _get_display_parts(self)
+                parts = [(n, d, e * other) for n, d, e in src_parts]
+                parts = _normalise_display_parts(parts)
+                canonical = _format_display_parts(parts)
+                return Unit(
+                    dim, base=self.base, scale=scale, factor=factor,
+                    name=canonical, dispname=canonical,
+                    is_fullname=True,
+                    display_parts=parts,
+                )
+
+            # Fallback: standard-unit lookup (for anonymous units)
+            name, dispname, is_fullname, dimless = _find_standard_unit(
+                dim, self.base, scale, factor
+            )
             return Unit(
-                dim,
-                base=self.base,
-                scale=scale,
-                factor=factor,
-                name=name,
-                dispname=dispname,
-                iscompound=iscompound,
-                is_fullname=is_fullname
+                dim, base=self.base, scale=scale, factor=factor,
+                name=name, dispname=dispname,
+                is_fullname=is_fullname,
             )
         else:
             raise TypeError(
@@ -2335,7 +2554,8 @@ class Unit:
 
     def __add__(self, other: 'Unit') -> 'Unit':
         # self + other
-        assert isinstance(other, Unit), f"Expected a Unit, but got {other}"
+        if not isinstance(other, Unit):
+            raise TypeError(f"Expected a Unit, but got {other}")
         if self.has_same_dim(other):
             if self.has_same_magnitude(other):
                 return self.copy()
@@ -2352,7 +2572,8 @@ class Unit:
 
     def __sub__(self, other: 'Unit') -> 'Unit':
         # self - other
-        assert isinstance(other, Unit), f"Expected a Unit, but got {other}"
+        if not isinstance(other, Unit):
+            raise TypeError(f"Expected a Unit, but got {other}")
         if self.has_same_dim(other):
             if self.has_same_magnitude(other):
                 return self.copy()
@@ -2387,8 +2608,12 @@ class Unit:
         else:
             return False
 
-    def __neq__(self, other) -> bool:
+    def __ne__(self, other) -> bool:
         return not self.__eq__(other)
+
+    def __abs__(self) -> 'Unit':
+        """Return the unit itself — units are always non-negative."""
+        return self
 
     def __reduce__(self):
         # For pickling
@@ -2401,14 +2626,27 @@ class Unit:
                 self.factor,
                 self.name,
                 self.dispname,
-                self.iscompound,
                 self.is_fullname
             )
         )
 
 
 def _to_unit(*args):
+    """Private pickle reconstruction shim for Unit.
+
+    Must live at module level without ``@set_module_as`` so that pickle can
+    locate it as ``saiunit._base._to_unit``.
+    """
     return Unit(*args)
+
+
+def _quantity_with_unit(mantissa, unit):
+    """Private reconstruction helper for Quantity pickling.
+
+    Must live at module level *without* ``@set_module_as`` so that pickle can
+    locate it as ``saiunit._base._quantity_with_unit``.
+    """
+    return Quantity(mantissa, unit=unit)
 
 
 UNITLESS = Unit()
@@ -2416,7 +2654,7 @@ UNITLESS = Unit()
 
 def _zoom_values_with_units(
     values: Sequence[jax.typing.ArrayLike],
-    units: Sequence['Unit']
+    units: Sequence[Unit]
 ):
     """
     Zoom values with units.
@@ -2437,13 +2675,12 @@ def _zoom_values_with_units(
     values = list(values)
     first_unit = units[0]
     for i in range(1, len(values)):
-        values[i] = values[i]
         if not units[i].has_same_magnitude(first_unit):
             values[i] = values[i] * (units[i].magnitude / first_unit.magnitude)
     return values
 
 
-def _check_units_and_collect_values(lst) -> Tuple[jax.typing.ArrayLike, 'Unit']:
+def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
     units = []
     values = []
 
@@ -2478,7 +2715,7 @@ def _check_units_and_collect_values(lst) -> Tuple[jax.typing.ArrayLike, 'Unit']:
         return jnp.asarray(values), UNITLESS
 
 
-def _process_list_with_units(value: List) -> Tuple[jax.typing.ArrayLike, 'Unit']:
+def _process_list_with_units(value: list) -> tuple[jax.typing.ArrayLike, Unit]:
     values, unit = _check_units_and_collect_values(value)
     return values, unit
 
@@ -2489,7 +2726,7 @@ def _element_not_quantity(x):
 
 
 @register_pytree_node_class
-class Quantity(Generic[A]):
+class Quantity:
     """
     The `Quantity` class represents a physical quantity with a mantissa and a unit.
     It is used to represent all physical quantities in ``saiunit``.
@@ -2504,8 +2741,8 @@ class Quantity(Generic[A]):
     def __init__(
         self,
         mantissa: PyTree | Unit,
-        unit: Optional[Unit | jax.typing.ArrayLike] = UNITLESS,
-        dtype: Optional[jax.typing.DTypeLike] = None,
+        unit: Unit | jax.typing.ArrayLike | None = UNITLESS,
+        dtype: jax.typing.DTypeLike | None = None,
     ):
 
         with jax.ensure_compile_time_eval():  # inside JIT, this can avoid to trace the constant mantissa value
@@ -2514,7 +2751,8 @@ class Quantity(Generic[A]):
             mantissa = maybe_custom_array_tree(mantissa)
 
             if isinstance(mantissa, Unit):
-                assert unit is UNITLESS, "Cannot create a Quantity object with a unit and a mantissa that is a Unit object."
+                if unit is not UNITLESS:
+                    raise ValueError("Cannot create a Quantity object with a unit and a mantissa that is a Unit object.")
                 unit = mantissa
                 mantissa = 1.
 
@@ -2524,7 +2762,7 @@ class Quantity(Generic[A]):
                     unit = new_unit
                 elif new_unit != UNITLESS:
                     if not new_unit.has_same_dim(unit):
-                        raise TypeError(f"All elements must have the same unit. But got {unit} != {UNITLESS}")
+                        raise TypeError(f"All elements must have the same unit. But got {unit} != {new_unit}")
                     if not new_unit.has_same_magnitude(unit):
                         mantissa = mantissa * (new_unit.magnitude / unit.magnitude)
                 mantissa = jnp.array(mantissa, dtype=dtype)
@@ -2544,11 +2782,10 @@ class Quantity(Generic[A]):
                 # skip 'asarray' if dtype is not provided
 
             elif isinstance(mantissa, (jnp.number, numbers.Number)):
-                # mantissa = jnp.array(mantissa, dtype=dtype)
-                mantissa = mantissa
+                pass  # keep as-is; jnp.array conversion deferred to use-site
 
             else:
-                mantissa = mantissa
+                pass  # keep as-is for other pytree types
 
         # mantissa
         self._mantissa = mantissa
@@ -2675,7 +2912,7 @@ class Quantity(Generic[A]):
         """
         return self.mantissa
 
-    def update_mantissa(self, mantissa: PyTree):
+    def update_mantissa(self, mantissa: PyTree) -> None:
         """
         Set the mantissa of the array.
 
@@ -2687,9 +2924,9 @@ class Quantity(Generic[A]):
         Args:
           mantissa: The new mantissa of the array.
         """
-        self_value = self._check_tracer()
+        self_value = self.mantissa
         if isinstance(mantissa, Quantity):
-            raise ValueError("Cannot set the mantissa of an Array object to another Array object.")
+            raise ValueError("Cannot set the mantissa of a Quantity to another Quantity.")
         if isinstance(mantissa, np.ndarray):
             mantissa = jnp.asarray(mantissa, dtype=self.dtype)
         elif isinstance(mantissa, jax.Array):
@@ -2732,7 +2969,7 @@ class Quantity(Generic[A]):
         return self.unit.dim
 
     @dim.setter
-    def dim(self, *args):
+    def dim(self, value):
         # Do not support setting the unit directly
         raise NotImplementedError(
             "Cannot set the dimension of a Quantity object directly,"
@@ -2769,7 +3006,7 @@ class Quantity(Generic[A]):
         return self._unit
 
     @unit.setter
-    def unit(self, *args):
+    def unit(self, value):
         # Do not support setting the unit directly
         raise NotImplementedError(
             "Cannot set the unit of a Quantity object directly,"
@@ -2810,12 +3047,13 @@ class Quantity(Generic[A]):
         Returns:
           The decimal number of the quantity based on the given unit.
         """
-        assert isinstance(unit, Unit), f"Expected a Unit, but got {unit}."
+        if not isinstance(unit, Unit):
+            raise TypeError(f"Expected a Unit, but got {unit}.")
         if not unit.has_same_dim(self.unit):
             raise UnitMismatchError(
-                f"Cannot convert to the decimal number using a unit with different "
-                f"dimensions. The quantity has the unit {self.unit}, but the given "
-                f"unit is {unit}"
+                f"Cannot convert to the decimal number using a unit with different dimensions.",
+                self.unit,
+                unit,
             )
         if not unit.has_same_magnitude(self.unit):
             return self.mantissa * (self.unit.magnitude / unit.magnitude)
@@ -2839,16 +3077,19 @@ class Quantity(Generic[A]):
         Returns:
             The new quantity with the given unit.
         """
-        assert isinstance(unit, Unit), f"Expected a Unit, but got {unit}."
+        if not isinstance(unit, Unit):
+            raise TypeError(f"Expected a Unit, but got {unit}.")
         if not unit.has_same_dim(self.unit):
             if err_msg is None:
                 raise UnitMismatchError(f"Cannot convert to a unit with different dimensions.", self.unit, unit)
             else:
                 raise UnitMismatchError(err_msg)
-        if unit.has_same_magnitude(self.unit):
+        self_mag = self.unit.magnitude
+        target_mag = unit.magnitude
+        if self_mag == target_mag:
             u = Quantity(self.mantissa, unit=unit)
         else:
-            u = Quantity(self.mantissa * (self.unit.magnitude / unit.magnitude), unit=unit)
+            u = Quantity(self.mantissa * (self_mag / target_mag), unit=unit)
         return u
 
     @staticmethod
@@ -2906,76 +3147,68 @@ class Quantity(Generic[A]):
         other_dim = get_dim(other.dim)
         return (self_dim is other_dim) or (self_dim == other_dim)
 
+    def _format_value(self, precision: int | None = None) -> str:
+        """Format the mantissa value as a string."""
+        m = self.mantissa
+        if isinstance(m, jax.Array):
+            value = m
+        else:
+            try:
+                value = jnp.asarray(m)
+            except TypeError:
+                value = m
+
+        if _is_tracer(value):
+            return str(value)
+
+        try:
+            if value.shape == ():
+                s = np.array_str(np.array([value]), precision=precision)
+                return s.replace("[", "").replace("]", "").strip()
+            # Use numpy's built-in summarization for large arrays
+            if value.size > 100:
+                kw = {}
+                if precision is not None:
+                    kw['precision'] = precision
+                with np.printoptions(threshold=10, **kw):
+                    return np.array_str(value)
+            return np.array_str(value, precision=precision)
+        except (TypeError, AttributeError):
+            return str(value)
+
     def repr_in_unit(
         self,
         precision: int | None = None,
-        python_code: bool = True
     ) -> str:
         """
-        Represent the Array in a given unit.
+        Represent the Quantity in its current unit.
+
+        Returns the canonical ``"value unit"`` format, e.g.
+        ``"3.0 mV"`` or ``"[1. 2. 3.] mV"``.
 
         Parameters
         ----------
         precision : `int`, optional
-            The number of digits of precision (in the given unit)
+            The number of digits of precision (in the given unit).
             If no value is given, numpy's `get_printoptions` is used.
-        python_code : `bool`, optional
-            Whether to return a string that can be used as python code.
-            If True, the string will be formatted as a python expression.
-            If False, the string will be formatted as a human-readable string.
 
         Returns
         -------
         s : `str`
-            The string representation of the Array in the given unit.
+            The string representation of the Quantity.
 
         Examples
         --------
         >>> from saiunit import *
         >>> x = 25.123456 * mV
-        >>> x.repr_in_unit(volt)
-        '0.02512346 V'
-        >>> x.repr_in_unit(volt, 3)
+        >>> x.repr_in_unit()
+        '25.123456 mV'
+        >>> x.in_unit(volt).repr_in_unit(3)
         '0.025 V'
-        >>> x.repr_in_unit(mV, 3)
-        '25.123 mV'
         """
-        # convert to the JAX array
-        try:
-            value = jnp.asarray(self.mantissa)
-        except TypeError:
-            value = self.mantissa
-
-        if _is_tracer(value):  # in the JIT mode
-            s = str(value)
-        else:  # in the normal mode
-            try:
-                if value.shape == ():
-                    s = np.array_str(np.array([value]), precision=precision)
-                    s = s.replace("[", "").replace("]", "").strip()
-                else:
-                    if value.size > 100:
-                        if python_code:
-                            s = np.array_repr(value, precision=precision)[:100]
-                            s += "..."
-                        else:
-                            s = np.array_str(value, precision=precision)[:100]
-                            s += "..."
-                    else:
-                        if python_code:
-                            s = np.array_repr(value, precision=precision)
-                        else:
-                            s = np.array_str(value, precision=precision)
-            except TypeError:
-                s = str(value)
-
-        if not self.unit.is_unitless:
-            if python_code:
-                s += f" * {repr(self.unit)}"
-            else:
-                s += f" {str(self.unit)}"
-        elif python_code:  # Make a array without unit recognisable
-            return f"{self.__class__.__name__}({s.strip()})"
+        s = self._format_value(precision=precision)
+        if self.unit.should_display_unit:
+            s += f" {str(self.unit)}"
         return s.strip()
 
     def factorless(self) -> 'Quantity':
@@ -2991,10 +3224,6 @@ class Quantity(Generic[A]):
             return Quantity(self.mantissa * self.unit.factor, unit=self.unit.factorless())
         else:
             return self
-
-    def _check_tracer(self):
-        self_value = self.mantissa
-        return self_value
 
     @property
     def dtype(self):
@@ -3015,7 +3244,7 @@ class Quantity(Generic[A]):
                 raise TypeError(f'Can not get dtype of {a}.')
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         """Variable shape."""
         return jnp.shape(self.mantissa)
 
@@ -3025,12 +3254,10 @@ class Quantity(Generic[A]):
 
     @property
     def imag(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.imag(self.mantissa), unit=self.unit)
 
     @property
     def real(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.real(self.mantissa), unit=self.unit)
 
     @property
@@ -3038,13 +3265,32 @@ class Quantity(Generic[A]):
         return jnp.size(self.mantissa)
 
     @property
+    def nbytes(self) -> int:
+        """Total bytes consumed by the mantissa array."""
+        return jnp.asarray(self.mantissa).nbytes
+
+    @property
+    def itemsize(self) -> int:
+        """Length (in bytes) of one array element."""
+        return jnp.asarray(self.mantissa).itemsize
+
+    @property
+    def strides(self):
+        """Tuple of byte-steps in each dimension (mirrors numpy.ndarray.strides)."""
+        return np.asarray(self.mantissa).strides
+
+    @property
+    def flat(self):
+        """1-D iterator over the mantissa elements, unit preserved."""
+        for v in jnp.asarray(self.mantissa).flat:
+            yield Quantity(v, unit=self.unit)
+
+    @property
     def T(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa).T, unit=self.unit)
 
     @property
     def mT(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa).mT, unit=self.unit)
 
     @property
@@ -3060,7 +3306,7 @@ class Quantity(Generic[A]):
         return jnp.isfinite(self.mantissa)
 
     @property
-    def isinfnite(self) -> jax.Array:
+    def isinfinite(self) -> jax.Array:
         return jnp.isinf(self.mantissa)
 
     @property
@@ -3082,31 +3328,57 @@ class Quantity(Generic[A]):
         Returns:
           int: The hash value of the Quantity object.
         """
-        return hash((self.mantissa, self.unit))
+        try:
+            return hash((np.asarray(self.mantissa).tobytes(), self.unit))
+        except Exception:
+            return hash((id(self.mantissa), self.unit))
 
     def __repr__(self) -> str:
-        return self.repr_in_unit(python_code=True)
+        value_str = self._format_value()
+        unit_str = str(self.unit)
+        prefix = "Quantity("
+        if self.unit.should_display_unit:
+            suffix = f", \"{unit_str}\")"
+        else:
+            suffix = ")"
+        # Indent continuation lines to align with prefix
+        if "\n" in value_str:
+            indent = " " * len(prefix)
+            lines = value_str.split("\n")
+            value_str = lines[0] + "\n" + "\n".join(indent + line for line in lines[1:])
+        return f"{prefix}{value_str}{suffix}"
 
     def __str__(self) -> str:
-        # change to python code,
-        # since the new display method has a scale factor,
-        # which should be more clear when add a "*" operator
-        return self.repr_in_unit(python_code=True)
+        return self.repr_in_unit()
 
-    def __format__(self, format_spec):
-        # check if scalar
+    def __format__(self, format_spec) -> str:
+        if not format_spec:
+            return str(self)
+        # Block '%' format on quantities with units — "50% mV" is meaningless
+        if '%' in format_spec and not self.unit.is_unitless:
+            raise ValueError(
+                f"'%' format is not supported for Quantity with unit {str(self.unit)!r}. "
+                f"Convert to a dimensionless value first."
+            )
+        unit_str = str(self.unit)
+        show_unit = self.unit.should_display_unit
         if self.shape == ():
             formatted_value = format(self.mantissa, format_spec)
-            return f"{formatted_value} * {self.unit.name}"
+            if not show_unit:
+                return formatted_value
+            return f"{formatted_value} {unit_str}"
         else:
-            try:
-                # Extract the number of decimal places from the format_spec
-                decimal_places = int(format_spec.strip('f').strip('.'))
-
-                rounded_value = self.round(decimal_places)
-                return rounded_value.__repr__()
-            except:
-                return self.__repr__()
+            # Parse precision from standard format specs like .2f, .3e, .4g,
+            # 10.2f, +.2f, etc.  Use a regex to extract the precision field.
+            m = re.match(r'^[^.]*\.(\d+)[feEgGn%]?$', format_spec)
+            if m is not None:
+                precision = int(m.group(1))
+                value = np.asarray(self.mantissa)
+                s = np.array_str(np.round(value, precision), precision=precision)
+                if not show_unit:
+                    return s
+                return f"{s} {unit_str}"
+            return str(self)
 
     def __iter__(self):
         """Solve the issue of DeviceArray.__iter__.
@@ -3116,27 +3388,25 @@ class Quantity(Generic[A]):
         - https://github.com/google/jax/issues/7713
         - https://github.com/google/jax/pull/3821
         """
-        # self = self.factorless()
 
         if self.ndim == 0:
-            yield self
-        else:
-            for i in range(self.shape[0]):
-                yield Quantity(self.mantissa[i], unit=self.unit)
+            raise TypeError("iteration over a 0-d Quantity is not allowed")
+        for i in range(self.shape[0]):
+            yield Quantity(self.mantissa[i], unit=self.unit)
 
     def __getitem__(self, index) -> 'Quantity':
-        # self = self.factorless()
 
         if isinstance(index, slice) and (index == _all_slice):
             return Quantity(self.mantissa, unit=self.unit)
         elif isinstance(index, tuple):
             for x in index:
-                assert not isinstance(x, Quantity), "Array indices must be integers or slices, not Array"
+                if isinstance(x, Quantity):
+                    raise TypeError("Array indices must be integers or slices, not Array")
         elif isinstance(index, Quantity):
             raise TypeError("Array indices must be integers or slices, not Array")
         return Quantity(self.mantissa[index], unit=self.unit)
 
-    def __setitem__(self, index, value: 'Quantity' | jax.typing.ArrayLike):
+    def __setitem__(self, index, value: 'Quantity | jax.typing.ArrayLike'):
         # check value
         if not isinstance(value, Quantity):
             if self.is_unitless:
@@ -3149,14 +3419,13 @@ class Quantity(Generic[A]):
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # update
-        self_value = jnp.asarray(self._check_tracer())
-        self_value = self_value.at[index].set(value.mantissa)
+        self_value = jnp.asarray(self.mantissa).at[index].set(value.mantissa)
         self.update_mantissa(self_value)
 
     def scatter_add(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-add the given value to the given index.
@@ -3173,7 +3442,6 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-added value.
         """
-        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -3187,14 +3455,14 @@ class Quantity(Generic[A]):
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-add
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].add(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
     def scatter_sub(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-sub the given value to the given index.
@@ -3216,7 +3484,7 @@ class Quantity(Generic[A]):
     def scatter_mul(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-mul the given value to the given index.
@@ -3233,28 +3501,28 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-multiplied value.
         """
-        # self = self.factorless()
 
-        # check value
+        # check value: scatter_mul requires a dimensionless scale factor
         if not isinstance(value, Quantity):
-            if self.is_unitless:
-                value = Quantity(value)
-            else:
-                raise TypeError(f"Only Quantity can be assigned to Quantity. But got {value}")
-        value = value.in_unit(self.unit)
+            value = Quantity(value)
+        if not value.is_unitless:
+            raise TypeError(
+                f"scatter_mul requires a dimensionless scale factor, "
+                f"but got {value}. Use Quantity.__mul__ for unit-changing multiplication."
+            )
 
         # check index
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-mul
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].mul(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
     def scatter_div(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-div the given value to the given index.
@@ -3271,28 +3539,28 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-divided value.
         """
-        # self = self.factorless()
 
-        # check value
+        # check value: scatter_div requires a dimensionless scale factor
         if not isinstance(value, Quantity):
-            if self.is_unitless:
-                value = Quantity(value)
-            else:
-                raise TypeError(f"Only Quantity can be assigned to Quantity. But got {value}")
-        value = value.in_unit(self.unit)
+            value = Quantity(value)
+        if not value.is_unitless:
+            raise TypeError(
+                f"scatter_div requires a dimensionless scale factor, "
+                f"but got {value}. Use Quantity.__truediv__ for unit-changing division."
+            )
 
         # check index
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-div
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].divide(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
     def scatter_max(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-max the given value to the given index.
@@ -3309,7 +3577,6 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-maximum value.
         """
-        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -3323,14 +3590,14 @@ class Quantity(Generic[A]):
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-max
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].max(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
     def scatter_min(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-min the given value to the given index.
@@ -3347,7 +3614,6 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-minimum value.
         """
-        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -3361,7 +3627,7 @@ class Quantity(Generic[A]):
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-min
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].min(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
@@ -3373,19 +3639,15 @@ class Quantity(Generic[A]):
         return len(self.mantissa)
 
     def __neg__(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(self.mantissa.__neg__(), unit=self.unit)
 
     def __pos__(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(self.mantissa.__pos__(), unit=self.unit)
 
     def __abs__(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(self.mantissa.__abs__(), unit=self.unit)
 
     def __invert__(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(self.mantissa.__invert__(), unit=self.unit)
 
     def _comparison(self, other: Any, operator_str: str, operation: Callable):
@@ -3393,8 +3655,10 @@ class Quantity(Generic[A]):
         try:
             other_value = other.in_unit(self.unit).mantissa
         except UnitMismatchError as e:
-            raise UnitMismatchError(f"Cannot compare {self} {operator_str} {other}, "
-                                    f"since units do not match: {self.unit} != {other.unit}") from e
+            raise UnitMismatchError(
+                f"Cannot compare {self} {operator_str} {other}",
+                self.unit, other.unit,
+            ) from e
         return operation(self.mantissa, other_value)
 
     def __eq__(self, oc) -> jax.typing.ArrayLike:
@@ -3448,10 +3712,10 @@ class Quantity(Generic[A]):
         inplace: bool, optional
             Whether to do the operation in-place (defaults to ``False``).
         """
-        # self = self.factorless()
 
         # format "other"
-        other = _to_quantity(other)
+        if not isinstance(other, Quantity):
+            other = _to_quantity(other)
 
         # format the unit and mantissa of "other"
         if fail_for_mismatch:
@@ -3603,7 +3867,7 @@ class Quantity(Generic[A]):
     # -------------------- #
 
     def __pow__(self, oc):
-        # self = self.factorless()
+        self = self.factorless()
         if compat_with_equinox:
             try:
                 from equinox.internal._omega import ω  # noqa
@@ -3612,15 +3876,16 @@ class Quantity(Generic[A]):
             except (ImportError, ModuleNotFoundError):
                 pass
         if isinstance(oc, Quantity):
-            assert oc.is_unitless, f"Cannot calculate {self} ** {oc}, the exponent has to be dimensionless"
+            if not oc.is_unitless:
+                raise ValueError(f"Cannot calculate {self} ** {oc}, the exponent has to be dimensionless")
             oc = oc.mantissa
         r = Quantity(jnp.array(self.mantissa) ** oc, unit=self.unit ** oc)
         return maybe_decimal(r)
 
     def __rpow__(self, oc):
         # oc ** self
-        # self = self.factorless()
-        assert self.is_unitless, f"Cannot calculate {oc} ** {self}, the exponent has to be dimensionless"
+        if not self.is_unitless:
+            raise ValueError(f"Cannot calculate {oc} ** {self}, the exponent has to be dimensionless")
         return oc ** self.mantissa
 
     def __ipow__(self, oc):
@@ -3667,44 +3932,42 @@ class Quantity(Generic[A]):
 
     def __lshift__(self, oc) -> 'Quantity':
         # self << oc
-        # self = self.factorless()
         if isinstance(oc, Quantity):
-            assert oc.is_unitless, "The shift amount must be dimensionless"
+            if not oc.is_unitless:
+                raise ValueError("The shift amount must be dimensionless")
             oc = oc.mantissa
         r = Quantity(self.mantissa << oc, unit=self.unit)
         return maybe_decimal(r)
 
-    def __rlshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
+    def __rlshift__(self, oc) -> 'Quantity | jax.typing.ArrayLike':
         # oc << self
-        # self = self.factorless()
-        assert self.is_unitless, "The shift amount must be dimensionless"
+        if not self.is_unitless:
+            raise ValueError("The shift amount must be dimensionless")
         return oc << self.mantissa
 
     def __ilshift__(self, oc) -> 'Quantity':
         # self <<= oc
-        # self = self.factorless()
         r = self.__lshift__(oc)
         self.update_mantissa(r.mantissa)
         return self
 
     def __rshift__(self, oc) -> 'Quantity':
         # self >> oc
-        # self = self.factorless()
         if isinstance(oc, Quantity):
-            assert oc.is_unitless, "The shift amount must be dimensionless"
+            if not oc.is_unitless:
+                raise ValueError("The shift amount must be dimensionless")
             oc = oc.mantissa
         r = Quantity(self.mantissa >> oc, unit=self.unit)
         return maybe_decimal(r)
 
-    def __rrshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
+    def __rrshift__(self, oc) -> 'Quantity | jax.typing.ArrayLike':
         # oc >> self
-        # self = self.factorless()
-        assert self.is_unitless, "The shift amount must be dimensionless"
+        if not self.is_unitless:
+            raise ValueError("The shift amount must be dimensionless")
         return oc >> self.mantissa
 
     def __irshift__(self, oc) -> 'Quantity':
         # self >>= oc
-        # self = self.factorless()
         r = self.__rshift__(oc)
         self.update_mantissa(r.mantissa)
         return self
@@ -3716,19 +3979,25 @@ class Quantity(Generic[A]):
         :param ndigits: The number of decimals to round to.
         :return: The rounded Quantity.
         """
-        # self = self.factorless()
         return Quantity(self.mantissa.__round__(ndigits), unit=self.unit)
 
-    # def __reduce__(self):
-    #     """
-    #     Method used by Pickle object serialization.
-    #
-    #     Returns
-    #     -------
-    #     tuple
-    #         The tuple of the class and the arguments required to reconstruct the object.
-    #     """
-    #     return array_with_unit, (self.mantissa, self.unit, None)
+    def __reduce__(self):
+        """
+        Method used by Pickle object serialization.
+
+        Returns ``(array_with_unit, (mantissa, unit))`` so that
+        ``pickle.loads(pickle.dumps(q))`` reconstructs an identical Quantity
+        without bypassing ``__init__`` validation.  Using ``array_with_unit``
+        (rather than ``Quantity`` directly) mirrors the pattern used by
+        ``Unit.__reduce__`` and avoids issues with ``__slots__``.
+
+        Returns
+        -------
+        tuple
+            ``(callable, args)`` such that ``callable(*args)`` reconstructs
+            the object.
+        """
+        return _quantity_with_unit, (self.mantissa, self.unit)
 
     # ----------------------- #
     #      NumPy methods      #
@@ -3754,7 +4023,7 @@ class Quantity(Generic[A]):
     ptp = _wrap_function_keep_unit(jnp.ptp)
     ravel = _wrap_function_keep_unit(jnp.ravel)
 
-    def __deepcopy__(self, memodict: Dict):
+    def __deepcopy__(self, memodict: dict):
         return Quantity(
             deepcopy(self.mantissa),
             unit=self.unit.__deepcopy__(memodict)
@@ -3784,7 +4053,6 @@ class Quantity(Generic[A]):
             The real and imaginary parts of complex numbers are rounded
             separately.  The result of rounding a float is a float.
         """
-        # self = self.factorless()
         return Quantity(jnp.round(self.mantissa, decimals), unit=self.unit)
 
     def astype(
@@ -3798,7 +4066,6 @@ class Quantity(Generic[A]):
         dtype: str, dtype
           Typecode or data-type to which the array is cast.
         """
-        # self = self.factorless()
         if dtype is None:
             return Quantity(self.mantissa, unit=self.unit)
         else:
@@ -3806,30 +4073,26 @@ class Quantity(Generic[A]):
 
     def clip(
         self,
-        min: Quantity | jax.typing.ArrayLike = None,
-        max: Quantity | jax.typing.ArrayLike = None,
+        min: 'Quantity | jax.typing.ArrayLike' = None,
+        max: 'Quantity | jax.typing.ArrayLike' = None,
     ) -> 'Quantity':
         """
         Return an array whose values are limited to [min, max]. One of max or min must be given.
         """
-        # self = self.factorless()
         _, min = unit_scale_align_to_first(self, min)
         _, max = unit_scale_align_to_first(self, max)
         return Quantity(jnp.clip(self.mantissa, min.mantissa, max.mantissa), unit=self.unit)
 
     def conj(self) -> 'Quantity':
         """Complex-conjugate all elements."""
-        # self = self.factorless()
         return Quantity(jnp.conj(self.mantissa), unit=self.unit)
 
     def conjugate(self) -> 'Quantity':
         """Return the complex conjugate, element-wise."""
-        # self = self.factorless()
         return Quantity(jnp.conjugate(self.mantissa), unit=self.unit)
 
     def copy(self) -> 'Quantity':
         """Return a copy of the quantity."""
-        # self = self.factorless()
         return type(self)(jnp.copy(self.mantissa), unit=self.unit)
 
     def dot(self, b) -> 'Quantity':
@@ -3837,25 +4100,53 @@ class Quantity(Generic[A]):
         r = self._binary_operation(b, jnp.dot, operator.mul, operator_str="@")
         return maybe_decimal(r)
 
-    def fill(self, value: Quantity) -> 'Quantity':
+    def trace(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':
+        """Sum along diagonals of the array, preserving units."""
+        return Quantity(jnp.trace(self.mantissa, offset=offset, axis1=axis1, axis2=axis2), unit=self.unit)
+
+    def diagonal(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':
+        """Return specified diagonals, preserving units."""
+        return Quantity(jnp.diagonal(self.mantissa, offset=offset, axis1=axis1, axis2=axis2), unit=self.unit)
+
+    def outer(self, b: 'Quantity') -> 'Quantity':
+        """Outer product of two 1-D arrays; result unit = self.unit * b.unit."""
+        b = _to_quantity(b)
+        r = self._binary_operation(b, jnp.outer, operator.mul, operator_str="outer")
+        return maybe_decimal(r)
+
+    def cross(self, b: 'Quantity', axisa: int = -1, axisb: int = -1, axisc: int = -1, axis: int = None) -> 'Quantity':
+        """Cross product of two arrays; result unit = self.unit * b.unit."""
+        b = _to_quantity(b)
+        kwargs = dict(axisa=axisa, axisb=axisb, axisc=axisc)
+        if axis is not None:
+            kwargs['axis'] = axis
+        result_mantissa = jnp.cross(self.mantissa, b.mantissa, **kwargs)
+        result_unit = self.unit * b.unit
+        r = Quantity(result_mantissa, unit=result_unit)
+        return maybe_decimal(r)
+
+    def searchsorted(self, v, side: str = 'left', sorter=None) -> jax.Array:
+        """Find indices where elements should be inserted to maintain order."""
+        if isinstance(v, Quantity):
+            v = v.in_unit(self.unit).mantissa
+        return jnp.searchsorted(self.mantissa, v, side=side, sorter=sorter)
+
+    def fill(self, value: 'Quantity') -> 'Quantity':
         """Fill the array with a scalar mantissa."""
-        # self = self.factorless()
         fail_for_dimension_mismatch(self, value, "fill")
         self[:] = value
         return self
 
     def flatten(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.reshape(self.mantissa, -1), unit=self.unit)
 
     def item(self, *args) -> 'Quantity':
         """Copy an element of an array to a standard Python scalar and return it."""
-        # self = self.factorless()
         return Quantity(self.mantissa.item(*args), unit=self.unit)
 
     def prod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
         """Return the product of the array elements over the given axis."""
-        # self = self.factorless()
+        self = self.factorless()
 
         prod_res = jnp.prod(self.mantissa, *args, **kwds)
         # Calculating the correct dimensions is not completly trivial (e.g.
@@ -3876,7 +4167,7 @@ class Quantity(Generic[A]):
 
     def nanprod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
         """Return the product of array elements over a given axis treating Not a Numbers (NaNs) as ones."""
-        # self = self.factorless()
+        self = self.factorless()
 
         prod_res = jnp.nanprod(self.mantissa, *args, **kwds)
         nan_mask = jnp.isnan(self.mantissa)
@@ -3887,7 +4178,7 @@ class Quantity(Generic[A]):
         return maybe_decimal(r)
 
     def cumprod(self, *args, **kwds):  # TODO: check error when axis is not None
-        # self = self.factorless()
+        self = self.factorless()
 
         prod_res = jnp.cumprod(self.mantissa, *args, **kwds)
         dim_exponent = jnp.ones_like(self.mantissa).cumsum(*args, **kwds)
@@ -3897,7 +4188,7 @@ class Quantity(Generic[A]):
         return maybe_decimal(r)
 
     def nancumprod(self, *args, **kwds):  # TODO: check error when axis is not None
-        # self = self.factorless()
+        self = self.factorless()
 
         prod_res = jnp.nancumprod(self.mantissa, *args, **kwds)
         nan_mask = jnp.isnan(self.mantissa)
@@ -3917,25 +4208,21 @@ class Quantity(Generic[A]):
         values: array_like
           Values to place in the array at target indices.
         """
-        # self = self.factorless()
         fail_for_dimension_mismatch(self, values, "put")
         self.__setitem__(indices, values)
         return self
 
     def repeat(self, repeats, axis=None) -> 'Quantity':
         """Repeat elements of an array."""
-        # self = self.factorless()
         r = jnp.repeat(self.mantissa, repeats=repeats, axis=axis)
         return Quantity(r, unit=self.unit)
 
     def reshape(self, shape, order='C') -> 'Quantity':
         """Returns an array containing the same data with a new shape."""
-        # self = self.factorless()
         return Quantity(jnp.reshape(self.mantissa, shape, order=order), unit=self.unit)
 
     def resize(self, new_shape) -> 'Quantity':
         """Change shape and size of array in-place."""
-        # self = self.factorless()
         self.update_mantissa(jnp.resize(self.mantissa, new_shape))
         return self
 
@@ -3956,21 +4243,18 @@ class Quantity(Generic[A]):
             but unspecified fields will still be used, in the order in which
             they come up in the dtype, to break ties.
         """
-        # self = self.factorless()
         self.update_mantissa(jnp.sort(self.mantissa, axis=axis, stable=stable, order=order))
         return self
 
     def squeeze(self, axis=None) -> 'Quantity':
         """Remove axes of length one from ``a``."""
-        # self = self.factorless()
         return Quantity(jnp.squeeze(self.mantissa, axis=axis), unit=self.unit)
 
     def swapaxes(self, axis1, axis2) -> 'Quantity':
         """Return a view of the array with `axis1` and `axis2` interchanged."""
-        # self = self.factorless()
         return Quantity(jnp.swapaxes(self.mantissa, axis1, axis2), unit=self.unit)
 
-    def split(self, indices_or_sections, axis=0) -> List['Quantity']:
+    def split(self, indices_or_sections, axis=0) -> 'list[Quantity]':
         """Split an array into multiple sub-arrays as views into ``ary``.
 
         Parameters
@@ -3998,7 +4282,6 @@ class Quantity(Generic[A]):
         sub-arrays : list of ndarrays
           A list of sub-arrays as views into `ary`.
         """
-        # self = self.factorless()
         return [Quantity(a, unit=self.unit) for a in jnp.split(self.mantissa, indices_or_sections, axis=axis)]
 
     def take(
@@ -4011,7 +4294,6 @@ class Quantity(Generic[A]):
         fill_value=None,
     ) -> 'Quantity':
         """Return an array formed from the elements of a at the given indices."""
-        # self = self.factorless()
 
         if isinstance(fill_value, Quantity):
             fail_for_dimension_mismatch(self, fill_value, "take")
@@ -4078,7 +4360,6 @@ class Quantity(Generic[A]):
         out : ndarray
             View of `a`, with axes suitably permuted.
         """
-        # self = self.factorless()
         return Quantity(jnp.transpose(self.mantissa, *axes), unit=self.unit)
 
     def tile(self, reps) -> 'Quantity':
@@ -4110,7 +4391,6 @@ class Quantity(Generic[A]):
         c : ndarray
             The tiled output array.
         """
-        # self = self.factorless()
         return Quantity(jnp.tile(self.mantissa, reps), unit=self.unit)
 
     def view(self, *args, dtype=None) -> 'Quantity':
@@ -4143,28 +4423,16 @@ class Quantity(Generic[A]):
 
         Example::
 
-            >>> import brainstate, saiunit
-            >>> x = brainstate.random.randn(4, 4)
-            >>> x.size
-           [4, 4]
+            >>> import jax.numpy as jnp, saiunit
+            >>> x = saiunit.Quantity(jnp.ones((4, 4)))
+            >>> x.shape
+            (4, 4)
             >>> y = x.view(16)
-            >>> y.size
-            [16]
-            >>> z = x.view(-1, 8)  # the size -1 is inferred from other dimensions
-            >>> z.size
-            [2, 8]
-
-            >>> a = brainstate.random.randn(1, 2, 3, 4)
-            >>> a.size
-            [1, 2, 3, 4]
-            >>> b = a.transpose(1, 2)  # Swaps 2nd and 3rd dimension
-            >>> b.size
-            [1, 3, 2, 4]
-            >>> c = a.view(1, 3, 2, 4)  # Does not change tensor layout in memory
-            >>> c.size
-            [1, 3, 2, 4]
-            >>> saiunit.math.equal(b, c)
-            False
+            >>> y.shape
+            (16,)
+            >>> z = x.view(2, 8)
+            >>> z.shape
+            (2, 8)
 
 
         .. method:: view(dtype) -> Tensor
@@ -4249,7 +4517,6 @@ class Quantity(Generic[A]):
             [4, 16]
 
         """
-        # self = self.factorless()
         if len(args) == 0:
             if dtype is None:
                 raise ValueError('Provide dtype or shape.')
@@ -4269,9 +4536,8 @@ class Quantity(Generic[A]):
     # NumPy support
     # ------------------
 
-    def __array__(self, dtype: Optional[jax.typing.DTypeLike] = None) -> np.ndarray:
+    def __array__(self, dtype: jax.typing.DTypeLike | None = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
-        # self = self.factorless()
         if self.dim.is_dimensionless:
             return np.asarray(self.to_decimal(), dtype=dtype)
         else:
@@ -4281,7 +4547,6 @@ class Quantity(Generic[A]):
             )
 
     def __float__(self):
-        # self = self.factorless()
         if self.dim.is_dimensionless and self.ndim == 0:
             return float(self.to_decimal())
         else:
@@ -4291,7 +4556,6 @@ class Quantity(Generic[A]):
             )
 
     def __int__(self):
-        # self = self.factorless()
         if self.dim.is_dimensionless and self.ndim == 0:
             return int(self.to_decimal())
         else:
@@ -4301,7 +4565,6 @@ class Quantity(Generic[A]):
             )
 
     def __index__(self):
-        # self = self.factorless()
         if self.dim.is_dimensionless:
             return operator.index(self.to_decimal())
         else:
@@ -4322,10 +4585,9 @@ class Quantity(Generic[A]):
 
         See :func:`brainstate.math.unsqueeze`
         """
-        # self = self.factorless()
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
-    def expand_dims(self, axis: Union[int, Sequence[int]]) -> 'Quantity':
+    def expand_dims(self, axis: int | Sequence[int]) -> 'Quantity':
         """
         Expand the shape of an array.
 
@@ -4339,10 +4601,9 @@ class Quantity(Generic[A]):
         expanded : Quantity
             A view with the new axis inserted.
         """
-        # self = self.factorless()
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
-    def expand_as(self, array: Union['Quantity', jax.typing.ArrayLike]) -> 'Quantity':
+    def expand_as(self, array: 'Quantity | jax.typing.ArrayLike') -> 'Quantity':
         """
         Expand an array to a shape of another array.
 
@@ -4357,20 +4618,18 @@ class Quantity(Generic[A]):
             typically not contiguous. Furthermore, more than one element of a
             expanded array may refer to a single memory location.
         """
-        # self = self.factorless()
         if isinstance(array, Quantity):
             fail_for_dimension_mismatch(self, array, "expand_as (Quantity)")
             array = array.mantissa
         return Quantity(jnp.broadcast_to(self.mantissa, array), unit=self.unit)
 
     def pow(self, oc) -> 'Quantity':
-        # self = self.factorless()
         return self.__pow__(oc)
 
     def clone(self) -> 'Quantity':
         return self.copy()
 
-    def tree_flatten(self) -> Tuple[Tuple[jax.typing.ArrayLike], Unit]:
+    def tree_flatten(self) -> tuple[tuple[jax.typing.ArrayLike], Unit]:
         """
         Tree flattens the data.
 
@@ -4393,9 +4652,9 @@ class Quantity(Generic[A]):
         """
         return cls(*values, unit=unit)
 
-    def cuda(self, deice=None) -> 'Quantity':
-        deice = jax.devices('cuda')[0] if deice is None else deice
-        self.update_mantissa(jax.device_put(self.mantissa, deice))
+    def cuda(self, device=None) -> 'Quantity':
+        device = jax.devices('cuda')[0] if device is None else device
+        self.update_mantissa(jax.device_put(self.mantissa, device))
         return self
 
     def cpu(self, device=None) -> 'Quantity':
@@ -4406,15 +4665,12 @@ class Quantity(Generic[A]):
     # dtype exchanging #
     # ---------------- #
     def half(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float16), unit=self.unit)
 
     def float(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float32), unit=self.unit)
 
     def double(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float64), unit=self.unit)
 
 
@@ -4425,10 +4681,11 @@ class _IndexUpdateHelper:
     __slots__ = ("quantity",)
 
     def __init__(self, quantity: Quantity):
-        assert isinstance(quantity, Quantity), f"quantity must be a Quantity object, but got {quantity}"
+        if not isinstance(quantity, Quantity):
+            raise TypeError(f"quantity must be a Quantity object, but got {quantity}")
         self.quantity = quantity
 
-    def __getitem__(self, index: Any) -> _IndexUpdateRef:
+    def __getitem__(self, index: Any) -> '_IndexUpdateRef':
         return _IndexUpdateRef(index, self.quantity)
 
     def __repr__(self):
@@ -4569,7 +4826,7 @@ class _IndexUpdateRef:
         values = Quantity(values)
         return Quantity(
             self.mantissa_at[self.index].divide(
-                values,
+                values.mantissa,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
                 mode=mode
@@ -4592,7 +4849,8 @@ class _IndexUpdateRef:
         :mod:indexed assignment <numpy.doc.indexing>` ``x[idx] **= y``.
 
         """
-        assert isinstance(values, int), f"values must be an integer, but got {values}"
+        if not isinstance(values, int):
+            raise TypeError(f"values must be an integer, but got {values}")
         return Quantity(
             self.mantissa_at[self.index].power(
                 values,
@@ -4656,7 +4914,7 @@ class _IndexUpdateRef:
     def apply(
         self,
         mantissa_fun: Callable[[jax.typing.ArrayLike], jax.typing.ArrayLike],
-        unit_fun: Callable[[Unit], Unit],
+        unit_fun: Callable[[Unit], Unit] | None = None,
         indices_are_sorted: bool = False,
         unique_indices: bool = False,
         mode: str | None = None
@@ -4672,7 +4930,15 @@ class _IndexUpdateRef:
         Note that in the current implementation, ``scatter_apply`` is not compatible
         with automatic differentiation.
 
+        Parameters
+        ----------
+        mantissa_fun : callable
+            Applied to the mantissa values at the given indices.
+        unit_fun : callable, optional
+            Transforms the unit of the result. If omitted the unit is preserved
+            (unit-preserving operations such as ``jnp.abs``).
         """
+        result_unit = unit_fun(self.unit) if unit_fun is not None else self.unit
         return Quantity(
             self.mantissa_at[self.index].apply(
                 mantissa_fun,
@@ -4680,7 +4946,7 @@ class _IndexUpdateRef:
                 unique_indices=unique_indices,
                 mode=mode
             ),
-            unit=unit_fun(self.unit)
+            unit=result_unit
         )
 
 
@@ -5205,7 +5471,7 @@ class CallableAssignUnit(Callable):
         pass
 
 
-class Missing():
+class Missing:
     pass
 
 
@@ -5409,13 +5675,11 @@ def _remove_unit(fname, n, unit, v):
 def _check_unit(f, val, unit):
     unit = UNITLESS if unit is None else unit
     if not has_same_unit(val, unit):
-        error_message = (
-            "The return value of function "
-            f"'{f.__name__}' was expected to have "
-            f"unit {get_unit(val)} but was "
-            f"'{val}'"
+        raise UnitMismatchError(
+            f"The return value of function '{f.__name__}' was expected to have "
+            f"unit {unit} but got unit {get_unit(val)} (value: {val!r})",
+            unit, get_unit(val),
         )
-        raise UnitMismatchError(error_message, get_unit(val))
 
 
 def _assign_unit(f, val, unit):

@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ from typing import Any, Callable, Sequence, Union
 import jax
 from jax import lax
 
-from .._base import Quantity, maybe_decimal
-from .._misc import set_module_as, maybe_custom_array
+from saiunit._base import Quantity, maybe_decimal
+from saiunit._misc import set_module_as, maybe_custom_array
 
 __all__ = [
     'reduce', 'reduce_precision',

@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 __version_info__ = tuple(map(int, __version__.split(".")))
 
 from . import _matplotlib_compat

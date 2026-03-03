@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -897,10 +897,10 @@ class TestFunKeepUnit(parameterized.TestCase):
             expected = jnp_fun(jnp.array(x1), jnp.array(x2))
             assert_quantity(result, expected, unit=unit)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(q1, jnp.array(x2))
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(jnp.array(x1), q2)
 
     @parameterized.product(
@@ -975,7 +975,7 @@ class TestFunKeepUnit(parameterized.TestCase):
     def test_fun_accept_unitless_unary_can_return_quantity(self, value):
         for fun in fun_accept_unitless_unary_can_return_quantity:
             bm_fun = getattr(um, fun)
-            jnp_fun = getattr(jnp, fun)
+            jnp_fun = jnp.trunc if fun == 'fix' else getattr(jnp, fun)
 
             print(f'fun: {bm_fun.__name__}')
             result = bm_fun(jnp.array(value))

@@ -1,4 +1,4 @@
-# Copyright 2024 BDP Ecosystem Limited. All Rights Reserved.
+# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ from typing import Union, Sequence
 import jax
 from jax.numpy import fft as jnpfft
 
-from .._base import Quantity
-from .._misc import set_module_as
-from ..math._fun_keep_unit import _fun_keep_unit_unary
+from saiunit._base import Quantity
+from saiunit._misc import set_module_as
+from saiunit.math._fun_keep_unit import _fun_keep_unit_unary
 
 __all__ = [
     # keep unit
