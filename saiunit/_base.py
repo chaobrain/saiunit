@@ -1287,10 +1287,11 @@ def display_in_unit(
     x: jax.typing.ArrayLike | 'Quantity',
     u: 'Unit' = None,
     precision: Optional[int] = None,
-    python_code: bool = False
 ) -> str:
     """
     Display a value in a certain unit with a given precision.
+
+    Returns the canonical ``"value unit"`` format.
 
     Parameters
     ----------
@@ -1301,9 +1302,6 @@ def display_in_unit(
     precision : `int`, optional
         The number of digits of precision (in the given unit, see Examples).
         If no value is given, numpy's `get_printoptions` value is used.
-    python_code : `bool`, optional
-        When False (default) produce human-readable output using display
-        symbols.  When True produce Python-evaluable output.
 
     Returns
     -------
@@ -1331,7 +1329,7 @@ def display_in_unit(
     x = _to_quantity(x)
     if u is not None:
         x = x.in_unit(u)
-    return x.repr_in_unit(precision=precision, python_code=python_code)
+    return x.repr_in_unit(precision=precision)
 
 
 @set_module_as('saiunit')
@@ -1759,8 +1757,20 @@ def _fmt_exp(exp):
     return str(int(exp)) if exp == int(exp) else str(exp)
 
 
-def _format_display_parts(parts, python_code: bool = True) -> str:
-    """Render a parts-list as a human-readable or Python-code string."""
+def _format_display_parts(parts) -> str:
+    """Render a parts-list as a canonical unit string.
+
+    The canonical format uses dispname symbols (e.g. ``mV``, ``Hz``),
+    ``^`` for exponentiation, `` * `` for multiplication, and `` / ``
+    for division.  This single format is both human-readable and
+    machine-parseable:
+
+        mV
+        J / kg
+        nA / cm^2
+        mS * nA / cm^2
+        m / (kg * s^2)
+    """
     if not parts:
         return "1"
 
@@ -1768,25 +1778,21 @@ def _format_display_parts(parts, python_code: bool = True) -> str:
     denominator = [(n, d, -e) for n, d, e in parts if e < 0]
 
     def _fmt_term(name, dispname, exp):
-        label = name if python_code else dispname
         if exp == 1:
-            return label
-        if python_code:
-            return f"{label} ** {_fmt_exp(exp)}"
-        return f"{label}^{_fmt_exp(exp)}"
+            return dispname
+        return f"{dispname}^{_fmt_exp(exp)}"
 
     num_str = " * ".join(_fmt_term(n, d, e) for n, d, e in numerator) if numerator else "1"
 
     if not denominator:
         return num_str
 
-    sep = " / " if python_code else "/"
     if len(denominator) == 1:
         den_str = _fmt_term(*denominator[0])
     else:
         inner = " * ".join(_fmt_term(n, d, e) for n, d, e in denominator)
         den_str = f"({inner})"
-    return f"{num_str}{sep}{den_str}"
+    return f"{num_str} / {den_str}"
 
 
 class Unit:
@@ -2254,43 +2260,38 @@ class Unit:
         add_standard_unit(u)
         return u
 
-    def __repr__(self) -> str:
-        if self._display_parts is not None:
-            return _format_display_parts(self._display_parts, python_code=True)
-        if self.is_fullname:
-            return self.name
-        if self.dim.is_dimensionless:
-            return f'Unit({self.base}^{self.scale})'
-        else:
-            if self.factor == 1.:
-                if self.scale == 0:
-                    return f'{self.name}'
-                else:
-                    return f'{self.base}^{self.scale} * {self.name}'
-            else:
-                if self.scale == 0:
-                    return f'{self.factor} * {self.name}'
-                else:
-                    return f'{self.factor} * {self.base}^{self.scale} * {self.name}'
+    def _canonical_str(self) -> str:
+        """Return the canonical display string for this unit.
 
-    def __str__(self) -> str:
+        Uses dispname symbols (``mV``, ``Hz``, ``kg``), ``^`` for
+        exponentiation, `` * `` for multiplication, and `` / `` for
+        division.  The result is both human-readable and
+        machine-parseable.
+        """
         if self._display_parts is not None:
-            return _format_display_parts(self._display_parts, python_code=False)
+            return _format_display_parts(self._display_parts)
         if self.is_fullname:
             return self.dispname
         if self.dim.is_dimensionless:
             return f'Unit({self.base}^{self.scale})'
-        else:
-            if self.factor == 1.:
-                if self.scale == 0:
-                    return f'{self.dispname}'
-                else:
-                    return f'{self.base}^{self.scale} * {self.dispname}'
+        # Anonymous unit — build a descriptive string from components
+        if self.factor == 1.:
+            if self.scale == 0:
+                return f'{self.dispname}'
             else:
-                if self.scale == 0:
-                    return f'{self.factor} * {self.dispname}'
-                else:
-                    return f'{self.factor} * {self.base}^{self.scale} * {self.dispname}'
+                return f'{self.base}^{self.scale} * {self.dispname}'
+        else:
+            if self.scale == 0:
+                return f'{self.factor} * {self.dispname}'
+            else:
+                return f'{self.factor} * {self.base}^{self.scale} * {self.dispname}'
+
+    def __repr__(self) -> str:
+        s = self._canonical_str()
+        return f"Unit(\"{s}\")"
+
+    def __str__(self) -> str:
+        return self._canonical_str()
 
     def __mul__(self, other) -> 'Unit' | Quantity:
         # self * other
@@ -2310,10 +2311,10 @@ class Unit:
                     _get_display_parts(self),
                     _get_display_parts(other),
                 )
+                canonical = _format_display_parts(parts)
                 return Unit(
                     dim, scale=scale, base=self.base, factor=factor,
-                    name=_format_display_parts(parts, python_code=True),
-                    dispname=_format_display_parts(parts, python_code=False),
+                    name=canonical, dispname=canonical,
                     iscompound=True, is_fullname=True,
                     display_parts=parts,
                 )
@@ -2372,10 +2373,10 @@ class Unit:
                 parts = _merge_display_parts(
                     _get_display_parts(self), other_parts,
                 )
+                canonical = _format_display_parts(parts)
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
-                    name=_format_display_parts(parts, python_code=True),
-                    dispname=_format_display_parts(parts, python_code=False),
+                    name=canonical, dispname=canonical,
                     iscompound=True, is_fullname=True,
                     display_parts=parts,
                 )
@@ -2427,10 +2428,10 @@ class Unit:
         if self.is_fullname:
             parts = [(n, d, -e) for n, d, e in _get_display_parts(self)]
             parts.sort(key=lambda x: (0 if x[2] > 0 else 1, x[0].lower()))
+            canonical = _format_display_parts(parts)
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
-                name=_format_display_parts(parts, python_code=True),
-                dispname=_format_display_parts(parts, python_code=False),
+                name=canonical, dispname=canonical,
                 iscompound=True, is_fullname=True,
                 display_parts=parts,
             )
@@ -2488,10 +2489,10 @@ class Unit:
                 src_parts = _get_display_parts(self)
                 parts = [(n, d, e * other) for n, d, e in src_parts]
                 parts.sort(key=lambda x: (0 if x[2] > 0 else 1, x[0].lower()))
+                canonical = _format_display_parts(parts)
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
-                    name=_format_display_parts(parts, python_code=True),
-                    dispname=_format_display_parts(parts, python_code=False),
+                    name=canonical, dispname=canonical,
                     iscompound=True, is_fullname=True,
                     display_parts=parts,
                 )
@@ -3107,41 +3108,8 @@ class Quantity:
         other_dim = get_dim(other.dim)
         return (self_dim is other_dim) or (self_dim == other_dim)
 
-    def repr_in_unit(
-        self,
-        precision: int | None = None,
-        python_code: bool = True
-    ) -> str:
-        """
-        Represent the Array in a given unit.
-
-        Parameters
-        ----------
-        precision : `int`, optional
-            The number of digits of precision (in the given unit)
-            If no value is given, numpy's `get_printoptions` is used.
-        python_code : `bool`, optional
-            Whether to return a string that can be used as python code.
-            If True, the string will be formatted as a python expression.
-            If False, the string will be formatted as a human-readable string.
-
-        Returns
-        -------
-        s : `str`
-            The string representation of the Array in the given unit.
-
-        Examples
-        --------
-        >>> from saiunit import *
-        >>> x = 25.123456 * mV
-        >>> x.repr_in_unit(volt)
-        '0.02512346 V'
-        >>> x.repr_in_unit(volt, 3)
-        '0.025 V'
-        >>> x.repr_in_unit(mV, 3)
-        '25.123 mV'
-        """
-        # convert to the JAX array (skip if already a JAX array)
+    def _format_value(self, precision: int | None = None) -> str:
+        """Format the mantissa value as a string."""
         m = self.mantissa
         if isinstance(m, jax.Array):
             value = m
@@ -3151,40 +3119,57 @@ class Quantity:
             except TypeError:
                 value = m
 
-        if _is_tracer(value):  # in the JIT mode
-            s = str(value)
-        else:  # in the normal mode
-            try:
-                if value.shape == ():
-                    s = np.array_str(np.array([value]), precision=precision)
-                    s = s.replace("[", "").replace("]", "").strip()
-                else:
-                    # Use numpy's built-in summarization for large arrays
-                    # instead of broken manual string slicing.
-                    if value.size > 100:
-                        kw = {}
-                        if precision is not None:
-                            kw['precision'] = precision
-                        with np.printoptions(threshold=10, **kw):
-                            if python_code:
-                                s = np.array_repr(value)
-                            else:
-                                s = np.array_str(value)
-                    else:
-                        if python_code:
-                            s = np.array_repr(value, precision=precision)
-                        else:
-                            s = np.array_str(value, precision=precision)
-            except (TypeError, AttributeError):
-                s = str(value)
+        if _is_tracer(value):
+            return str(value)
 
+        try:
+            if value.shape == ():
+                s = np.array_str(np.array([value]), precision=precision)
+                return s.replace("[", "").replace("]", "").strip()
+            # Use numpy's built-in summarization for large arrays
+            if value.size > 100:
+                kw = {}
+                if precision is not None:
+                    kw['precision'] = precision
+                with np.printoptions(threshold=10, **kw):
+                    return np.array_str(value)
+            return np.array_str(value, precision=precision)
+        except (TypeError, AttributeError):
+            return str(value)
+
+    def repr_in_unit(
+        self,
+        precision: int | None = None,
+    ) -> str:
+        """
+        Represent the Quantity in its current unit.
+
+        Returns the canonical ``"value unit"`` format, e.g.
+        ``"3.0 mV"`` or ``"[1. 2. 3.] mV"``.
+
+        Parameters
+        ----------
+        precision : `int`, optional
+            The number of digits of precision (in the given unit).
+            If no value is given, numpy's `get_printoptions` is used.
+
+        Returns
+        -------
+        s : `str`
+            The string representation of the Quantity.
+
+        Examples
+        --------
+        >>> from saiunit import *
+        >>> x = 25.123456 * mV
+        >>> x.repr_in_unit()
+        '25.123456 mV'
+        >>> x.in_unit(volt).repr_in_unit(3)
+        '0.025 V'
+        """
+        s = self._format_value(precision=precision)
         if not self.unit.is_unitless:
-            if python_code:
-                s += f" * {repr(self.unit)}"
-            else:
-                s += f" {str(self.unit)}"
-        elif python_code:  # Make a array without unit recognisable
-            return f"{self.__class__.__name__}({s.strip()})"
+            s += f" {str(self.unit)}"
         return s.strip()
 
     def factorless(self) -> 'Quantity':
@@ -3310,10 +3295,22 @@ class Quantity:
             return hash((id(self.mantissa), self.unit))
 
     def __repr__(self) -> str:
-        return self.repr_in_unit(python_code=True)
+        value_str = self._format_value()
+        unit_str = str(self.unit)
+        prefix = "Quantity("
+        if self.unit.is_unitless:
+            suffix = ")"
+        else:
+            suffix = f", \"{unit_str}\")"
+        # Indent continuation lines to align with prefix
+        if "\n" in value_str:
+            indent = " " * len(prefix)
+            lines = value_str.split("\n")
+            value_str = lines[0] + "\n" + "\n".join(indent + line for line in lines[1:])
+        return f"{prefix}{value_str}{suffix}"
 
     def __str__(self) -> str:
-        return self.repr_in_unit(python_code=False)
+        return self.repr_in_unit()
 
     def __format__(self, format_spec) -> str:
         if not format_spec:
@@ -3321,13 +3318,17 @@ class Quantity:
         unit_str = str(self.unit)
         if self.shape == ():
             formatted_value = format(self.mantissa, format_spec)
+            if self.unit.is_unitless:
+                return formatted_value
             return f"{formatted_value} {unit_str}"
         else:
             try:
                 decimal_places = int(format_spec.strip('f').strip('.'))
                 value = np.asarray(self.mantissa)
                 rounded = np.round(value, decimal_places)
-                s = np.array_repr(rounded, precision=decimal_places)
+                s = np.array_str(rounded, precision=decimal_places)
+                if self.unit.is_unitless:
+                    return s
                 return f"{s} {unit_str}"
             except (ValueError, TypeError):
                 return str(self)

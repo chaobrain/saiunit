@@ -193,23 +193,22 @@ class TestUnit(unittest.TestCase):
 
     def test_inverse_second_prefers_hertz_alias(self):
         q = 1 / u.second
-        assert_equal(repr(q), "1 * hertz")
-        assert_equal(repr(q.unit), "hertz")
         assert_equal(str(q.unit), "Hz")
+        assert_equal(repr(q.unit), 'Unit("Hz")')
 
         q_ms = 1 / u.ms
-        assert_equal(repr(q_ms.unit), "khertz")
         assert_equal(str(q_ms.unit), "kHz")
+        assert_equal(repr(q_ms.unit), 'Unit("kHz")')
 
     def test_compound_unit_multiplication_keeps_grouping(self):
         unit = (u.nA / (u.cm ** 2)) * u.mS
-        assert_equal(repr(unit), "msiemens * namp / cmeter2")
-        assert_equal(str(unit), "mS * nA/cm^2")
+        assert_equal(repr(unit), 'Unit("mS * nA / cm^2")')
+        assert_equal(str(unit), "mS * nA / cm^2")
 
         # Reversed operand order produces identical display (canonical sort)
         unit_rhs = u.mS * (u.nA / (u.cm ** 2))
-        assert_equal(repr(unit_rhs), "msiemens * namp / cmeter2")
-        assert_equal(str(unit_rhs), "mS * nA/cm^2")
+        assert_equal(repr(unit_rhs), 'Unit("mS * nA / cm^2")')
+        assert_equal(str(unit_rhs), "mS * nA / cm^2")
 
     def test_unit_with_factor(self):
         self.assertTrue(u.math.isclose(1. * u.eV / u.joule, 1.6021766e-19))
@@ -348,10 +347,8 @@ class TestQuantity(unittest.TestCase):
         """
         Test displaying a Quantity in different units.
 
-        display_in_unit now defaults to human-readable output (python_code=False),
-        and __str__ is also human-oriented.
+        All display uses the unified canonical format with dispname symbols.
         """
-        # display_in_unit uses python_code=False by default → dispnames
         assert_equal(display_in_unit(3. * volt, mvolt), "3000. mV")
         assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 A * ohm")
         with pytest.raises(u.UnitMismatchError):
@@ -363,20 +360,20 @@ class TestQuantity(unittest.TestCase):
                 display_in_unit(10 * nS, ohm)
         assert_equal(display_in_unit(10.0, Unit(scale=1)), "1. Unit(10.0^1)")
         assert_equal(str(3 * u.kmeter / u.meter), '3000.0')
-        assert_equal(str(u.mS / u.cm ** 2), 'mS/cm^2')
+        assert_equal(str(u.mS / u.cm ** 2), 'mS / cm^2')
 
         assert_equal(display_in_unit(10. * u.mV), '10. mV')
         assert_equal(display_in_unit(10. * u.ohm * u.amp), '10. A * ohm')
-        assert_equal(display_in_unit(120. * (u.mS / u.cm ** 2)), '120. mS/cm^2')
+        assert_equal(display_in_unit(120. * (u.mS / u.cm ** 2)), '120. mS / cm^2')
         assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter), '0.02298674 km * m')
         assert_equal(display_in_unit(3.0 * u.kmeter / (130.51 * u.meter)), '22.986744')
         assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -2), '229867.44')
-        assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -1), '0.02298674 km * m/cm')
-        assert_equal(display_in_unit(1. * u.joule / u.kelvin), '1. J/K')
+        assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter * u.cm ** -1), '0.02298674 km * m / cm')
+        assert_equal(display_in_unit(1. * u.joule / u.kelvin), '1. J / K')
 
-        # __str__ is now human-oriented (python_code=False)
+        # __str__ uses canonical format
         assert_equal(str(1. * u.metre / ((3.0 * u.ms) / (1. * u.second))), '333.33334 m')
-        assert_equal(str(1. * u.metre / ((3.0 * u.ms) / 1. * u.second)), '0.33333334 m/(ms * s)')
+        assert_equal(str(1. * u.metre / ((3.0 * u.ms) / 1. * u.second)), '0.33333334 m / (ms * s)')
         assert_equal(str((3.0 * u.ms) / 1. * u.second), '3. ms * s')
 
     # def test_display2(self):
@@ -1765,45 +1762,55 @@ class TestGetMethod(unittest.TestCase):
             assert f"{q1:.3f}" == "1.235 mV"
             assert f"{q1:.4f}" == "1.2346 mV"
 
-            # Array: rounded, uses dispname
+            # Array: rounded, uses dispname (np.array_str format)
             q2 = [1.23456789, 1.23456789] * u.mV
-            assert f"{q2:.2f}" == "array([1.23, 1.23]) mV"
-            assert f"{q2:.3f}" == "array([1.235, 1.235]) mV"
-            assert f"{q2:.4f}" == "array([1.2346, 1.2346]) mV"
+            assert f"{q2:.2f}" == "[1.23 1.23] mV"
+            assert f"{q2:.3f}" == "[1.235 1.235] mV"
+            assert f"{q2:.4f}" == "[1.2346 1.2346] mV"
 
 
 class TestDisplayRedesign:
-    """Regression tests for the display redesign (Issues 1-7)."""
+    """Regression tests for the unified display convention.
+
+    Convention: One canonical format using dispname symbols (``mV``,
+    ``Hz``, ``kg``), ``^`` for exponentiation, `` * `` for
+    multiplication, and `` / `` for division.
+
+    - ``str(unit)``  → canonical: ``"J / kg"``
+    - ``repr(unit)`` → ``Unit("J / kg")``
+    - ``str(qty)``   → ``"3.0 mV"``
+    - ``repr(qty)``  → ``Quantity(3.0, "mV")``
+    """
 
     # --- Issue 1: Semantic-safe aliasing ---
 
     def test_joule_per_kg_not_sievert(self):
         """joule/kg must NOT auto-relabel as sievert."""
         unit = u.joule / u.kilogram
-        assert "sievert" not in repr(unit).lower()
-        assert "gray" not in repr(unit).lower()
-        assert_equal(repr(unit), "joule / kilogram")
-        assert_equal(str(unit), "J/kg")
+        assert "sievert" not in str(unit).lower()
+        assert "gray" not in str(unit).lower()
+        assert_equal(str(unit), "J / kg")
+        assert_equal(repr(unit), 'Unit("J / kg")')
 
     def test_meter2_per_second2_not_sievert(self):
         """m^2/s^2 must NOT auto-relabel as sievert or gray."""
         unit = u.meter ** 2 / u.second ** 2
-        assert "sievert" not in repr(unit).lower()
-        assert "gray" not in repr(unit).lower()
-        assert_equal(repr(unit), "meter2 / second2")
-        assert_equal(str(unit), "m^2/s^2")
+        assert "sievert" not in str(unit).lower()
+        assert "gray" not in str(unit).lower()
+        assert_equal(str(unit), "m^2 / s^2")
+        assert_equal(repr(unit), 'Unit("m^2 / s^2")')
 
     def test_inverse_second_stays_hertz(self):
         """1/s^1 should still resolve to hertz (non-contextual)."""
         q = 1 / u.second
-        assert_equal(repr(q.unit), "hertz")
         assert_equal(str(q.unit), "Hz")
+        assert_equal(repr(q.unit), 'Unit("Hz")')
 
     def test_becquerel_not_used_in_reverse(self):
         """Becquerel (contextual) must not appear via reverse()."""
         unit = u.second.reverse()
-        assert "becquerel" not in repr(unit).lower()
-        assert_equal(repr(unit), "hertz")
+        assert "becquerel" not in str(unit).lower()
+        assert_equal(str(unit), "Hz")
 
     # --- Issue 2: Deterministic composed-unit display ---
 
@@ -1811,23 +1818,23 @@ class TestDisplayRedesign:
         """Operand order must not affect display for multiplication."""
         a = u.meter * u.second * u.amp
         b = u.amp * u.second * u.meter
-        assert_equal(repr(a), repr(b))
         assert_equal(str(a), str(b))
-        assert_equal(repr(a), "amp * meter * second")
+        assert_equal(repr(a), repr(b))
+        assert_equal(str(a), "A * m * s")
 
     def test_permutation_invariance_compound(self):
         """Compound units from different orderings must match."""
         a = (u.nA / u.cm ** 2) * u.mS
         b = u.mS * (u.nA / u.cm ** 2)
-        assert_equal(repr(a), repr(b))
         assert_equal(str(a), str(b))
+        assert_equal(repr(a), repr(b))
 
     def test_no_intermediate_simplification(self):
         """amp*second must NOT collapse to coulomb during composition."""
         unit = u.amp * u.second * u.meter
-        r = repr(unit)
-        assert "coulomb" not in r.lower()
-        assert_equal(r, "amp * meter * second")
+        s = str(unit)
+        assert "coulomb" not in s.lower()
+        assert_equal(s, "A * m * s")
 
     # --- Issue 3: Large-array repr validity ---
 
@@ -1838,7 +1845,7 @@ class TestDisplayRedesign:
         assert r.count("[") == r.count("]"), f"Unbalanced brackets: {r}"
         assert r.count("(") == r.count(")"), f"Unbalanced parens: {r}"
         assert "..." in r  # must use summarization
-        assert "mvolt" in r  # unit still present
+        assert "mV" in r   # unit still present (dispname)
 
     def test_large_array_str_balanced(self):
         """Large array str must have balanced brackets."""
@@ -1862,49 +1869,62 @@ class TestDisplayRedesign:
         q = 1.5 * u.mV
         assert format(q, "") == str(q)
 
-    # --- Issue 5: __str__ is human-oriented ---
+    # --- Issue 5: Unified display convention ---
 
     def test_str_human_oriented(self):
         """__str__ must use dispname (human-readable), not code name."""
         q = 10.0 * u.mV
         s = str(q)
         assert "mV" in s
-        assert " * " not in s  # no Python multiplication
+        assert "mvolt" not in s
 
-    def test_repr_is_code_oriented(self):
-        """__repr__ must use code name with * operator."""
+    def test_repr_shows_type(self):
+        """__repr__ wraps canonical format in Quantity(...)."""
         q = 10.0 * u.mV
         r = repr(q)
-        assert "mvolt" in r
-        assert " * " in r
+        assert r.startswith("Quantity(")
+        assert "mV" in r
 
-    # --- Issue 6: display_in_unit default ---
+    # --- Issue 6: display_in_unit is unified ---
 
     def test_display_in_unit_default_human(self):
-        """display_in_unit defaults to human-readable (python_code=False)."""
+        """display_in_unit returns canonical format."""
         s = display_in_unit(3.0 * u.volt, u.mvolt)
         assert "mV" in s
-        assert " * " not in s
+        assert "mvolt" not in s
 
-    def test_display_in_unit_python_code_flag(self):
-        """display_in_unit(python_code=True) gives code-style output."""
-        s = display_in_unit(3.0 * u.volt, u.mvolt, python_code=True)
-        assert "mvolt" in s
-        assert " * " in s
+    def test_display_in_unit_canonical(self):
+        """display_in_unit always returns canonical format (no python_code param)."""
+        s = display_in_unit(3.0 * u.volt, u.mvolt)
+        assert_equal(s, "3000. mV")
 
     # --- Issue 7: Alias preference determinism ---
 
     def test_hertz_preferred_over_becquerel(self):
         """For s^-1, hertz must always win over becquerel."""
         unit = u.second.reverse()
-        assert_equal(repr(unit), "hertz")
         assert_equal(str(unit), "Hz")
+        assert_equal(repr(unit), 'Unit("Hz")')
 
     def test_scaled_hertz_preferred(self):
         """kHz must be preferred over kBq for ms^-1."""
         unit = (1 / u.ms).unit
-        assert_equal(repr(unit), "khertz")
         assert_equal(str(unit), "kHz")
+        assert_equal(repr(unit), 'Unit("kHz")')
+
+    # --- Round-trip consistency ---
+
+    def test_repr_str_consistency(self):
+        """repr wraps str in Unit('...')."""
+        for unit in [u.mV, u.joule / u.kilogram, u.nA / u.cm ** 2]:
+            assert_equal(repr(unit), f'Unit("{str(unit)}")')
+
+    def test_quantity_repr_str_consistency(self):
+        """Quantity repr wraps value and unit string."""
+        q = 3.0 * u.mV
+        r = repr(q)
+        assert r.startswith("Quantity(")
+        assert 'mV' in r
 
 
 class TestJit:
