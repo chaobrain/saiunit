@@ -16,10 +16,9 @@
 
 from __future__ import annotations
 
-import unittest
-
 import jax
 import numpy as np
+import pytest
 
 import saiunit as u
 
@@ -29,248 +28,251 @@ class Array(u.CustomArray):
         self.data = value
 
 
-class TestHessianFunction(unittest.TestCase):
-    def test_hessian_scalar_function(self):
-        def scalar_function(x):
-            return x ** 2 + 3 * x + 2
+def test_hessian_scalar_function():
+    def scalar_function(x):
+        return x ** 2 + 3 * x + 2
 
-        hess = u.autograd.hessian(scalar_function)
-        x = np.array(1.0)
-        expected_hessian = np.array([[2.0]])
-        np.testing.assert_array_almost_equal(hess(x), expected_hessian)
+    hess = u.autograd.hessian(scalar_function)
+    x = np.array(1.0)
+    expected_hessian = np.array([[2.0]])
+    np.testing.assert_array_almost_equal(hess(x), expected_hessian)
 
-    def test_hessian_scalar_function_with_unit(self):
-        unit = u.ms
 
-        def scalar_function(x):
-            return x ** 2 + 3 * x * unit + 2 * unit * unit
+def test_hessian_scalar_function_with_unit():
+    unit = u.ms
 
-        hess = u.autograd.hessian(scalar_function)
-        x = np.array(1.0) * unit
-        res = hess(x)
-        expected_hessian = np.array([[2.0]])
-        np.testing.assert_array_almost_equal(res, expected_hessian)
+    def scalar_function(x):
+        return x ** 2 + 3 * x * unit + 2 * unit * unit
 
-    def test_hessian_scalar_function_with_unit2(self):
-        unit = u.ms
+    hess = u.autograd.hessian(scalar_function)
+    x = np.array(1.0) * unit
+    res = hess(x)
+    expected_hessian = np.array([[2.0]])
+    np.testing.assert_array_almost_equal(res, expected_hessian)
 
-        def scalar_function(x):
-            return x ** 3 + 3 * x * unit * unit + 2 * unit * unit * unit
 
-        hess = u.autograd.hessian(scalar_function)
-        x = np.array(1.0) * unit
-        res = hess(x)
-        expected_hessian = np.array([[6.0]]) * unit
-        assert u.math.allclose(res, expected_hessian)
+def test_hessian_scalar_function_with_unit2():
+    unit = u.ms
 
-    def test_hessian_vector_function(self):
-        def vector_function(x):
-            return np.sum(x ** 2)
+    def scalar_function(x):
+        return x ** 3 + 3 * x * unit * unit + 2 * unit * unit * unit
 
-        hess = u.autograd.hessian(vector_function)
-        x = np.array([1.0, 2.0])
-        expected_hessian = np.array([[2.0, 0.0], [0.0, 2.0]])
-        np.testing.assert_array_almost_equal(hess(x), expected_hessian)
+    hess = u.autograd.hessian(scalar_function)
+    x = np.array(1.0) * unit
+    res = hess(x)
+    expected_hessian = np.array([[6.0]]) * unit
+    assert u.math.allclose(res, expected_hessian)
 
-    def test_hessian_with_aux(self):
-        unit = u.ms
 
-        def function_with_aux(x):
-            return x ** 2, x + u.math.ones_like(x)
+def test_hessian_vector_function():
+    def vector_function(x):
+        return np.sum(x ** 2)
 
-        hess = u.autograd.hessian(function_with_aux, has_aux=True)
-        x = np.array(1.0)
-        expected_hessian = np.array([[2.0]])
-        result, aux = hess(x)
-        np.testing.assert_array_almost_equal(result, expected_hessian)
-        np.testing.assert_array_almost_equal(aux, np.array(2.0))
+    hess = u.autograd.hessian(vector_function)
+    x = np.array([1.0, 2.0])
+    expected_hessian = np.array([[2.0, 0.0], [0.0, 2.0]])
+    np.testing.assert_array_almost_equal(hess(x), expected_hessian)
 
-        x = np.array(1.0) * unit
-        result, aux = hess(x)
-        expected_hessian = np.array([[2.0]])
-        assert u.math.allclose(result, expected_hessian)
-        assert u.math.allclose(aux, np.array(2.0) * unit)
 
-    def test_hessian_multiple_arguments(self):
-        def multi_arg_function(x, y):
-            return x ** 2 + y ** 2
+def test_hessian_with_aux():
+    unit = u.ms
 
-        hess = u.autograd.hessian(multi_arg_function, argnums=(0, 1))
-        x = np.array(1.0)
-        y = np.array(2.0)
-        expected_hessian = np.array([[2.0, 0.0], [0.0, 2.0]])
-        res = hess(x, y)
-        np.testing.assert_array_almost_equal(res, expected_hessian)
+    def function_with_aux(x):
+        return x ** 2, x + u.math.ones_like(x)
 
-        x = np.array(1.0) * u.ms
-        y = np.array(2.0) * u.ms
-        res = hess(x, y)
-        assert u.math.allclose(u.math.asarray(res), expected_hessian)
+    hess = u.autograd.hessian(function_with_aux, has_aux=True)
 
-    def test_hessian_dict(self):
-        def dict_function(x):
-            return {'z': x['a'] ** 3 + x['b'] ** 3}
+    x = np.array(1.0)
+    expected_hessian = np.array([[2.0]])
+    result, aux = hess(x)
+    np.testing.assert_array_almost_equal(result, expected_hessian)
+    np.testing.assert_array_almost_equal(aux, np.array(2.0))
 
-        unit = u.ms
-        x = {'a': np.array(1.0) * unit, 'b': np.array(2.0) * unit}
-        res = u.autograd.hessian(dict_function)(x)
+    x = np.array(1.0) * unit
+    result, aux = hess(x)
+    expected_hessian = np.array([[2.0]])
+    assert u.math.allclose(result, expected_hessian)
+    assert u.math.allclose(aux, np.array(2.0) * unit)
 
-        expected_hessian = {'z': {'a': {'a': 6.0 * unit, 'b': 0.0 * unit},
-                                  'b': {'a': 0.0 * unit, 'b': 12.0 * unit}}}
 
-        def check(a, b):
-            assert u.math.allclose(a, b)
+def test_hessian_multiple_arguments():
+    def multi_arg_function(x, y):
+        return x ** 2 + y ** 2
 
-        jax.tree.map(check, res, expected_hessian, is_leaf=u.math.is_quantity)
+    hess = u.autograd.hessian(multi_arg_function, argnums=(0, 1))
+    x = np.array(1.0)
+    y = np.array(2.0)
+    expected_hessian = np.array([[2.0, 0.0], [0.0, 2.0]])
+    res = hess(x, y)
+    np.testing.assert_array_almost_equal(res, expected_hessian)
 
-    def test_hessian_with_array_custom_array(self):
-        def scalar_function(x):
-            return x ** 2 + 3 * x + 2
+    x = np.array(1.0) * u.ms
+    y = np.array(2.0) * u.ms
+    res = hess(x, y)
+    assert u.math.allclose(u.math.asarray(res), expected_hessian)
 
-        hess = u.autograd.hessian(scalar_function)
-        
-        # Test with Array containing unitless values
-        x_array = Array(np.array(1.0))
-        assert isinstance(x_array, u.CustomArray)
-        result = hess(x_array.data)
-        result_array = Array(result)
-        assert isinstance(result_array, u.CustomArray)
-        expected_hessian = np.array([[2.0]])
-        np.testing.assert_array_almost_equal(result_array.data, expected_hessian)
 
-    def test_hessian_with_unit_array_custom_array(self):
-        unit = u.ms
+def test_hessian_dict():
+    def dict_function(x):
+        return {'z': x['a'] ** 3 + x['b'] ** 3}
 
-        def scalar_function(x):
-            return x ** 3 + 3 * x * unit * unit + 2 * unit * unit * unit
+    unit = u.ms
+    x = {'a': np.array(1.0) * unit, 'b': np.array(2.0) * unit}
+    res = u.autograd.hessian(dict_function)(x)
 
-        hess = u.autograd.hessian(scalar_function)
-        
-        # Test with Array containing unit values
-        x_unit = np.array(1.0) * unit
-        x_array = Array(x_unit)
-        assert isinstance(x_array, u.CustomArray)
-        result = hess(x_array.data)
-        result_array = Array(result)
-        assert isinstance(result_array, u.CustomArray)
-        expected_hessian = np.array([[6.0]]) * unit
-        assert u.math.allclose(result_array.data, expected_hessian)
+    expected_hessian = {'z': {'a': {'a': 6.0 * unit, 'b': 0.0 * unit},
+                              'b': {'a': 0.0 * unit, 'b': 12.0 * unit}}}
 
-    def test_hessian_vector_function_with_array(self):
-        def vector_function(x):
-            return np.sum(x ** 2)
+    def check(a, b):
+        assert u.math.allclose(a, b)
 
-        hess = u.autograd.hessian(vector_function)
-        
-        # Test with vector Array
-        x_array = Array(np.array([1.0, 2.0]))
-        assert isinstance(x_array, u.CustomArray)
-        result = hess(x_array.data)
-        result_array = Array(result)
-        assert isinstance(result_array, u.CustomArray)
-        expected_hessian = np.array([[2.0, 0.0], [0.0, 2.0]])
-        np.testing.assert_array_almost_equal(result_array.data, expected_hessian)
+    jax.tree.map(check, res, expected_hessian, is_leaf=u.math.is_quantity)
 
-    def test_hessian_with_aux_array(self):
-        def function_with_aux(x):
-            return x ** 2, x + u.math.ones_like(x)
 
-        hess = u.autograd.hessian(function_with_aux, has_aux=True)
-        
-        # Test with Array containing unitless values
-        x_array = Array(np.array(1.0))
-        assert isinstance(x_array, u.CustomArray)
-        result, aux = hess(x_array.data)
-        result_array = Array(result)
-        aux_array = Array(aux)
-        assert isinstance(result_array, u.CustomArray)
-        assert isinstance(aux_array, u.CustomArray)
-        expected_hessian = np.array([[2.0]])
-        np.testing.assert_array_almost_equal(result_array.data, expected_hessian)
-        np.testing.assert_array_almost_equal(aux_array.data, np.array(2.0))
+def test_hessian_with_array_custom_array():
+    def scalar_function(x):
+        return x ** 2 + 3 * x + 2
 
-        # Test with Array containing unit values
-        x_unit = np.array(1.0) * u.ms
-        x_array_unit = Array(x_unit)
-        assert isinstance(x_array_unit, u.CustomArray)
-        result, aux = hess(x_array_unit.data)
-        result_array = Array(result)
-        aux_array = Array(aux)
-        assert isinstance(result_array, u.CustomArray)
-        assert isinstance(aux_array, u.CustomArray)
-        expected_hessian = np.array([[2.0]])
-        assert u.math.allclose(result_array.data, expected_hessian)
-        assert u.math.allclose(aux_array.data, np.array(2.0) * u.ms)
+    hess = u.autograd.hessian(scalar_function)
 
-    def test_hessian_multiple_arguments_with_array(self):
-        def multi_arg_function(x, y):
-            return x ** 2 + y ** 2
+    x_array = Array(np.array(1.0))
+    assert isinstance(x_array, u.CustomArray)
+    result = hess(x_array.data)
+    result_array = Array(result)
+    assert isinstance(result_array, u.CustomArray)
+    expected_hessian = np.array([[2.0]])
+    np.testing.assert_array_almost_equal(result_array.data, expected_hessian)
 
-        hess = u.autograd.hessian(multi_arg_function, argnums=(0, 1))
-        
-        # Test with Array inputs containing unitless values
-        x_array = Array(np.array(1.0))
-        y_array = Array(np.array(2.0))
-        assert isinstance(x_array, u.CustomArray)
-        assert isinstance(y_array, u.CustomArray)
-        result = hess(x_array.data, y_array.data)
-        result_array = Array(result)
-        assert isinstance(result_array, u.CustomArray)
-        expected_hessian = np.array([[2.0, 0.0], [0.0, 2.0]])
-        np.testing.assert_array_almost_equal(result_array.data, expected_hessian)
 
-        # Test with Array inputs containing unit values
-        x_unit = np.array(1.0) * u.ms
-        y_unit = np.array(2.0) * u.ms
-        x_array_unit = Array(x_unit)
-        y_array_unit = Array(y_unit)
-        assert isinstance(x_array_unit, u.CustomArray)
-        assert isinstance(y_array_unit, u.CustomArray)
-        result = hess(x_array_unit.data, y_array_unit.data)
-        result_array = Array(result)
-        assert isinstance(result_array, u.CustomArray)
-        assert u.math.allclose(u.math.asarray(result_array.data), expected_hessian)
+def test_hessian_with_unit_array_custom_array():
+    unit = u.ms
 
-    def test_hessian_matrix_operations_with_array(self):
-        def quadratic_form(x):
-            A = np.array([[2.0, 1.0], [1.0, 3.0]]) * u.ms
-            A_array = Array(A)
-            assert isinstance(A_array, u.CustomArray)
-            return 0.5 * x.T @ A_array.data @ x
+    def scalar_function(x):
+        return x ** 3 + 3 * x * unit * unit + 2 * unit * unit * unit
 
-        hess = u.autograd.hessian(quadratic_form)
-        
-        # Test with vector Array
-        x = np.array([1.0, 1.0]) * u.ms
-        x_array = Array(x)
-        assert isinstance(x_array, u.CustomArray)
-        result = hess(x_array.data)
-        result_array = Array(result)
-        assert isinstance(result_array, u.CustomArray)
-        expected = np.array([[2.0, 1.0], [1.0, 3.0]]) * u.ms
-        assert u.math.allclose(result_array.data, expected)
+    hess = u.autograd.hessian(scalar_function)
 
-    def test_array_custom_array_compatibility_with_hessian(self):
-        data = np.array(2.0) * u.second
-        test_array = Array(data)
-        
-        assert isinstance(test_array, u.CustomArray)
-        assert hasattr(test_array, 'data')
-        
-        def test_function(x):
-            return x ** 4
-        
-        # Test hessian with Array
-        hess_fn = u.autograd.hessian(test_function)
-        result = hess_fn(test_array.data)
-        result_array = Array(result)
-        
-        assert isinstance(result_array, u.CustomArray)
-        
-        # Compare with direct computation
-        direct_result = hess_fn(data)
-        assert u.math.allclose(result_array.data, direct_result)
+    x_unit = np.array(1.0) * unit
+    x_array = Array(x_unit)
+    assert isinstance(x_array, u.CustomArray)
+    result = hess(x_array.data)
+    result_array = Array(result)
+    assert isinstance(result_array, u.CustomArray)
+    expected_hessian = np.array([[6.0]]) * unit
+    assert u.math.allclose(result_array.data, expected_hessian)
+
+
+def test_hessian_vector_function_with_array():
+    def vector_function(x):
+        return np.sum(x ** 2)
+
+    hess = u.autograd.hessian(vector_function)
+
+    x_array = Array(np.array([1.0, 2.0]))
+    assert isinstance(x_array, u.CustomArray)
+    result = hess(x_array.data)
+    result_array = Array(result)
+    assert isinstance(result_array, u.CustomArray)
+    expected_hessian = np.array([[2.0, 0.0], [0.0, 2.0]])
+    np.testing.assert_array_almost_equal(result_array.data, expected_hessian)
+
+
+def test_hessian_with_aux_array():
+    def function_with_aux(x):
+        return x ** 2, x + u.math.ones_like(x)
+
+    hess = u.autograd.hessian(function_with_aux, has_aux=True)
+
+    x_array = Array(np.array(1.0))
+    assert isinstance(x_array, u.CustomArray)
+    result, aux = hess(x_array.data)
+    result_array = Array(result)
+    aux_array = Array(aux)
+    assert isinstance(result_array, u.CustomArray)
+    assert isinstance(aux_array, u.CustomArray)
+    expected_hessian = np.array([[2.0]])
+    np.testing.assert_array_almost_equal(result_array.data, expected_hessian)
+    np.testing.assert_array_almost_equal(aux_array.data, np.array(2.0))
+
+    x_unit = np.array(1.0) * u.ms
+    x_array_unit = Array(x_unit)
+    assert isinstance(x_array_unit, u.CustomArray)
+    result, aux = hess(x_array_unit.data)
+    result_array = Array(result)
+    aux_array = Array(aux)
+    assert isinstance(result_array, u.CustomArray)
+    assert isinstance(aux_array, u.CustomArray)
+    expected_hessian = np.array([[2.0]])
+    assert u.math.allclose(result_array.data, expected_hessian)
+    assert u.math.allclose(aux_array.data, np.array(2.0) * u.ms)
+
+
+def test_hessian_multiple_arguments_with_array():
+    def multi_arg_function(x, y):
+        return x ** 2 + y ** 2
+
+    hess = u.autograd.hessian(multi_arg_function, argnums=(0, 1))
+
+    x_array = Array(np.array(1.0))
+    y_array = Array(np.array(2.0))
+    assert isinstance(x_array, u.CustomArray)
+    assert isinstance(y_array, u.CustomArray)
+    result = hess(x_array.data, y_array.data)
+    result_array = Array(result)
+    assert isinstance(result_array, u.CustomArray)
+    expected_hessian = np.array([[2.0, 0.0], [0.0, 2.0]])
+    np.testing.assert_array_almost_equal(result_array.data, expected_hessian)
+
+    x_unit = np.array(1.0) * u.ms
+    y_unit = np.array(2.0) * u.ms
+    x_array_unit = Array(x_unit)
+    y_array_unit = Array(y_unit)
+    assert isinstance(x_array_unit, u.CustomArray)
+    assert isinstance(y_array_unit, u.CustomArray)
+    result = hess(x_array_unit.data, y_array_unit.data)
+    result_array = Array(result)
+    assert isinstance(result_array, u.CustomArray)
+    assert u.math.allclose(u.math.asarray(result_array.data), expected_hessian)
+
+
+def test_hessian_matrix_operations_with_array():
+    def quadratic_form(x):
+        A = np.array([[2.0, 1.0], [1.0, 3.0]]) * u.ms
+        A_array = Array(A)
+        assert isinstance(A_array, u.CustomArray)
+        return 0.5 * x.T @ A_array.data @ x
+
+    hess = u.autograd.hessian(quadratic_form)
+
+    x = np.array([1.0, 1.0]) * u.ms
+    x_array = Array(x)
+    assert isinstance(x_array, u.CustomArray)
+    result = hess(x_array.data)
+    result_array = Array(result)
+    assert isinstance(result_array, u.CustomArray)
+    expected = np.array([[2.0, 1.0], [1.0, 3.0]]) * u.ms
+    assert u.math.allclose(result_array.data, expected)
+
+
+def test_array_custom_array_compatibility_with_hessian():
+    data = np.array(2.0) * u.second
+    test_array = Array(data)
+
+    assert isinstance(test_array, u.CustomArray)
+    assert hasattr(test_array, 'data')
+
+    def test_function(x):
+        return x ** 4
+
+    hess_fn = u.autograd.hessian(test_function)
+    result = hess_fn(test_array.data)
+    result_array = Array(result)
+
+    assert isinstance(result_array, u.CustomArray)
+
+    direct_result = hess_fn(data)
+    assert u.math.allclose(result_array.data, direct_result)
 
 
 if __name__ == '__main__':
-    unittest.main()
+    pytest.main()

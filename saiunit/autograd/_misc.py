@@ -20,14 +20,14 @@ import operator
 from functools import partial
 from typing import Any
 
-import jax
+from .._compatible_import import concrete_or_error
 
 
 def _ensure_index(x: Any) -> int | tuple[int, ...]:
     """
     Ensure x is either an index or a tuple of indices.
     """
-    x = jax.core.concrete_or_error(None, x, "expected a static index or sequence of indices.")
+    x = concrete_or_error(None, x, "expected a static index or sequence of indices.")
     try:
         return operator.index(x)
     except TypeError:

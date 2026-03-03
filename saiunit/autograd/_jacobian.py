@@ -20,20 +20,101 @@ from typing import (Sequence, Callable, Any)
 
 import jax
 import numpy as np
-from jax._src.api import (
-    _jvp,
-    _vjp,
-    _check_input_dtype_jacrev,
-    _check_output_dtype_jacrev,
-    _check_input_dtype_jacfwd,
-    _check_output_dtype_jacfwd
-)
+from jax import numpy as jnp
 from jax.api_util import argnums_partial
 
+# _vjp and _jvp are trace-level primitives that accept WrappedFun objects from
+# argnums_partial. In JAX 0.9+ WrappedFun has no __call__, so the public
+# jax.vjp / jax.jvp cannot be used here.  These internal functions are also
+# necessary for the vmap(jvp) composition used in jacfwd (same as JAX's own
+# jacfwd implementation).  Wrap in try/except for forward-compatibility.
+try:
+    from jax._src.api import _vjp, _jvp
+except ImportError:
+    def _vjp(fun, *primals, has_aux=False):
+        raise ImportError(
+            "saiunit.autograd.jacrev/vector_grad requires jax._src.api._vjp "
+            "which is not available in this JAX version. Please open an issue at "
+            "https://github.com/chaoming0625/saiunit/issues"
+        )
+
+
+    def _jvp(fun, primals, tangents, has_aux=False):
+        raise ImportError(
+            "saiunit.autograd.jacfwd requires jax._src.api._jvp which is not "
+            "available in this JAX version. Please open an issue at "
+            "https://github.com/chaoming0625/saiunit/issues"
+        )
+
 from ._misc import _ensure_index, _check_callable
-from .._base import Quantity, maybe_decimal, get_magnitude, get_unit
-from .._compatible_import import safe_map, wrap_init
-from .._misc import maybe_custom_array_tree
+from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
+from saiunit._compatible_import import safe_map, wrap_init
+from saiunit._misc import maybe_custom_array_tree
+
+
+# ---------------------------------------------------------------------------
+# Dtype-validation helpers (inlined from jax._src.api to avoid private API)
+# ---------------------------------------------------------------------------
+
+def _get_leaf_dtype(x):
+    try:
+        return x.dtype
+    except AttributeError:
+        return np.result_type(x)
+
+
+def _check_input_dtype_jacrev(holomorphic: bool, allow_int: bool, x) -> None:
+    dtype = _get_leaf_dtype(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                "jacrev with holomorphic=True requires inputs with complex dtype, "
+                f"got {dtype}."
+            )
+    elif not allow_int and not np.issubdtype(dtype, np.floating):
+        raise TypeError(
+            f"jacrev requires real-valued inputs (not {dtype}); "
+            "use allow_int=True to differentiate through integer values."
+        )
+
+
+def _check_output_dtype_jacrev(holomorphic: bool, x) -> None:
+    dtype = _get_leaf_dtype(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                "jacrev with holomorphic=True requires outputs with complex dtype, "
+                f"got {dtype}."
+            )
+    elif not np.issubdtype(dtype, np.floating):
+        raise TypeError(f"jacrev requires real-valued outputs (not {dtype}).")
+
+
+def _check_input_dtype_jacfwd(holomorphic: bool, x) -> None:
+    dtype = _get_leaf_dtype(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                "jacfwd with holomorphic=True requires inputs with complex dtype, "
+                f"got {dtype}."
+            )
+    elif not np.issubdtype(dtype, np.inexact):
+        raise TypeError(
+            f"jacfwd requires real- or complex-valued inputs (not {dtype})."
+        )
+
+
+def _check_output_dtype_jacfwd(holomorphic: bool, x) -> None:
+    dtype = _get_leaf_dtype(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                "jacfwd with holomorphic=True requires outputs with complex dtype, "
+                f"got {dtype}."
+            )
+    elif not np.issubdtype(dtype, np.floating):
+        raise TypeError(f"jacfwd requires real-valued outputs (not {dtype}).")
+
 
 __all__ = [
     'jacrev',
@@ -419,7 +500,7 @@ def _split(x, indices, axis):
     elif isinstance(x, Quantity):
         return x.split(indices, axis)
     else:
-        return x._split(indices, axis)
+        return jnp.split(x, indices, axis)
 
 
 def _is_quantity(x):

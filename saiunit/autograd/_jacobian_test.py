@@ -16,11 +16,12 @@
 
 from __future__ import annotations
 
-import brainstate as bst
 import jax.numpy as jnp
 import pytest
 
 import saiunit as u
+
+bst = pytest.importorskip('brainstate', reason='brainstate is not installed')
 
 
 class Array(u.CustomArray):
@@ -230,17 +231,17 @@ def test_jacobian_multiple_args_with_array():
     y = bst.random.rand(3) * u.mA
     x_array = Array(x)
     y_array = Array(y)
-    
+
     assert isinstance(x_array, u.CustomArray)
     assert isinstance(y_array, u.CustomArray)
-    
+
     jac = jac_fn(x_array.data, y_array.data)
     jac0_array = Array(jac[0])
     jac1_array = Array(jac[1])
-    
+
     assert isinstance(jac0_array, u.CustomArray)
     assert isinstance(jac1_array, u.CustomArray)
-    
+
     assert u.math.allclose(jac0_array.data, u.math.diag(y))
     assert u.math.allclose(jac1_array.data, u.math.diag(x))
 
@@ -250,16 +251,16 @@ def test_jacobian_with_aux_array():
         return x ** 2, x
 
     jac_fn = u.autograd.jacrev(function_with_aux, has_aux=True)
-    
+
     # Test with Array
     x_unit = jnp.array(3.0) * u.ms
     x_array = Array(x_unit)
     assert isinstance(x_array, u.CustomArray)
-    
+
     jac, aux = jac_fn(x_array.data)
     jac_array = Array(jac)
     aux_array = Array(aux)
-    
+
     assert isinstance(jac_array, u.CustomArray)
     assert isinstance(aux_array, u.CustomArray)
     assert u.math.allclose(jac_array.data, jnp.array([6.0]) * u.ms)
@@ -271,16 +272,16 @@ def test_jacobian_vector_inputs_with_array():
         return u.math.sum(x ** 2)
 
     jac_fn = u.autograd.jacrev(vector_function)
-    
+
     # Test with vector Array
     x = jnp.array([1.0, 2.0, 3.0]) * u.mA
     x_array = Array(x)
     assert isinstance(x_array, u.CustomArray)
-    
+
     jac = jac_fn(x_array.data)
     jac_array = Array(jac)
     assert isinstance(jac_array, u.CustomArray)
-    
+
     expected = 2.0 * jnp.array([1.0, 2.0, 3.0]) * u.mA
     assert u.math.allclose(jac_array.data, expected)
 
@@ -288,20 +289,20 @@ def test_jacobian_vector_inputs_with_array():
 def test_array_custom_array_compatibility_with_jacobian():
     data = jnp.array([1.0, 2.0, 3.0]) * u.second
     test_array = Array(data)
-    
+
     assert isinstance(test_array, u.CustomArray)
     assert hasattr(test_array, 'data')
-    
+
     def test_function(x):
         return u.math.sum(x ** 3)
-    
+
     # Test jacrev with Array
     jac_fn = u.autograd.jacrev(test_function)
     result = jac_fn(test_array.data)
     result_array = Array(result)
-    
+
     assert isinstance(result_array, u.CustomArray)
-    
+
     # Compare with direct computation
     direct_result = jac_fn(data)
     assert u.math.allclose(result_array.data, direct_result)

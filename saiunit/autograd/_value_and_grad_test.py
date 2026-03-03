@@ -116,25 +116,25 @@ def test_value_and_grad_with_array_custom_array():
         return x ** 2
 
     value_and_grad_fn = u.autograd.value_and_grad(simple_function)
-    
+
     # Test with Array containing unitless values
     x_array = Array(jnp.array(3.0))
     assert isinstance(x_array, u.CustomArray)
     value, grad = value_and_grad_fn(x_array.data)
-    
+
     value_array = Array(value)
     grad_array = Array(grad)
     assert isinstance(value_array, u.CustomArray)
     assert isinstance(grad_array, u.CustomArray)
     assert value_array.data == 9.0
     assert grad_array.data == 6.0
-    
+
     # Test with Array containing unit values
     x_unit = jnp.array(3.0) * u.ms
     x_array_unit = Array(x_unit)
     assert isinstance(x_array_unit, u.CustomArray)
     value, grad = value_and_grad_fn(x_array_unit.data)
-    
+
     value_array = Array(value)
     grad_array = Array(grad)
     assert isinstance(value_array, u.CustomArray)
@@ -148,7 +148,7 @@ def test_grad_with_array_custom_array():
         return x ** 2
 
     grad_fn = u.autograd.grad(simple_function)
-    
+
     # Test with Array containing unitless values
     x_array = Array(jnp.array(3.0))
     assert isinstance(x_array, u.CustomArray)
@@ -156,7 +156,7 @@ def test_grad_with_array_custom_array():
     grad_array = Array(grad)
     assert isinstance(grad_array, u.CustomArray)
     assert grad_array.data == 6.0
-    
+
     # Test with Array containing unit values
     x_unit = jnp.array(3.0) * u.mvolt
     x_array_unit = Array(x_unit)
@@ -172,21 +172,21 @@ def test_value_and_grad_multiple_args_with_array():
         return x * y
 
     value_and_grad_fn = u.autograd.value_and_grad(multi_arg_function, argnums=(0, 1))
-    
+
     # Test with Array inputs
     x = jnp.array(3.0) * u.ms
     y = jnp.array(4.0) * u.mV
     x_array = Array(x)
     y_array = Array(y)
-    
+
     assert isinstance(x_array, u.CustomArray)
     assert isinstance(y_array, u.CustomArray)
-    
+
     value, grad = value_and_grad_fn(x_array.data, y_array.data)
     value_array = Array(value)
     grad0_array = Array(grad[0])
     grad1_array = Array(grad[1])
-    
+
     assert isinstance(value_array, u.CustomArray)
     assert isinstance(grad0_array, u.CustomArray)
     assert isinstance(grad1_array, u.CustomArray)
@@ -200,17 +200,17 @@ def test_value_and_grad_with_aux_array():
         return x ** 2, x * 3
 
     value_and_grad_fn = u.autograd.value_and_grad(function_with_aux, has_aux=True)
-    
+
     # Test with Array
     x_unit = jnp.array(3.0) * u.mV
     x_array = Array(x_unit)
     assert isinstance(x_array, u.CustomArray)
-    
+
     (value, aux), grad = value_and_grad_fn(x_array.data)
     value_array = Array(value)
     aux_array = Array(aux)
     grad_array = Array(grad)
-    
+
     assert isinstance(value_array, u.CustomArray)
     assert isinstance(aux_array, u.CustomArray)
     assert isinstance(grad_array, u.CustomArray)
@@ -224,20 +224,20 @@ def test_grad_multiple_args_with_array():
         return x * y
 
     grad_fn = u.autograd.grad(multi_arg_function, argnums=(0, 1))
-    
+
     # Test with Array inputs
     x = jnp.array(3.0) * u.UNITLESS
     y = jnp.array(4.0) * u.mV
     x_array = Array(x)
     y_array = Array(y)
-    
+
     assert isinstance(x_array, u.CustomArray)
     assert isinstance(y_array, u.CustomArray)
-    
+
     grad = grad_fn(x_array.data, y_array.data)
     grad0_array = Array(grad[0])
     grad1_array = Array(grad[1])
-    
+
     assert isinstance(grad0_array, u.CustomArray)
     assert isinstance(grad1_array, u.CustomArray)
     assert u.math.allclose(grad0_array.data, 4.0 * u.mV)
@@ -247,22 +247,22 @@ def test_grad_multiple_args_with_array():
 def test_array_custom_array_compatibility_with_value_and_grad():
     data = jnp.array(2.5) * u.second
     test_array = Array(data)
-    
+
     assert isinstance(test_array, u.CustomArray)
     assert hasattr(test_array, 'data')
-    
+
     def test_function(x):
         return x ** 3
-    
+
     # Test value_and_grad with Array
     value_and_grad_fn = u.autograd.value_and_grad(test_function)
     value, grad = value_and_grad_fn(test_array.data)
     value_array = Array(value)
     grad_array = Array(grad)
-    
+
     assert isinstance(value_array, u.CustomArray)
     assert isinstance(grad_array, u.CustomArray)
-    
+
     # Compare with direct computation
     direct_value, direct_grad = value_and_grad_fn(data)
     assert u.math.allclose(value_array.data, direct_value)

@@ -20,9 +20,10 @@ from typing import (Any, Sequence, Callable)
 
 import jax
 
+from saiunit._base import get_mantissa, get_unit, Quantity, maybe_decimal
+from saiunit._compatible_import import concrete_or_error
+from saiunit._misc import maybe_custom_array_tree
 from ._misc import _ensure_index
-from .._base import get_mantissa, get_unit, Quantity, maybe_decimal
-from .._misc import maybe_custom_array_tree
 
 __all__ = [
     'value_and_grad',
@@ -66,7 +67,7 @@ def value_and_grad(
         the argument(s) indicated by `argnums`.
     """
 
-    argnums = jax.core.concrete_or_error(_ensure_index, argnums)
+    argnums = concrete_or_error(_ensure_index, argnums)
 
     def fun_return_unitless_loss(*args, **kwargs):
         if has_aux:
@@ -153,13 +154,11 @@ def grad(
 
     @wraps(fun)
     def grad_f(*args, **kwargs):
-        args, kwargs = maybe_custom_array_tree((args, kwargs))
         _, g = value_and_grad_f(*args, **kwargs)
         return g
 
     @wraps(fun)
     def grad_f_aux(*args, **kwargs):
-        args, kwargs = maybe_custom_array_tree((args, kwargs))
         (_, aux), g = value_and_grad_f(*args, **kwargs)
         return g, aux
 

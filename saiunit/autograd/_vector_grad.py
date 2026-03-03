@@ -20,13 +20,24 @@ from typing import Callable, Sequence
 
 import jax
 from jax import numpy as jnp
-from jax._src.api import _vjp
 from jax.api_util import argnums_partial
 
+# _vjp is a trace-level primitive that accepts WrappedFun from argnums_partial.
+# In JAX 0.9+ WrappedFun has no __call__, so the public jax.vjp cannot be used.
+try:
+    from jax._src.api import _vjp
+except ImportError:
+    def _vjp(fun, *primals, has_aux=False):
+        raise ImportError(
+            "saiunit.autograd.vector_grad requires jax._src.api._vjp which is "
+            "not available in this JAX version. Please open an issue at "
+            "https://github.com/chaoming0625/saiunit/issues"
+        )
+
 from ._misc import _check_callable
-from .._base import get_unit, maybe_decimal, Quantity, get_mantissa
-from .._compatible_import import wrap_init
-from .._misc import maybe_custom_array_tree
+from saiunit._base import get_unit, maybe_decimal, Quantity, get_mantissa
+from saiunit._compatible_import import wrap_init
+from saiunit._misc import maybe_custom_array_tree
 
 __all__ = [
     'vector_grad',
@@ -44,14 +55,14 @@ def vector_grad(
     Unit-aware compute the gradient of a vector with respect to the input.
 
     Args:
-        fun: A Python callable that computes a scalar loss given arguments.
+        func: A Python callable that computes a vector output given arguments.
         argnums: Optional, an integer or a tuple of integers. The argument number(s) to differentiate with respect to.
         return_value: Optional, bool. Whether to return the value of the function.
-        has_aux: Optional, whether `fun` returns auxiliary data.
+        has_aux: Optional, whether `func` returns auxiliary data.
         unit_aware: Optional, whether to enable unit-aware computation.
 
     Returns:
-        A function that computes the gradient of `fun` with respect to
+        A function that computes the gradient of `func` with respect to
         the argument(s) indicated by `argnums`.
 
     >>> import jax.numpy as jnp
@@ -84,10 +95,14 @@ def vector_grad(
         if has_aux:
             y, vjp_fn, aux = _vjp(f_partial, *dyn_args, has_aux=True)
         else:
-            y, vjp_fn = _vjp(f_partial, *dyn_args, has_aux=False)
+            y, vjp_fn = _vjp(f_partial, *dyn_args)
         leaves, tree = jax.tree.flatten(y)
         if unit_aware:
-            assert len(leaves) == 1, 'The function must return a single array when unit_aware is True.'
+            if len(leaves) != 1:
+                raise ValueError(
+                    f'vector_grad with unit_aware=True requires the function to return a single '
+                    f'array, but got {len(leaves)} outputs.'
+                )
         tangents = jax.tree.unflatten(tree, [jnp.ones(l.shape, dtype=l.dtype) for l in leaves])
         grads = vjp_fn(tangents)
         if isinstance(argnums, int):
