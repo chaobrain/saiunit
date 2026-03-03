@@ -351,12 +351,12 @@ class TestFunRemoveUnit(parameterized.TestCase):
             expected = jnp_fun(jnp.array(x1), jnp.array(x2))
             assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(jnp.array(x1), q2)
                 expected = jnp_fun(jnp.array(x1), jnp.array(x2))
                 assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(q1, q2)
                 expected = jnp_fun(jnp.array(x1), jnp.array(x2))
                 assert_quantity(result, expected)
@@ -403,10 +403,10 @@ class TestFunRemoveUnit(parameterized.TestCase):
             expected = jnp_fun(jnp.array(array), jnp.array(bins))
             assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(jnp.array(array), q_bins)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(q_array, jnp.array(bins))
 
     @parameterized.product(
@@ -426,7 +426,7 @@ class TestFunRemoveUnit(parameterized.TestCase):
 
             q = value * unit
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(q)
 
     @parameterized.product(
@@ -452,10 +452,10 @@ class TestFunRemoveUnit(parameterized.TestCase):
             expected = jnp_fun(jnp.array(x1), jnp.array(x2))
             assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(jnp.array(x1), q2)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(q1, jnp.array(x2))
 
     @parameterized.product(
@@ -583,12 +583,12 @@ class Test_allclose(unittest.TestCase):
         assert not bu.math.allclose(a, b)
 
         b = val
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             assert bu.math.allclose(a, b)
 
         b = val * bu.mV
         a = val
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             assert bu.math.allclose(a, b)
 
     def test_tol(self):

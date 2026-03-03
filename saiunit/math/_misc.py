@@ -22,10 +22,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from .._base import (Unit,
-                     Quantity,
-                     get_unit,
-                     is_unitless)
+from .._base import Unit, Quantity, get_unit, is_unitless
 from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 T = TypeVar("T")

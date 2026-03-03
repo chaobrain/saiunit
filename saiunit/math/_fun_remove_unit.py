@@ -121,7 +121,11 @@ def heaviside(
     x2 = maybe_custom_array(x2)
     x1 = x1.mantissa if isinstance(x1, Quantity) else x1
     if isinstance(x2, Quantity):
-        assert x2.is_unitless, f'Expected unitless array for x2, while got {x2}'
+        if not x2.is_unitless:
+            raise TypeError(
+                f'heaviside requires "x2" (the step value) to be dimensionless, '
+                f'but got x2 with unit={x2.unit}. Strip the unit from x2 before calling heaviside.'
+            )
         x2 = x2.mantissa
     return _fun_remove_unit_unary(jnp.heaviside, x1, x2)
 
@@ -248,10 +252,20 @@ def digitize(
         bins = bins.in_unit(x.unit).mantissa
         x = x.mantissa
     elif isinstance(x, Quantity):
-        assert x.is_unitless, f'Expected unitless Quantity when bins is not a Quantity, got {x}'
+        if not x.is_unitless:
+            raise TypeError(
+                f'digitize requires "x" to be dimensionless when "bins" is a plain array, '
+                f'but got x with unit={x.unit}. '
+                f'Either pass a Quantity for bins with matching units, or strip the unit from x.'
+            )
         x = x.mantissa
     elif isinstance(bins, Quantity):
-        assert bins.is_unitless, f'Expected unitless Quantity when x is not a Quantity, got {bins}'
+        if not bins.is_unitless:
+            raise TypeError(
+                f'digitize requires "bins" to be dimensionless when "x" is a plain array, '
+                f'but got bins with unit={bins.unit}. '
+                f'Either pass a Quantity for x with matching units, or strip the unit from bins.'
+            )
         bins = bins.mantissa
     return jnp.digitize(x, bins, right=right)
 
@@ -259,7 +273,11 @@ def digitize(
 def _fun_logic_unary(func, x, *args, **kwargs):
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
-        assert x.is_unitless, f'Expected unitless array for {func.__name__}, while got {x}'
+        if not x.is_unitless:
+            raise TypeError(
+                f'{func.__name__} requires a dimensionless input, '
+                f'but got x with unit={x.unit}. Strip the unit from x before calling {func.__name__}.'
+            )
     return func(x, *args, **kwargs)
 
 
@@ -390,11 +408,21 @@ def _fun_logic_binary(func, x, y, *args, **kwargs):
         return func(x.mantissa, y.in_unit(x.unit).mantissa, *args, **kwargs)
     elif isinstance(x, Quantity):
         # x = x.factorless()
-        assert x.is_unitless, f'Expected unitless array when y is not Quantity, while got {x}'
+        if not x.is_unitless:
+            raise TypeError(
+                f'{func.__name__} requires "x" to be dimensionless when "y" is a plain array, '
+                f'but got x with unit={x.unit}. '
+                f'Either pass a Quantity for y with matching units, or strip the unit from x.'
+            )
         return func(x.mantissa, y, *args, **kwargs)
     elif isinstance(y, Quantity):
         # y = y.factorless()
-        assert y.is_unitless, f'Expected unitless array when x is not Quantity, while got {y}'
+        if not y.is_unitless:
+            raise TypeError(
+                f'{func.__name__} requires "y" to be dimensionless when "x" is a plain array, '
+                f'but got y with unit={y.unit}. '
+                f'Either pass a Quantity for x with matching units, or strip the unit from y.'
+            )
         return func(x, y.mantissa, *args, **kwargs)
     else:
         return func(x, y, *args, **kwargs)
@@ -742,10 +770,20 @@ def isclose(
         y = y.in_unit(x.unit).mantissa
         x = x.mantissa
     elif isinstance(x, Quantity):
-        assert x.is_unitless, f'Expected unitless array when y is not Quantity, while got {x}'
+        if not x.is_unitless:
+            raise TypeError(
+                f'isclose requires "x" to be dimensionless when "y" is a plain array, '
+                f'but got x with unit={x.unit}. '
+                f'Either pass a Quantity for y with matching units, or strip the unit from x.'
+            )
         x = x.mantissa
     elif isinstance(y, Quantity):
-        assert y.is_unitless, f'Expected unitless array when x is not Quantity, while got {y}'
+        if not y.is_unitless:
+            raise TypeError(
+                f'isclose requires "y" to be dimensionless when "x" is a plain array, '
+                f'but got y with unit={y.unit}. '
+                f'Either pass a Quantity for x with matching units, or strip the unit from y.'
+            )
         y = y.mantissa
     if rtol is None:
         rtol = 1e-5 * unit
@@ -804,11 +842,21 @@ def allclose(
         x_val = x.mantissa
         y_val = y.mantissa
     elif isinstance(x, Quantity):
-        assert x.is_unitless, f'Expected unitless array when y is not Quantity, while got {x}'
+        if not x.is_unitless:
+            raise TypeError(
+                f'allclose requires "x" to be dimensionless when "y" is a plain array, '
+                f'but got x with unit={x.unit}. '
+                f'Either pass a Quantity for y with matching units, or strip the unit from x.'
+            )
         x_val = x.mantissa
         y_val = y
     elif isinstance(y, Quantity):
-        assert y.is_unitless, f'Expected unitless array when x is not Quantity, while got {y}'
+        if not y.is_unitless:
+            raise TypeError(
+                f'allclose requires "y" to be dimensionless when "x" is a plain array, '
+                f'but got y with unit={y.unit}. '
+                f'Either pass a Quantity for x with matching units, or strip the unit from y.'
+            )
         y_val = y.mantissa
         x_val = x
     else:

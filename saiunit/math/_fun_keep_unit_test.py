@@ -897,10 +897,10 @@ class TestFunKeepUnit(parameterized.TestCase):
             expected = jnp_fun(jnp.array(x1), jnp.array(x2))
             assert_quantity(result, expected, unit=unit)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(q1, jnp.array(x2))
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = bm_fun(jnp.array(x1), q2)
 
     @parameterized.product(

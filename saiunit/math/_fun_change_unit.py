@@ -836,11 +836,21 @@ def power(
     y = maybe_custom_array(y)
     if isinstance(x, Quantity):
         if isinstance(y, Quantity):
-            assert y.is_unitless, f'{jnp.power.__name__} only supports scalar exponent'
+            if not y.is_unitless:
+                raise TypeError(
+                    f'power requires the exponent "y" to be dimensionless, '
+                    f'but got y with unit={y.unit}. '
+                    f'Strip the unit from y before raising a Quantity to a power.'
+                )
             y = y.mantissa
         return maybe_decimal(Quantity(jnp.power(x.mantissa, y), unit=x.unit ** y))
     elif isinstance(y, Quantity):
-        assert y.is_unitless, f'{jnp.power.__name__} only supports scalar exponent'
+        if not y.is_unitless:
+            raise TypeError(
+                f'power requires the exponent "y" to be dimensionless, '
+                f'but got y with unit={y.unit}. '
+                f'Strip the unit from y before raising a value to a power.'
+            )
         y = y.mantissa
         return maybe_decimal(Quantity(jnp.power(x, y), unit=x ** y))
     else:
@@ -916,11 +926,21 @@ def float_power(
     y = maybe_custom_array(y)
     if isinstance(x, Quantity):
         if isinstance(y, Quantity):
-            assert y.is_unitless, f'{jnp.float_power.__name__} only supports scalar exponent'
+            if not y.is_unitless:
+                raise TypeError(
+                    f'float_power requires the exponent "y" to be dimensionless, '
+                    f'but got y with unit={y.unit}. '
+                    f'Strip the unit from y before raising a Quantity to a power.'
+                )
             y = y.mantissa
         return maybe_decimal(Quantity(jnp.float_power(x.mantissa, y), unit=x.unit ** y))
     elif isinstance(y, Quantity):
-        assert y.is_unitless, f'{jnp.float_power.__name__} only supports scalar exponent'
+        if not y.is_unitless:
+            raise TypeError(
+                f'float_power requires the exponent "y" to be dimensionless, '
+                f'but got y with unit={y.unit}. '
+                f'Strip the unit from y before raising a value to a power.'
+            )
         y = y.mantissa
         return maybe_decimal(Quantity(jnp.float_power(x, y), unit=x ** y))
     else:

@@ -80,7 +80,7 @@ class TestFunAcceptUnitless(parameterized.TestCase):
                 expected = jnp_fun(q.to_decimal(unit2scale))
                 assert_quantity(result, expected)
 
-                with pytest.raises(AssertionError):
+                with pytest.raises(TypeError, match='requires a dimensionless "x"'):
                     result = fun(q)
 
                 with pytest.raises(u.UnitMismatchError):
@@ -108,7 +108,7 @@ class TestFunAcceptUnitless(parameterized.TestCase):
             expected = jnp_fun(q1.to_decimal(u.dametre), q2.to_decimal(u.dametre))
             assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError, match='requires a dimensionless "x"'):
                 result = bm_fun(q1, q2)
 
             with pytest.raises(u.UnitMismatchError):
@@ -138,7 +138,7 @@ class TestFunAcceptUnitless(parameterized.TestCase):
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
             assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError, match='requires a dimensionless "x"'):
                 result = bm_fun(q1, q2)
 
     @parameterized.product(
@@ -160,7 +160,7 @@ class TestFunAcceptUnitless(parameterized.TestCase):
             # expected = jnp_fun(jnp.array(data))
             # assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError, match='requires a dimensionless "x"'):
                 result = bm_fun(q)
 
     @parameterized.product(
@@ -185,7 +185,7 @@ class TestFunAcceptUnitless(parameterized.TestCase):
             # expected = jnp_fun(jnp.array(value1), jnp.array(value2))
             # assert_quantity(result, expected)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError, match='requires a dimensionless "x"'):
                 result = bm_fun(q1, q2)
 
     def test_dimensionless(self):
@@ -266,7 +266,7 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
             pass
 
         # Test that Array with units raises error without unit_to_scale
-        with pytest.raises((AssertionError, u.UnitMismatchError)):
+        with pytest.raises((TypeError, u.UnitMismatchError)):
             fun(self.meter_array)
 
     def test_exp_functions_with_array_custom_array(self):
@@ -423,7 +423,7 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
             pass
 
         # Test that Arrays with units raise error without unit_to_scale
-        with pytest.raises((AssertionError, u.UnitMismatchError)):
+        with pytest.raises((TypeError, u.UnitMismatchError)):
             fun(meter1, meter2)
 
     def test_hypot_with_array_custom_array(self):
@@ -500,7 +500,7 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
         assert_quantity(result_bool, expected_bool)
 
         # Test that Arrays with units raise error
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError, match='requires a dimensionless "x"'):
             fun(self.meter_array)
 
     @parameterized.named_parameters(
