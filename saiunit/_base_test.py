@@ -191,6 +191,25 @@ class TestUnit(unittest.TestCase):
         print(str(u.kmeter / u.meter))
         assert_equal(str(u.kmeter / u.meter), 'Unit(10.0^3)')
 
+    def test_inverse_second_prefers_hertz_alias(self):
+        q = 1 / u.second
+        assert_equal(repr(q), "1 * hertz")
+        assert_equal(repr(q.unit), "hertz")
+        assert_equal(str(q.unit), "Hz")
+
+        q_ms = 1 / u.ms
+        assert_equal(repr(q_ms.unit), "khertz")
+        assert_equal(str(q_ms.unit), "kHz")
+
+    def test_compound_unit_multiplication_keeps_grouping(self):
+        unit = (u.nA / (u.cm ** 2)) * u.mS
+        assert_equal(repr(unit), "(namp / cmeter2) * msiemens")
+        assert_equal(str(unit), "(nA/cm^2) * mS")
+
+        unit_rhs = u.mS * (u.nA / (u.cm ** 2))
+        assert_equal(repr(unit_rhs), "msiemens * (namp / cmeter2)")
+        assert_equal(str(unit_rhs), "mS * (nA/cm^2)")
+
     def test_unit_with_factor(self):
         self.assertTrue(u.math.isclose(1. * u.eV / u.joule, 1.6021766e-19))
         self.assertTrue(u.math.isclose(1. * u.joule / u.eV, 6.241509074460762e18))
@@ -341,7 +360,7 @@ class TestQuantity(unittest.TestCase):
                 display_in_unit(10 * nS, ohm)
         assert_equal(display_in_unit(10.0, Unit(scale=1)), "1. * Unit(10.0^1)")
         assert_equal(str(3 * u.kmeter / u.meter), '3000.0')
-        assert_equal(str(u.mS / u.cm ** 2), 'mS/cmeter2')
+        assert_equal(str(u.mS / u.cm ** 2), 'mS/cm^2')
 
         assert_equal(display_in_unit(10. * u.mV), '10. * mvolt')
         assert_equal(display_in_unit(10. * u.ohm * u.amp), '10. * volt')

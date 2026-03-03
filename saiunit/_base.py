@@ -1589,30 +1589,35 @@ def _assert_same_base(u1, u2):
         raise TypeError(f"Cannot operate on units with different bases. Got {u1.base} != {u2.base}.")
 
 
-def _find_standard_unit(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bool, bool]:
+def _find_standard_unit(
+    dim: Dimension,
+    base,
+    scale,
+    factor
+) -> Tuple[Optional[str], Optional[str], bool, bool]:
     """
     Find a standard unit for the given dimension, base, scale, and factor.
 
     :param dim:
     :param base:
     :param scale:
-    :return: Name, is full name, is dimensionless.
+    :return: Name, display name, is full name, is dimensionless.
     """
     if dim == DIMENSIONLESS:
-        return None, False, True
+        return None, None, False, True
     if isinstance(base, (int, float)):
         if isinstance(scale, (int, float)):
             if isinstance(factor, (int, float)):
                 key = (dim, scale, base, factor)
                 if key in _standard_units:
-                    u_name = _standard_units[key].name
-                    return u_name, True, False
+                    u = _standard_units[key]
+                    return u.name, u.dispname, True, False
 
         key = (dim, 0, base, 1.0)
         if key in _standard_units:
-            u_name = _standard_units[key].name
-            return u_name, False, False
-    return None, False, False
+            u = _standard_units[key]
+            return u.name, u.dispname, False, False
+    return None, None, False, False
 
 
 def _find_a_name(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bool]:
@@ -1648,6 +1653,36 @@ def _find_a_name(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bo
 
 
 _standard_units: Dict[Tuple, 'Unit'] = {}
+_standard_unit_aliases: Dict[Tuple, List['Unit']] = {}
+
+
+def _standard_unit_preference_score(unit: 'Unit') -> int:
+    """
+    Return a preference score for choosing canonical display aliases.
+
+    Lower is better. Keep default behavior close to previous logic
+    (last registration wins on ties), but prefer frequency aliases
+    (`hertz`) over radioactive-decay aliases (`becquerel`) for `s^-1`.
+    """
+    name = unit.name.lower() if isinstance(unit.name, str) else ""
+    score = 0
+    if "hertz" in name:
+        score -= 10
+    if "becquerel" in name:
+        score += 10
+    return score
+
+
+def _select_preferred_standard_unit(units: List['Unit']) -> 'Unit':
+    best = units[0]
+    best_score = _standard_unit_preference_score(best)
+    for candidate in units[1:]:
+        score = _standard_unit_preference_score(candidate)
+        # On ties, use the most recently registered alias.
+        if score <= best_score:
+            best = candidate
+            best_score = score
+    return best
 
 
 def add_standard_unit(u: 'Unit'):
@@ -1657,7 +1692,9 @@ def add_standard_unit(u: 'Unit'):
         isinstance(u.factor, (int, float))
     ):
         key = (u.dim, u.scale, u.base, u.factor)
-        _standard_units[key] = u
+        aliases = _standard_unit_aliases.setdefault(key, [])
+        aliases.append(u)
+        _standard_units[key] = _select_preferred_standard_unit(aliases)
 
 
 class Unit:
@@ -1931,14 +1968,14 @@ class Unit:
             return _standard_units[key]
 
         # using temporary units
-        name, is_fullname, dimless = _find_standard_unit(self.dim, self.base, self.scale, 1.0)
+        name, dispname, is_fullname, dimless = _find_standard_unit(self.dim, self.base, self.scale, 1.0)
         return Unit(
             dim=self.dim,
             scale=self.scale,
             base=self.base,
             factor=1.,
             name=name,
-            dispname=name,
+            dispname=dispname,
             iscompound=self.iscompound,
             is_fullname=is_fullname,
         )
@@ -2161,12 +2198,23 @@ class Unit:
             scale = self.scale + other.scale
             dim = self.dim * other.dim
             factor = self.factor * other.factor
-            name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-            dispname = name
+            name, dispname, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
             iscompound = False
             if name is None and not dimless and not is_fullname and self.is_fullname and other.is_fullname:
-                name = f"{self.name} * {other.name}"
-                dispname = f"{self.dispname} * {other.dispname}"
+                if self.iscompound:
+                    name = f"({self.name})"
+                    dispname = f"({self.dispname})"
+                else:
+                    name = self.name
+                    dispname = self.dispname
+                name += " * "
+                dispname += " * "
+                if other.iscompound:
+                    name += f"({other.name})"
+                    dispname += f"({other.dispname})"
+                else:
+                    name += other.name
+                    dispname += other.dispname
                 iscompound = True
                 is_fullname = True
             return Unit(
@@ -2213,8 +2261,7 @@ class Unit:
             scale = self.scale - other.scale
             dim = self.dim / other.dim
             factor = self.factor / other.factor
-            name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-            dispname = name
+            name, dispname, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
             iscompound = False
             if name is None and not dimless and not is_fullname and self.is_fullname and other.is_fullname:
                 if self.iscompound:
@@ -2262,8 +2309,7 @@ class Unit:
         dim = self.dim ** -1
         scale = -self.scale
         factor = 1. / self.factor
-        name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-        dispname = name
+        name, dispname, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
         iscompound = False
         if name is None and not dimless and not is_fullname and self.is_fullname:
             if self.iscompound:
@@ -2313,8 +2359,7 @@ class Unit:
             dim = self.dim ** other
             scale = self.scale * other
             factor = self.factor ** other
-            name, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
-            dispname = name
+            name, dispname, is_fullname, dimless = _find_standard_unit(dim, self.base, scale, factor)
             iscompound = False
             if name is None and not dimless and not is_fullname and self.is_fullname:
                 if self.iscompound:
