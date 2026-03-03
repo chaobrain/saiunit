@@ -20,9 +20,9 @@ from typing import Union
 import jax
 import jax.numpy as jnp
 
-from .._base import Quantity, maybe_decimal, UNITLESS
-from .._misc import set_module_as, maybe_custom_array
-from ..math._fun_change_unit import (
+from saiunit._base import Quantity, maybe_decimal, UNITLESS
+from saiunit._misc import set_module_as, maybe_custom_array
+from saiunit.math._fun_change_unit import (
     dot, multi_dot, vdot, vecdot, inner,
     outer, kron, matmul, tensordot,
     matrix_power, det, cross, unit_change, _fun_change_unit_unary, _fun_change_unit_binary

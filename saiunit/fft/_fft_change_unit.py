@@ -14,7 +14,6 @@
 # ==============================================================================
 from __future__ import annotations
 
-import sys
 from typing import Callable, Union, Sequence
 
 import jax
@@ -1170,16 +1169,8 @@ def fftfreq(
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
                                     scale=freq_unit_scale, )
-        if sys.version_info >= (3, 10):
-            return Quantity(jnpfft.fftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device), unit=freq_unit)
-        else:
-            # noinspection PyUnresolvedReferences
-            return Quantity(jnpfft.fftfreq(n, d.to_decimal(time_unit), dtype=dtype), unit=freq_unit)
-    if sys.version_info >= (3, 10):
-        return jnpfft.fftfreq(n, d, dtype=dtype, device=device)
-    else:
-        # noinspection PyUnresolvedReferences
-        return jnpfft.fftfreq(n, d, dtype=dtype)
+        return Quantity(jnpfft.fftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device), unit=freq_unit)
+    return jnpfft.fftfreq(n, d, dtype=dtype, device=device)
 
 
 @set_module_as('saiunit.fft')
@@ -1230,13 +1221,5 @@ def rfftfreq(
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
                                     scale=freq_unit_scale, )
-        if sys.version_info >= (3, 10):
-            return Quantity(jnpfft.rfftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device), unit=freq_unit)
-        else:
-            # noinspection PyUnresolvedReferences
-            return Quantity(jnpfft.rfftfreq(n, d.to_decimal(time_unit), dtype=dtype), unit=freq_unit)
-    if sys.version_info >= (3, 10):
-        return jnpfft.rfftfreq(n, d, dtype=dtype, device=device)
-    else:
-        # noinspection PyUnresolvedReferences
-        return jnpfft.rfftfreq(n, d, dtype=dtype)
+        return Quantity(jnpfft.rfftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device), unit=freq_unit)
+    return jnpfft.rfftfreq(n, d, dtype=dtype, device=device)
