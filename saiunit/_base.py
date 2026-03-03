@@ -1931,7 +1931,7 @@ class Unit:
     """
 
     __module__ = "saiunit"
-    __slots__ = ["_dim", "_base", "_scale", "_factor", "_dispname", "_name", "iscompound", "is_fullname", "_hash", "_display_parts"]
+    __slots__ = ["_dim", "_base", "_scale", "_factor", "_dispname", "_name", "is_fullname", "_hash", "_display_parts"]
     __array_priority__ = 1000
 
     def __init__(
@@ -1942,7 +1942,6 @@ class Unit:
         factor: jax.typing.ArrayLike = 1.,
         name: str = None,
         dispname: str = None,
-        iscompound: bool = False,
         is_fullname: bool = True,
         display_parts=None,
     ):
@@ -1978,9 +1977,6 @@ class Unit:
 
         # The display name of this unit
         self._dispname = (name if dispname is None else dispname)
-
-        # Whether this unit is a combination of other units
-        self.iscompound = iscompound
 
         # whether the name is the full name
         self.is_fullname = is_fullname
@@ -2125,7 +2121,6 @@ class Unit:
             factor=1.,
             name=name,
             dispname=dispname,
-            iscompound=self.iscompound,
             is_fullname=is_fullname,
         )
 
@@ -2140,7 +2135,6 @@ class Unit:
             factor=self.factor,
             name=self.name,
             dispname=self.dispname,
-            iscompound=self.iscompound,
             is_fullname=self.is_fullname,
         )
 
@@ -2152,7 +2146,6 @@ class Unit:
             factor=deepcopy(self.factor),
             name=deepcopy(self.name),
             dispname=deepcopy(self.dispname),
-            iscompound=deepcopy(self.iscompound),
             is_fullname=deepcopy(self.is_fullname),
         )
 
@@ -2166,8 +2159,6 @@ class Unit:
                     self.scale,
                     self.name,
                     self.dispname,
-                    self.iscompound,
-                    self.is_fullname
                 )
             )
         return self._hash
@@ -2368,7 +2359,7 @@ class Unit:
                 return Unit(
                     dim, scale=scale, base=self.base, factor=factor,
                     name=canonical, dispname=canonical,
-                    iscompound=True, is_fullname=True,
+                    is_fullname=True,
                     display_parts=parts,
                 )
 
@@ -2379,7 +2370,7 @@ class Unit:
             return Unit(
                 dim, scale=scale, base=self.base, factor=factor,
                 name=name, dispname=dispname,
-                iscompound=False, is_fullname=is_fullname,
+                is_fullname=is_fullname,
             )
 
         elif isinstance(other, Quantity):
@@ -2430,7 +2421,7 @@ class Unit:
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
                     name=canonical, dispname=canonical,
-                    iscompound=True, is_fullname=True,
+                    is_fullname=True,
                     display_parts=parts,
                 )
 
@@ -2441,7 +2432,7 @@ class Unit:
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
                 name=name, dispname=dispname,
-                iscompound=False, is_fullname=is_fullname,
+                is_fullname=is_fullname,
             )
 
         else:
@@ -2473,7 +2464,7 @@ class Unit:
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
                 name=name, dispname=dispname,
-                iscompound=False, is_fullname=True,
+                is_fullname=True,
             )
 
         # Build from display_parts (negate exponents)
@@ -2484,14 +2475,14 @@ class Unit:
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
                 name=canonical, dispname=canonical,
-                iscompound=True, is_fullname=True,
+                is_fullname=True,
                 display_parts=parts,
             )
 
         return Unit(
             dim, base=self.base, scale=scale, factor=factor,
             name=name, dispname=dispname,
-            iscompound=False, is_fullname=is_fullname,
+            is_fullname=is_fullname,
         )
 
     def __idiv__(self, other):
@@ -2538,7 +2529,7 @@ class Unit:
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
                     name=canonical, dispname=canonical,
-                    iscompound=True, is_fullname=True,
+                    is_fullname=True,
                     display_parts=parts,
                 )
 
@@ -2549,7 +2540,7 @@ class Unit:
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
                 name=name, dispname=dispname,
-                iscompound=False, is_fullname=is_fullname,
+                is_fullname=is_fullname,
             )
         else:
             raise TypeError(
@@ -2635,7 +2626,6 @@ class Unit:
                 self.factor,
                 self.name,
                 self.dispname,
-                self.iscompound,
                 self.is_fullname
             )
         )
