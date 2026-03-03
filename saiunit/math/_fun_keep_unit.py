@@ -24,7 +24,7 @@ import numpy as np
 from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 
 from ._fun_array_creation import asarray
-from .._base import (
+from saiunit._base import (
     Quantity,
     fail_for_dimension_mismatch,
     get_unit,
@@ -33,7 +33,7 @@ from .._base import (
     unit_scale_align_to_first,
     maybe_decimal
 )
-from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
     # sequence inputs
@@ -3590,7 +3590,7 @@ def fix(
     -------
     out : jax.Array
     """
-    return _fun_keep_unit_unary(jnp.fix, x)
+    return _fun_keep_unit_unary(jnp.trunc, x)
 
 
 @set_module_as('saiunit.math')

@@ -20,8 +20,8 @@ import jax
 import jax.numpy as jnp
 
 from ._exprel import exprel as _exprel_impl, set_exprel_order
-from .._base import Quantity, Unit
-from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
+from saiunit._base import Quantity, Unit
+from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 __all__ = [
     # math funcs only accept unitless (unary)

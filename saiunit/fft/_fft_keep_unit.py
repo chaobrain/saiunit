@@ -18,9 +18,9 @@ from typing import Union, Sequence
 import jax
 from jax.numpy import fft as jnpfft
 
-from .._base import Quantity
-from .._misc import set_module_as
-from ..math._fun_keep_unit import _fun_keep_unit_unary
+from saiunit._base import Quantity
+from saiunit._misc import set_module_as
+from saiunit.math._fun_keep_unit import _fun_keep_unit_unary
 
 __all__ = [
     # keep unit

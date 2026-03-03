@@ -22,9 +22,9 @@ import numpy as np
 from jax import lax
 from jax._src.typing import Shape
 
-from .._base import Quantity, maybe_decimal, has_same_unit
-from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
-from ..math._fun_keep_unit import _fun_keep_unit_unary, _fun_keep_unit_binary
+from saiunit._base import Quantity, maybe_decimal, has_same_unit
+from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from saiunit.math._fun_keep_unit import _fun_keep_unit_unary, _fun_keep_unit_binary
 
 __all__ = [
     # sequence inputs

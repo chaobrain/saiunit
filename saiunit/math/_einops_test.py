@@ -738,7 +738,7 @@ class TestEinopsWithArrayCustomArray:
             einrearrange(self.array_2d, "a b c -> a b c")  # Wrong number of axes
 
         # Test invalid reduction
-        with pytest.raises(ValueError):
+        with pytest.raises(EinopsError):
             einreduce(self.array_2d, "h w -> h", reduction="invalid_reduction")
 
         # Test incompatible reshape

@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from typing import (Union)
+from typing import Union
 
 import jax
 import jax.numpy as jnp

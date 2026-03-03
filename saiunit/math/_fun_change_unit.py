@@ -21,8 +21,8 @@ import jax
 import jax.numpy as jnp
 
 from ._fun_array_creation import asarray
-from .._base import UNITLESS, Quantity, maybe_decimal
-from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from saiunit._base import UNITLESS, Quantity, maybe_decimal
+from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
 

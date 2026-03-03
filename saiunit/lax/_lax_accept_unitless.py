@@ -20,9 +20,9 @@ from typing import Union, Optional, Callable, Sequence
 import jax
 from jax import lax
 
-from .._base import Quantity, Unit
-from .._misc import set_module_as
-from ..math._fun_accept_unitless import _fun_accept_unitless_unary, _fun_accept_unitless_binary, _fun_unitless_binary
+from saiunit._base import Quantity, Unit
+from saiunit._misc import set_module_as
+from saiunit.math._fun_accept_unitless import _fun_accept_unitless_unary, _fun_accept_unitless_binary, _fun_unitless_binary
 
 __all__ = [
     # math funcs only accept unitless (unary)

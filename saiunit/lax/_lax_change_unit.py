@@ -19,9 +19,9 @@ from typing import Callable, Union, Sequence
 import jax
 from jax import lax
 
-from .._base import Quantity, maybe_decimal, UNITLESS
-from .._misc import set_module_as, maybe_custom_array
-from ..math._fun_change_unit import _fun_change_unit_unary, _fun_change_unit_binary
+from saiunit._base import Quantity, maybe_decimal, UNITLESS
+from saiunit._misc import set_module_as, maybe_custom_array
+from saiunit.math._fun_change_unit import _fun_change_unit_unary, _fun_change_unit_binary
 
 __all__ = [
     # math funcs change unit (unary)

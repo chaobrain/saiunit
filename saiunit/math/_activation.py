@@ -20,8 +20,8 @@ from jax import nn
 from ._fun_accept_unitless import _fun_accept_unitless_unary
 from ._fun_array_creation import asarray
 from ._fun_keep_unit import _fun_keep_unit_unary, where
-from .._base import Quantity, get_mantissa
-from .._misc import set_module_as, maybe_custom_array
+from saiunit._base import Quantity, get_mantissa
+from saiunit._misc import set_module_as, maybe_custom_array
 
 __all__ = [
     'relu', 'relu6', 'sigmoid', 'softplus', 'sparse_plus', 'sparse_sigmoid', 'soft_sign', 'silu', 'swish',

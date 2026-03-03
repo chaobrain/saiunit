@@ -19,8 +19,8 @@ from typing import (Union, Optional, Sequence)
 import jax
 import jax.numpy as jnp
 
-from .._base import Quantity, get_unit
-from .._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from saiunit._base import Quantity, get_unit
+from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
     # math funcs remove unit (unary)

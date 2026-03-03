@@ -975,7 +975,7 @@ class TestFunKeepUnit(parameterized.TestCase):
     def test_fun_accept_unitless_unary_can_return_quantity(self, value):
         for fun in fun_accept_unitless_unary_can_return_quantity:
             bm_fun = getattr(um, fun)
-            jnp_fun = getattr(jnp, fun)
+            jnp_fun = jnp.trunc if fun == 'fix' else getattr(jnp, fun)
 
             print(f'fun: {bm_fun.__name__}')
             result = bm_fun(jnp.array(value))

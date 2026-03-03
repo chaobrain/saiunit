@@ -22,7 +22,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import Array
 
-from .._base import (
+from saiunit._base import (
     Quantity,
     Unit,
     UNITLESS,
@@ -30,7 +30,7 @@ from .._base import (
     get_unit,
     unit_scale_align_to_first,
 )
-from .._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
+from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 Shape = Union[int, Sequence[int]]
 
