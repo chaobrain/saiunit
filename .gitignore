@@ -226,8 +226,6 @@ cython_debug/
 /docs/apis/saiunit.math.rst
 /docs/apis/changelog.md
 /dist-hist/
-/dist-hist/
-/examples/
 !brainunit/docs/auto_generater.py
 !brainunit/docs/conf.py
 !brainunit/docs/requirements.txt

@@ -169,7 +169,7 @@ class TestUnit(unittest.TestCase):
     def test_mul(self):
         a = u.Unit(base=2)
         b = u.Unit(base=10)
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             a * b
 
     def test_inplace_operations(self):
@@ -791,7 +791,7 @@ class TestQuantity(unittest.TestCase):
             assert_quantity(a ** 3, a.mantissa ** 3, kilogram ** 3)
             # Test raising to a dimensionless Array
             assert_quantity(a ** (3 * volt / volt), a.mantissa ** 3, kilogram ** 3)
-            with pytest.raises(AssertionError):
+            with pytest.raises(ValueError):
                 a ** (2 * volt)
             with pytest.raises(TypeError):
                 a ** np.array([2, 3])
