@@ -5205,7 +5205,7 @@ class CallableAssignUnit(Callable):
         pass
 
 
-class Missing():
+class Missing:
     pass
 
 

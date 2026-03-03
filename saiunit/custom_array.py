@@ -14,14 +14,14 @@
 # ==============================================================================
 
 
+import operator
 from typing import Any, Optional, Union, Sequence
 
-import operator
 import jax.numpy as jnp
 import jax.typing
 import numpy as np
-from saiunit import math
 
+from saiunit import math
 
 ArrayLike = jax.typing.ArrayLike
 
@@ -58,10 +58,15 @@ class CustomArray:
     real : array_like
         Real part of the array elements.
     imag : array_like
-        Imaginary part of the array elements. Note: Currently contains a typo,
-        accessing 'data.image' instead of 'data.imag'.
+        Imaginary part of the array elements.
     T : array_like
         Transposed view of the array.
+    mT : array_like
+        Transpose of the last two dimensions (for batched matrix operations).
+    nbytes : int
+        Total bytes consumed by the array elements.
+    itemsize : int
+        Length of one array element in bytes.
 
     Methods
     -------
@@ -203,7 +208,6 @@ class CustomArray:
     - This class uses duck typing and delegates operations to the underlying array
     - In-place operations modify the internal `data` attribute directly
     - Some methods return the underlying array type rather than CustomArray instances
-    - The `imag` property currently has a typo and accesses `data.image`
     - Thread safety depends on the underlying array implementation
     - JAX transformations (jit, grad, vmap) work seamlessly with CustomArray instances
 
@@ -240,7 +244,7 @@ class CustomArray:
 
     @property
     def imag(self):
-        return self.data.image
+        return self.data.imag
 
     @property
     def real(self):
@@ -254,8 +258,29 @@ class CustomArray:
     def T(self):
         return self.data.T
 
+    @property
+    def mT(self):
+        """Transpose the last two dimensions (for batched matrix operations)."""
+        return jnp.swapaxes(self.data, -1, -2)
+
+    @property
+    def nbytes(self):
+        """Total bytes consumed by the array elements."""
+        return self.data.nbytes
+
+    @property
+    def itemsize(self):
+        """Length of one array element in bytes."""
+        return self.data.itemsize
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.data})"
+
+    def __str__(self) -> str:
+        return str(self.data)
+
     def __format__(self, format_spec: str) -> str:
-        return format(self.data)
+        return format(self.data, format_spec)
 
     def __iter__(self):
         """Solve the issue of DeviceArray.__iter__.
@@ -350,9 +375,6 @@ class CustomArray:
         # a *= b
         self.data = self.data * oc
         return self
-
-    def __rdiv__(self, oc):
-        return oc / self.data
 
     def __truediv__(self, oc):
         return self.data / oc
@@ -695,7 +717,7 @@ class CustomArray:
         return self.data.transpose(*axes)
 
     def tile(self, reps):
-        return self.data.tile(reps)
+        return math.tile(self.data, reps)
 
     def var(self, axis=None, dtype=None, ddof=0, keepdims=False):
         """Returns the variance of the array elements, along given axis."""
@@ -724,8 +746,7 @@ class CustomArray:
 
     def numpy(self, dtype=None):
         """Convert to numpy.ndarray."""
-        # warnings.warn('Deprecated since 2.1.12. Please use ".to_numpy()" instead.', DeprecationWarning)
-        return np.asarray(self.data, dtype=dtype)
+        return self.to_numpy(dtype=dtype)
 
     def to_numpy(self, dtype=None):
         """Convert to numpy.ndarray."""
@@ -786,7 +807,7 @@ class CustomArray:
         return math.expand_dims(self.data, axis)
 
     def expand_as(self, array: ArrayLike) -> ArrayLike:
-        return math.broadcast_to(self.data, array)
+        return math.broadcast_to(self.data, jnp.asarray(array).shape)
 
     def pow(self, index: int):
         return self.data ** index
@@ -917,7 +938,7 @@ class CustomArray:
         if min_data is None, then no lower bound,
         if max_data is None, then no upper bound.
         """
-        self.clamp(min_data, max_data)
+        self.data = math.clip(self.data, min_data, max_data)
         return self
 
     def clone(self) -> ArrayLike:
@@ -945,18 +966,25 @@ class CustomArray:
         base = l_tar - l_ori
         sizes_list = list(sizes)
         if base < 0:
-            raise ValueError(f'the number of sizes provided ({len(sizes)}) must be greater or equal to the number of '
-                             f'dimensions in the tensor ({len(self.shape)})')
+            raise ValueError(
+                f'the number of sizes provided ({len(sizes)}) '
+                f'must be greater or equal to the number of '
+                f'dimensions in the tensor ({len(self.shape)})'
+            )
         for i, v in enumerate(sizes[:base]):
             if v < 0:
                 raise ValueError(
-                    f'The expanded size of the tensor ({v}) isn\'t allowed in a leading, non-existing dimension {i + 1}')
+                    f'The expanded size of the tensor ({v}) '
+                    f'isn\'t allowed in a leading, non-existing dimension {i + 1}'
+                )
         for i, v in enumerate(self.shape):
             sizes_list[base + i] = v if sizes_list[base + i] == -1 else sizes_list[base + i]
             if v != 1 and sizes_list[base + i] != v:
                 raise ValueError(
-                    f'The expanded size of the tensor ({sizes_list[base + i]}) must match the existing size ({v}) at non-singleton '
-                    f'dimension {i}.  Target sizes: {sizes}.  Tensor sizes: {self.shape}')
+                    f'The expanded size of the tensor ({sizes_list[base + i]}) '
+                    f'must match the existing size ({v}) at non-singleton '
+                    f'dimension {i}.  Target sizes: {sizes}.  Tensor sizes: {self.shape}'
+                )
         return math.broadcast_to(self.data, tuple(sizes_list))
 
     def zero_(self):
@@ -987,4 +1015,3 @@ class CustomArray:
     @classmethod
     def tree_unflatten(cls, aux_data, flat_contents):
         return cls(*flat_contents)
-
