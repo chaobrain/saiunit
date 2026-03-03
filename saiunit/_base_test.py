@@ -1130,7 +1130,7 @@ class TestNumPyFunctions(unittest.TestCase):
         )
 
         # Check some error cases
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             where(cond, ar1)
         with pytest.raises(TypeError):
             where(cond, ar1, ar1, ar2)
@@ -1239,7 +1239,7 @@ class TestNumPyFunctions(unittest.TestCase):
         for bu_fun, np_fun in funcs:
             # make sure these functions raise errors when run on values with dimensions
             for val in unit_values:
-                with pytest.raises(AssertionError):
+                with pytest.raises(TypeError):
                     bu_fun(val)
 
             for val in unitless_values:
