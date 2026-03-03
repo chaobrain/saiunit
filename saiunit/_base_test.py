@@ -189,7 +189,7 @@ class TestUnit(unittest.TestCase):
 
     def test_display(self):
         print(str(u.kmeter / u.meter))
-        assert_equal(str(u.kmeter / u.meter), 'Unit(10.0^3)')
+        assert_equal(str(u.kmeter / u.meter), '10.0^3')
 
     def test_inverse_second_prefers_hertz_alias(self):
         q = 1 / u.second
@@ -358,7 +358,7 @@ class TestQuantity(unittest.TestCase):
             assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 A * ohm")
             with pytest.raises(u.UnitMismatchError):
                 display_in_unit(10 * nS, ohm)
-        assert_equal(display_in_unit(10.0, Unit(scale=1)), "1. Unit(10.0^1)")
+        assert_equal(display_in_unit(10.0, Unit(scale=1)), "1. 10.0^1")
         assert_equal(str(3 * u.kmeter / u.meter), '3000.0')
         assert_equal(str(u.mS / u.cm ** 2), 'mS / cm^2')
 
@@ -1925,6 +1925,188 @@ class TestDisplayRedesign:
         r = repr(q)
         assert r.startswith("Quantity(")
         assert 'mV' in r
+
+
+class TestDisplayBugFixes:
+    """Tests for display bug fixes (2026-03)."""
+
+    # --- Bug 1: __pow__ must not auto-alias to ambiguous units ---
+
+    def test_pow_compound_not_gray(self):
+        """(m/s)**2 must NOT become 'Gy' (gray)."""
+        unit = (u.meter / u.second) ** 2
+        assert "gray" not in str(unit).lower()
+        assert "sievert" not in str(unit).lower()
+        assert "Gy" not in str(unit)
+        assert "Sv" not in str(unit)
+        assert_equal(str(unit), "m^2 / s^2")
+
+    def test_pow_compound_not_gray_repr(self):
+        """repr((m/s)**2) must not contain gray."""
+        unit = (u.meter / u.second) ** 2
+        assert_equal(repr(unit), 'Unit("m^2 / s^2")')
+
+    # --- Bug 2: __pow__ must not alias m^3 to kiloliter ---
+
+    def test_meter_cubed_not_kliter(self):
+        """m**3 must NOT auto-relabel as kl (kiloliter)."""
+        unit = u.meter ** 3
+        assert "kl" not in str(unit)
+        assert "liter" not in str(unit).lower()
+        assert_equal(str(unit), "m^3")
+
+    def test_meter_cubed_consistent_with_mul(self):
+        """m**3 and m*m*m must display identically."""
+        assert_equal(str(u.meter ** 3), str(u.meter * u.meter * u.meter))
+
+    def test_meter_squared_consistent_with_mul(self):
+        """m**2 and m*m must display identically."""
+        assert_equal(str(u.meter ** 2), str(u.meter * u.meter))
+
+    def test_cm_cubed_via_pow(self):
+        """cm**3 must show as 'cm^3', not some alias."""
+        assert_equal(str(u.cmeter ** 3), "cm^3")
+
+    # --- Bug 3: Exponent stacking ---
+
+    def test_no_exponent_stacking(self):
+        """(m^2/s)**3 must be 'm^6 / s^3', NOT 'm^2^3 / s^3'."""
+        unit = (u.meter ** 2 / u.second) ** 3
+        assert_equal(str(unit), "m^6 / s^3")
+
+    def test_no_exponent_stacking_squared(self):
+        """(m^2)**2 must be 'm^4', NOT 'm^2^2'."""
+        assert_equal(str((u.meter ** 2) ** 2), "m^4")
+
+    def test_no_exponent_stacking_cm(self):
+        """(cm^2)**3 must be 'cm^6', NOT 'cm^2^3'."""
+        assert_equal(str((u.cmeter ** 2) ** 3), "cm^6")
+
+    def test_compound_pow_preserves_parts(self):
+        """(m*s/A)^2 must show 'm^2 * s^2 / A^2'."""
+        unit = (u.meter * u.second / u.amp) ** 2
+        assert_equal(str(unit), "m^2 * s^2 / A^2")
+
+    # --- Bug 4: __format__ for arrays ---
+
+    def test_format_array_2f(self):
+        """Array format '.2f' applies precision."""
+        q = jnp.array([1.23456, 2.34567]) * u.mV
+        result = format(q, ".2f")
+        assert "mV" in result
+        # Should have limited precision
+        assert "1.23" in result or "1.23" in result
+
+    def test_format_array_2e(self):
+        """Array format '.2e' should apply precision."""
+        q = jnp.array([1.23456, 2.34567]) * u.mV
+        result = format(q, ".2e")
+        assert "mV" in result
+
+    def test_format_array_2g(self):
+        """Array format '.2g' should apply precision."""
+        q = jnp.array([1.23456, 2.34567]) * u.mV
+        result = format(q, ".2g")
+        assert "mV" in result
+
+    def test_format_array_width_precision(self):
+        """Array format '10.2f' should apply precision (2 digits)."""
+        q = jnp.array([1.23456, 2.34567]) * u.mV
+        result = format(q, "10.2f")
+        assert "mV" in result
+
+    def test_format_array_sign_precision(self):
+        """Array format '+.2f' should apply precision."""
+        q = jnp.array([1.23456, 2.34567]) * u.mV
+        result = format(q, "+.2f")
+        assert "mV" in result
+
+    def test_format_array_bad_spec_fallback(self):
+        """Array format with non-numeric spec falls through to str."""
+        q = jnp.array([1.23, 2.34]) * u.mV
+        result = format(q, "d")
+        assert "mV" in result
+        assert_equal(result, str(q))
+
+    # --- Bug 5: Dimensionless unit display ---
+
+    def test_dimensionless_unit_str(self):
+        """str of dimensionless unit should be '1', not 'Unit(10.0^0)'."""
+        unit = u.meter / u.meter
+        assert_equal(str(unit), "1")
+
+    def test_dimensionless_unit_repr(self):
+        """repr of dimensionless unit should not have double 'Unit'."""
+        unit = u.meter / u.meter
+        r = repr(unit)
+        assert_equal(r, 'Unit("1")')
+        # No double 'Unit'
+        assert r.count("Unit") == 1
+
+    def test_dimensionless_scaled_str(self):
+        """Dimensionless with scale should show base^scale."""
+        unit = u.kmeter / u.meter
+        assert_equal(str(unit), "10.0^3")
+
+    def test_meter_pow_zero_str(self):
+        """m**0 should show as '1'."""
+        assert_equal(str(u.meter ** 0), "1")
+
+    # --- Bug 6: Radian/steradian display ---
+
+    def test_radian_str_shows_unit(self):
+        """str(3.14 * radian) should show 'rad'."""
+        q = 3.14 * u.radian
+        s = str(q)
+        assert "rad" in s
+        assert_equal(s, "3.14 rad")
+
+    def test_radian_repr_shows_unit(self):
+        """repr(3.14 * radian) should show 'rad'."""
+        q = 3.14 * u.radian
+        r = repr(q)
+        assert "rad" in r
+        assert_equal(r, 'Quantity(3.14, "rad")')
+
+    def test_steradian_str_shows_unit(self):
+        """str(3.14 * steradian) should show 'sr'."""
+        q = 3.14 * u.steradian
+        assert_equal(str(q), "3.14 sr")
+
+    def test_steradian_repr_shows_unit(self):
+        """repr should include steradian display."""
+        q = 3.14 * u.steradian
+        assert_equal(repr(q), 'Quantity(3.14, "sr")')
+
+    def test_radian_format_shows_unit(self):
+        """__format__ on radian quantity shows 'rad'."""
+        q = 3.14 * u.radian
+        assert_equal(f"{q:.1f}", "3.1 rad")
+
+    def test_plain_unitless_no_unit_shown(self):
+        """Plain unitless quantity should NOT show any unit."""
+        q = Quantity(3.14)
+        assert_equal(str(q), "3.14")
+        assert_equal(repr(q), "Quantity(3.14)")
+
+    def test_division_dimensionless_no_unit(self):
+        """m/m quantity should not show unit."""
+        q = 3.0 * (u.meter / u.meter)
+        assert_equal(str(q), "3.")
+        assert_equal(repr(q), "Quantity(3.)")
+
+    # --- Bug 7: % format blocked for physical units ---
+
+    def test_percent_format_raises_for_physical_unit(self):
+        """'%' format on mV quantity must raise ValueError."""
+        q = 0.5 * u.mV
+        with pytest.raises(ValueError, match="not supported"):
+            f"{q:%}"
+
+    def test_percent_format_ok_for_unitless(self):
+        """'%' format on unitless quantity should work."""
+        q = Quantity(0.5)
+        assert_equal(f"{q:%}", "50.000000%")
 
 
 class TestJit:

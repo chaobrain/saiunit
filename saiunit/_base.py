@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import numbers
 import operator
+import re
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps, partial
@@ -1752,6 +1753,40 @@ def _merge_display_parts(parts_a, parts_b):
     return result
 
 
+_RE_DISPNAME_EXP = re.compile(r'^(.+)\^(-?\d+(?:\.\d+)?)$')
+
+
+def _normalise_display_parts(parts):
+    """Normalise display parts: decompose stacked exponents, drop zeros, sort.
+
+    If a dispname already contains an exponent (e.g. ``'m^2'``), fold that
+    exponent into the part's own exponent so that ``('meter2', 'm^2', 3)``
+    becomes ``('meter2', 'm', 6)`` instead of rendering as ``m^2^3``.
+    """
+    result = []
+    for name, disp, exp in parts:
+        if exp == 0:
+            continue
+        m = _RE_DISPNAME_EXP.match(disp)
+        if m:
+            base_disp = m.group(1)
+            inner_exp = float(m.group(2))
+            disp = base_disp
+            exp = inner_exp * exp
+        result.append((name, disp, exp))
+    # Merge entries that now share the same base dispname
+    merged: Dict[str, tuple] = {}
+    for name, disp, exp in result:
+        if disp in merged:
+            _, old_disp, old_exp = merged[disp]
+            merged[disp] = (name, disp, old_exp + exp)
+        else:
+            merged[disp] = (name, disp, exp)
+    result = [(n, d, e) for n, d, e in merged.values() if e != 0]
+    result.sort(key=lambda x: (0 if x[2] > 0 else 1, x[0].lower()))
+    return result
+
+
 def _fmt_exp(exp):
     """Format an exponent value, using int form when possible."""
     return str(int(exp)) if exp == int(exp) else str(exp)
@@ -2029,6 +2064,18 @@ class Unit:
         return self.dim.is_dimensionless and self.scale == 0 and self.factor == 1.0
 
     @property
+    def should_display_unit(self) -> bool:
+        """Whether the unit should be shown in formatted output.
+
+        Returns True for all non-unitless units, and also for dimensionless
+        units that carry a meaningful registered name (e.g. radian, steradian).
+        """
+        if not self.is_unitless:
+            return True
+        # Dimensionless but with a registered display name (e.g. rad, sr)
+        return self.is_fullname and self._canonical_str() != '1'
+
+    @property
     def name(self):
         """
         The name of the unit.
@@ -2273,7 +2320,14 @@ class Unit:
         if self.is_fullname:
             return self.dispname
         if self.dim.is_dimensionless:
-            return f'Unit({self.base}^{self.scale})'
+            if self.scale == 0 and self.factor == 1.:
+                return '1'
+            elif self.factor == 1.:
+                return f'{self.base}^{_fmt_exp(self.scale)}'
+            elif self.scale == 0:
+                return str(self.factor)
+            else:
+                return f'{self.factor} * {self.base}^{_fmt_exp(self.scale)}'
         # Anonymous unit — build a descriptive string from components
         if self.factor == 1.:
             if self.scale == 0:
@@ -2410,10 +2464,9 @@ class Unit:
         scale = -self.scale
         factor = 1. / self.factor
 
-        # Standard-unit lookup (ambiguous keys are NOT blocked here
-        # because reverse() is a single-operand transform; binary
-        # composition in __mul__/__div__ handles ambiguity via
-        # display_parts).
+        # Standard-unit lookup — allowed for reverse() because it is a
+        # single-operand transform where the preference system correctly
+        # picks hertz over becquerel, etc.
         name, dispname, is_fullname, dimless = _find_standard_unit(
             dim, self.base, scale, factor
         )
@@ -2427,7 +2480,7 @@ class Unit:
         # Build from display_parts (negate exponents)
         if self.is_fullname:
             parts = [(n, d, -e) for n, d, e in _get_display_parts(self)]
-            parts.sort(key=lambda x: (0 if x[2] > 0 else 1, x[0].lower()))
+            parts = _normalise_display_parts(parts)
             canonical = _format_display_parts(parts)
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
@@ -2472,23 +2525,16 @@ class Unit:
             scale = self.scale * other
             factor = self.factor ** other
 
-            # Standard-unit lookup (ambiguous keys are NOT blocked;
-            # binary composition in __mul__/__div__ handles ambiguity).
-            name, dispname, is_fullname, dimless = _find_standard_unit(
-                dim, self.base, scale, factor
-            )
-            if is_fullname:
-                return Unit(
-                    dim, base=self.base, scale=scale, factor=factor,
-                    name=name, dispname=dispname,
-                    iscompound=False, is_fullname=True,
-                )
+            if dim == DIMENSIONLESS:
+                return Unit(dim, scale=scale, base=self.base, factor=factor)
 
-            # Build from display_parts (multiply exponents)
-            if not dimless and self.is_fullname:
+            # Named source → build from display_parts (multiply exponents).
+            # This avoids ambiguous standard-unit aliases (e.g. m^3→kl,
+            # (m/s)^2→Gy) and keeps display consistent with __mul__/__div__.
+            if self.is_fullname:
                 src_parts = _get_display_parts(self)
                 parts = [(n, d, e * other) for n, d, e in src_parts]
-                parts.sort(key=lambda x: (0 if x[2] > 0 else 1, x[0].lower()))
+                parts = _normalise_display_parts(parts)
                 canonical = _format_display_parts(parts)
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
@@ -2497,6 +2543,10 @@ class Unit:
                     display_parts=parts,
                 )
 
+            # Fallback: standard-unit lookup (for anonymous units)
+            name, dispname, is_fullname, dimless = _find_standard_unit(
+                dim, self.base, scale, factor
+            )
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
                 name=name, dispname=dispname,
@@ -3168,7 +3218,7 @@ class Quantity:
         '0.025 V'
         """
         s = self._format_value(precision=precision)
-        if not self.unit.is_unitless:
+        if self.unit.should_display_unit:
             s += f" {str(self.unit)}"
         return s.strip()
 
@@ -3298,10 +3348,10 @@ class Quantity:
         value_str = self._format_value()
         unit_str = str(self.unit)
         prefix = "Quantity("
-        if self.unit.is_unitless:
-            suffix = ")"
-        else:
+        if self.unit.should_display_unit:
             suffix = f", \"{unit_str}\")"
+        else:
+            suffix = ")"
         # Indent continuation lines to align with prefix
         if "\n" in value_str:
             indent = " " * len(prefix)
@@ -3315,23 +3365,31 @@ class Quantity:
     def __format__(self, format_spec) -> str:
         if not format_spec:
             return str(self)
+        # Block '%' format on quantities with units — "50% mV" is meaningless
+        if '%' in format_spec and not self.unit.is_unitless:
+            raise ValueError(
+                f"'%' format is not supported for Quantity with unit {str(self.unit)!r}. "
+                f"Convert to a dimensionless value first."
+            )
         unit_str = str(self.unit)
+        show_unit = self.unit.should_display_unit
         if self.shape == ():
             formatted_value = format(self.mantissa, format_spec)
-            if self.unit.is_unitless:
+            if not show_unit:
                 return formatted_value
             return f"{formatted_value} {unit_str}"
         else:
-            try:
-                decimal_places = int(format_spec.strip('f').strip('.'))
+            # Parse precision from standard format specs like .2f, .3e, .4g,
+            # 10.2f, +.2f, etc.  Use a regex to extract the precision field.
+            m = re.match(r'^[^.]*\.(\d+)[feEgGn%]?$', format_spec)
+            if m is not None:
+                precision = int(m.group(1))
                 value = np.asarray(self.mantissa)
-                rounded = np.round(value, decimal_places)
-                s = np.array_str(rounded, precision=decimal_places)
-                if self.unit.is_unitless:
+                s = np.array_str(np.round(value, precision), precision=precision)
+                if not show_unit:
                     return s
                 return f"{s} {unit_str}"
-            except (ValueError, TypeError):
-                return str(self)
+            return str(self)
 
     def __iter__(self):
         """Solve the issue of DeviceArray.__iter__.
