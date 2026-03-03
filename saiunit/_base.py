@@ -20,7 +20,7 @@ import operator
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps, partial
-from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict, cast, TypeVar, Generic
+from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict, cast
 
 import jax
 import jax.numpy as jnp
@@ -73,7 +73,6 @@ StaticScalar = Union[
 PyTree = Any
 _all_slice = slice(None, None, None)
 compat_with_equinox = False
-A = TypeVar('A')
 
 
 def compatible_with_equinox(mode: bool = True):
@@ -98,7 +97,7 @@ def _to_quantity(array) -> 'Quantity':
 
 def _assert_not_quantity(array):
     if isinstance(array, Quantity):
-        raise ValueError('Input array should not be an instance of Array.')
+        raise ValueError('Input array should not be an instance of Quantity.')
     return array
 
 
@@ -201,7 +200,7 @@ def assert_quantity(
 # SI dimensions (see table at the top of the file) and various descriptions,
 # each description maps to an index i, and the power of each dimension
 # is stored in the variable dims[i].
-_dim2index = {
+_dim2index: dict[str, int] = {
     "Length": 0,
     "length": 0,
     "metre": 0,
@@ -810,6 +809,10 @@ class Dimension:
         return self.hash
 
 
+# Cache for get_or_create_dimension — maps tuple(dims) -> Dimension
+_dimension_cache: dict[tuple, 'Dimension'] = {}
+
+
 @set_module_as('saiunit')
 def get_or_create_dimension(*args, **kwds) -> Dimension:
     """
@@ -854,7 +857,8 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
     e.g. length, metre, and m all refer to the same thing here.
     """
     if len(args):
-        assert len(args) == 1, "Only one argument allowed"
+        if len(args) != 1:
+            raise TypeError(f"get_or_create_dimension() takes at most 1 positional argument, got {len(args)}")
         # initialisation by list
         dims = args[0]
         try:
@@ -870,7 +874,12 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
             dims[_dim2index[k]] = kwds[k]
 
     dims = np.asarray(dims)
+    key = tuple(dims)
+    cached = _dimension_cache.get(key)
+    if cached is not None:
+        return cached
     new_dim = Dimension(dims)
+    _dimension_cache[key] = new_dim
     return new_dim
 
 
@@ -917,14 +926,10 @@ class DimensionMismatchError(Exception):
             s += f" (unit is {get_dim_for_display(self.dims[0])}"
         elif len(self.dims) == 2:
             d1, d2 = self.dims
-            s += (
-                f" (units are {get_dim_for_display(d1)} and {get_dim_for_display(d2)}"
-            )
+            s += f" (units are {get_dim_for_display(d1)} and {get_dim_for_display(d2)}"
         else:
-            s += (
-                " (units are"
-                f" {' '.join([f'({get_dim_for_display(d)})' for d in self.dims])}"
-            )
+            parts = ", ".join(get_dim_for_display(d) for d in self.dims)
+            s += f" (units are {parts}"
         if len(self.dims):
             s += ")."
         return s
@@ -967,14 +972,9 @@ class UnitMismatchError(Exception):
             s += f" (unit is {self.units[0]}"
         elif len(self.units) == 2:
             d1, d2 = self.units
-            s += (
-                f" (units are {d1} and {d2} "
-            )
+            s += f" (units are {d1} and {d2}"
         else:
-            s += (
-                " (units are"
-                f" {' '.join([f'({d})' for d in self.units])} "
-            )
+            s += f" (units are {' '.join([f'({d})' for d in self.units])}"
         if len(self.units):
             s += ")."
         return s
@@ -1151,7 +1151,7 @@ def fail_for_dimension_mismatch(
         The object to compare. If `obj2` is ``None``, assume it to be
         dimensionless
     error_message : str, optional
-        An error message that is used in the DimensionMismatchError
+        An error message that is used in the UnitMismatchError
     error_arrays : dict mapping str to `Array`, optional
         Arrays in this dictionary will be converted using the `_short_str`
         helper method and inserted into the ``error_message`` (which should
@@ -1169,7 +1169,7 @@ def fail_for_dimension_mismatch(
 
     Raises
     ------
-    DimensionMismatchError
+    UnitMismatchError
         If the dimensions of `obj1` and `obj2` do not match (or, if `obj2` is
         ``None``, in case `obj1` is not dimensionsless).
 
@@ -1231,7 +1231,7 @@ def fail_for_unit_mismatch(
         The object to compare. If `obj2` is ``None``, assume it to be
         dimensionless
     error_message : str, optional
-        An error message that is used in the DimensionMismatchError
+        An error message that is used in the UnitMismatchError
     error_arrays : dict mapping str to `Array`, optional
         Arrays in this dictionary will be converted using the `_short_str`
         helper method and inserted into the ``error_message`` (which should
@@ -1249,7 +1249,7 @@ def fail_for_unit_mismatch(
 
     Raises
     ------
-    DimensionMismatchError
+    UnitMismatchError
         If the dimensions of `obj1` and `obj2` do not match (or, if `obj2` is
         ``None``, in case `obj1` is not dimensionsless).
 
@@ -1525,7 +1525,6 @@ def _wrap_function_keep_unit(func):
     """
 
     def f(x: Quantity, *args, **kwds):  # pylint: disable=C0111
-        # x = x.factorless()
         return Quantity(func(x.mantissa, *args, **kwds), unit=x.unit)
 
     f._arg_units = [None]
@@ -1551,7 +1550,7 @@ def _wrap_function_change_unit(func, unit_fun):
 
     def f(x, *args, **kwds):  # pylint: disable=C0111
         assert isinstance(x, Quantity), "Only Quantity objects can be passed to this function"
-        # x = x.factorless()
+        x = x.factorless()
         return maybe_decimal(Quantity(func(x.mantissa, *args, **kwds), unit=unit_fun(x.unit, x.unit)))
 
     f._arg_units = [None]
@@ -1575,7 +1574,6 @@ def _wrap_function_remove_unit(func):
 
     def f(x, *args, **kwds):  # pylint: disable=C0111
         assert isinstance(x, Quantity), "Only Quantity objects can be passed to this function"
-        # x = x.factorless()
         return func(x.mantissa, *args, **kwds)
 
     f._arg_units = [None]
@@ -1764,7 +1762,7 @@ class Unit:
     """
 
     __module__ = "saiunit"
-    __slots__ = ["_dim", "_base", "_scale", "_factor", "_dispname", "_name", "iscompound", "is_fullname"]
+    __slots__ = ["_dim", "_base", "_scale", "_factor", "_dispname", "_name", "iscompound", "is_fullname", "_hash"]
     __array_priority__ = 1000
 
     def __init__(
@@ -1816,6 +1814,9 @@ class Unit:
 
         # whether the name is the full name
         self.is_fullname = is_fullname
+
+        # cached hash (computed lazily)
+        self._hash = None
 
     @property
     def factor(self) -> float:
@@ -1870,7 +1871,7 @@ class Unit:
         return self._dim
 
     @dim.setter
-    def dim(self, *args):
+    def dim(self, value):
         # Do not support setting the unit directly
         raise NotImplementedError(
             "Cannot set the dimension of a Quantity object directly,"
@@ -1885,7 +1886,7 @@ class Unit:
         Returns:
           bool: True if the array does not have unit.
         """
-        return self.dim.is_dimensionless and self.scale == 0
+        return self.dim.is_dimensionless and self.scale == 0 and self.factor == 1.0
 
     @property
     def name(self):
@@ -1970,18 +1971,20 @@ class Unit:
         )
 
     def __hash__(self):
-        return hash(
-            (
-                self.dim,
-                self.factor,
-                self.base,
-                self.scale,
-                self.name,
-                self.dispname,
-                self.iscompound,
-                self.is_fullname
+        if self._hash is None:
+            self._hash = hash(
+                (
+                    self.dim,
+                    self.factor,
+                    self.base,
+                    self.scale,
+                    self.name,
+                    self.dispname,
+                    self.iscompound,
+                    self.is_fullname
+                )
             )
-        )
+        return self._hash
 
     def has_same_magnitude(self, other: 'Unit') -> bool:
         """
@@ -2098,6 +2101,11 @@ class Unit:
         u : `Unit`
             The new unit.
         """
+        if scalefactor not in _siprefixes:
+            raise ValueError(
+                f"Unknown SI prefix {scalefactor!r}. "
+                f"Valid prefixes are: {list(_siprefixes.keys())}"
+            )
         name = scalefactor + baseunit.name
         dispname = scalefactor + baseunit.dispname
         scale = _siprefixes[scalefactor] + baseunit.scale
@@ -2165,7 +2173,7 @@ class Unit:
                 dim,
                 scale=scale,
                 base=self.base,
-                factor=self.factor,
+                factor=factor,
                 name=name,
                 dispname=dispname,
                 iscompound=iscompound,
@@ -2397,6 +2405,10 @@ class Unit:
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
+    def __abs__(self) -> 'Unit':
+        """Return the unit itself — units are always non-negative."""
+        return self
+
     def __reduce__(self):
         # For pickling
         return (
@@ -2415,6 +2427,11 @@ class Unit:
 
 
 def _to_unit(*args):
+    """Private pickle reconstruction shim for Unit.
+
+    Must live at module level without ``@set_module_as`` so that pickle can
+    locate it as ``saiunit._base._to_unit``.
+    """
     return Unit(*args)
 
 
@@ -2453,7 +2470,6 @@ def _zoom_values_with_units(
     values = list(values)
     first_unit = units[0]
     for i in range(1, len(values)):
-        values[i] = values[i]
         if not units[i].has_same_magnitude(first_unit):
             values[i] = values[i] * (units[i].magnitude / first_unit.magnitude)
     return values
@@ -2505,7 +2521,7 @@ def _element_not_quantity(x):
 
 
 @register_pytree_node_class
-class Quantity(Generic[A]):
+class Quantity:
     """
     The `Quantity` class represents a physical quantity with a mantissa and a unit.
     It is used to represent all physical quantities in ``saiunit``.
@@ -2541,7 +2557,7 @@ class Quantity(Generic[A]):
                     unit = new_unit
                 elif new_unit != UNITLESS:
                     if not new_unit.has_same_dim(unit):
-                        raise TypeError(f"All elements must have the same unit. But got {unit} != {UNITLESS}")
+                        raise TypeError(f"All elements must have the same unit. But got {unit} != {new_unit}")
                     if not new_unit.has_same_magnitude(unit):
                         mantissa = mantissa * (new_unit.magnitude / unit.magnitude)
                 mantissa = jnp.array(mantissa, dtype=dtype)
@@ -2561,11 +2577,10 @@ class Quantity(Generic[A]):
                 # skip 'asarray' if dtype is not provided
 
             elif isinstance(mantissa, (jnp.number, numbers.Number)):
-                # mantissa = jnp.array(mantissa, dtype=dtype)
-                mantissa = mantissa
+                pass  # keep as-is; jnp.array conversion deferred to use-site
 
             else:
-                mantissa = mantissa
+                pass  # keep as-is for other pytree types
 
         # mantissa
         self._mantissa = mantissa
@@ -2692,7 +2707,7 @@ class Quantity(Generic[A]):
         """
         return self.mantissa
 
-    def update_mantissa(self, mantissa: PyTree):
+    def update_mantissa(self, mantissa: PyTree) -> None:
         """
         Set the mantissa of the array.
 
@@ -2704,9 +2719,9 @@ class Quantity(Generic[A]):
         Args:
           mantissa: The new mantissa of the array.
         """
-        self_value = self._check_tracer()
+        self_value = self.mantissa
         if isinstance(mantissa, Quantity):
-            raise ValueError("Cannot set the mantissa of an Array object to another Array object.")
+            raise ValueError("Cannot set the mantissa of a Quantity to another Quantity.")
         if isinstance(mantissa, np.ndarray):
             mantissa = jnp.asarray(mantissa, dtype=self.dtype)
         elif isinstance(mantissa, jax.Array):
@@ -2749,7 +2764,7 @@ class Quantity(Generic[A]):
         return self.unit.dim
 
     @dim.setter
-    def dim(self, *args):
+    def dim(self, value):
         # Do not support setting the unit directly
         raise NotImplementedError(
             "Cannot set the dimension of a Quantity object directly,"
@@ -2786,7 +2801,7 @@ class Quantity(Generic[A]):
         return self._unit
 
     @unit.setter
-    def unit(self, *args):
+    def unit(self, value):
         # Do not support setting the unit directly
         raise NotImplementedError(
             "Cannot set the unit of a Quantity object directly,"
@@ -2831,9 +2846,9 @@ class Quantity(Generic[A]):
             raise TypeError(f"Expected a Unit, but got {unit}.")
         if not unit.has_same_dim(self.unit):
             raise UnitMismatchError(
-                f"Cannot convert to the decimal number using a unit with different "
-                f"dimensions. The quantity has the unit {self.unit}, but the given "
-                f"unit is {unit}"
+                f"Cannot convert to the decimal number using a unit with different dimensions.",
+                self.unit,
+                unit,
             )
         if not unit.has_same_magnitude(self.unit):
             return self.mantissa * (self.unit.magnitude / unit.magnitude)
@@ -2864,10 +2879,12 @@ class Quantity(Generic[A]):
                 raise UnitMismatchError(f"Cannot convert to a unit with different dimensions.", self.unit, unit)
             else:
                 raise UnitMismatchError(err_msg)
-        if unit.has_same_magnitude(self.unit):
+        self_mag = self.unit.magnitude
+        target_mag = unit.magnitude
+        if self_mag == target_mag:
             u = Quantity(self.mantissa, unit=unit)
         else:
-            u = Quantity(self.mantissa * (self.unit.magnitude / unit.magnitude), unit=unit)
+            u = Quantity(self.mantissa * (self_mag / target_mag), unit=unit)
         return u
 
     @staticmethod
@@ -2959,11 +2976,15 @@ class Quantity(Generic[A]):
         >>> x.repr_in_unit(mV, 3)
         '25.123 mV'
         """
-        # convert to the JAX array
-        try:
-            value = jnp.asarray(self.mantissa)
-        except TypeError:
-            value = self.mantissa
+        # convert to the JAX array (skip if already a JAX array)
+        m = self.mantissa
+        if isinstance(m, jax.Array):
+            value = m
+        else:
+            try:
+                value = jnp.asarray(m)
+            except TypeError:
+                value = m
 
         if _is_tracer(value):  # in the JIT mode
             s = str(value)
@@ -3011,10 +3032,6 @@ class Quantity(Generic[A]):
         else:
             return self
 
-    def _check_tracer(self):
-        self_value = self.mantissa
-        return self_value
-
     @property
     def dtype(self):
         """Variable dtype."""
@@ -3044,12 +3061,10 @@ class Quantity(Generic[A]):
 
     @property
     def imag(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.imag(self.mantissa), unit=self.unit)
 
     @property
     def real(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.real(self.mantissa), unit=self.unit)
 
     @property
@@ -3057,13 +3072,32 @@ class Quantity(Generic[A]):
         return jnp.size(self.mantissa)
 
     @property
+    def nbytes(self) -> int:
+        """Total bytes consumed by the mantissa array."""
+        return jnp.asarray(self.mantissa).nbytes
+
+    @property
+    def itemsize(self) -> int:
+        """Length (in bytes) of one array element."""
+        return jnp.asarray(self.mantissa).itemsize
+
+    @property
+    def strides(self):
+        """Tuple of byte-steps in each dimension (mirrors numpy.ndarray.strides)."""
+        return np.asarray(self.mantissa).strides
+
+    @property
+    def flat(self):
+        """1-D iterator over the mantissa elements, unit preserved."""
+        for v in jnp.asarray(self.mantissa).flat:
+            yield Quantity(v, unit=self.unit)
+
+    @property
     def T(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa).T, unit=self.unit)
 
     @property
     def mT(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa).mT, unit=self.unit)
 
     @property
@@ -3115,7 +3149,7 @@ class Quantity(Generic[A]):
         # which should be more clear when add a "*" operator
         return self.repr_in_unit(python_code=True)
 
-    def __format__(self, format_spec):
+    def __format__(self, format_spec) -> str:
         # check if scalar
         if self.shape == ():
             formatted_value = format(self.mantissa, format_spec)
@@ -3127,7 +3161,7 @@ class Quantity(Generic[A]):
 
                 rounded_value = self.round(decimal_places)
                 return rounded_value.__repr__()
-            except:
+            except (ValueError, TypeError):
                 return self.__repr__()
 
     def __iter__(self):
@@ -3138,16 +3172,13 @@ class Quantity(Generic[A]):
         - https://github.com/google/jax/issues/7713
         - https://github.com/google/jax/pull/3821
         """
-        # self = self.factorless()
 
         if self.ndim == 0:
-            yield self
-        else:
-            for i in range(self.shape[0]):
-                yield Quantity(self.mantissa[i], unit=self.unit)
+            raise TypeError("iteration over a 0-d Quantity is not allowed")
+        for i in range(self.shape[0]):
+            yield Quantity(self.mantissa[i], unit=self.unit)
 
     def __getitem__(self, index) -> 'Quantity':
-        # self = self.factorless()
 
         if isinstance(index, slice) and (index == _all_slice):
             return Quantity(self.mantissa, unit=self.unit)
@@ -3172,8 +3203,7 @@ class Quantity(Generic[A]):
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # update
-        self_value = jnp.asarray(self._check_tracer())
-        self_value = self_value.at[index].set(value.mantissa)
+        self_value = jnp.asarray(self.mantissa).at[index].set(value.mantissa)
         self.update_mantissa(self_value)
 
     def scatter_add(
@@ -3196,7 +3226,6 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-added value.
         """
-        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -3210,7 +3239,7 @@ class Quantity(Generic[A]):
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-add
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].add(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
@@ -3256,21 +3285,21 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-multiplied value.
         """
-        # self = self.factorless()
 
-        # check value
+        # check value: scatter_mul requires a dimensionless scale factor
         if not isinstance(value, Quantity):
-            if self.is_unitless:
-                value = Quantity(value)
-            else:
-                raise TypeError(f"Only Quantity can be assigned to Quantity. But got {value}")
-        value = value.in_unit(self.unit)
+            value = Quantity(value)
+        if not value.is_unitless:
+            raise TypeError(
+                f"scatter_mul requires a dimensionless scale factor, "
+                f"but got {value}. Use Quantity.__mul__ for unit-changing multiplication."
+            )
 
         # check index
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-mul
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].mul(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
@@ -3294,21 +3323,21 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-divided value.
         """
-        # self = self.factorless()
 
-        # check value
+        # check value: scatter_div requires a dimensionless scale factor
         if not isinstance(value, Quantity):
-            if self.is_unitless:
-                value = Quantity(value)
-            else:
-                raise TypeError(f"Only Quantity can be assigned to Quantity. But got {value}")
-        value = value.in_unit(self.unit)
+            value = Quantity(value)
+        if not value.is_unitless:
+            raise TypeError(
+                f"scatter_div requires a dimensionless scale factor, "
+                f"but got {value}. Use Quantity.__truediv__ for unit-changing division."
+            )
 
         # check index
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-div
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].divide(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
@@ -3332,7 +3361,6 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-maximum value.
         """
-        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -3346,7 +3374,7 @@ class Quantity(Generic[A]):
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-max
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].max(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
@@ -3370,7 +3398,6 @@ class Quantity(Generic[A]):
         out : Quantity
             The scatter-minimum value.
         """
-        # self = self.factorless()
 
         # check value
         if not isinstance(value, Quantity):
@@ -3384,7 +3411,7 @@ class Quantity(Generic[A]):
         index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-min
-        self_value = jnp.asarray(self._check_tracer())
+        self_value = jnp.asarray(self.mantissa)
         self_value = self_value.at[index].min(value.mantissa)
         return Quantity(self_value, unit=self.unit)
 
@@ -3396,19 +3423,15 @@ class Quantity(Generic[A]):
         return len(self.mantissa)
 
     def __neg__(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(self.mantissa.__neg__(), unit=self.unit)
 
     def __pos__(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(self.mantissa.__pos__(), unit=self.unit)
 
     def __abs__(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(self.mantissa.__abs__(), unit=self.unit)
 
     def __invert__(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(self.mantissa.__invert__(), unit=self.unit)
 
     def _comparison(self, other: Any, operator_str: str, operation: Callable):
@@ -3416,8 +3439,10 @@ class Quantity(Generic[A]):
         try:
             other_value = other.in_unit(self.unit).mantissa
         except UnitMismatchError as e:
-            raise UnitMismatchError(f"Cannot compare {self} {operator_str} {other}, "
-                                    f"since units do not match: {self.unit} != {other.unit}") from e
+            raise UnitMismatchError(
+                f"Cannot compare {self} {operator_str} {other}",
+                self.unit, other.unit,
+            ) from e
         return operation(self.mantissa, other_value)
 
     def __eq__(self, oc) -> jax.typing.ArrayLike:
@@ -3471,10 +3496,10 @@ class Quantity(Generic[A]):
         inplace: bool, optional
             Whether to do the operation in-place (defaults to ``False``).
         """
-        # self = self.factorless()
 
         # format "other"
-        other = _to_quantity(other)
+        if not isinstance(other, Quantity):
+            other = _to_quantity(other)
 
         # format the unit and mantissa of "other"
         if fail_for_mismatch:
@@ -3626,7 +3651,7 @@ class Quantity(Generic[A]):
     # -------------------- #
 
     def __pow__(self, oc):
-        # self = self.factorless()
+        self = self.factorless()
         if compat_with_equinox:
             try:
                 from equinox.internal._omega import ω  # noqa
@@ -3643,7 +3668,6 @@ class Quantity(Generic[A]):
 
     def __rpow__(self, oc):
         # oc ** self
-        # self = self.factorless()
         if not self.is_unitless:
             raise ValueError(f"Cannot calculate {oc} ** {self}, the exponent has to be dimensionless")
         return oc ** self.mantissa
@@ -3692,7 +3716,6 @@ class Quantity(Generic[A]):
 
     def __lshift__(self, oc) -> 'Quantity':
         # self << oc
-        # self = self.factorless()
         if isinstance(oc, Quantity):
             if not oc.is_unitless:
                 raise ValueError("The shift amount must be dimensionless")
@@ -3702,21 +3725,18 @@ class Quantity(Generic[A]):
 
     def __rlshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
         # oc << self
-        # self = self.factorless()
         if not self.is_unitless:
             raise ValueError("The shift amount must be dimensionless")
         return oc << self.mantissa
 
     def __ilshift__(self, oc) -> 'Quantity':
         # self <<= oc
-        # self = self.factorless()
         r = self.__lshift__(oc)
         self.update_mantissa(r.mantissa)
         return self
 
     def __rshift__(self, oc) -> 'Quantity':
         # self >> oc
-        # self = self.factorless()
         if isinstance(oc, Quantity):
             if not oc.is_unitless:
                 raise ValueError("The shift amount must be dimensionless")
@@ -3726,14 +3746,12 @@ class Quantity(Generic[A]):
 
     def __rrshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
         # oc >> self
-        # self = self.factorless()
         if not self.is_unitless:
             raise ValueError("The shift amount must be dimensionless")
         return oc >> self.mantissa
 
     def __irshift__(self, oc) -> 'Quantity':
         # self >>= oc
-        # self = self.factorless()
         r = self.__rshift__(oc)
         self.update_mantissa(r.mantissa)
         return self
@@ -3745,7 +3763,6 @@ class Quantity(Generic[A]):
         :param ndigits: The number of decimals to round to.
         :return: The rounded Quantity.
         """
-        # self = self.factorless()
         return Quantity(self.mantissa.__round__(ndigits), unit=self.unit)
 
     def __reduce__(self):
@@ -3820,7 +3837,6 @@ class Quantity(Generic[A]):
             The real and imaginary parts of complex numbers are rounded
             separately.  The result of rounding a float is a float.
         """
-        # self = self.factorless()
         return Quantity(jnp.round(self.mantissa, decimals), unit=self.unit)
 
     def astype(
@@ -3834,7 +3850,6 @@ class Quantity(Generic[A]):
         dtype: str, dtype
           Typecode or data-type to which the array is cast.
         """
-        # self = self.factorless()
         if dtype is None:
             return Quantity(self.mantissa, unit=self.unit)
         else:
@@ -3848,24 +3863,20 @@ class Quantity(Generic[A]):
         """
         Return an array whose values are limited to [min, max]. One of max or min must be given.
         """
-        # self = self.factorless()
         _, min = unit_scale_align_to_first(self, min)
         _, max = unit_scale_align_to_first(self, max)
         return Quantity(jnp.clip(self.mantissa, min.mantissa, max.mantissa), unit=self.unit)
 
     def conj(self) -> 'Quantity':
         """Complex-conjugate all elements."""
-        # self = self.factorless()
         return Quantity(jnp.conj(self.mantissa), unit=self.unit)
 
     def conjugate(self) -> 'Quantity':
         """Return the complex conjugate, element-wise."""
-        # self = self.factorless()
         return Quantity(jnp.conjugate(self.mantissa), unit=self.unit)
 
     def copy(self) -> 'Quantity':
         """Return a copy of the quantity."""
-        # self = self.factorless()
         return type(self)(jnp.copy(self.mantissa), unit=self.unit)
 
     def dot(self, b) -> 'Quantity':
@@ -3873,25 +3884,53 @@ class Quantity(Generic[A]):
         r = self._binary_operation(b, jnp.dot, operator.mul, operator_str="@")
         return maybe_decimal(r)
 
+    def trace(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':
+        """Sum along diagonals of the array, preserving units."""
+        return Quantity(jnp.trace(self.mantissa, offset=offset, axis1=axis1, axis2=axis2), unit=self.unit)
+
+    def diagonal(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':
+        """Return specified diagonals, preserving units."""
+        return Quantity(jnp.diagonal(self.mantissa, offset=offset, axis1=axis1, axis2=axis2), unit=self.unit)
+
+    def outer(self, b: 'Quantity') -> 'Quantity':
+        """Outer product of two 1-D arrays; result unit = self.unit * b.unit."""
+        b = _to_quantity(b)
+        r = self._binary_operation(b, jnp.outer, operator.mul, operator_str="outer")
+        return maybe_decimal(r)
+
+    def cross(self, b: 'Quantity', axisa: int = -1, axisb: int = -1, axisc: int = -1, axis: int = None) -> 'Quantity':
+        """Cross product of two arrays; result unit = self.unit * b.unit."""
+        b = _to_quantity(b)
+        kwargs = dict(axisa=axisa, axisb=axisb, axisc=axisc)
+        if axis is not None:
+            kwargs['axis'] = axis
+        result_mantissa = jnp.cross(self.mantissa, b.mantissa, **kwargs)
+        result_unit = self.unit * b.unit
+        r = Quantity(result_mantissa, unit=result_unit)
+        return maybe_decimal(r)
+
+    def searchsorted(self, v, side: str = 'left', sorter=None) -> jax.Array:
+        """Find indices where elements should be inserted to maintain order."""
+        if isinstance(v, Quantity):
+            v = v.in_unit(self.unit).mantissa
+        return jnp.searchsorted(self.mantissa, v, side=side, sorter=sorter)
+
     def fill(self, value: Quantity) -> 'Quantity':
         """Fill the array with a scalar mantissa."""
-        # self = self.factorless()
         fail_for_dimension_mismatch(self, value, "fill")
         self[:] = value
         return self
 
     def flatten(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.reshape(self.mantissa, -1), unit=self.unit)
 
     def item(self, *args) -> 'Quantity':
         """Copy an element of an array to a standard Python scalar and return it."""
-        # self = self.factorless()
         return Quantity(self.mantissa.item(*args), unit=self.unit)
 
     def prod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
         """Return the product of the array elements over the given axis."""
-        # self = self.factorless()
+        self = self.factorless()
 
         prod_res = jnp.prod(self.mantissa, *args, **kwds)
         # Calculating the correct dimensions is not completly trivial (e.g.
@@ -3912,7 +3951,7 @@ class Quantity(Generic[A]):
 
     def nanprod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
         """Return the product of array elements over a given axis treating Not a Numbers (NaNs) as ones."""
-        # self = self.factorless()
+        self = self.factorless()
 
         prod_res = jnp.nanprod(self.mantissa, *args, **kwds)
         nan_mask = jnp.isnan(self.mantissa)
@@ -3923,7 +3962,7 @@ class Quantity(Generic[A]):
         return maybe_decimal(r)
 
     def cumprod(self, *args, **kwds):  # TODO: check error when axis is not None
-        # self = self.factorless()
+        self = self.factorless()
 
         prod_res = jnp.cumprod(self.mantissa, *args, **kwds)
         dim_exponent = jnp.ones_like(self.mantissa).cumsum(*args, **kwds)
@@ -3933,7 +3972,7 @@ class Quantity(Generic[A]):
         return maybe_decimal(r)
 
     def nancumprod(self, *args, **kwds):  # TODO: check error when axis is not None
-        # self = self.factorless()
+        self = self.factorless()
 
         prod_res = jnp.nancumprod(self.mantissa, *args, **kwds)
         nan_mask = jnp.isnan(self.mantissa)
@@ -3953,25 +3992,21 @@ class Quantity(Generic[A]):
         values: array_like
           Values to place in the array at target indices.
         """
-        # self = self.factorless()
         fail_for_dimension_mismatch(self, values, "put")
         self.__setitem__(indices, values)
         return self
 
     def repeat(self, repeats, axis=None) -> 'Quantity':
         """Repeat elements of an array."""
-        # self = self.factorless()
         r = jnp.repeat(self.mantissa, repeats=repeats, axis=axis)
         return Quantity(r, unit=self.unit)
 
     def reshape(self, shape, order='C') -> 'Quantity':
         """Returns an array containing the same data with a new shape."""
-        # self = self.factorless()
         return Quantity(jnp.reshape(self.mantissa, shape, order=order), unit=self.unit)
 
     def resize(self, new_shape) -> 'Quantity':
         """Change shape and size of array in-place."""
-        # self = self.factorless()
         self.update_mantissa(jnp.resize(self.mantissa, new_shape))
         return self
 
@@ -3992,18 +4027,15 @@ class Quantity(Generic[A]):
             but unspecified fields will still be used, in the order in which
             they come up in the dtype, to break ties.
         """
-        # self = self.factorless()
         self.update_mantissa(jnp.sort(self.mantissa, axis=axis, stable=stable, order=order))
         return self
 
     def squeeze(self, axis=None) -> 'Quantity':
         """Remove axes of length one from ``a``."""
-        # self = self.factorless()
         return Quantity(jnp.squeeze(self.mantissa, axis=axis), unit=self.unit)
 
     def swapaxes(self, axis1, axis2) -> 'Quantity':
         """Return a view of the array with `axis1` and `axis2` interchanged."""
-        # self = self.factorless()
         return Quantity(jnp.swapaxes(self.mantissa, axis1, axis2), unit=self.unit)
 
     def split(self, indices_or_sections, axis=0) -> List['Quantity']:
@@ -4034,7 +4066,6 @@ class Quantity(Generic[A]):
         sub-arrays : list of ndarrays
           A list of sub-arrays as views into `ary`.
         """
-        # self = self.factorless()
         return [Quantity(a, unit=self.unit) for a in jnp.split(self.mantissa, indices_or_sections, axis=axis)]
 
     def take(
@@ -4047,7 +4078,6 @@ class Quantity(Generic[A]):
         fill_value=None,
     ) -> 'Quantity':
         """Return an array formed from the elements of a at the given indices."""
-        # self = self.factorless()
 
         if isinstance(fill_value, Quantity):
             fail_for_dimension_mismatch(self, fill_value, "take")
@@ -4114,7 +4144,6 @@ class Quantity(Generic[A]):
         out : ndarray
             View of `a`, with axes suitably permuted.
         """
-        # self = self.factorless()
         return Quantity(jnp.transpose(self.mantissa, *axes), unit=self.unit)
 
     def tile(self, reps) -> 'Quantity':
@@ -4146,7 +4175,6 @@ class Quantity(Generic[A]):
         c : ndarray
             The tiled output array.
         """
-        # self = self.factorless()
         return Quantity(jnp.tile(self.mantissa, reps), unit=self.unit)
 
     def view(self, *args, dtype=None) -> 'Quantity':
@@ -4179,28 +4207,16 @@ class Quantity(Generic[A]):
 
         Example::
 
-            >>> import brainstate, saiunit
-            >>> x = brainstate.random.randn(4, 4)
-            >>> x.size
-           [4, 4]
+            >>> import jax.numpy as jnp, saiunit
+            >>> x = saiunit.Quantity(jnp.ones((4, 4)))
+            >>> x.shape
+            (4, 4)
             >>> y = x.view(16)
-            >>> y.size
-            [16]
-            >>> z = x.view(-1, 8)  # the size -1 is inferred from other dimensions
-            >>> z.size
-            [2, 8]
-
-            >>> a = brainstate.random.randn(1, 2, 3, 4)
-            >>> a.size
-            [1, 2, 3, 4]
-            >>> b = a.transpose(1, 2)  # Swaps 2nd and 3rd dimension
-            >>> b.size
-            [1, 3, 2, 4]
-            >>> c = a.view(1, 3, 2, 4)  # Does not change tensor layout in memory
-            >>> c.size
-            [1, 3, 2, 4]
-            >>> saiunit.math.equal(b, c)
-            False
+            >>> y.shape
+            (16,)
+            >>> z = x.view(2, 8)
+            >>> z.shape
+            (2, 8)
 
 
         .. method:: view(dtype) -> Tensor
@@ -4285,7 +4301,6 @@ class Quantity(Generic[A]):
             [4, 16]
 
         """
-        # self = self.factorless()
         if len(args) == 0:
             if dtype is None:
                 raise ValueError('Provide dtype or shape.')
@@ -4307,7 +4322,6 @@ class Quantity(Generic[A]):
 
     def __array__(self, dtype: Optional[jax.typing.DTypeLike] = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
-        # self = self.factorless()
         if self.dim.is_dimensionless:
             return np.asarray(self.to_decimal(), dtype=dtype)
         else:
@@ -4317,7 +4331,6 @@ class Quantity(Generic[A]):
             )
 
     def __float__(self):
-        # self = self.factorless()
         if self.dim.is_dimensionless and self.ndim == 0:
             return float(self.to_decimal())
         else:
@@ -4327,7 +4340,6 @@ class Quantity(Generic[A]):
             )
 
     def __int__(self):
-        # self = self.factorless()
         if self.dim.is_dimensionless and self.ndim == 0:
             return int(self.to_decimal())
         else:
@@ -4337,7 +4349,6 @@ class Quantity(Generic[A]):
             )
 
     def __index__(self):
-        # self = self.factorless()
         if self.dim.is_dimensionless:
             return operator.index(self.to_decimal())
         else:
@@ -4358,7 +4369,6 @@ class Quantity(Generic[A]):
 
         See :func:`brainstate.math.unsqueeze`
         """
-        # self = self.factorless()
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
     def expand_dims(self, axis: Union[int, Sequence[int]]) -> 'Quantity':
@@ -4375,7 +4385,6 @@ class Quantity(Generic[A]):
         expanded : Quantity
             A view with the new axis inserted.
         """
-        # self = self.factorless()
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
     def expand_as(self, array: Union['Quantity', jax.typing.ArrayLike]) -> 'Quantity':
@@ -4393,14 +4402,12 @@ class Quantity(Generic[A]):
             typically not contiguous. Furthermore, more than one element of a
             expanded array may refer to a single memory location.
         """
-        # self = self.factorless()
         if isinstance(array, Quantity):
             fail_for_dimension_mismatch(self, array, "expand_as (Quantity)")
             array = array.mantissa
         return Quantity(jnp.broadcast_to(self.mantissa, array), unit=self.unit)
 
     def pow(self, oc) -> 'Quantity':
-        # self = self.factorless()
         return self.__pow__(oc)
 
     def clone(self) -> 'Quantity':
@@ -4429,9 +4436,9 @@ class Quantity(Generic[A]):
         """
         return cls(*values, unit=unit)
 
-    def cuda(self, deice=None) -> 'Quantity':
-        deice = jax.devices('cuda')[0] if deice is None else deice
-        self.update_mantissa(jax.device_put(self.mantissa, deice))
+    def cuda(self, device=None) -> 'Quantity':
+        device = jax.devices('cuda')[0] if device is None else device
+        self.update_mantissa(jax.device_put(self.mantissa, device))
         return self
 
     def cpu(self, device=None) -> 'Quantity':
@@ -4442,15 +4449,12 @@ class Quantity(Generic[A]):
     # dtype exchanging #
     # ---------------- #
     def half(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float16), unit=self.unit)
 
     def float(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float32), unit=self.unit)
 
     def double(self) -> 'Quantity':
-        # self = self.factorless()
         return Quantity(jnp.asarray(self.mantissa, dtype=jnp.float64), unit=self.unit)
 
 
@@ -4694,7 +4698,7 @@ class _IndexUpdateRef:
     def apply(
         self,
         mantissa_fun: Callable[[jax.typing.ArrayLike], jax.typing.ArrayLike],
-        unit_fun: Callable[[Unit], Unit],
+        unit_fun: Callable[[Unit], Unit] | None = None,
         indices_are_sorted: bool = False,
         unique_indices: bool = False,
         mode: str | None = None
@@ -4710,7 +4714,15 @@ class _IndexUpdateRef:
         Note that in the current implementation, ``scatter_apply`` is not compatible
         with automatic differentiation.
 
+        Parameters
+        ----------
+        mantissa_fun : callable
+            Applied to the mantissa values at the given indices.
+        unit_fun : callable, optional
+            Transforms the unit of the result. If omitted the unit is preserved
+            (unit-preserving operations such as ``jnp.abs``).
         """
+        result_unit = unit_fun(self.unit) if unit_fun is not None else self.unit
         return Quantity(
             self.mantissa_at[self.index].apply(
                 mantissa_fun,
@@ -4718,7 +4730,7 @@ class _IndexUpdateRef:
                 unique_indices=unique_indices,
                 mode=mode
             ),
-            unit=unit_fun(self.unit)
+            unit=result_unit
         )
 
 
@@ -5447,13 +5459,11 @@ def _remove_unit(fname, n, unit, v):
 def _check_unit(f, val, unit):
     unit = UNITLESS if unit is None else unit
     if not has_same_unit(val, unit):
-        error_message = (
-            "The return value of function "
-            f"'{f.__name__}' was expected to have "
-            f"unit {get_unit(val)} but was "
-            f"'{val}'"
+        raise UnitMismatchError(
+            f"The return value of function '{f.__name__}' was expected to have "
+            f"unit {unit} but got unit {get_unit(val)} (value: {val!r})",
+            unit, get_unit(val),
         )
-        raise UnitMismatchError(error_message, get_unit(val))
 
 
 def _assign_unit(f, val, unit):
