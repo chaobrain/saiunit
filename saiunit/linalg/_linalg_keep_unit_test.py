@@ -14,7 +14,9 @@
 # ==============================================================================
 
 
+import jax
 import jax.numpy as jnp
+import pytest
 from absl.testing import parameterized
 
 import saiunit as u
@@ -194,3 +196,47 @@ class TestLinalgKeepUnit(parameterized.TestCase):
             result = bm_fun(q)
             expected = jnp_fun(jnp.array(value))
             assert_quantity(result, expected, unit=unit)
+
+    def test_svd_supports_hermitian(self):
+        a = jnp.array([[3.0, 1.0], [1.0, 3.0]])
+
+        u_res, s_res, vh_res = bulinalg.svd(a, hermitian=True)
+        u_exp, s_exp, vh_exp = jnp.linalg.svd(a, hermitian=True)
+        assert_quantity(u_res, u_exp)
+        assert_quantity(s_res, s_exp)
+        assert_quantity(vh_res, vh_exp)
+
+        q = a * meter
+        u_res, s_res, vh_res = bulinalg.svd(q, hermitian=True)
+        assert_quantity(u_res, u_exp)
+        assert_quantity(s_res, s_exp, unit=meter)
+        assert_quantity(vh_res, vh_exp)
+
+    def test_svd_rejects_algorithm_with_hermitian(self):
+        a = jnp.array([[3.0, 1.0], [1.0, 3.0]])
+        with pytest.raises(TypeError):
+            bulinalg.svd(a, hermitian=True, algorithm=jax.lax.linalg.SvdAlgorithm.QR)
+
+    def test_eigvalsh_supports_symmetrize_input(self):
+        a = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+
+        result = bulinalg.eigvalsh(a, symmetrize_input=False)
+        expected = jnp.linalg.eigvalsh(a, symmetrize_input=False)
+        assert_quantity(result, expected)
+
+        q = a * second
+        result = bulinalg.eigvalsh(q, symmetrize_input=False)
+        assert_quantity(result, expected, unit=second)
+
+    def test_vector_norm_supports_axis_tuple(self):
+        x = jnp.array([[[1.0, 2.0], [3.0, 4.0]],
+                       [[5.0, 6.0], [7.0, 8.0]]]) * meter
+        result = bulinalg.vector_norm(x, axis=(1, 2))
+        expected = jnp.linalg.vector_norm(x.mantissa, axis=(1, 2))
+        assert_quantity(result, expected, unit=meter)
+
+    def test_matrix_norm_supports_int_ord(self):
+        x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * second
+        result = bulinalg.matrix_norm(x, ord=2)
+        expected = jnp.linalg.matrix_norm(x.mantissa, ord=2)
+        assert_quantity(result, expected, unit=second)

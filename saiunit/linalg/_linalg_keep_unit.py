@@ -123,7 +123,7 @@ def matrix_norm(
     x: Union[jax.typing.ArrayLike, Quantity],
     *,
     keepdims: bool = False,
-    ord: str = 'fro'
+    ord: int | str = 'fro'
 ) -> Union[jax.Array, Quantity]:
     """Compute the norm of a matrix or stack of matrices.
 
@@ -149,7 +149,7 @@ def matrix_norm(
         >>> u.linalg.matrix_norm(x)
         16.881943 * second
     """
-    return _fun_keep_unit_unary(jnp.linalg.norm,
+    return _fun_keep_unit_unary(jnp.linalg.matrix_norm,
                                 x,
                                 keepdims=keepdims,
                                 ord=ord)
@@ -158,7 +158,7 @@ def matrix_norm(
 @set_module_as('saiunit.linalg')
 def vector_norm(
     x: Union[jax.typing.ArrayLike, Quantity],
-    *, axis: int | None = None,
+    *, axis: int | tuple[int, ...] | None = None,
     keepdims: bool = False,
     ord: int | str = 2
 ) -> Union[jax.Array, Quantity]:
@@ -194,7 +194,7 @@ def vector_norm(
         >>> u.linalg.vector_norm(x, axis=1)
         ArrayImpl([3.7416575, 9.48683262], dtype=float32) * meter
     """
-    return _fun_keep_unit_unary(jnp.linalg.norm,
+    return _fun_keep_unit_unary(jnp.linalg.vector_norm,
                                 x,
                                 axis=axis,
                                 keepdims=keepdims,
@@ -286,7 +286,60 @@ def qr(
             return result
 
 
-svd = lax_linalg.svd
+@set_module_as('saiunit.linalg')
+def svd(
+    x: Union[Quantity, jax.typing.ArrayLike],
+    *,
+    full_matrices: bool = True,
+    compute_uv: bool = True,
+    hermitian: bool = False,
+    subset_by_index: tuple[int, int] | None = None,
+    algorithm: jax.lax.linalg.SvdAlgorithm | None = None,
+) -> Union[Quantity, jax.typing.ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
+    """Singular value decomposition.
+
+    Wrapper around :func:`jax.numpy.linalg.svd` and :func:`jax.lax.linalg.svd` with
+    unit-preserving singular values.
+    """
+    x = maybe_custom_array(x)
+
+    # `hermitian` is currently available on jnp.linalg.svd (not lax.linalg.svd).
+    if hermitian:
+        if algorithm is not None:
+            raise TypeError('"algorithm" is not supported when "hermitian=True".')
+        if isinstance(x, Quantity):
+            if compute_uv:
+                u, s, vh = jnp.linalg.svd(
+                    x.mantissa,
+                    full_matrices=full_matrices,
+                    compute_uv=compute_uv,
+                    hermitian=hermitian,
+                    subset_by_index=subset_by_index
+                )
+                return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
+            s = jnp.linalg.svd(
+                x.mantissa,
+                full_matrices=full_matrices,
+                compute_uv=compute_uv,
+                hermitian=hermitian,
+                subset_by_index=subset_by_index
+            )
+            return maybe_decimal(Quantity(s, unit=x.unit))
+        return jnp.linalg.svd(
+            x,
+            full_matrices=full_matrices,
+            compute_uv=compute_uv,
+            hermitian=hermitian,
+            subset_by_index=subset_by_index
+        )
+
+    return lax_linalg.svd(
+        x,
+        full_matrices=full_matrices,
+        compute_uv=compute_uv,
+        subset_by_index=subset_by_index,
+        algorithm=algorithm
+    )
 
 
 @set_module_as('saiunit.linalg')
@@ -401,7 +454,8 @@ def eigh(
     else:
         msg = f"UPLO must be one of None, 'L', or 'U', got {UPLO}"
         raise ValueError(msg)
-    return lax_linalg.eigh(a, lower=lower, symmetrize_input=symmetrize_input)
+    v, w = lax_linalg.eigh(a, lower=lower, symmetrize_input=symmetrize_input)
+    return w, v
 
 
 @set_module_as('saiunit.linalg')
@@ -437,6 +491,8 @@ def eigvals(
 def eigvalsh(
     a: Union[Quantity, jax.typing.ArrayLike],
     UPLO: str = 'L',
+    *,
+    symmetrize_input: bool = True,
 ) -> Union[jax.Array, Quantity]:
     """
     Compute the eigenvalues of a Hermitian matrix.
@@ -448,6 +504,8 @@ def eigvalsh(
             or symmetric (if real) matrix.
         UPLO: specifies whether the calculation is done with the lower triangular
             part of ``a`` (``'L'``, default) or the upper triangular part (``'U'``).
+        symmetrize_input: if True (default), symmetrize the input before
+            eigendecomposition for improved autodiff behavior.
 
     Returns:
         A quantity of shape ``(..., M)`` containing the eigenvalues, sorted in
@@ -463,7 +521,7 @@ def eigvalsh(
         >>> w
         Array([-1.,  3.], dtype=float32)
     """
-    return eigh(a, UPLO=UPLO)[0]
+    return eigh(a, UPLO=UPLO, symmetrize_input=symmetrize_input)[0]
 
 
 @set_module_as('saiunit.linalg')

@@ -52,7 +52,8 @@ __all__ = [
 def cholesky(
     a: Union[jax.typing.ArrayLike, Quantity],
     *,
-    upper: bool = False
+    upper: bool = False,
+    symmetrize_input: bool = True,
 ) -> Union[Quantity, jax.Array]:
     """Compute the Cholesky decomposition of a matrix.
 
@@ -78,6 +79,8 @@ def cholesky(
             Must have shape ``(..., N, N)``.
         upper: if True, compute the upper Cholesky decomposition `L`. if False
             (default), compute the lower Cholesky decomposition `U`.
+        symmetrize_input: if True (default), symmetrize the input before decomposition
+            for improved autodiff behavior.
 
     Returns:
         quantity of shape ``(..., N, N)`` representing the Cholesky decomposition
@@ -113,7 +116,8 @@ def cholesky(
     return _fun_change_unit_unary(jnp.linalg.cholesky,
                                   lambda u: u ** 0.5,
                                   a,
-                                  upper=upper)
+                                  upper=upper,
+                                  symmetrize_input=symmetrize_input)
 
 
 @unit_change(lambda x, y: y / x)
