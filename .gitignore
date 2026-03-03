@@ -234,3 +234,4 @@ cython_debug/
 /brainunit/setup.py
 /.claude/
 /dev/replace_all.py
+/dev/prompt/

@@ -86,7 +86,12 @@ def _reduce_axes(tensor, reduction_type: Reduction, reduced_axes: List[int]):
         return reduction_type(tensor, tuple(reduced_axes))
     else:
         # one of built-in operations
-        assert reduction_type in _reductions
+        if reduction_type not in _reductions:
+            raise ValueError(
+                f'Unknown reduction "{reduction_type}". '
+                f'Valid built-in reductions are: {_reductions}. '
+                f'Pass a callable for custom reductions.'
+            )
         if reduction_type == "mean":
             if not is_float_type(tensor):
                 raise NotImplementedError("reduce_mean is not available for non-floating tensors")
@@ -115,7 +120,13 @@ def __reduce(x: jax.typing.ArrayLike, operation: str, reduced_axes):
 def _optimize_transformation(init_shapes, reduced_axes, axes_reordering, final_shapes):
     # 'collapses' neighboring axes if those participate in the result pattern in the same order
     # TODO add support for added_axes
-    assert len(axes_reordering) + len(reduced_axes) == len(init_shapes)
+    if len(axes_reordering) + len(reduced_axes) != len(init_shapes):
+        raise ValueError(
+            f'Internal einops error in _optimize_transformation: '
+            f'len(axes_reordering)={len(axes_reordering)} + len(reduced_axes)={len(reduced_axes)} '
+            f'must equal len(init_shapes)={len(init_shapes)}. '
+            f'Please file a bug report.'
+        )
     # joining consecutive axes that will be reduced
     # possibly we can skip this if all backends can optimize this (not sure)
     reduced_axes = tuple(sorted(reduced_axes))
@@ -439,7 +450,13 @@ def _prepare_transformation_recipe(
         unknown: Set[str] = {axis for axis in composite_axis if axis_name2known_length[axis] == _unknown_axis_length}
         if len(unknown) > 1:
             raise EinopsError("Could not infer sizes for {}".format(unknown))
-        assert len(unknown) + len(known) == len(composite_axis)
+        if len(unknown) + len(known) != len(composite_axis):
+            raise ValueError(
+                f'Internal einops error: axis partition invariant violated — '
+                f'len(unknown)={len(unknown)} + len(known)={len(known)} '
+                f'!= len(composite_axis)={len(composite_axis)}. '
+                f'Please file a bug report.'
+            )
         input_axes_known_unknown.append(
             ([axis_name2position[axis] for axis in known], [axis_name2position[axis] for axis in unknown])
         )
@@ -786,7 +803,11 @@ def _removechars(s, chars):
 
 
 def _partition_list(bs: Sequence[bool], l: Sequence[T]) -> tuple[list[T], list[T]]:
-    assert len(bs) == len(l)
+    if len(bs) != len(l):
+        raise ValueError(
+            f'_partition_list requires both arguments to have the same length, '
+            f'but got len(bs)={len(bs)} and len(l)={len(l)}.'
+        )
     lists = [], []  # type: ignore
     for b, x in zip(bs, l):
         lists[b].append(x)
@@ -963,8 +984,18 @@ def _einsum(
 
         # the resulting 'operand' with axis labels 'names' should be a permutation
         # of the desired result
-        assert len(names) == len(result_names) == len(set(names))
-        assert set(names) == set(result_names)
+        if len(names) != len(result_names) or len(names) != len(set(names)):
+            raise ValueError(
+                f'Internal einops error: operand axis names are inconsistent — '
+                f'names={names}, result_names={result_names}. '
+                f'Please file a bug report.'
+            )
+        if set(names) != set(result_names):
+            raise ValueError(
+                f'Internal einops error: operand axis set does not match result axis set — '
+                f'got {set(names)} vs {set(result_names)}. '
+                f'Please file a bug report.'
+            )
         if names != result_names:
             perm = tuple(names.index(name) for name in result_names)
             operand = transpose(operand, perm)
