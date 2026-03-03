@@ -13,15 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
-from __future__ import annotations
-
 import numbers
 import operator
 import re
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps, partial
-from typing import Union, Optional, Sequence, Callable, Tuple, Any, List, Dict, cast
+from collections.abc import Callable, Sequence
+from typing import Any, cast
 
 import jax
 import jax.numpy as jnp
@@ -67,10 +66,10 @@ __all__ = [
     'get_or_create_dimension',
 ]
 
-StaticScalar = Union[
-    np.bool_, np.number,  # NumPy scalar types
-    bool, int, float, complex,  # Python scalar types
-]
+StaticScalar = (
+    np.bool_ | np.number |  # NumPy scalar types
+    bool | int | float | complex  # Python scalar types
+)
 PyTree = Any
 _all_slice = slice(None, None, None)
 compat_with_equinox = False
@@ -153,7 +152,7 @@ def get_dim_for_display(d):
 
 @set_module_as('saiunit')
 def assert_quantity(
-    q: Union['Quantity', jax.typing.ArrayLike],
+    q: 'Quantity | jax.typing.ArrayLike',
     mantissa: jax.typing.ArrayLike,
     unit: 'Unit' = None
 ):
@@ -958,7 +957,7 @@ class UnitMismatchError(Exception):
 
     def __init__(self, description, *units):
         super().__init__(description, *units)
-        self.units: Tuple = units
+        self.units: tuple = units
         self.desc = description
 
     def __repr__(self):
@@ -1014,7 +1013,7 @@ def get_dim(obj) -> Dimension:
 
 
 @set_module_as('saiunit')
-def get_unit(obj) -> Unit:
+def get_unit(obj) -> 'Unit':
     """
     Return the unit of any object that has them.
 
@@ -1222,7 +1221,7 @@ def fail_for_dimension_mismatch(
 @set_module_as('saiunit')
 def fail_for_unit_mismatch(
     obj1, obj2=None, error_message=None, **error_arrays
-) -> Tuple['Unit', 'Unit']:
+) -> 'tuple[Unit, Unit]':
     """
     Compare the dimensions of two objects.
 
@@ -1285,9 +1284,9 @@ def fail_for_unit_mismatch(
 
 @set_module_as('saiunit')
 def display_in_unit(
-    x: jax.typing.ArrayLike | 'Quantity',
+    x: 'jax.typing.ArrayLike | Quantity',
     u: 'Unit' = None,
-    precision: Optional[int] = None,
+    precision: int | None = None,
 ) -> str:
     """
     Display a value in a certain unit with a given precision.
@@ -1335,9 +1334,9 @@ def display_in_unit(
 
 @set_module_as('saiunit')
 def maybe_decimal(
-    val: Union['Quantity', jax.typing.ArrayLike],
-    unit: Optional['Unit'] = None
-) -> Union[jax.Array, 'Quantity']:
+    val: 'Quantity | jax.typing.ArrayLike',
+    unit: 'Unit | None' = None
+) -> 'jax.Array | Quantity':
     """
     Convert a quantity to a decimal number if it is a dimensionless quantity.
 
@@ -1363,7 +1362,7 @@ def maybe_decimal(
 
 
 @set_module_as('saiunit')
-def unit_scale_align_to_first(*args) -> List['Quantity']:
+def unit_scale_align_to_first(*args) -> 'list[Quantity]':
     """
     Align the unit units of all arguments to the first one.
 
@@ -1410,7 +1409,7 @@ def unit_scale_align_to_first(*args) -> List['Quantity']:
 def array_with_unit(
     mantissa,
     unit: 'Unit',
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: jax.typing.DTypeLike | None = None
 ) -> 'Quantity':
     """
     Create a new `Array` with the given dimensions. Calls
@@ -1445,7 +1444,7 @@ def array_with_unit(
 
 
 @set_module_as('saiunit')
-def is_dimensionless(obj: Union['Quantity', 'Unit', 'Dimension', jax.typing.ArrayLike]) -> bool:
+def is_dimensionless(obj: 'Quantity | Unit | Dimension | jax.typing.ArrayLike') -> bool:
     """
     Test if a value is dimensionless or not.
 
@@ -1466,7 +1465,7 @@ def is_dimensionless(obj: Union['Quantity', 'Unit', 'Dimension', jax.typing.Arra
 
 
 @set_module_as('saiunit')
-def is_unitless(obj: Union['Quantity', 'Unit', jax.typing.ArrayLike]) -> bool:
+def is_unitless(obj: 'Quantity | Unit | jax.typing.ArrayLike') -> bool:
     """
     Test if a value is unitless or not.
 
@@ -1520,7 +1519,7 @@ def _wrap_function_keep_unit(func):
     ``sum`` to work as expected with additional ``axis`` etc. arguments.
     """
 
-    def f(x: Quantity, *args, **kwds):  # pylint: disable=C0111
+    def f(x: 'Quantity', *args, **kwds):  # pylint: disable=C0111
         return Quantity(func(x.mantissa, *args, **kwds), unit=x.unit)
 
     f._arg_units = [None]
@@ -1591,7 +1590,7 @@ def _find_standard_unit(
     scale,
     factor,
     for_composition: bool = False,
-) -> Tuple[Optional[str], Optional[str], bool, bool]:
+) -> tuple[str | None, str | None, bool, bool]:
     """
     Find a standard unit for the given dimension, base, scale, and factor.
 
@@ -1630,7 +1629,7 @@ def _find_standard_unit(
     return None, None, False, False
 
 
-def _find_a_name(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bool]:
+def _find_a_name(dim: Dimension, base, scale, factor) -> tuple[str | None, bool]:
     if dim == DIMENSIONLESS:
         u_name = f"Unit({base}^{scale})"
         return u_name, False
@@ -1662,8 +1661,8 @@ def _find_a_name(dim: Dimension, base, scale, factor) -> Tuple[Optional[str], bo
     return None, True
 
 
-_standard_units: Dict[Tuple, 'Unit'] = {}
-_standard_unit_aliases: Dict[Tuple, List['Unit']] = {}
+_standard_units: 'dict[tuple, Unit]' = {}
+_standard_unit_aliases: 'dict[tuple, list[Unit]]' = {}
 
 # ---------------------------------------------------------------------------
 # Ambiguous-key detection
@@ -1696,7 +1695,7 @@ def _standard_unit_preference_score(unit: 'Unit') -> int:
     return score
 
 
-def _select_preferred_standard_unit(units: List['Unit']) -> 'Unit':
+def _select_preferred_standard_unit(units: 'list[Unit]') -> 'Unit':
     """Pick the preferred alias – deterministic (score, then alpha)."""
     return min(
         units,
@@ -1740,7 +1739,7 @@ def _get_display_parts(unit: 'Unit'):
 
 def _merge_display_parts(parts_a, parts_b):
     """Merge two part-lists, combine same-name entries, drop zeros, sort."""
-    merged: Dict[str, tuple] = {}
+    merged: dict[str, tuple] = {}
     for name, disp, exp in list(parts_a) + list(parts_b):
         if name in merged:
             _, old_disp, old_exp = merged[name]
@@ -1775,7 +1774,7 @@ def _normalise_display_parts(parts):
             exp = inner_exp * exp
         result.append((name, disp, exp))
     # Merge entries that now share the same base dispname
-    merged: Dict[str, tuple] = {}
+    merged: dict[str, tuple] = {}
     for name, disp, exp in result:
         if disp in merged:
             _, old_disp, old_exp = merged[disp]
@@ -2347,7 +2346,7 @@ class Unit:
     def __str__(self) -> str:
         return self._canonical_str()
 
-    def __mul__(self, other) -> 'Unit' | Quantity:
+    def __mul__(self, other) -> 'Unit | Quantity':
         # self * other
         if isinstance(other, Unit):
             _assert_same_base(self, other)
@@ -2395,7 +2394,7 @@ class Unit:
         else:
             return Quantity(other, unit=self)
 
-    def __rmul__(self, other) -> 'Unit' | Quantity:
+    def __rmul__(self, other) -> 'Unit | Quantity':
         # other * self
         if isinstance(other, Unit):
             return other.__mul__(self)
@@ -2448,7 +2447,7 @@ class Unit:
         else:
             raise TypeError(f"unit {self} cannot divide by a non-unit {other}")
 
-    def __rdiv__(self, other) -> 'Unit' | Quantity:
+    def __rdiv__(self, other) -> 'Unit | Quantity':
         # other / self
         if isinstance(other, Unit):
             return other.__div__(self)
@@ -2665,7 +2664,7 @@ UNITLESS = Unit()
 
 def _zoom_values_with_units(
     values: Sequence[jax.typing.ArrayLike],
-    units: Sequence['Unit']
+    units: Sequence[Unit]
 ):
     """
     Zoom values with units.
@@ -2691,7 +2690,7 @@ def _zoom_values_with_units(
     return values
 
 
-def _check_units_and_collect_values(lst) -> Tuple[jax.typing.ArrayLike, 'Unit']:
+def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
     units = []
     values = []
 
@@ -2726,7 +2725,7 @@ def _check_units_and_collect_values(lst) -> Tuple[jax.typing.ArrayLike, 'Unit']:
         return jnp.asarray(values), UNITLESS
 
 
-def _process_list_with_units(value: List) -> Tuple[jax.typing.ArrayLike, 'Unit']:
+def _process_list_with_units(value: list) -> tuple[jax.typing.ArrayLike, Unit]:
     values, unit = _check_units_and_collect_values(value)
     return values, unit
 
@@ -2752,8 +2751,8 @@ class Quantity:
     def __init__(
         self,
         mantissa: PyTree | Unit,
-        unit: Optional[Unit | jax.typing.ArrayLike] = UNITLESS,
-        dtype: Optional[jax.typing.DTypeLike] = None,
+        unit: Unit | jax.typing.ArrayLike | None = UNITLESS,
+        dtype: jax.typing.DTypeLike | None = None,
     ):
 
         with jax.ensure_compile_time_eval():  # inside JIT, this can avoid to trace the constant mantissa value
@@ -3255,7 +3254,7 @@ class Quantity:
                 raise TypeError(f'Can not get dtype of {a}.')
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         """Variable shape."""
         return jnp.shape(self.mantissa)
 
@@ -3417,7 +3416,7 @@ class Quantity:
             raise TypeError("Array indices must be integers or slices, not Array")
         return Quantity(self.mantissa[index], unit=self.unit)
 
-    def __setitem__(self, index, value: 'Quantity' | jax.typing.ArrayLike):
+    def __setitem__(self, index, value: 'Quantity | jax.typing.ArrayLike'):
         # check value
         if not isinstance(value, Quantity):
             if self.is_unitless:
@@ -3436,7 +3435,7 @@ class Quantity:
     def scatter_add(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-add the given value to the given index.
@@ -3473,7 +3472,7 @@ class Quantity:
     def scatter_sub(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-sub the given value to the given index.
@@ -3495,7 +3494,7 @@ class Quantity:
     def scatter_mul(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-mul the given value to the given index.
@@ -3533,7 +3532,7 @@ class Quantity:
     def scatter_div(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-div the given value to the given index.
@@ -3571,7 +3570,7 @@ class Quantity:
     def scatter_max(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-max the given value to the given index.
@@ -3608,7 +3607,7 @@ class Quantity:
     def scatter_min(
         self,
         index: jax.typing.ArrayLike,
-        value: Union['Quantity', jax.typing.ArrayLike]
+        value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
         Scatter-min the given value to the given index.
@@ -3950,7 +3949,7 @@ class Quantity:
         r = Quantity(self.mantissa << oc, unit=self.unit)
         return maybe_decimal(r)
 
-    def __rlshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
+    def __rlshift__(self, oc) -> 'Quantity | jax.typing.ArrayLike':
         # oc << self
         if not self.is_unitless:
             raise ValueError("The shift amount must be dimensionless")
@@ -3971,7 +3970,7 @@ class Quantity:
         r = Quantity(self.mantissa >> oc, unit=self.unit)
         return maybe_decimal(r)
 
-    def __rrshift__(self, oc) -> 'Quantity' | jax.typing.ArrayLike:
+    def __rrshift__(self, oc) -> 'Quantity | jax.typing.ArrayLike':
         # oc >> self
         if not self.is_unitless:
             raise ValueError("The shift amount must be dimensionless")
@@ -4034,7 +4033,7 @@ class Quantity:
     ptp = _wrap_function_keep_unit(jnp.ptp)
     ravel = _wrap_function_keep_unit(jnp.ravel)
 
-    def __deepcopy__(self, memodict: Dict):
+    def __deepcopy__(self, memodict: dict):
         return Quantity(
             deepcopy(self.mantissa),
             unit=self.unit.__deepcopy__(memodict)
@@ -4084,8 +4083,8 @@ class Quantity:
 
     def clip(
         self,
-        min: Quantity | jax.typing.ArrayLike = None,
-        max: Quantity | jax.typing.ArrayLike = None,
+        min: 'Quantity | jax.typing.ArrayLike' = None,
+        max: 'Quantity | jax.typing.ArrayLike' = None,
     ) -> 'Quantity':
         """
         Return an array whose values are limited to [min, max]. One of max or min must be given.
@@ -4142,7 +4141,7 @@ class Quantity:
             v = v.in_unit(self.unit).mantissa
         return jnp.searchsorted(self.mantissa, v, side=side, sorter=sorter)
 
-    def fill(self, value: Quantity) -> 'Quantity':
+    def fill(self, value: 'Quantity') -> 'Quantity':
         """Fill the array with a scalar mantissa."""
         fail_for_dimension_mismatch(self, value, "fill")
         self[:] = value
@@ -4265,7 +4264,7 @@ class Quantity:
         """Return a view of the array with `axis1` and `axis2` interchanged."""
         return Quantity(jnp.swapaxes(self.mantissa, axis1, axis2), unit=self.unit)
 
-    def split(self, indices_or_sections, axis=0) -> List['Quantity']:
+    def split(self, indices_or_sections, axis=0) -> 'list[Quantity]':
         """Split an array into multiple sub-arrays as views into ``ary``.
 
         Parameters
@@ -4547,7 +4546,7 @@ class Quantity:
     # NumPy support
     # ------------------
 
-    def __array__(self, dtype: Optional[jax.typing.DTypeLike] = None) -> np.ndarray:
+    def __array__(self, dtype: jax.typing.DTypeLike | None = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
         if self.dim.is_dimensionless:
             return np.asarray(self.to_decimal(), dtype=dtype)
@@ -4598,7 +4597,7 @@ class Quantity:
         """
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
-    def expand_dims(self, axis: Union[int, Sequence[int]]) -> 'Quantity':
+    def expand_dims(self, axis: int | Sequence[int]) -> 'Quantity':
         """
         Expand the shape of an array.
 
@@ -4614,7 +4613,7 @@ class Quantity:
         """
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
-    def expand_as(self, array: Union['Quantity', jax.typing.ArrayLike]) -> 'Quantity':
+    def expand_as(self, array: 'Quantity | jax.typing.ArrayLike') -> 'Quantity':
         """
         Expand an array to a shape of another array.
 
@@ -4640,7 +4639,7 @@ class Quantity:
     def clone(self) -> 'Quantity':
         return self.copy()
 
-    def tree_flatten(self) -> Tuple[Tuple[jax.typing.ArrayLike], Unit]:
+    def tree_flatten(self) -> tuple[tuple[jax.typing.ArrayLike], Unit]:
         """
         Tree flattens the data.
 
@@ -4696,7 +4695,7 @@ class _IndexUpdateHelper:
             raise TypeError(f"quantity must be a Quantity object, but got {quantity}")
         self.quantity = quantity
 
-    def __getitem__(self, index: Any) -> _IndexUpdateRef:
+    def __getitem__(self, index: Any) -> '_IndexUpdateRef':
         return _IndexUpdateRef(index, self.quantity)
 
     def __repr__(self):
