@@ -293,7 +293,7 @@ class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
         self.assertTrue(jnp.all(result == expected))
 
         array = array * u.second
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result_q = ulax.dynamic_update_slice(array, start_indices=start_indices, update=update)
         update = update * u.second
         result_q = ulax.dynamic_update_slice(array, start_indices=start_indices, update=update)
@@ -416,7 +416,7 @@ class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
 
     def test_sort_key_val(self):
         x = jnp.array([-np.inf, 0.0, -0.0, np.inf, np.nan, -np.nan])
-        index = lax.iota(jnp.int64, x.size)
+        index = lax.iota(jnp.int32, x.size)
 
         result = ulax.sort_key_val(x, index, is_stable=True)[1]
         expected = lax.sort_key_val(x, index, is_stable=True)[1]
@@ -472,10 +472,10 @@ class TestLaxKeepUnit(parameterized.TestCase):
             expected = lax_fun(jnp.array(x1), jnp.array(x2))
             assert_quantity(result, expected, unit=unit)
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = ulax_fun(q1, jnp.array(x2))
 
-            with pytest.raises(AssertionError):
+            with pytest.raises(TypeError):
                 result = ulax_fun(jnp.array(x1), q2)
 
     @parameterized.product(
@@ -514,7 +514,7 @@ class TestLaxKeepUnit(parameterized.TestCase):
         self.assertTrue(jnp.all(result == expected))
 
         array = array * u.second
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result_q = ulax.scatter(array, rand_idx, update, dimension_numbers=dnums)
         update = update * u.second
         result_q = ulax.scatter(array, rand_idx, update, dimension_numbers=dnums)
@@ -562,7 +562,7 @@ class TestLaxKeepUnit(parameterized.TestCase):
         self.assertTrue(jnp.all(result == expected))
 
         array = array * u.second
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result_q = ulax_op(array, rand_idx, update, dimension_numbers=dnums, mode=mode)
         update = update * u.second
         result_q = ulax_op(array, rand_idx, update, dimension_numbers=dnums, mode=mode)
@@ -608,7 +608,7 @@ class TestLaxKeepUnit(parameterized.TestCase):
         self.assertTrue(jnp.all(result == expected))
 
         array = array * u.second
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result_q = ulax.scatter_min(array, rand_idx, update, dimension_numbers=dnums)
         update = update * u.second
         result_q = ulax.scatter_min(array, rand_idx, update, dimension_numbers=dnums)
@@ -650,7 +650,7 @@ class TestLaxKeepUnit(parameterized.TestCase):
         self.assertTrue(jnp.all(result == expected))
 
         array = array * u.second
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result_q = ulax.scatter_max(array, rand_idx, update, dimension_numbers=dnums)
         update = update * u.second
         result_q = ulax.scatter_max(array, rand_idx, update, dimension_numbers=dnums)
@@ -721,7 +721,7 @@ class TestLaxKeepUnit(parameterized.TestCase):
         self.assertTrue(jnp.all(result == expected))
 
         array = array * u.second
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result_q = ulax.pad(array, padding, pads)
         padding = padding * u.second
         result_q = ulax.pad(array, padding, pads)
@@ -750,7 +750,7 @@ class TestLaxKeepUnitNary(parameterized.TestCase):
 
         array1 = array1 * u.second
         array2 = array2 * u.second
-        with pytest.raises(AssertionError):
+        with pytest.raises(TypeError):
             result_q = ulax.clamp(array1, array2, array3)
         array3 = array3 * u.second
         result_q = ulax.clamp(array1, array2, array3)

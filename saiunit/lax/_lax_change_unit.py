@@ -222,7 +222,7 @@ def dot_general(
                                        lambda x, y: x * y,
                                        x, y,
                                        dimension_numbers, precision, preferred_element_type, out_type)
-    except:
+    except TypeError:
         return _fun_change_unit_binary(lax.dot_general,
                                        lambda x, y: x * y,
                                        x, y,
@@ -239,11 +239,13 @@ def pow(
     y = maybe_custom_array(y)
     if isinstance(x, Quantity):
         if isinstance(y, Quantity):
-            assert y.is_unitless, f'{jax.lax.pow.__name__} only supports scalar exponent'
+            if not y.is_unitless:
+                raise TypeError(f'{jax.lax.pow.__name__} only supports scalar exponent')
             y = y.mantissa
         return maybe_decimal(Quantity(jax.lax.pow(x.mantissa, y), unit=x.unit ** y))
     elif isinstance(y, Quantity):
-        assert y.is_unitless, f'{jax.lax.power.__name__} only supports scalar exponent'
+        if not y.is_unitless:
+            raise TypeError(f'{jax.lax.power.__name__} only supports scalar exponent')
         y = y.mantissa
         return maybe_decimal(Quantity(jax.lax.pow(x, y), unit=x ** y))
     else:
@@ -260,11 +262,13 @@ def integer_pow(
     y = maybe_custom_array(y)
     if isinstance(x, Quantity):
         if isinstance(y, Quantity):
-            assert y.is_unitless, f'{jax.lax.integer_pow.__name__} only supports scalar exponent'
+            if not y.is_unitless:
+                raise TypeError(f'{jax.lax.integer_pow.__name__} only supports scalar exponent')
             y = y.mantissa
         return maybe_decimal(Quantity(jax.lax.integer_pow(x.mantissa, y), unit=x.unit ** y))
     elif isinstance(y, Quantity):
-        assert y.is_unitless, f'{jax.lax.integer_power.__name__} only supports scalar exponent'
+        if not y.is_unitless:
+            raise TypeError(f'{jax.lax.integer_power.__name__} only supports scalar exponent')
         y = y.mantissa
         return maybe_decimal(Quantity(jax.lax.integer_pow(x, y), unit=x ** y))
     else:

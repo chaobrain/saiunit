@@ -762,14 +762,16 @@ def _fun_lax_scatter(
     operand = maybe_custom_array(operand)
     updates = maybe_custom_array(updates)
     if isinstance(operand, Quantity) and isinstance(updates, Quantity):
-        assert has_same_unit(operand,
-                             updates), f'operand(unit:{operand.unit}) and updates(unit:{updates.unit}) do not have same unit'
+        if not has_same_unit(operand, updates):
+            raise TypeError(
+                f'operand(unit:{operand.unit}) and updates(unit:{updates.unit}) must have the same unit.'
+            )
         return maybe_decimal(Quantity(fun(operand.mantissa, scatter_indices, updates.mantissa, dimension_numbers,
                                           indices_are_sorted=indices_are_sorted,
                                           unique_indices=unique_indices,
                                           mode=mode), unit=operand.unit))
     elif isinstance(operand, Quantity) or isinstance(updates, Quantity):
-        raise AssertionError(
+        raise TypeError(
             f'operand and updates should both be `Quantity` or Array, now we got {type(operand)} and {type(updates)}')
     else:
         return fun(operand, scatter_indices, updates, dimension_numbers,
@@ -1303,7 +1305,7 @@ def clamp(
              (min, x, max)):
         return lax.clamp(min, x, max)
     else:
-        raise AssertionError('All inputs must be Quantity or jax.typing.ArrayLike')
+        raise TypeError('All inputs must be Quantity or jax.typing.ArrayLike')
 
 
 # math funcs keep unit (return Quantity and index)

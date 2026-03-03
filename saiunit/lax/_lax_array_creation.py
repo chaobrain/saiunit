@@ -43,12 +43,14 @@ def zeros_like_array(
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         if unit is not None:
-            assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+            if not isinstance(unit, Unit):
+                raise TypeError('unit must be an instance of Unit.')
             x = x.in_unit(unit)
         return Quantity(jnp.zeros_like(x.mantissa), unit=x.unit)
     else:
         if unit is not None:
-            assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+            if not isinstance(unit, Unit):
+                raise TypeError('unit must be an instance of Unit.')
             return jnp.zeros_like(x) * unit
         else:
             return jnp.zeros_like(x)
@@ -63,7 +65,8 @@ def iota(
 ) -> Union[Quantity, jax.Array]:
     """Wraps XLA's `Iota  operator."""
     if unit is not None:
-        assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+        if not isinstance(unit, Unit):
+            raise TypeError('unit must be an instance of Unit.')
         return lax.iota(dtype, size) * unit
     else:
         return lax.iota(dtype, size)
@@ -79,13 +82,14 @@ def broadcasted_iota(
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper around ``iota``."""
     if unit is not None:
-        assert isinstance(unit, Unit), 'unit must be an instance of Unit.'
+        if not isinstance(unit, Unit):
+            raise TypeError('unit must be an instance of Unit.')
         try:
             return lax.broadcasted_iota(dtype, shape, dimension, _sharding) * unit
-        except:
+        except TypeError:
             return lax.broadcasted_iota(dtype, shape, dimension) * unit
     else:
         try:
             return lax.broadcasted_iota(dtype, shape, dimension, _sharding)
-        except:
+        except TypeError:
             return lax.broadcasted_iota(dtype, shape, dimension)
