@@ -226,12 +226,11 @@ def _element_not_quantity(x):
 
 def _quantity_with_unit(mantissa, unit):
     """Private reconstruction helper for Quantity pickling.
-
-    Must live at module level *without* ``@set_module_as`` so that pickle can
-    locate it as ``saiunit._base._quantity_with_unit``.
     """
     return Quantity(mantissa, unit=unit)
 
+
+_quantity_with_unit.__module__ = 'saiunit._base_quantity'
 
 # ---------------------------------------------------------------------------
 # Quantity class

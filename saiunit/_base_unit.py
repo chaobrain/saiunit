@@ -1109,14 +1109,10 @@ class Unit:
 
 def _to_unit(*args):
     """Private pickle reconstruction shim for Unit.
-
-    Must live at module level so that pickle can locate it.
-    ``__module__`` is set to ``saiunit._base`` for backward compatibility
-    with objects pickled before the module was split.
     """
     return Unit(*args)
 
 
-_to_unit.__module__ = 'saiunit._base'
+_to_unit.__module__ = 'saiunit._base_unit'
 
 UNITLESS = Unit()
