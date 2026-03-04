@@ -189,39 +189,11 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    mathematical_functions/activation_functions.ipynb
    mathematical_functions/check_units.ipynb
    mathematical_functions/assign_units.ipynb
-
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: JAX Integration
-
-   jax_integration/jax_transforms.ipynb
-   jax_integration/autograd.ipynb
-
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Sparse Matrices
-
-   sparse_matrices/sparse_matrices.ipynb
-
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Visualization
-
-   visualization/matplotlib_integration.ipynb
-
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
-   :caption: Type Annotations
-
-   type_annotations/type_annotations.ipynb
+   mathematical_functions/jax_transforms.ipynb
+   mathematical_functions/autograd.ipynb
+   mathematical_functions/sparse_matrices.ipynb
+   mathematical_functions/matplotlib_integration.ipynb
+   mathematical_functions/type_annotations.ipynb
 
 
 .. toctree::
