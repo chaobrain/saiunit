@@ -89,12 +89,15 @@ from __future__ import annotations
 
 import functools
 import inspect
-from typing import Annotated, Any, Union, get_type_hints
+from typing import Annotated, Any, Union, get_type_hints, get_origin
 
 import jax
 import numpy as np
 
-from ._base_dimension import Dimension, DIMENSIONLESS
+from ._base_dimension import UnitMismatchError, DimensionMismatchError
+from ._base_dimension import get_or_create_dimension
+from ._base_quantity import Quantity
+from ._base_unit import Unit
 
 __all__ = [
     # Marker classes
@@ -138,7 +141,6 @@ __all__ = [
     # Runtime validation decorator
     'validate_units',
 ]
-
 
 # ---------------------------------------------------------------------------
 # Mapping from human-readable physical type names to SI dimension exponents
@@ -196,7 +198,6 @@ class _PhysicalTypeMeta(type):
     """Metaclass enabling ``isinstance(quantity, PhysicalType("length"))``."""
 
     def __instancecheck__(cls, instance):
-        from ._base_quantity import Quantity
         if not type.__instancecheck__(Quantity, instance):
             return False
         return instance.dim == cls.dimension
@@ -267,7 +268,6 @@ class PhysicalType:
         if key in _physical_type_cache:
             return _physical_type_cache[key]
 
-        from ._base_dimension import get_or_create_dimension
         dim = get_or_create_dimension(_PHYSICAL_TYPE_DIMS[key])
 
         new_cls = _PhysicalTypeMeta(
@@ -306,7 +306,6 @@ class _AnnotatedQuantityMeta(type):
     """Metaclass enabling ``isinstance(quantity, Quantity[u.meter])``."""
 
     def __instancecheck__(cls, instance):
-        from ._base_quantity import Quantity
         if not type.__instancecheck__(Quantity, instance):
             return False
         return cls._unit_check(instance)
@@ -332,8 +331,6 @@ def _make_annotated_quantity_type(item):
 
     *item* is a ``Unit`` or a physical-type string.
     """
-    from ._base_unit import Unit
-
     # Determine cache key
     if isinstance(item, Unit):
         cache_key = ('unit', id(item), str(item.dim))
@@ -409,63 +406,34 @@ DimensionLike = Union["Dimension", str]
 # Pre-built physical-type aliases
 # ---------------------------------------------------------------------------
 
-class _LazyAliases:
-    """Lazy alias container to avoid circular imports."""
-
-    _cache: dict[str, Any] = {}
-
-    _MAP = {
-        'HAS_UNIT': None,  # special: any Quantity
-        'DIMENSIONLESS_TYPE': 'dimensionless',
-        'LENGTH': 'length',
-        'MASS': 'mass',
-        'TIME': 'time',
-        'CURRENT': 'current',
-        'TEMPERATURE': 'temperature',
-        'SUBSTANCE': 'substance',
-        'LUMINOSITY': 'luminosity',
-        'FREQUENCY': 'frequency',
-        'FORCE': 'force',
-        'ENERGY': 'energy',
-        'POWER': 'power',
-        'PRESSURE': 'pressure',
-        'CHARGE': 'charge',
-        'VOLTAGE': 'voltage',
-        'RESISTANCE': 'resistance',
-        'CAPACITANCE': 'capacitance',
-        'CONDUCTANCE': 'conductance',
-        'MAGNETIC_FLUX': 'magnetic flux',
-        'MAGNETIC_FIELD': 'magnetic field',
-        'INDUCTANCE': 'inductance',
-        'SPEED': 'speed',
-        'ACCELERATION': 'acceleration',
-        'AREA': 'area',
-        'VOLUME': 'volume',
-        'DENSITY': 'density',
-    }
-
-    @classmethod
-    def get(cls, attr: str) -> Any:
-        if attr not in cls._MAP:
-            raise AttributeError(attr)
-        if attr not in cls._cache:
-            from ._base_quantity import Quantity
-            phys = cls._MAP[attr]
-            if phys is None:
-                # HAS_UNIT: any Quantity with a unit (just Quantity itself)
-                cls._cache[attr] = Quantity
-            else:
-                cls._cache[attr] = Quantity[phys]
-        return cls._cache[attr]
-
-
-# Eagerly populate module-level names so that ``from saiunit.typing import LENGTH``
-# works and static type checkers can see the names.
-def __getattr__(name: str):
-    try:
-        return _LazyAliases.get(name)
-    except AttributeError:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None
+# Eager module-level aliases for common physical types.
+HAS_UNIT = Quantity
+DIMENSIONLESS_TYPE = Quantity['dimensionless']
+LENGTH = Quantity['length']
+MASS = Quantity['mass']
+TIME = Quantity['time']
+CURRENT = Quantity['current']
+TEMPERATURE = Quantity['temperature']
+SUBSTANCE = Quantity['substance']
+LUMINOSITY = Quantity['luminosity']
+FREQUENCY = Quantity['frequency']
+FORCE = Quantity['force']
+ENERGY = Quantity['energy']
+POWER = Quantity['power']
+PRESSURE = Quantity['pressure']
+CHARGE = Quantity['charge']
+VOLTAGE = Quantity['voltage']
+RESISTANCE = Quantity['resistance']
+CAPACITANCE = Quantity['capacitance']
+CONDUCTANCE = Quantity['conductance']
+MAGNETIC_FLUX = Quantity['magnetic flux']
+MAGNETIC_FIELD = Quantity['magnetic field']
+INDUCTANCE = Quantity['inductance']
+SPEED = Quantity['speed']
+ACCELERATION = Quantity['acceleration']
+AREA = Quantity['area']
+VOLUME = Quantity['volume']
+DENSITY = Quantity['density']
 
 
 # ---------------------------------------------------------------------------
@@ -514,10 +482,6 @@ def validate_units(func=None, *, strict: bool = False):
     """
     if func is None:
         return functools.partial(validate_units, strict=strict)
-
-    from ._base_quantity import Quantity
-    from ._base_unit import Unit
-    from ._base_dimension import UnitMismatchError, DimensionMismatchError
 
     # Resolve annotations (handles string forward refs).
     try:
@@ -591,8 +555,6 @@ def _extract_unit_metadata(hint) -> tuple[str, Any] | None:
     - ``_AnnotatedQuantityMeta`` types (from ``Quantity[u.meter]``)
     - ``typing.Annotated[Quantity, ...]`` types (legacy)
     """
-    import typing as _typing
-    from ._base_unit import Unit
 
     # Check for _AnnotatedQuantityMeta (new-style Quantity[...])
     if isinstance(hint, _AnnotatedQuantityMeta):
@@ -604,7 +566,7 @@ def _extract_unit_metadata(hint) -> tuple[str, Any] | None:
         return None
 
     # Check for typing.Annotated (fallback)
-    if _typing.get_origin(hint) is Annotated:
+    if get_origin(hint) is Annotated:
         metadata = hint.__metadata__
         for meta in metadata:
             if isinstance(meta, Unit):
