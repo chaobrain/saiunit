@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.setuptools.dynamic]
-version = { attr = "saiunit.__version__" }
+version = { attr = "saiunit._version.__version__" }
 
 [tool.setuptools.packages.find]
 exclude = [

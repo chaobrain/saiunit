@@ -146,6 +146,7 @@ class Dimension:
 
     def __init__(self, dims):
         self._dims: np.ndarray = np.asarray(dims)
+        self._dims.flags.writeable = False
         self._hash = None
 
     @property
@@ -239,8 +240,7 @@ class Dimension:
             >>> u.meter.dim.is_dimensionless
             False
         """
-        return np.allclose(self._dims, 0)
-        # return all([x == 0 for x in self._dims])
+        return bool(np.all(self._dims == 0))
 
     @property
     def dim(self):
@@ -568,7 +568,7 @@ class Dimension:
         if not isinstance(value, Dimension):
             return False
         try:
-            return np.allclose(self._dims, value._dims)
+            return np.array_equal(self._dims, value._dims)
         except (AttributeError, jax.errors.TracerArrayConversionError):
             # Only compare equal to another Dimensions object
             return False
@@ -619,6 +619,8 @@ class Dimension:
             The array of dimensional exponents.
         """
         self._dims = state
+        self._dims.flags.writeable = False
+        self._hash = None
 
     def __reduce__(self):
         """
@@ -761,7 +763,7 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
     return new_dim
 
 
-DIMENSIONLESS = Dimension(np.asarray([0, 0, 0, 0, 0, 0, 0]))
+DIMENSIONLESS = get_or_create_dimension([0, 0, 0, 0, 0, 0, 0])
 """
 Singleton Dimension instance representing dimensionless quantities.
 

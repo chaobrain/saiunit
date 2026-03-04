@@ -162,21 +162,21 @@ __all__ = [
 
 # ----- Fundamental Constants -----
 #: Avogadro constant (http://physics.nist.gov/cgi-bin/cuu/Value?na)
-avogadro = np.asarray(6.022140857e23) / mole
-#: Boltzmann constant (physics.nist.gov/cgi-bin/cuu/Value?k)
-boltzmann = np.asarray(1.38064852e-23) * (joule / kelvin)
-#: electric constant (http://physics.nist.gov/cgi-bin/cuu/Value?ep0)
-electric = np.asarray(8.854187817e-12) * (farad / meter)
-#: Electron rest mass (physics.nist.gov/cgi-bin/cuu/Value?me)
-electron_mass = np.asarray(9.10938356e-31) * kilogram
-#: Elementary charge (physics.nist.gov/cgi-bin/cuu/Value?e)
-elementary_charge = np.asarray(1.6021766208e-19) * coulomb
-#: Faraday constant (http://physics.nist.gov/cgi-bin/cuu/Value?f)
-faraday = np.asarray(96485.33289) * (coulomb / mole)
-#: gas constant (http://physics.nist.gov/cgi-bin/cuu/Value?r)
-gas = np.asarray(8.3144598) * (joule / mole / kelvin)
-#: Magnetic constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu0)
-magnetic = np.asarray(1.25663706212e-6) * (newton / amp ** 2)
+avogadro = np.asarray(6.02214076e23) / mole
+#: Boltzmann constant (CODATA 2018, exact)
+boltzmann = np.asarray(1.380649e-23) * (joule / kelvin)
+#: electric constant (CODATA 2018)
+electric = np.asarray(8.8541878188e-12) * (farad / meter)
+#: Electron rest mass (CODATA 2018)
+electron_mass = np.asarray(9.1093837139e-31) * kilogram
+#: Elementary charge (CODATA 2018, exact)
+elementary_charge = np.asarray(1.602176634e-19) * coulomb
+#: Faraday constant (CODATA 2018)
+faraday = np.asarray(96485.33212331) * (coulomb / mole)
+#: gas constant (CODATA 2018)
+gas = np.asarray(8.314462618153240) * (joule / mole / kelvin)
+#: Magnetic constant (CODATA 2018)
+magnetic = np.asarray(1.25663706127e-6) * (newton / amp ** 2)
 #: Molar mass constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu)
 molar_mass = np.asarray(1e-3) * (kilogram / mole)
 #: zero degree Celsius
@@ -195,7 +195,7 @@ short_ton = np.asarray(0.90718474e3) * kilogram  # Short ton
 troy_ounce = np.asarray(3.11034768e-2) * kilogram  # Troy ounce
 troy_pound = np.asarray(0.3732417216) * kilogram  # Troy pound
 carat = np.asarray(2e-4) * kilogram  # Carat
-atomic_mass = np.asarray(1.66053886e-27) * kilogram  # Atomic mass unit (amu)
+atomic_mass = np.asarray(1.66053906892e-27) * kilogram  # Atomic mass unit (amu)
 
 # ----- Angle -----
 degree = np.asarray(np.pi / 180) * radian  # Degree
@@ -226,25 +226,25 @@ fermi = np.asarray(1e-15) * meter  # Fermi
 angstrom = np.asarray(1e-10) * meter  # Ångstrom
 micron = np.asarray(1e-6) * meter  # Micron
 au = astronomical_unit = np.asarray(1.495978707e11) * meter  # Astronomical unit
-light_year = np.asarray(9.460730777119564e15) * meter  # Light year
+light_year = np.asarray(9.46073047258080e15) * meter  # Light year
 parsec = np.asarray(3.085677581491367e16) * meter  # Parsec
 
 # ----- Pressure -----
-atm = atmosphere = np.asarray(1.013249966e5) * (newton / meter2)  # Atmosphere
+atm = atmosphere = np.asarray(1.01325e5) * (newton / meter2)  # Atmosphere
 bar = np.asarray(1e5) * (newton / meter2)  # Bar
 mmHg = torr = np.asarray(1.3332236842105263e2) * (newton / meter2)  # Torr (mmHg)
 psi = np.asarray(6.894757293168361e3) * (newton / meter2)  # Pound per square inch (psi)
 
 # ----- Area -----
 hectare = np.asarray(1e4) * meter2  # Hectare
-acre = np.asarray(4046.864798) * meter2  # Acre
+acre = np.asarray(4046.8564224) * meter2  # Acre
 
 # ----- Volume -----
 gallon = gallon_US = np.asarray(3.785411784e-3) * meter3  # Gallon (US)
 gallon_imp = np.asarray(4.54609e-3) * meter3  # Imperial gallon
 fluid_ounce = fluid_ounce_US = np.asarray(2.95735295625e-5) * meter3  # Fluid ounce (US)
-fluid_ounce_imp = np.asarray(2.84130742e-5) * meter3  # Imperial fluid ounce
-bbl = barrel = np.asarray(1.58987294928e2) * meter3  # Barrel (oil)
+fluid_ounce_imp = np.asarray(2.84130625e-5) * meter3  # Imperial fluid ounce
+bbl = barrel = np.asarray(1.58987294928e-1) * meter3  # Barrel (oil)
 
 # ----- Temperature -----
 # Note: Fahrenheit is a temperature scale, not a unit. Use conversion functions instead.
@@ -255,15 +255,15 @@ degree_Fahrenheit = np.asarray(5/9) * kelvin  # Fahrenheit degree size in Kelvin
 kmh = np.asarray(2.77777778e-1) * speed_unit  # Kilometer per hour
 mph = np.asarray(4.4704e-1) * speed_unit  # Mile per hour
 knot = np.asarray(5.14444444e-1) * speed_unit  # Knot
-mach = np.asarray(3.4029e2) * speed_unit  # Mach
+mach = np.asarray(3.405e2) * speed_unit  # Mach
 
 # ----- Energy -----
-eV = electronvolt = np.asarray(1.6021766208e-19) * joule  # Electronvolt
+eV = electronvolt = np.asarray(1.602176634e-19) * joule  # Electronvolt
 calorie = calorie_th = np.asarray(4.184) * joule  # Calorie (thermochemical)
 calorie_IT = np.asarray(4.1868) * joule  # Calorie (International Table)
 erg = np.asarray(1e-7) * joule  # Erg
 Btu = Btu_IT = np.asarray(1.05505585262e3) * joule  # British thermal unit (International Table)
-Btu_th = np.asarray(1.05435026444e3) * joule  # British thermal unit (thermochemical)
+Btu_th = np.asarray(1.054350264488889e3) * joule  # British thermal unit (thermochemical)
 ton_TNT = np.asarray(4.184e9) * joule  # Ton of TNT
 
 # ----- Power -----
@@ -273,4 +273,4 @@ hp = horsepower = np.asarray(7.4569987158227022e2) * watt  # Horsepower
 dyn = dyne = np.asarray(1e-5) * newton  # Dyne
 lbf = pound_force = np.asarray(4.4482216152605) * newton  # Pound-force
 kgf = kilogram_force = np.asarray(9.80665) * newton  # Kilogram-force
-IMF = np.asarray(1.602176565e-9) * newton  # Intermolecular force
+IMF = np.asarray(1.602176634e-9) * newton  # Intermolecular force

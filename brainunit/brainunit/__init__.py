@@ -13,11 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-
 import saiunit
-
 __version__ = saiunit.__version__
-__version_info__ = tuple(map(int, __version__.split(".")))
+__version_info__ = saiunit.__version_info__
 
 from . import autograd
 from . import constants
@@ -26,6 +24,7 @@ from . import lax
 from . import linalg
 from . import math
 from . import sparse
+from . import typing
 from ._base_decorators import assign_units, check_dims, check_units
 from ._base_dimension import (
     DIMENSIONLESS,
@@ -55,7 +54,7 @@ from ._base_getters import (
     unit_scale_align_to_first,
 )
 from ._base_quantity import Quantity, compatible_with_equinox
-from ._base_unit import UNITLESS, Unit, add_standard_unit
+from ._base_unit import UNITLESS, Unit, add_standard_unit, parse_unit
 from ._celsius import celsius2kelvin, kelvin2celsius
 from ._misc import maybe_custom_array, maybe_custom_array_tree
 from ._unit_common import *
@@ -78,6 +77,10 @@ magnetic_constant = constants.magnetic
 molar_mass_constant = constants.molar_mass
 
 __all__ = [
+              # version control
+              '__version__',
+              '__version_info__',
+
               # submodules
               'math',
               'linalg',
@@ -85,6 +88,7 @@ __all__ = [
               'fft',
               'constants',
               'sparse',
+              'typing',
 
               # misc
               'maybe_custom_array',
@@ -103,6 +107,7 @@ __all__ = [
               'Unit',
               'UNITLESS',
               'add_standard_unit',
+              'parse_unit',
 
               # _base_getters
               'is_dimensionless',
@@ -148,4 +153,3 @@ __all__ = [
               'molar_mass_constant',
           ] + _common_all + _std_units_all + _constants_all
 del _common_all, _std_units_all, _constants_all, saiunit
-

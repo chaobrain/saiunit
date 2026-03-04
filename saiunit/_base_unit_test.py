@@ -32,7 +32,9 @@ from saiunit._base_unit import (
     _normalise_display_parts,
     _siprefixes,
     _standard_units,
+    _unit_name_registry,
     add_standard_unit,
+    parse_unit,
 )
 from saiunit._unit_common import *
 from saiunit._unit_shortcuts import kHz, ms, mV, nS
@@ -651,11 +653,30 @@ class TestStandardUnitLookup:
         assert not is_full
 
     def test_add_standard_unit_registers(self):
+        from saiunit._base_unit import _standard_unit_aliases, _unit_name_registry, _ambiguous_keys
         d = get_or_create_dimension([0, 0, 0, 1, 0, 0, 0])
-        u = Unit(d, name="teestamp", dispname="tA", scale=0, base=10., factor=1.)
-        add_standard_unit(u)
         key = (d, 0, 10., 1.)
-        assert key in _standard_units
+        prev_standard = _standard_units.get(key)
+        prev_aliases = list(_standard_unit_aliases.get(key, []))
+        prev_tA = _unit_name_registry.get('tA')
+        prev_teestamp = _unit_name_registry.get('teestamp')
+        was_ambiguous = key in _ambiguous_keys
+        try:
+            u = Unit(d, name="teestamp", dispname="tA", scale=0, base=10., factor=1.)
+            add_standard_unit(u)
+            assert key in _standard_units
+        finally:
+            if prev_standard is None:
+                _standard_units.pop(key, None)
+            else:
+                _standard_units[key] = prev_standard
+            _standard_unit_aliases[key] = prev_aliases
+            if prev_tA is None:
+                _unit_name_registry.pop('tA', None)
+            if prev_teestamp is None:
+                _unit_name_registry.pop('teestamp', None)
+            if not was_ambiguous:
+                _ambiguous_keys.discard(key)
 
 
 # =========================================================================
@@ -1169,10 +1190,11 @@ def test_docstring_example_unit_class():
     """Test the example from Unit class docstring."""
     import saiunit as u
     Nm = u.newton * u.metre
-    assert 'N' in str(Nm)
+    # newton * metre simplifies to joule
+    assert str(Nm) == 'J'
     q = 1.0 * Nm
     s = q.repr_in_unit(Nm)
-    assert 'N' in s
+    assert 'J' in s
 
 
 def test_docstring_example_unit_is_unitless():
@@ -1221,9 +1243,150 @@ def test_docstring_example_unitless():
 def test_docstring_example_add_standard_unit():
     """Test the example from add_standard_unit docstring."""
     import saiunit as u
-    from saiunit._base_unit import _standard_units
+    from saiunit._base_unit import (
+        _standard_units, _standard_unit_aliases, _unit_name_registry, _ambiguous_keys
+    )
     dim = u.get_or_create_dimension(length=1, time=-1)
-    vel_unit = u.Unit(dim, name='testvel', dispname='tv', scale=0, base=10., factor=1.)
-    u.add_standard_unit(vel_unit)
     key = (dim, 0, 10., 1.)
-    assert key in _standard_units
+    # Save state before registration
+    prev_standard = _standard_units.get(key)
+    prev_aliases = list(_standard_unit_aliases.get(key, []))
+    prev_tv = _unit_name_registry.get('tv')
+    prev_testvel = _unit_name_registry.get('testvel')
+    was_ambiguous = key in _ambiguous_keys
+    try:
+        vel_unit = u.Unit(dim, name='testvel', dispname='tv', scale=0, base=10., factor=1.)
+        u.add_standard_unit(vel_unit)
+        assert key in _standard_units
+    finally:
+        # Restore global state
+        if prev_standard is None:
+            _standard_units.pop(key, None)
+        else:
+            _standard_units[key] = prev_standard
+        _standard_unit_aliases[key] = prev_aliases
+        if prev_tv is None:
+            _unit_name_registry.pop('tv', None)
+        if prev_testvel is None:
+            _unit_name_registry.pop('testvel', None)
+        if not was_ambiguous:
+            _ambiguous_keys.discard(key)
+
+
+# ---------------------------------------------------------------------------
+# parse_unit / Unit(str) tests
+# ---------------------------------------------------------------------------
+
+
+class TestParseUnit:
+    """Tests for string-based Unit construction."""
+
+    # --- Simple dispname lookup ---
+    def test_simple_dispname(self):
+        assert Unit("mV") == mvolt
+
+    def test_base_unit_dispname(self):
+        assert Unit("V") == volt
+
+    def test_si_prefixed(self):
+        assert Unit("kHz") == khertz
+
+    # --- Full name lookup ---
+    def test_fullname(self):
+        assert Unit("mvolt") == mvolt
+
+    def test_fullname_base(self):
+        assert Unit("volt") == volt
+
+    # --- Exponents ---
+    def test_positive_exponent(self):
+        assert Unit("m^2") == metre ** 2
+
+    def test_negative_exponent(self):
+        assert Unit("s^-1") == second ** -1
+
+    def test_exponent_3(self):
+        assert Unit("m^3") == metre ** 3
+
+    # --- Division ---
+    def test_simple_division(self):
+        assert Unit("J / kg") == joule / kilogram
+
+    def test_division_with_exponent(self):
+        assert Unit("nA / cm^2") == namp / cmetre ** 2
+
+    # --- Multiplication + division ---
+    def test_product_and_division(self):
+        parsed = Unit("mS * nA / cm^2")
+        expected = msiemens * namp / cmetre ** 2
+        assert parsed == expected
+
+    # --- Parenthesized denominator ---
+    def test_parenthesized_denominator(self):
+        parsed = Unit("m / (kg * s^2)")
+        expected = metre / (kilogram * second ** 2)
+        assert parsed == expected
+
+    # --- Dimensionless ---
+    def test_unitless(self):
+        assert Unit("1") == UNITLESS
+
+    def test_dimensionless_scaled(self):
+        u = Unit("10^3")
+        assert u.dim == DIMENSIONLESS
+        assert u.base == 10.0
+        assert u.scale == 3
+
+    # --- Repr wrapper ---
+    def test_from_repr_double_quote(self):
+        assert Unit('Unit("mV")') == mvolt
+
+    def test_from_repr_single_quote(self):
+        assert Unit("Unit('mV')") == mvolt
+
+    # --- Roundtrip for common units ---
+    @pytest.mark.parametrize("unit", [
+        volt, mvolt, hertz, metre, kilogram, second, amp,
+        joule, watt, newton, pascal, ohm, siemens, farad,
+        coulomb, weber, tesla, henry, lumen, lux, katal,
+    ])
+    def test_roundtrip_named(self, unit):
+        assert Unit(str(unit)) == unit
+
+    def test_roundtrip_compound(self):
+        compound = mvolt / (kilogram * second)
+        assert Unit(str(compound)) == compound
+
+    def test_roundtrip_all_standard_units(self):
+        """Every registered standard unit should roundtrip.
+
+        Units whose dispname collides with another unit (e.g. survey_foot
+        and foot both display as 'ft') are skipped because the parser
+        always resolves to the first-registered unit for a given dispname.
+        """
+        for key, unit in _standard_units.items():
+            s = str(unit)
+            parsed = Unit(s)
+            if parsed != unit:
+                # Verify the mismatch is due to a dispname collision,
+                # not a genuine parser bug.
+                assert s in _unit_name_registry
+                assert _unit_name_registry[s] == parsed
+
+    # --- Error handling ---
+    def test_unknown_unit_raises(self):
+        with pytest.raises(ValueError, match="Unknown unit"):
+            Unit("nonexistent_unit_xyz")
+
+    def test_empty_string_raises(self):
+        with pytest.raises(ValueError):
+            Unit("")
+
+    # --- parse_unit function directly ---
+    def test_parse_unit_function(self):
+        assert parse_unit("mV") == mvolt
+
+    def test_registry_populated(self):
+        assert "mV" in _unit_name_registry
+        assert "volt" in _unit_name_registry
+        assert "V" in _unit_name_registry

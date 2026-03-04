@@ -712,14 +712,14 @@ class TestQuantityIntegration:
     def test_display(self):
         """Test displaying a Quantity in different units."""
         assert_equal(display_in_unit(3. * volt, mvolt), "3000. mV")
-        assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 A * ohm")
+        assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 V")
         with pytest.raises(u.UnitMismatchError):
             display_in_unit(10 * nS, ohm)
 
         brainstate = pytest.importorskip("brainstate")
         with brainstate.environ.context(precision=32):
             assert_equal(display_in_unit(3. * volt, mvolt), "3000. mV")
-            assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 A * ohm")
+            assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 V")
             with pytest.raises(u.UnitMismatchError):
                 display_in_unit(10 * nS, ohm)
 
@@ -728,7 +728,7 @@ class TestQuantityIntegration:
         assert_equal(str(u.mS / u.cm ** 2), 'mS / cm^2')
 
         assert_equal(display_in_unit(10. * u.mV), '10. mV')
-        assert_equal(display_in_unit(10. * u.ohm * u.amp), '10. A * ohm')
+        assert_equal(display_in_unit(10. * u.ohm * u.amp), '10. V')
         assert_equal(display_in_unit(120. * (u.mS / u.cm ** 2)), '120. mS / cm^2')
         assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter), '0.02298674 km * m')
         assert_equal(display_in_unit(3.0 * u.kmeter / (130.51 * u.meter)), '22.986744')
@@ -1760,3 +1760,38 @@ def test_docstring_example_pow():
     q = u.Quantity(2.0, unit=u.mV)
     result = q.pow(2)
     assert jnp.allclose(result.mantissa, 4.0)
+
+
+# ---------------------------------------------------------------------------
+# Quantity with string unit tests
+# ---------------------------------------------------------------------------
+
+
+class TestQuantityStringUnit:
+    """Tests for Quantity(value, 'unit_string')."""
+
+    def test_simple_string_unit(self):
+        q = Quantity(1.0, "mV")
+        assert q.unit == mvolt
+        assert q.mantissa == 1.0
+
+    def test_fullname_string_unit(self):
+        q = Quantity(1.0, "mvolt")
+        assert q.unit == mvolt
+
+    def test_compound_string_unit(self):
+        q = Quantity(1.0, "J / kg")
+        assert q.unit == joule / kilogram
+
+    def test_unitless_string(self):
+        q = Quantity(1.0, "1")
+        assert q.unit == UNITLESS
+
+    def test_array_with_string_unit(self):
+        q = Quantity(jnp.array([1.0, 2.0, 3.0]), "mV")
+        assert q.unit == mvolt
+        assert q.shape == (3,)
+
+    def test_invalid_string_unit_raises(self):
+        with pytest.raises(ValueError):
+            Quantity(1.0, "nonexistent_xyz")

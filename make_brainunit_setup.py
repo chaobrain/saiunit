@@ -22,7 +22,7 @@ import sys
 def make(root_dir):
     sys.path.insert(0, os.path.abspath(root_dir))
 
-    import saiunit
+    from saiunit._version import __version__ as saiunit_version
 
     # base directory
     root_dir = os.path.abspath(root_dir)
@@ -32,9 +32,9 @@ def make(root_dir):
     # pyproject
     with open(os.path.join(brainunit_dir, 'pyproject.toml.template'), 'r') as f:
         pyproject = f.read()
-    pyproject = pyproject.replace('version = ""', f'version = "{saiunit.__version__}"')
-    pyproject = pyproject.replace('saiunit==', f'saiunit=={saiunit.__version__}')
-    pyproject = pyproject.replace('version = &', f'version = "{saiunit.__version__}"')
+    pyproject = pyproject.replace('version = ""', f'version = "{saiunit_version}"')
+    pyproject = pyproject.replace('saiunit==', f'saiunit=={saiunit_version}')
+    pyproject = pyproject.replace('version = &', f'version = "{saiunit_version}"')
     with open(os.path.join(brainunit_dir, 'pyproject.toml'), 'w') as f:
         f.write(pyproject)
 

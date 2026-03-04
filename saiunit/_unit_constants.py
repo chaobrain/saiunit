@@ -72,7 +72,7 @@ from .math import pi
 
 __all__ = [
     "metric_ton", "grain", "lb", "pound", "slinch", "blob", "slug", "oz", "ounce", "stone", "long_ton", "short_ton",
-    "troy_ounce", "troy_pound", "carat", "atomic_mass", "u", "um_u", "degree", "arcmin", "arcminute", "arcsec",
+    "troy_ounce", "troy_pound", "carat", "atomic_mass", "u", "um_u", "amu", "degree", "arcmin", "arcminute", "arcsec",
     "arcsecond", "minute", "hour", "day", "week", "month", "year", "julian_year", "inch", "foot", "yard", "mile",
     "mil", "point", "pica", "survey_foot", "survey_mile", "nautical_mile", "fermi", "angstrom", "micron",
     "astronomical_unit", "au", "light_year", "parsec", "atm", "atmosphere", "bar", "mmHg", "torr", "psi",
@@ -97,9 +97,9 @@ short_ton = Unit.create(kilogram.dim, name="short ton", dispname="short ton", sc
 troy_ounce = Unit.create(kilogram.dim, name="troy ounce", dispname="oz t", scale=kilogram.scale - 2, factor=3.11034768)
 troy_pound = Unit.create(kilogram.dim, name="troy pound", dispname="lb t", scale=kilogram.scale, factor=0.3732417216)
 carat = Unit.create(kilogram.dim, name="carat", dispname="ct", scale=kilogram.scale - 4, factor=2.)
-# atomic mass unit (amu)
-atomic_mass = u = um_u = Unit.create(kilogram.dim, name="atomic mass unit", dispname="u", scale=kilogram.scale - 27,
-                                     factor=1.66053886)
+# atomic mass unit (amu) — CODATA 2018
+atomic_mass = u = um_u = amu = Unit.create(kilogram.dim, name="atomic mass unit", dispname="u",
+                                           scale=kilogram.scale - 27, factor=1.66053906892)
 
 # ----- Angle -----
 degree = Unit.create(radian.dim, name="degree", dispname="°", scale=radian.scale, factor=pi / 180)
@@ -109,6 +109,7 @@ arcsec = arcsecond = Unit.create(radian.dim, name="arcsecond", dispname="″", s
                                  factor=4.84813681109536)
 
 # ----- Time -----
+# Note: ``year`` uses the Gregorian calendar year (365.2425 days), not the common 365-day year.
 
 minute = Unit.create(second.dim, name="minute", dispname="min", scale=second.scale + 1, factor=6.0)
 hour = Unit.create(second.dim, name="hour", dispname="h", scale=second.scale + 3, factor=3.600)
@@ -127,8 +128,8 @@ mile = Unit.create(meter.dim, name="mile", dispname="mi", scale=meter.scale + 3,
 mil = Unit.create(meter.dim, name="mil", dispname="mil", scale=meter.scale, factor=2.54e-5)
 point = Unit.create(meter.dim, name="point", dispname="pt", scale=meter.scale - 4, factor=3.5277777777777776)
 pica = Unit.create(meter.dim, name="pica", dispname="p", scale=meter.scale, factor=4.233333333333333e-3)
-survey_foot = Unit.create(meter.dim, name="survey foot", dispname="ft", scale=meter.scale, factor=0.3048006096012192)
-survey_mile = Unit.create(meter.dim, name="survey mile", dispname="mi", scale=meter.scale + 3,
+survey_foot = Unit.create(meter.dim, name="survey foot", dispname="US survey ft", scale=meter.scale, factor=0.3048006096012192)
+survey_mile = Unit.create(meter.dim, name="survey mile", dispname="US survey mi", scale=meter.scale + 3,
                           factor=1.6093472186944374)
 nautical_mile = Unit.create(meter.dim, name="nautical mile", dispname="nmi", scale=meter.scale + 3, factor=1.8520)
 fermi = Unit.create(meter.dim, name="fermi", dispname="fm", scale=meter.scale - 15)
@@ -136,11 +137,11 @@ angstrom = Unit.create(meter.dim, name="angstrom", dispname="Å", scale=meter.sc
 micron = Unit.create(meter.dim, name="micron", dispname="µm", scale=meter.scale - 6, factor=1.)
 au = astronomical_unit = Unit.create(meter.dim, name="astronomical unit", dispname="AU", scale=meter.scale + 11,
                                      factor=1.495978707)
-light_year = Unit.create(meter.dim, name="light year", dispname="ly", scale=meter.scale + 15, factor=9.460730777119564)
+light_year = Unit.create(meter.dim, name="light year", dispname="ly", scale=meter.scale + 15, factor=9.46073047258080)
 parsec = Unit.create(meter.dim, name="parsec", dispname="pc", scale=meter.scale + 16, factor=3.085677581491367)
 
 # ----- Pressure -----
-atm = atmosphere = Unit.create(pascal.dim, name="atmosphere", dispname="atm", scale=pascal.scale + 5, factor=1.013249966)
+atm = atmosphere = Unit.create(pascal.dim, name="atmosphere", dispname="atm", scale=pascal.scale + 5, factor=1.01325)
 bar = Unit.create(pascal.dim, name="bar", dispname="bar", scale=pascal.scale + 5, factor=1.)
 mmHg = torr = Unit.create(pascal.dim, name="torr", dispname="torr", scale=pascal.scale + 2, factor=1.3332236842105263)
 psi = Unit.create(pascal.dim, name="pound per square inch", dispname="psi", scale=pascal.scale + 3,
@@ -148,16 +149,16 @@ psi = Unit.create(pascal.dim, name="pound per square inch", dispname="psi", scal
 
 # ----- Area -----
 hectare = Unit.create(meter2.dim, name="hectare", dispname="ha", scale=meter2.scale + 4, factor=1.)
-acre = Unit.create(meter2.dim, name="acre", dispname="acre", scale=meter2.scale + 3, factor=4.046864798)
+acre = Unit.create(meter2.dim, name="acre", dispname="acre", scale=meter2.scale + 3, factor=4.0468564224)
 
 # ----- Volume -----
 gallon = gallon_US = Unit.create(meter3.dim, name="gallon", dispname="gal", scale=meter3.scale - 3, factor=3.785411784)
-gallon_imp = Unit.create(meter3.dim, name="imperial gallon", dispname="gal", scale=meter3.scale - 3, factor=4.54609)
+gallon_imp = Unit.create(meter3.dim, name="imperial gallon", dispname="imp gal", scale=meter3.scale - 3, factor=4.54609)
 fluid_ounce = fluid_ounce_US = Unit.create(meter3.dim, name="fluid ounce", dispname="fl oz", scale=meter3.scale - 5,
                                            factor=2.95735295625)
-fluid_ounce_imp = Unit.create(meter3.dim, name="imperial fluid ounce", dispname="fl oz imp", scale=meter3.scale - 5,
-                              factor=2.84130742)
-bbl = barrel = Unit.create(meter3.dim, name="barrel", dispname="bbl", scale=meter3.scale + 2, factor=1.58987294928)
+fluid_ounce_imp = Unit.create(meter3.dim, name="imperial fluid ounce", dispname="imp fl oz", scale=meter3.scale - 5,
+                              factor=2.84130625)
+bbl = barrel = Unit.create(meter3.dim, name="barrel", dispname="bbl", scale=meter3.scale - 1, factor=1.58987294928)
 
 # ----- Speed -----
 speed_unit = meter / second
@@ -165,7 +166,7 @@ kmh = Unit.create(speed_unit.dim, name="kilometer per hour", dispname="km/h", sc
                   factor=2.77777778)
 mph = Unit.create(speed_unit.dim, name="mile per hour", dispname="mph", scale=speed_unit.scale - 1, factor=4.4704)
 mach = speed_of_sound = Unit.create(speed_unit.dim, name="speed of sound", dispname="mach", scale=speed_unit.scale + 2,
-                                    factor=3.4029)
+                                    factor=3.405)
 knot = Unit.create(speed_unit.dim, name="knot", dispname="kn", scale=speed_unit.scale - 1, factor=5.14444444)
 
 # ----- Temperature -----
@@ -175,15 +176,15 @@ degree_Fahrenheit = Unit.create(kelvin.dim, name="degree Fahrenheit", dispname="
                                 factor=5/9)
 
 # ----- Energy -----
-eV = electron_volt = Unit.create(joule.dim, name="electronvolt", dispname="eV", scale=joule.scale - 19, factor=1.602176565)
+eV = electron_volt = Unit.create(joule.dim, name="electronvolt", dispname="eV", scale=joule.scale - 19, factor=1.602176634)
 calorie = calorie_th = Unit.create(joule.dim, name="calorie", dispname="cal", scale=joule.scale, factor=4.184)
 calorie_IT = Unit.create(joule.dim, name="calorie (International Table)", dispname="cal IT", scale=joule.scale,
                          factor=4.1868)
 erg = Unit.create(joule.dim, name="erg", dispname="erg", scale=joule.scale - 7, factor=1.)
-Btu = Btu_IT = Unit.create(joule.dim, name="British thermal unit (International Table)", dispname="Btu IT",
+Btu = Btu_IT = Unit.create(joule.dim, name="British thermal unit (International Table)", dispname="Btu",
                            scale=joule.scale + 3, factor=1.05505585262)
 Btu_th = Unit.create(joule.dim, name="British thermal unit (thermochemical)", dispname="Btu th", scale=joule.scale + 3,
-                     factor=1.05435026444)
+                     factor=1.054350264488889)
 ton_TNT = Unit.create(joule.dim, name="ton of TNT", dispname="ton TNT", scale=joule.scale + 9, factor=4.184)
 
 # ----- Power -----
@@ -202,7 +203,7 @@ kgf = kilogram_force = Unit.create(newton.dim, name="kilogram force", dispname="
 # UNITS in modular dynamics
 # See https://github.com/chaobrain/brainunit/issues/63
 # Intermolecular force 分子间作用力
-IMF = Unit.create(newton.dim, name="intermolecular force", dispname="IMF", scale=newton.scale - 9, factor=1.602176565)
+IMF = Unit.create(newton.dim, name="intermolecular force", dispname="IMF", scale=newton.scale - 9, factor=1.602176634)
 
 """"
 References

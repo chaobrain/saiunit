@@ -214,15 +214,12 @@ def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
             units.append(None)
 
     if len(units):
+        # Normalize None (plain scalars) to UNITLESS so they are
+        # compatible with explicitly unitless Quantity values.
+        units = [UNITLESS if u is None else u for u in units]
         first_unit = units[0]
-        if first_unit is None:
-            if not all(unit is None for unit in units):
-                raise TypeError(f"All elements must have the same units, but got {units}")
-            first_unit = UNITLESS
-            units = [UNITLESS] * len(units)
-        else:
-            if not all(first_unit.has_same_dim(unit) for unit in units):
-                raise TypeError(f"All elements must have the same units, but got {units}")
+        if not all(first_unit.has_same_dim(unit) for unit in units):
+            raise TypeError(f"All elements must have the same units, but got {units}")
         return jnp.asarray(_zoom_values_with_units(values, units)), first_unit
     else:
         return jnp.asarray(values), UNITLESS
@@ -310,14 +307,57 @@ class Quantity:
     _mantissa: jax.Array | np.ndarray
     _unit: Unit
 
+    def __class_getitem__(cls, item: Unit | str) -> type['Quantity']:
+        """Enable ``Quantity[unit]`` and ``Quantity["physical_type"]`` annotations.
+
+        Returns a type that supports ``isinstance`` checks and can be used as
+        a type annotation.
+
+        Parameters
+        ----------
+        item : Unit or str
+            A :class:`Unit` instance (e.g. ``u.meter``) or a string naming a
+            physical type (e.g. ``"length"``, ``"speed"``).
+
+        Returns
+        -------
+        type
+            A class supporting ``isinstance(quantity, Quantity[unit])``.
+
+        Examples
+        --------
+        >>> import saiunit as u
+        >>> x = 2.0 * u.kmeter
+        >>> isinstance(x, u.Quantity[u.meter])    # dimension check
+        True
+        >>> isinstance(x, u.Quantity["length"])    # physical type check
+        True
+        >>> isinstance(x, u.Quantity["mass"])      # wrong dimension
+        False
+
+        Notes
+        -----
+        Some static analyzers may report warnings for
+        ``isinstance(x, Quantity["..."])`` because they interpret this syntax
+        as parameterized generics. For IDE-safe runtime checks, use
+        :func:`saiunit.typing.quantity_type`.
+        """
+        from .typing import _make_annotated_quantity_type
+        return _make_annotated_quantity_type(item)
+
     def __init__(
         self,
         mantissa: PyTree | Unit,
-        unit: Unit | jax.typing.ArrayLike | None = UNITLESS,
+        unit: 'Unit | jax.typing.ArrayLike | str | None' = UNITLESS,
         dtype: jax.typing.DTypeLike | None = None,
     ):
 
         with jax.ensure_compile_time_eval():  # inside JIT, this can avoid to trace the constant mantissa value
+
+            # String-based unit: Quantity(1.0, "mV")
+            if isinstance(unit, str):
+                from ._base_unit import parse_unit
+                unit = parse_unit(unit)
 
             # Handle custom arrays in the mantissa tree structure
             mantissa = maybe_custom_array_tree(mantissa)

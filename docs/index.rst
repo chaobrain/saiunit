@@ -157,14 +157,22 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
 .. toctree::
    :hidden:
    :maxdepth: 1
+   :caption: Getting Started
+
+   getting_started/quickstart.ipynb
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
    :caption: Physical Units
 
    physical_units/quantity.ipynb
-   physical_units/math_operations_with_quantity.ipynb
+   physical_units/math_operations.ipynb
    physical_units/standard_units.ipynb
    physical_units/constants.ipynb
    physical_units/conversion.ipynb
-
+   physical_units/temperature.ipynb
 
 
 .. toctree::
@@ -178,8 +186,42 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    mathematical_functions/linalg_functions.ipynb
    mathematical_functions/fft_functions.ipynb
    mathematical_functions/lax_functions.ipynb
+   mathematical_functions/activation_functions.ipynb
    mathematical_functions/check_units.ipynb
    mathematical_functions/assign_units.ipynb
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: JAX Integration
+
+   jax_integration/jax_transforms.ipynb
+   jax_integration/autograd.ipynb
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Sparse Matrices
+
+   sparse_matrices/sparse_matrices.ipynb
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Visualization
+
+   visualization/matplotlib_integration.ipynb
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Type Annotations
+
+   type_annotations/type_annotations.ipynb
 
 
 .. toctree::
@@ -193,7 +235,6 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    FAQs
 
 
-
 .. toctree::
    :hidden:
    :maxdepth: 1
@@ -201,6 +242,7 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
 
    apis/changelog.md
    apis/saiunit.rst
+   apis/saiunit.typing.rst
    apis/saiunit.autograd.rst
    apis/saiunit.math.rst
    apis/saiunit.linalg.rst
@@ -208,6 +250,5 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    apis/saiunit.fft.rst
    apis/saiunit.sparse.rst
    apis/saiunit.constants.rst
-
 
 
