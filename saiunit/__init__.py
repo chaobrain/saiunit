@@ -89,7 +89,7 @@ from ._base_getters import (
     unit_scale_align_to_first,
 )
 from ._base_quantity import Quantity, compatible_with_equinox
-from ._base_unit import UNITLESS, Unit, add_standard_unit
+from ._base_unit import UNITLESS, Unit, add_standard_unit, parse_unit
 from ._celsius import celsius2kelvin, kelvin2celsius
 from ._misc import maybe_custom_array, maybe_custom_array_tree
 from ._unit_common import *
@@ -142,6 +142,7 @@ __all__ = [
               'Unit',
               'UNITLESS',
               'add_standard_unit',
+              'parse_unit',
 
               # _base_getters
               'is_dimensionless',

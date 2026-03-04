@@ -28,6 +28,7 @@ __all__ = [
     'Unit',
     'UNITLESS',
     'add_standard_unit',
+    'parse_unit',
 ]
 
 # SI unit _prefixes as integer exponents of 10, see table at end of file.
@@ -144,6 +145,7 @@ def _find_a_name(dim: Dimension, base, scale, factor) -> tuple[str | None, bool]
 
 _standard_units: 'dict[tuple, Unit]' = {}
 _standard_unit_aliases: 'dict[tuple, list[Unit]]' = {}
+_unit_name_registry: 'dict[str, Unit]' = {}
 
 # ---------------------------------------------------------------------------
 # Ambiguous-key detection
@@ -232,6 +234,12 @@ def add_standard_unit(u: 'Unit'):
         dispnames = {a.dispname for a in aliases if isinstance(a.dispname, str)}
         if len(dispnames) >= 2:
             _ambiguous_keys.add(key)
+
+        # Register by dispname and name for string-based lookup
+        if isinstance(u.dispname, str) and u.dispname:
+            _unit_name_registry.setdefault(u.dispname, u)
+        if isinstance(u.name, str) and u.name:
+            _unit_name_registry.setdefault(u.name, u)
 
 
 def _get_display_parts(unit: 'Unit'):
@@ -334,6 +342,164 @@ def _format_display_parts(parts) -> str:
         inner = " * ".join(_fmt_term(n, d, e) for n, d, e in denominator)
         den_str = f"({inner})"
     return f"{num_str} / {den_str}"
+
+
+# ---------------------------------------------------------------------------
+# String → Unit parser
+# ---------------------------------------------------------------------------
+
+def _split_fraction(s: str):
+    """Split ``'A / B'`` into ``('A', 'B')``, respecting parentheses.
+
+    Returns ``(s, None)`` when there is no top-level ``/``.
+    """
+    depth = 0
+    i = 0
+    while i < len(s):
+        ch = s[i]
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+        elif depth == 0 and s[i:i + 3] == ' / ':
+            num = s[:i].strip()
+            den = s[i + 3:].strip()
+            if den.startswith('(') and den.endswith(')'):
+                den = den[1:-1].strip()
+            return num, den
+        i += 1
+    return s, None
+
+
+def _split_product(s: str):
+    """Split on ``' * '`` respecting parentheses."""
+    parts = []
+    depth = 0
+    start = 0
+    i = 0
+    while i < len(s):
+        ch = s[i]
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+        elif depth == 0 and s[i:i + 3] == ' * ':
+            parts.append(s[start:i])
+            start = i + 3
+            i = start
+            continue
+        i += 1
+    parts.append(s[start:])
+    return parts
+
+
+def _parse_product(s: str):
+    """Parse ``'A * B * C'`` into a product of :class:`Unit` objects."""
+    terms = _split_product(s)
+    result = None
+    for term in terms:
+        u = _parse_term(term.strip())
+        result = u if result is None else result * u
+    return result
+
+
+def _parse_term(s: str):
+    """Parse a single term like ``'cm^2'``, ``'mV'``, or ``'10^3'``."""
+    s = s.strip()
+    caret_idx = s.rfind('^')
+    if caret_idx > 0:
+        atom = s[:caret_idx].strip()
+        exp_str = s[caret_idx + 1:].strip()
+        try:
+            exp = float(exp_str)
+            if exp == int(exp):
+                exp = int(exp)
+        except ValueError:
+            raise ValueError(f"Invalid exponent in unit string: {s!r}")
+
+        # Numeric base → dimensionless scaled unit (e.g. "10^3")
+        try:
+            base_num = float(atom)
+            return Unit(DIMENSIONLESS, scale=exp, base=base_num)
+        except ValueError:
+            pass
+
+        if atom in _unit_name_registry:
+            return _unit_name_registry[atom] ** exp
+        raise ValueError(f"Unknown unit token: {atom!r} in {s!r}")
+
+    # No exponent — direct lookup
+    if s in _unit_name_registry:
+        return _unit_name_registry[s]
+
+    # Numeric literal (rare: anonymous factor)
+    try:
+        num = float(s)
+        return Unit(DIMENSIONLESS, scale=0, base=10., factor=num)
+    except ValueError:
+        pass
+
+    raise ValueError(
+        f"Unknown unit: {s!r}. Use a registered unit name or display name."
+    )
+
+
+def parse_unit(s: str) -> 'Unit':
+    """Parse a canonical unit string into a :class:`Unit`.
+
+    Accepts strings in the format produced by ``str(unit)`` or
+    ``repr(unit)``, e.g. ``"mV"``, ``"J / kg"``, ``"nA / cm^2"``.
+
+    Both display names (``"mV"``) and full names (``"mvolt"``) are
+    recognised.
+
+    Parameters
+    ----------
+    s : str
+        The unit string to parse.
+
+    Returns
+    -------
+    Unit
+
+    Raises
+    ------
+    ValueError
+        If the string cannot be parsed into a known unit.
+
+    Examples
+    --------
+    >>> parse_unit("mV")
+    Unit("mV")
+    >>> parse_unit("J / kg")
+    Unit("J / kg")
+    """
+    s = s.strip()
+
+    # Strip the Unit("...") repr wrapper if present
+    if s.startswith('Unit("') and s.endswith('")'):
+        s = s[6:-2]
+    elif s.startswith("Unit('") and s.endswith("')"):
+        s = s[6:-2]
+
+    if not s:
+        raise ValueError("Cannot parse an empty unit string.")
+
+    # Dimensionless
+    if s == '1':
+        return UNITLESS
+
+    # Fast path: direct registry lookup
+    if s in _unit_name_registry:
+        return _unit_name_registry[s]
+
+    # Compound expression
+    num_str, den_str = _split_fraction(s)
+    numerator = _parse_product(num_str)
+    if den_str is not None:
+        denominator = _parse_product(den_str)
+        return numerator / denominator
+    return numerator
 
 
 class Unit:
@@ -498,7 +664,7 @@ class Unit:
 
     def __init__(
         self,
-        dim: Dimension = None,
+        dim: 'Dimension | str' = None,
         scale: jax.typing.ArrayLike = 0,
         base: jax.typing.ArrayLike = 10.,
         factor: jax.typing.ArrayLike = 1.,
@@ -507,6 +673,20 @@ class Unit:
         is_fullname: bool = True,
         display_parts=None,
     ):
+        # String-based construction: Unit("mV"), Unit("J / kg"), etc.
+        if isinstance(dim, str):
+            parsed = parse_unit(dim)
+            self._base = parsed._base
+            self._scale = parsed._scale
+            self._factor = parsed._factor
+            self._dim = parsed._dim
+            self._name = parsed._name
+            self._dispname = parsed._dispname
+            self.is_fullname = parsed.is_fullname
+            self._hash = None
+            self._display_parts = parsed._display_parts
+            return
+
         # The base for this unit (as the base of the exponent), i.e.
         # a base of 10 means 10^3, for a "k" prefix.
         self._base = base

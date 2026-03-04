@@ -313,11 +313,16 @@ class Quantity:
     def __init__(
         self,
         mantissa: PyTree | Unit,
-        unit: Unit | jax.typing.ArrayLike | None = UNITLESS,
+        unit: 'Unit | jax.typing.ArrayLike | str | None' = UNITLESS,
         dtype: jax.typing.DTypeLike | None = None,
     ):
 
         with jax.ensure_compile_time_eval():  # inside JIT, this can avoid to trace the constant mantissa value
+
+            # String-based unit: Quantity(1.0, "mV")
+            if isinstance(unit, str):
+                from ._base_unit import parse_unit
+                unit = parse_unit(unit)
 
             # Handle custom arrays in the mantissa tree structure
             mantissa = maybe_custom_array_tree(mantissa)

@@ -1760,3 +1760,38 @@ def test_docstring_example_pow():
     q = su.Quantity(2.0, unit=su.mV)
     result = q.pow(2)
     assert jnp.allclose(result.mantissa, 4.0)
+
+
+# ---------------------------------------------------------------------------
+# Quantity with string unit tests
+# ---------------------------------------------------------------------------
+
+
+class TestQuantityStringUnit:
+    """Tests for Quantity(value, 'unit_string')."""
+
+    def test_simple_string_unit(self):
+        q = Quantity(1.0, "mV")
+        assert q.unit == mvolt
+        assert q.mantissa == 1.0
+
+    def test_fullname_string_unit(self):
+        q = Quantity(1.0, "mvolt")
+        assert q.unit == mvolt
+
+    def test_compound_string_unit(self):
+        q = Quantity(1.0, "J / kg")
+        assert q.unit == joule / kilogram
+
+    def test_unitless_string(self):
+        q = Quantity(1.0, "1")
+        assert q.unit == UNITLESS
+
+    def test_array_with_string_unit(self):
+        q = Quantity(jnp.array([1.0, 2.0, 3.0]), "mV")
+        assert q.unit == mvolt
+        assert q.shape == (3,)
+
+    def test_invalid_string_unit_raises(self):
+        with pytest.raises(ValueError):
+            Quantity(1.0, "nonexistent_xyz")
