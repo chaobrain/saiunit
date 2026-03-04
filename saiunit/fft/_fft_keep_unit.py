@@ -65,9 +65,9 @@ def fftshift(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
-        >>> freq = sufft.fftfreq(4, 1.0 * su.second)
+        >>> freq = sufft.fftfreq(4, 1.0 * u.second)
         >>> shifted = sufft.fftshift(freq)
         >>> recovered = sufft.ifftshift(shifted)
     """
@@ -106,9 +106,9 @@ def ifftshift(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
-        >>> freq = sufft.fftfreq(4, 1.0 * su.second)
+        >>> freq = sufft.fftfreq(4, 1.0 * u.second)
         >>> shifted = sufft.fftshift(freq)
         >>> recovered = sufft.ifftshift(shifted)
     """

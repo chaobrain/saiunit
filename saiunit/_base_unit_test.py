@@ -1169,8 +1169,8 @@ class TestDisplayBugFixes:
 
 def test_docstring_example_unit_class():
     """Test the example from Unit class docstring."""
-    import saiunit as su
-    Nm = su.newton * su.metre
+    import saiunit as u
+    Nm = u.newton * u.metre
     assert 'N' in str(Nm)
     q = 1.0 * Nm
     s = q.repr_in_unit(Nm)
@@ -1179,54 +1179,54 @@ def test_docstring_example_unit_class():
 
 def test_docstring_example_unit_is_unitless():
     """Test the example from Unit.is_unitless docstring."""
-    import saiunit as su
-    assert su.UNITLESS.is_unitless is True
-    assert su.meter.is_unitless is False
+    import saiunit as u
+    assert u.UNITLESS.is_unitless is True
+    assert u.meter.is_unitless is False
 
 
 def test_docstring_example_unit_dim():
     """Test the example from Unit.dim docstring."""
-    import saiunit as su
-    assert su.meter.dim == su.get_or_create_dimension(length=1)
+    import saiunit as u
+    assert u.meter.dim == u.get_or_create_dimension(length=1)
 
 
 def test_docstring_example_unit_has_same_dim():
     """Test the example from Unit.has_same_dim docstring."""
-    import saiunit as su
-    assert su.meter.has_same_dim(su.kmeter) is True
-    assert su.meter.has_same_dim(su.second) is False
+    import saiunit as u
+    assert u.meter.has_same_dim(u.kmeter) is True
+    assert u.meter.has_same_dim(u.second) is False
 
 
 def test_docstring_example_unit_create():
     """Test the example from Unit.create docstring."""
-    import saiunit as su
-    dim = su.get_or_create_dimension(length=1)
-    my_unit = su.Unit.create(dim, name='myunit', dispname='mu')
+    import saiunit as u
+    dim = u.get_or_create_dimension(length=1)
+    my_unit = u.Unit.create(dim, name='myunit', dispname='mu')
     assert my_unit.name == 'myunit'
     assert my_unit.dispname == 'mu'
 
 
 def test_docstring_example_unit_create_scaled():
     """Test the example from Unit.create_scaled_unit docstring."""
-    import saiunit as su
-    assert su.mvolt.name == 'mvolt'
-    assert su.mvolt.scale == -3 + su.volt.scale
+    import saiunit as u
+    assert u.mvolt.name == 'mvolt'
+    assert u.mvolt.scale == -3 + u.volt.scale
 
 
 def test_docstring_example_unitless():
     """Test the example from UNITLESS docstring."""
-    import saiunit as su
-    assert su.UNITLESS.is_unitless is True
-    assert str(su.UNITLESS) == '1'
+    import saiunit as u
+    assert u.UNITLESS.is_unitless is True
+    assert str(u.UNITLESS) == '1'
 
 
 def test_docstring_example_add_standard_unit():
     """Test the example from add_standard_unit docstring."""
-    import saiunit as su
+    import saiunit as u
     from saiunit._base_unit import _standard_units
-    dim = su.get_or_create_dimension(length=1, time=-1)
-    vel_unit = su.Unit(dim, name='testvel', dispname='tv', scale=0, base=10., factor=1.)
-    su.add_standard_unit(vel_unit)
+    dim = u.get_or_create_dimension(length=1, time=-1)
+    vel_unit = u.Unit(dim, name='testvel', dispname='tv', scale=0, base=10., factor=1.)
+    u.add_standard_unit(vel_unit)
     key = (dim, 0, 10., 1.)
     assert key in _standard_units
 

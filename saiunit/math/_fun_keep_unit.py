@@ -130,10 +130,10 @@ def concatenate(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2] * su.second
-      >>> b = [3, 4] * su.second
-      >>> su.math.concatenate([a, b])
+      >>> import saiunit as u
+      >>> a = [1, 2] * u.second
+      >>> b = [3, 4] * u.second
+      >>> u.math.concatenate([a, b])
     """
     return _fun_keep_unit_sequence(jnp.concatenate, arrays, axis=axis, dtype=dtype)
 
@@ -166,10 +166,10 @@ def stack(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> b = [4, 5, 6] * su.second
-      >>> su.math.stack([a, b])
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> b = [4, 5, 6] * u.second
+      >>> u.math.stack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.stack, arrays, axis=axis, dtype=dtype)
 
@@ -199,10 +199,10 @@ def vstack(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> b = [4, 5, 6] * su.meter
-      >>> su.math.vstack([a, b])
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> b = [4, 5, 6] * u.meter
+      >>> u.math.vstack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.vstack, tup, dtype=dtype)
 
@@ -235,10 +235,10 @@ def hstack(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> b = [4, 5, 6] * su.meter
-      >>> su.math.hstack([a, b])
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> b = [4, 5, 6] * u.meter
+      >>> u.math.hstack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.hstack, arrays, dtype=dtype)
 
@@ -268,10 +268,10 @@ def dstack(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1], [2], [3]] * su.meter
-      >>> b = [[4], [5], [6]] * su.meter
-      >>> su.math.dstack([a, b])
+      >>> import saiunit as u
+      >>> a = [[1], [2], [3]] * u.meter
+      >>> b = [[4], [5], [6]] * u.meter
+      >>> u.math.dstack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.dstack, arrays, dtype=dtype)
 
@@ -300,10 +300,10 @@ def column_stack(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> b = [4, 5, 6] * su.second
-      >>> su.math.column_stack([a, b])
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> b = [4, 5, 6] * u.second
+      >>> u.math.column_stack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.column_stack, tup)
 
@@ -330,9 +330,9 @@ def block(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.second
-      >>> su.math.block(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.second
+      >>> u.math.block(a)
     """
     return _fun_keep_unit_sequence(jnp.block, arrays)
 
@@ -366,9 +366,9 @@ def append(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> su.math.append(a, 4 * su.second)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> u.math.append(a, 4 * u.second)
     """
     return _fun_keep_unit_sequence(jnp.append, arr, values, axis=axis)
 
@@ -421,10 +421,10 @@ def split(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.arange(9.0) * su.second
-      >>> su.math.split(a, 3)
+      >>> a = jnp.arange(9.0) * u.second
+      >>> u.math.split(a, 3)
     """
     return _fun_keep_unit_return_sequence(jnp.split, a, indices_or_sections=indices_or_sections, axis=axis)
 
@@ -458,10 +458,10 @@ def array_split(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.arange(9.0) * su.second
-      >>> su.math.array_split(a, 3)
+      >>> a = jnp.arange(9.0) * u.second
+      >>> u.math.array_split(a, 3)
     """
     return _fun_keep_unit_return_sequence(jnp.split, ary, indices_or_sections=indices_or_sections, axis=axis)
 
@@ -493,10 +493,10 @@ def dsplit(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.arange(16.0).reshape(2, 2, 4) * su.meter
-      >>> su.math.dsplit(a, 2)
+      >>> a = jnp.arange(16.0).reshape(2, 2, 4) * u.meter
+      >>> u.math.dsplit(a, 2)
     """
     return _fun_keep_unit_return_sequence(jnp.dsplit, a, indices_or_sections)
 
@@ -528,10 +528,10 @@ def hsplit(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.arange(16.0).reshape(4, 4) * su.meter
-      >>> su.math.hsplit(a, 2)
+      >>> a = jnp.arange(16.0).reshape(4, 4) * u.meter
+      >>> u.math.hsplit(a, 2)
     """
     return _fun_keep_unit_return_sequence(jnp.hsplit, a, indices_or_sections)
 
@@ -563,10 +563,10 @@ def vsplit(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.arange(16.0).reshape(4, 4) * su.meter
-      >>> su.math.vsplit(a, 2)
+      >>> a = jnp.arange(16.0).reshape(4, 4) * u.meter
+      >>> u.math.vsplit(a, 2)
     """
     return _fun_keep_unit_return_sequence(jnp.vsplit, a, indices_or_sections)
 
@@ -613,10 +613,10 @@ def broadcast_arrays(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> b = [[4], [5]] * su.second
-      >>> su.math.broadcast_arrays(a, b)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> b = [[4], [5]] * u.second
+      >>> u.math.broadcast_arrays(a, b)
     """
     return _broadcast_fun(jnp.broadcast_arrays, *args)
 
@@ -643,10 +643,10 @@ def promote_dtypes(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> b = [4.0, 5.0, 6.0] * su.second
-      >>> su.math.promote_dtypes(a, b)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> b = [4.0, 5.0, 6.0] * u.second
+      >>> u.math.promote_dtypes(a, b)
     """
     return _broadcast_fun(_promote_dtypes, *args)
 
@@ -684,9 +684,9 @@ def broadcast_to(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> su.math.broadcast_to(a, (2, 3))
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> u.math.broadcast_to(a, (2, 3))
     """
     return _fun_keep_unit_unary(jnp.broadcast_to, array, shape=shape)
 
@@ -712,8 +712,8 @@ def atleast_1d(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> su.math.atleast_1d(0 * su.second)
+      >>> import saiunit as u
+      >>> u.math.atleast_1d(0 * u.second)
     """
     return _broadcast_fun(jnp.atleast_1d, *arys)
 
@@ -739,9 +739,9 @@ def atleast_2d(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> su.math.atleast_2d(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> u.math.atleast_2d(a)
     """
     return _broadcast_fun(jnp.atleast_2d, *arys)
 
@@ -767,9 +767,9 @@ def atleast_3d(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.meter
-      >>> su.math.atleast_3d(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.meter
+      >>> u.math.atleast_3d(a)
     """
     return _broadcast_fun(jnp.atleast_3d, *arys)
 
@@ -821,9 +821,9 @@ def reshape(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4] * su.second
-      >>> su.math.reshape(a, (2, 2))
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4] * u.second
+      >>> u.math.reshape(a, (2, 2))
     """
     return _fun_keep_unit_unary(jnp.reshape, a, shape=shape, order=order)
 
@@ -857,10 +857,10 @@ def moveaxis(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.zeros((3, 4, 5)) * su.meter
-      >>> su.math.moveaxis(a, 0, -1).shape
+      >>> a = jnp.zeros((3, 4, 5)) * u.meter
+      >>> u.math.moveaxis(a, 0, -1).shape
       (4, 5, 3)
     """
     return _fun_keep_unit_unary(jnp.moveaxis, a, source=source, destination=destination)
@@ -892,10 +892,10 @@ def transpose(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.ones((2, 3)) * su.second
-      >>> su.math.transpose(a).shape
+      >>> a = jnp.ones((2, 3)) * u.second
+      >>> u.math.transpose(a).shape
       (3, 2)
     """
     return _fun_keep_unit_unary(jnp.transpose, a, axes=axes)
@@ -928,10 +928,10 @@ def swapaxes(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.zeros((3, 4, 5)) * su.meter
-      >>> su.math.swapaxes(a, 0, 2).shape
+      >>> a = jnp.zeros((3, 4, 5)) * u.meter
+      >>> u.math.swapaxes(a, 0, 2).shape
       (5, 4, 3)
     """
     return _fun_keep_unit_unary(jnp.swapaxes, a, axis1=axis1, axis2=axis2)
@@ -961,9 +961,9 @@ def tile(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> su.math.tile(a, 2)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> u.math.tile(a, 2)
     """
     return _fun_keep_unit_unary(jnp.tile, A, reps=reps)
 
@@ -999,9 +999,9 @@ def repeat(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> su.math.repeat(a, 2)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> u.math.repeat(a, 2)
     """
     return _fun_keep_unit_unary(jnp.repeat, a, repeats=repeats, axis=axis, total_repeat_length=total_repeat_length)
 
@@ -1030,9 +1030,9 @@ def flip(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> su.math.flip(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> u.math.flip(a)
     """
     return _fun_keep_unit_unary(jnp.flip, m, axis=axis)
 
@@ -1058,9 +1058,9 @@ def fliplr(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.meter
-      >>> su.math.fliplr(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.meter
+      >>> u.math.fliplr(a)
     """
     return _fun_keep_unit_unary(jnp.fliplr, m)
 
@@ -1086,9 +1086,9 @@ def flipud(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.meter
-      >>> su.math.flipud(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.meter
+      >>> u.math.flipud(a)
     """
     return _fun_keep_unit_unary(jnp.flipud, m)
 
@@ -1123,9 +1123,9 @@ def roll(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> su.math.roll(a, 1)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> u.math.roll(a, 1)
     """
     return _fun_keep_unit_unary(jnp.roll, a, shift=shift, axis=axis)
 
@@ -1154,9 +1154,9 @@ def expand_dims(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> su.math.expand_dims(a, axis=0).shape
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> u.math.expand_dims(a, axis=0).shape
       (1, 3)
     """
     return _fun_keep_unit_unary(jnp.expand_dims, a, axis=axis)
@@ -1187,9 +1187,9 @@ def squeeze(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[[1], [2], [3]]] * su.second
-      >>> su.math.squeeze(a).shape
+      >>> import saiunit as u
+      >>> a = [[[1], [2], [3]]] * u.second
+      >>> u.math.squeeze(a).shape
       (3,)
     """
     return _fun_keep_unit_unary(jnp.squeeze, a, axis=axis)
@@ -1234,9 +1234,9 @@ def sort(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [3, 1, 2] * su.meter
-      >>> su.math.sort(a)
+      >>> import saiunit as u
+      >>> a = [3, 1, 2] * u.meter
+      >>> u.math.sort(a)
     """
     return _fun_keep_unit_unary(jnp.sort, a, axis=axis, kind=kind, order=order, stable=stable, descending=descending)
 
@@ -1278,9 +1278,9 @@ def max(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> su.math.max(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> u.math.max(a)
     """
     return _fun_keep_unit_unary(jnp.max, a, axis=axis, keepdims=keepdims, initial=initial, where=where)
 
@@ -1322,9 +1322,9 @@ def min(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> su.math.min(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> u.math.min(a)
     """
     return _fun_keep_unit_unary(jnp.min, a, axis=axis, keepdims=keepdims, initial=initial, where=where)
 
@@ -1366,9 +1366,9 @@ def diagonal(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.second
-      >>> su.math.diagonal(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.second
+      >>> u.math.diagonal(a)
     """
     return _fun_keep_unit_unary(jnp.diagonal, a, offset=offset, axis1=axis1, axis2=axis2)
 
@@ -1402,9 +1402,9 @@ def ravel(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.meter
-      >>> su.math.ravel(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.meter
+      >>> u.math.ravel(a)
     """
     return _fun_keep_unit_unary(jnp.ravel, a, order=order)
 
@@ -1440,9 +1440,9 @@ def flatten(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.second
-      >>> su.math.flatten(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.second
+      >>> u.math.flatten(a)
     """
     shape = x.shape
     ndim = x.ndim
@@ -1490,9 +1490,9 @@ def unflatten(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4, 5, 6] * su.meter
-      >>> su.math.unflatten(a, 0, (2, 3))
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4, 5, 6] * u.meter
+      >>> u.math.unflatten(a, 0, (2, 3))
     """
     if x.ndim <= axis:
         raise ValueError(
@@ -1522,9 +1522,9 @@ def remove_diag(x: jax.typing.ArrayLike | Quantity) -> jax.Array | Quantity:
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] * su.second
-      >>> su.math.remove_diag(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] * u.second
+      >>> u.math.remove_diag(a)
     """
     x = maybe_custom_array(x)
     unit = UNITLESS
@@ -1575,10 +1575,10 @@ def choose(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
       >>> choices = [jnp.array([1, 2, 3]), jnp.array([4, 5, 6])]
-      >>> su.math.choose(jnp.array([0, 1, 0]), choices)
+      >>> u.math.choose(jnp.array([0, 1, 0]), choices)
     """
     return _fun_keep_unit_unary(jnp.choose, a, choices=choices, mode=mode)
 
@@ -1607,9 +1607,9 @@ def diagflat(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> su.math.diagflat(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> u.math.diagflat(a)
     """
     return _fun_keep_unit_unary(jnp.diagflat, v, k=k)
 
@@ -1650,10 +1650,10 @@ def astype(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1, 2, 3] * su.second
-      >>> su.math.astype(a, jnp.float32)
+      >>> a = [1, 2, 3] * u.second
+      >>> u.math.astype(a, jnp.float32)
     """
     return _fun_keep_unit_unary(jnp.astype, x, dtype)
 
@@ -1677,9 +1677,9 @@ def real(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1 + 2j, 3 + 4j] * su.second
-      >>> su.math.real(a)
+      >>> import saiunit as u
+      >>> a = [1 + 2j, 3 + 4j] * u.second
+      >>> u.math.real(a)
     """
     return _fun_keep_unit_unary(jnp.real, x)
 
@@ -1703,9 +1703,9 @@ def imag(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1 + 2j, 3 + 4j] * su.second
-      >>> su.math.imag(a)
+      >>> import saiunit as u
+      >>> a = [1 + 2j, 3 + 4j] * u.second
+      >>> u.math.imag(a)
     """
     return _fun_keep_unit_unary(jnp.imag, x)
 
@@ -1729,9 +1729,9 @@ def conj(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1 + 2j, 3 + 4j] * su.second
-      >>> su.math.conj(a)
+      >>> import saiunit as u
+      >>> a = [1 + 2j, 3 + 4j] * u.second
+      >>> u.math.conj(a)
     """
     return _fun_keep_unit_unary(jnp.conj, x)
 
@@ -1755,9 +1755,9 @@ def conjugate(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.A
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1 + 2j, 3 + 4j] * su.second
-      >>> su.math.conjugate(a)
+      >>> import saiunit as u
+      >>> a = [1 + 2j, 3 + 4j] * u.second
+      >>> u.math.conjugate(a)
     """
     return _fun_keep_unit_unary(jnp.conjugate, x)
 
@@ -1781,9 +1781,9 @@ def negative(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, -2, 3] * su.meter
-      >>> su.math.negative(a)
+      >>> import saiunit as u
+      >>> a = [1, -2, 3] * u.meter
+      >>> u.math.negative(a)
     """
     return _fun_keep_unit_unary(jnp.negative, x)
 
@@ -1807,9 +1807,9 @@ def positive(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, -2, 3] * su.meter
-      >>> su.math.positive(a)
+      >>> import saiunit as u
+      >>> a = [1, -2, 3] * u.meter
+      >>> u.math.positive(a)
     """
     return _fun_keep_unit_unary(jnp.positive, x)
 
@@ -1833,9 +1833,9 @@ def abs(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [-1, -2, 3] * su.meter
-      >>> su.math.abs(a)
+      >>> import saiunit as u
+      >>> a = [-1, -2, 3] * u.meter
+      >>> u.math.abs(a)
     """
     return _fun_keep_unit_unary(jnp.abs, x)
 
@@ -1898,9 +1898,9 @@ def sum(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.0, 2.0, 3.0] * su.second
-      >>> su.math.sum(a)
+      >>> import saiunit as u
+      >>> a = [1.0, 2.0, 3.0] * u.second
+      >>> u.math.sum(a)
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
@@ -1946,10 +1946,10 @@ def nancumsum(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0] * su.meter
-      >>> su.math.nancumsum(a)
+      >>> a = [1.0, jnp.nan, 3.0] * u.meter
+      >>> u.math.nancumsum(a)
     """
     return _fun_keep_unit_unary(jnp.nancumsum, x, axis=axis, dtype=dtype)
 
@@ -2003,10 +2003,10 @@ def nansum(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0] * su.meter
-      >>> su.math.nansum(a)
+      >>> a = [1.0, jnp.nan, 3.0] * u.meter
+      >>> u.math.nansum(a)
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
@@ -2051,9 +2051,9 @@ def cumsum(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.second
-      >>> su.math.cumsum(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.second
+      >>> u.math.cumsum(a)
     """
     return _fun_keep_unit_unary(jnp.cumsum, x, axis=axis, dtype=dtype)
 
@@ -2085,9 +2085,9 @@ def ediff1d(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 4, 7] * su.meter
-      >>> su.math.ediff1d(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 4, 7] * u.meter
+      >>> u.math.ediff1d(a)
     """
     x_unit = get_unit(x)
     if to_end is not None:
@@ -2116,9 +2116,9 @@ def absolute(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [-1.0, -2.0, 3.0] * su.meter
-      >>> su.math.absolute(a)
+      >>> import saiunit as u
+      >>> a = [-1.0, -2.0, 3.0] * u.meter
+      >>> u.math.absolute(a)
     """
     return _fun_keep_unit_unary(jnp.absolute, x)
 
@@ -2142,9 +2142,9 @@ def fabs(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [-1.0, -2.0, 3.0] * su.meter
-      >>> su.math.fabs(a)
+      >>> import saiunit as u
+      >>> a = [-1.0, -2.0, 3.0] * u.meter
+      >>> u.math.fabs(a)
     """
     return _fun_keep_unit_unary(jnp.fabs, x)
 
@@ -2189,9 +2189,9 @@ def median(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4, 5] * su.second
-      >>> su.math.median(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4, 5] * u.second
+      >>> u.math.median(a)
     """
     return _fun_keep_unit_unary(jnp.median, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims)
 
@@ -2239,10 +2239,10 @@ def nanmin(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0] * su.meter
-      >>> su.math.nanmin(a)
+      >>> a = [1.0, jnp.nan, 3.0] * u.meter
+      >>> u.math.nanmin(a)
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
@@ -2292,10 +2292,10 @@ def nanmax(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0] * su.meter
-      >>> su.math.nanmax(a)
+      >>> a = [1.0, jnp.nan, 3.0] * u.meter
+      >>> u.math.nanmax(a)
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
@@ -2342,9 +2342,9 @@ def ptp(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4, 5] * su.meter
-      >>> su.math.ptp(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4, 5] * u.meter
+      >>> u.math.ptp(a)
     """
     return _fun_keep_unit_unary(jnp.ptp, x, axis=axis, keepdims=keepdims)
 
@@ -2404,9 +2404,9 @@ def average(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.0, 2.0, 3.0] * su.second
-      >>> su.math.average(a)
+      >>> import saiunit as u
+      >>> a = [1.0, 2.0, 3.0] * u.second
+      >>> u.math.average(a)
     """
     return _fun_keep_unit_unary(jnp.average, x, axis=axis, weights=weights, returned=returned, keepdims=keepdims)
 
@@ -2458,9 +2458,9 @@ def mean(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.0, 2.0, 3.0] * su.second
-      >>> su.math.mean(a)
+      >>> import saiunit as u
+      >>> a = [1.0, 2.0, 3.0] * u.second
+      >>> u.math.mean(a)
     """
     return _fun_keep_unit_unary(jnp.mean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where)
 
@@ -2518,9 +2518,9 @@ def std(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.0, 2.0, 3.0] * su.meter
-      >>> su.math.std(a)
+      >>> import saiunit as u
+      >>> a = [1.0, 2.0, 3.0] * u.meter
+      >>> u.math.std(a)
     """
     return _fun_keep_unit_unary(jnp.std, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims, where=where)
 
@@ -2571,10 +2571,10 @@ def nanmedian(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0] * su.second
-      >>> su.math.nanmedian(a)
+      >>> a = [1.0, jnp.nan, 3.0] * u.second
+      >>> u.math.nanmedian(a)
     """
     return _fun_keep_unit_unary(jnp.nanmedian, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims)
 
@@ -2626,10 +2626,10 @@ def nanmean(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0] * su.meter
-      >>> su.math.nanmean(a)
+      >>> a = [1.0, jnp.nan, 3.0] * u.meter
+      >>> u.math.nanmean(a)
     """
     return _fun_keep_unit_unary(jnp.nanmean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where)
 
@@ -2687,10 +2687,10 @@ def nanstd(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0] * su.meter
-      >>> su.math.nanstd(a)
+      >>> a = [1.0, jnp.nan, 3.0] * u.meter
+      >>> u.math.nanstd(a)
     """
     return _fun_keep_unit_unary(jnp.nanstd, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims,
                                 where=where)
@@ -2733,9 +2733,9 @@ def diff(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 4, 7] * su.meter
-      >>> su.math.diff(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 4, 7] * u.meter
+      >>> u.math.diff(a)
     """
     x_unit = get_unit(x)
     if prepend is not None:
@@ -2778,9 +2778,9 @@ def rot90(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.second
-      >>> su.math.rot90(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.second
+      >>> u.math.rot90(a)
     """
     return _fun_keep_unit_unary(jnp.rot90, m, k=k, axes=axes)
 
@@ -2826,10 +2826,10 @@ def intersect1d(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4, 5] * su.second
-      >>> b = [3, 4, 5, 6, 7] * su.second
-      >>> su.math.intersect1d(a, b)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4, 5] * u.second
+      >>> b = [3, 4, 5, 6, 7] * u.second
+      >>> u.math.intersect1d(a, b)
     """
     ar1 = maybe_custom_array(ar1)
     ar2 = maybe_custom_array(ar2)
@@ -2902,10 +2902,10 @@ def nan_to_num(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, jnp.inf] * su.meter
-      >>> su.math.nan_to_num(a)
+      >>> a = [1.0, jnp.nan, jnp.inf] * u.meter
+      >>> u.math.nan_to_num(a)
     """
     x_unit = get_unit(x)
     if isinstance(x, Quantity):
@@ -2973,9 +2973,9 @@ def trace(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [[1, 2], [3, 4]] * su.second
-      >>> su.math.trace(a)
+      >>> import saiunit as u
+      >>> a = [[1, 2], [3, 4]] * u.second
+      >>> u.math.trace(a)
     """
     return _fun_keep_unit_unary(jnp.trace, a, offset=offset, axis1=axis1, axis2=axis2, dtype=dtype)
 
@@ -3034,9 +3034,9 @@ def percentile(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4, 5] * su.meter
-      >>> su.math.percentile(a, 50)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4, 5] * u.meter
+      >>> u.math.percentile(a, 50)
     """
     if isinstance(q, Quantity):
         if not q.is_unitless:
@@ -3104,10 +3104,10 @@ def nanpercentile(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0, 4.0, 5.0] * su.meter
-      >>> su.math.nanpercentile(a, 50)
+      >>> a = [1.0, jnp.nan, 3.0, 4.0, 5.0] * u.meter
+      >>> u.math.nanpercentile(a, 50)
     """
     if isinstance(q, Quantity):
         if not q.is_unitless:
@@ -3175,9 +3175,9 @@ def quantile(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4, 5] * su.meter
-      >>> su.math.quantile(a, 0.5)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4, 5] * u.meter
+      >>> u.math.quantile(a, 0.5)
     """
     if isinstance(q, Quantity):
         if not q.is_unitless:
@@ -3245,10 +3245,10 @@ def nanquantile(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 3.0, 4.0, 5.0] * su.meter
-      >>> su.math.nanquantile(a, 0.5)
+      >>> a = [1.0, jnp.nan, 3.0, 4.0, 5.0] * u.meter
+      >>> u.math.nanquantile(a, 0.5)
     """
     if isinstance(q, Quantity):
         if not q.is_unitless:
@@ -3313,10 +3313,10 @@ def fmod(x1: Union[Quantity, jax.typing.ArrayLike],
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [5, 6, 7] * su.second
-      >>> b = [2, 3, 4] * su.second
-      >>> su.math.fmod(a, b)
+      >>> import saiunit as u
+      >>> a = [5, 6, 7] * u.second
+      >>> b = [2, 3, 4] * u.second
+      >>> u.math.fmod(a, b)
     """
     return _fun_keep_unit_binary(jnp.fmod, x1, x2)
 
@@ -3342,10 +3342,10 @@ def mod(x1: Union[Quantity, jax.typing.ArrayLike], x2: Union[Quantity, jax.Array
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [5, 6, 7] * su.meter
-      >>> b = [2, 3, 4] * su.meter
-      >>> su.math.mod(a, b)
+      >>> import saiunit as u
+      >>> a = [5, 6, 7] * u.meter
+      >>> b = [2, 3, 4] * u.meter
+      >>> u.math.mod(a, b)
     """
     return _fun_keep_unit_binary(jnp.mod, x1, x2)
 
@@ -3374,10 +3374,10 @@ def copysign(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [-1.0, 2.0] * su.meter
-      >>> b = [1.0, -3.0] * su.meter
-      >>> su.math.copysign(a, b)
+      >>> import saiunit as u
+      >>> a = [-1.0, 2.0] * u.meter
+      >>> b = [1.0, -3.0] * u.meter
+      >>> u.math.copysign(a, b)
     """
     x2 = x2.mantissa if isinstance(x2, Quantity) else x2
     return _fun_keep_unit_unary(jnp.copysign, x1, x2)
@@ -3407,10 +3407,10 @@ def maximum(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 3, 5] * su.second
-      >>> b = [2, 2, 4] * su.second
-      >>> su.math.maximum(a, b)
+      >>> import saiunit as u
+      >>> a = [1, 3, 5] * u.second
+      >>> b = [2, 2, 4] * u.second
+      >>> u.math.maximum(a, b)
     """
     return _fun_keep_unit_binary(jnp.maximum, x1, x2)
 
@@ -3439,10 +3439,10 @@ def minimum(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 3, 5] * su.second
-      >>> b = [2, 2, 4] * su.second
-      >>> su.math.minimum(a, b)
+      >>> import saiunit as u
+      >>> a = [1, 3, 5] * u.second
+      >>> b = [2, 2, 4] * u.second
+      >>> u.math.minimum(a, b)
     """
     return _fun_keep_unit_binary(jnp.minimum, x1, x2)
 
@@ -3471,11 +3471,11 @@ def fmax(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 5.0] * su.meter
-      >>> b = [2.0, 2.0, 4.0] * su.meter
-      >>> su.math.fmax(a, b)
+      >>> a = [1.0, jnp.nan, 5.0] * u.meter
+      >>> b = [2.0, 2.0, 4.0] * u.meter
+      >>> u.math.fmax(a, b)
     """
     return _fun_keep_unit_binary(jnp.fmax, x1, x2)
 
@@ -3504,11 +3504,11 @@ def fmin(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1.0, jnp.nan, 5.0] * su.meter
-      >>> b = [2.0, 2.0, 4.0] * su.meter
-      >>> su.math.fmin(a, b)
+      >>> a = [1.0, jnp.nan, 5.0] * u.meter
+      >>> b = [2.0, 2.0, 4.0] * u.meter
+      >>> u.math.fmin(a, b)
     """
     return _fun_keep_unit_binary(jnp.fmin, x1, x2)
 
@@ -3537,11 +3537,11 @@ def lcm(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.array([4, 6]) * su.second
-      >>> b = jnp.array([6, 8]) * su.second
-      >>> su.math.lcm(a.astype(jnp.int64), b.astype(jnp.int64))
+      >>> a = jnp.array([4, 6]) * u.second
+      >>> b = jnp.array([6, 8]) * u.second
+      >>> u.math.lcm(a.astype(jnp.int64), b.astype(jnp.int64))
     """
     return _fun_keep_unit_binary(jnp.lcm, x1, x2)
 
@@ -3568,11 +3568,11 @@ def gcd(x1: Union[Quantity, jax.typing.ArrayLike],
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.array([4, 6]) * su.second
-      >>> b = jnp.array([6, 8]) * su.second
-      >>> su.math.gcd(a.astype(jnp.int64), b.astype(jnp.int64))
+      >>> a = jnp.array([4, 6]) * u.second
+      >>> b = jnp.array([6, 8]) * u.second
+      >>> u.math.gcd(a.astype(jnp.int64), b.astype(jnp.int64))
     """
     return _fun_keep_unit_binary(jnp.gcd, x1, x2)
 
@@ -3602,10 +3602,10 @@ def add(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3] * su.meter
-      >>> b = [4, 5, 6] * su.meter
-      >>> su.math.add(a, b)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3] * u.meter
+      >>> b = [4, 5, 6] * u.meter
+      >>> u.math.add(a, b)
     """
     return _fun_keep_unit_binary(jnp.add, x, y)
 
@@ -3638,10 +3638,10 @@ def subtract(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [4, 5, 6] * su.meter
-      >>> b = [1, 2, 3] * su.meter
-      >>> su.math.subtract(a, b)
+      >>> import saiunit as u
+      >>> a = [4, 5, 6] * u.meter
+      >>> b = [1, 2, 3] * u.meter
+      >>> u.math.subtract(a, b)
     """
     return _fun_keep_unit_binary(jnp.subtract, x, y)
 
@@ -3680,10 +3680,10 @@ def remainder(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [5, 6, 7] * su.second
-      >>> b = [2, 3, 4] * su.second
-      >>> su.math.remainder(a, b)
+      >>> import saiunit as u
+      >>> a = [5, 6, 7] * u.second
+      >>> b = [2, 3, 4] * u.second
+      >>> u.math.remainder(a, b)
     """
     return _fun_keep_unit_binary(jnp.remainder, x, y)
 
@@ -3718,10 +3718,10 @@ def nextafter(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.0, 2.0] * su.meter
-      >>> b = [2.0, 1.0] * su.meter
-      >>> su.math.nextafter(a, b)
+      >>> import saiunit as u
+      >>> a = [1.0, 2.0] * u.meter
+      >>> b = [2.0, 1.0] * u.meter
+      >>> u.math.nextafter(a, b)
     """
     return _fun_keep_unit_binary(jnp.nextafter, x, y)
 
@@ -3764,11 +3764,11 @@ def interp(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> x = [1, 2, 3] * su.second
-      >>> xp = [0, 1, 2, 3, 4] * su.second
-      >>> fp = [0, 1, 2, 3, 4] * su.meter
-      >>> su.math.interp(x, xp, fp)
+      >>> import saiunit as u
+      >>> x = [1, 2, 3] * u.second
+      >>> xp = [0, 1, 2, 3, 4] * u.second
+      >>> fp = [0, 1, 2, 3, 4] * u.meter
+      >>> u.math.interp(x, xp, fp)
     """
     x_unit = get_unit(x)
     fp, y_unit = split_mantissa_unit(fp)
@@ -3811,9 +3811,9 @@ def clip(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4, 5] * su.meter
-      >>> su.math.clip(a, 2 * su.meter, 4 * su.meter)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4, 5] * u.meter
+      >>> u.math.clip(a, 2 * u.meter, 4 * u.meter)
     """
     a_unit = get_unit(a)
     if a_min is not None:
@@ -3880,9 +3880,9 @@ def histogram(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 1, 3, 2] * su.second
-      >>> hist, bin_edges = su.math.histogram(a)
+      >>> import saiunit as u
+      >>> a = [1, 2, 1, 3, 2] * u.second
+      >>> hist, bin_edges = u.math.histogram(a)
     """
     unit = UNITLESS
     if isinstance(x, Quantity):
@@ -3936,10 +3936,10 @@ def compress(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [1, 2, 3, 4] * su.meter
-      >>> su.math.compress(jnp.array([0, 1, 1, 0]), a)
+      >>> a = [1, 2, 3, 4] * u.meter
+      >>> u.math.compress(jnp.array([0, 1, 1, 0]), a)
     """
     if isinstance(condition, Quantity):
         if not condition.is_unitless:
@@ -3990,10 +3990,10 @@ def extract(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.array([1, 2, 3]) * su.meter
-      >>> su.math.extract(a.mantissa > 1, a)
+      >>> a = jnp.array([1, 2, 3]) * u.meter
+      >>> u.math.extract(a.mantissa > 1, a)
     """
     if isinstance(condition, Quantity):
         if not condition.is_unitless:
@@ -4077,10 +4077,10 @@ def take(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = [4, 3, 5, 7, 6, 8] * su.second
-      >>> su.math.take(a, jnp.array([0, 1, 4]))
+      >>> a = [4, 3, 5, 7, 6, 8] * u.second
+      >>> u.math.take(a, jnp.array([0, 1, 4]))
     """
     if isinstance(a, Quantity):
         return a.take(indices, axis=axis, mode=mode, unique_indices=unique_indices,
@@ -4122,11 +4122,11 @@ def select(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
       >>> conds = [jnp.array([True, False, True]), jnp.array([False, True, False])]
-      >>> choices = [[1, 2, 3] * su.second, [4, 5, 6] * su.second]
-      >>> su.math.select(conds, choices, default=0)
+      >>> choices = [[1, 2, 3] * u.second, [4, 5, 6] * u.second]
+      >>> u.math.select(conds, choices, default=0)
     """
     for cond in condlist:
         if isinstance(cond, Quantity):
@@ -4177,9 +4177,9 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None):
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1, 2, 3, 4, 5] * su.meter
-      >>> su.math.where(a > 3 * su.meter, a, 0 * su.meter)
+      >>> import saiunit as u
+      >>> a = [1, 2, 3, 4, 5] * u.meter
+      >>> u.math.where(a > 3 * u.meter, a, 0 * u.meter)
     """
     if isinstance(condition, Quantity):
         raise TypeError(
@@ -4266,9 +4266,9 @@ def unique(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [0, 1, 2, 1, 0] * su.second
-      >>> su.math.unique(a)
+      >>> import saiunit as u
+      >>> a = [0, 1, 2, 1, 0] * u.second
+      >>> u.math.unique(a)
     """
     a_unit = get_unit(a)
     if fill_value is not None:
@@ -4325,9 +4325,9 @@ def round(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.2, 2.7, 3.1] * su.meter
-      >>> su.math.round(a)
+      >>> import saiunit as u
+      >>> a = [1.2, 2.7, 3.1] * u.meter
+      >>> u.math.round(a)
     """
     return _fun_keep_unit_unary(jnp.round, x, decimals=decimals)
 
@@ -4356,9 +4356,9 @@ def around(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.2, 2.7, 3.1] * su.second
-      >>> su.math.around(a)
+      >>> import saiunit as u
+      >>> a = [1.2, 2.7, 3.1] * u.second
+      >>> u.math.around(a)
     """
     return _fun_keep_unit_unary(jnp.around, x, decimals=decimals)
 
@@ -4384,9 +4384,9 @@ def rint(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.2, 2.7, 3.1] * su.meter
-      >>> su.math.rint(a)
+      >>> import saiunit as u
+      >>> a = [1.2, 2.7, 3.1] * u.meter
+      >>> u.math.rint(a)
     """
     return _fun_keep_unit_unary(jnp.rint, x)
 
@@ -4412,9 +4412,9 @@ def floor(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.2, 2.7, 3.1] * su.meter
-      >>> su.math.floor(a)
+      >>> import saiunit as u
+      >>> a = [1.2, 2.7, 3.1] * u.meter
+      >>> u.math.floor(a)
     """
     return _fun_keep_unit_unary(jnp.floor, x)
 
@@ -4440,9 +4440,9 @@ def ceil(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.2, 2.7, 3.1] * su.meter
-      >>> su.math.ceil(a)
+      >>> import saiunit as u
+      >>> a = [1.2, 2.7, 3.1] * u.meter
+      >>> u.math.ceil(a)
     """
     return _fun_keep_unit_unary(jnp.ceil, x)
 
@@ -4468,9 +4468,9 @@ def trunc(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.7, -2.3, 3.9] * su.meter
-      >>> su.math.trunc(a)
+      >>> import saiunit as u
+      >>> a = [1.7, -2.3, 3.9] * u.meter
+      >>> u.math.trunc(a)
     """
     return _fun_keep_unit_unary(jnp.trunc, x)
 
@@ -4496,9 +4496,9 @@ def fix(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.7, -2.3, 3.9] * su.meter
-      >>> su.math.fix(a)
+      >>> import saiunit as u
+      >>> a = [1.7, -2.3, 3.9] * u.meter
+      >>> u.math.fix(a)
     """
     return _fun_keep_unit_unary(jnp.trunc, x)
 
@@ -4523,9 +4523,9 @@ def modf(
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
-      >>> a = [1.5, 2.7] * su.second
-      >>> frac, intg = su.math.modf(a)
+      >>> import saiunit as u
+      >>> a = [1.5, 2.7] * u.second
+      >>> frac, intg = u.math.modf(a)
     """
     if isinstance(x, Quantity):
         return jax.tree.map(lambda y: Quantity(y, unit=x.unit), jnp.modf(x.mantissa))
@@ -4557,11 +4557,11 @@ def gather(input: jax.Array | Quantity, dim: int, index: jax.Array):
     --------
     .. code-block:: python
 
-      >>> import saiunit as su
+      >>> import saiunit as u
       >>> import jax.numpy as jnp
-      >>> a = jnp.array([[1, 2], [3, 4]]) * su.mV
+      >>> a = jnp.array([[1, 2], [3, 4]]) * u.mV
       >>> index = jnp.array([[0, 0], [1, 0]])
-      >>> su.math.gather(a, 1, index)
+      >>> u.math.gather(a, 1, index)
     """
     input = maybe_custom_array(input)
     # Normalize dim to be positive

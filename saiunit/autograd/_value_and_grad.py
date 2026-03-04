@@ -79,12 +79,12 @@ def value_and_grad(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f(x):
         ...     return x ** 2
         >>> vg = suauto.value_and_grad(f)
-        >>> value, grad = vg(jnp.array(3.0) * su.ms)
+        >>> value, grad = vg(jnp.array(3.0) * u.ms)
         >>> value
         9.0 * ms ** 2
         >>> grad
@@ -95,12 +95,12 @@ def value_and_grad(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def g(x, y):
         ...     return x * y
         >>> vg = suauto.value_and_grad(g, argnums=(0, 1))
-        >>> val, grads = vg(jnp.array(3.0) * su.ms, jnp.array(4.0) * su.mV)
+        >>> val, grads = vg(jnp.array(3.0) * u.ms, jnp.array(4.0) * u.mV)
         >>> grads[0]
         4.0 * mvolt
         >>> grads[1]
@@ -201,12 +201,12 @@ def grad(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f(x):
         ...     return x ** 2
         >>> grad_fn = suauto.grad(f)
-        >>> grad_fn(jnp.array(3.0) * su.ms)
+        >>> grad_fn(jnp.array(3.0) * u.ms)
         6.0 * ms
 
     Gradient with auxiliary data:
@@ -214,12 +214,12 @@ def grad(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f_aux(x):
         ...     return x ** 2, x * 3
         >>> grad_fn = suauto.grad(f_aux, has_aux=True)
-        >>> g, aux = grad_fn(jnp.array(3.0) * su.mV)
+        >>> g, aux = grad_fn(jnp.array(3.0) * u.mV)
         >>> g
         6.0 * mvolt
         >>> aux

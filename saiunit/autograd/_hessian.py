@@ -84,12 +84,12 @@ def hessian(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f(x):
-        ...     return x ** 2 + 3 * x * su.ms + 2 * su.msecond2
+        ...     return x ** 2 + 3 * x * u.ms + 2 * u.msecond2
         >>> hess_fn = suauto.hessian(f)
-        >>> hess_fn(jnp.array(1.0) * su.ms)
+        >>> hess_fn(jnp.array(1.0) * u.ms)
         [2]
 
     Hessian of a cubic function where the result carries units:
@@ -97,12 +97,12 @@ def hessian(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def g(x):
-        ...     return x ** 3 + 3 * x * su.msecond2 + 2 * su.msecond3
+        ...     return x ** 3 + 3 * x * u.msecond2 + 2 * u.msecond3
         >>> hess_fn = suauto.hessian(g)
-        >>> hess_fn(jnp.array(1.0) * su.ms)
+        >>> hess_fn(jnp.array(1.0) * u.ms)
         [6] * ms
     """
     _check_callable(fun)

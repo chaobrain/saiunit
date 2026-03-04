@@ -657,7 +657,7 @@ class TestCSRDocstringExamples(unittest.TestCase):
     def test_csr_fromdense_basic(self):
         """Verify CSR.fromdense round-trips through todense."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
@@ -668,7 +668,7 @@ class TestCSRDocstringExamples(unittest.TestCase):
     def test_csr_fromdense_function(self):
         """Verify csr_fromdense function round-trips through todense."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
@@ -679,7 +679,7 @@ class TestCSRDocstringExamples(unittest.TestCase):
     def test_csr_with_data(self):
         """Verify CSR.with_data replaces values but preserves structure."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0.], [0., 2.]])
@@ -691,7 +691,7 @@ class TestCSRDocstringExamples(unittest.TestCase):
     def test_csr_todense_function(self):
         """Verify the csr_todense standalone function."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[5., 0.], [0., 6.]])
@@ -702,7 +702,7 @@ class TestCSRDocstringExamples(unittest.TestCase):
     def test_csr_isinstance_sparse_matrix(self):
         """Verify CSR is a SparseMatrix instance."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0.], [0., 2.]])
@@ -716,7 +716,7 @@ class TestCSCDocstringExamples(unittest.TestCase):
     def test_csc_fromdense_basic(self):
         """Verify CSC.fromdense round-trips through todense."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
@@ -727,7 +727,7 @@ class TestCSCDocstringExamples(unittest.TestCase):
     def test_csc_fromdense_function(self):
         """Verify csc_fromdense function round-trips through todense."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
@@ -738,7 +738,7 @@ class TestCSCDocstringExamples(unittest.TestCase):
     def test_csc_with_data(self):
         """Verify CSC.with_data replaces values but preserves structure."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0.], [0., 2.]])
@@ -750,7 +750,7 @@ class TestCSCDocstringExamples(unittest.TestCase):
     def test_csc_todense_function(self):
         """Verify the csc_todense standalone function."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[5., 0.], [0., 6.]])

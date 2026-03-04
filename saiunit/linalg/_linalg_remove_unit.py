@@ -77,22 +77,22 @@ def cond(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[1., 2.],
-        ...                [2., 1.]]) * su.meter
-        >>> su.linalg.cond(x)
+        ...                [2., 1.]]) * u.meter
+        >>> u.linalg.cond(x)
         Array(3., dtype=float32)
 
     Ill-conditioned (rank-deficient) matrix:
 
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[1., 2.],
-        ...                [0., 0.]]) * su.meter
-        >>> su.linalg.cond(x)
+        ...                [0., 0.]]) * u.meter
+        >>> u.linalg.cond(x)
         Array(inf, dtype=float32)
     """
     return _fun_remove_unit_unary(jnp.linalg.cond, x, p=p)
@@ -152,22 +152,22 @@ def matrix_rank(
 
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1., 2.],
-        ...                [3., 4.]]) * su.meter
-        >>> su.linalg.matrix_rank(a)
+        ...                [3., 4.]]) * u.meter
+        >>> u.linalg.matrix_rank(a)
         Array(2, dtype=int32)
 
     Rank-deficient matrix:
 
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> b = jnp.array([[1., 0.],
-        ...                [0., 0.]]) * su.meter
-        >>> su.linalg.matrix_rank(b)
+        ...                [0., 0.]]) * u.meter
+        >>> u.linalg.matrix_rank(b)
         Array(1, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.linalg.matrix_rank, M, rtol=rtol, tol=tol)
@@ -225,11 +225,11 @@ def slogdet(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1., 2.],
-        ...                [3., 4.]]) * su.meter
-        >>> sign, logabsdet = su.linalg.slogdet(a)
+        ...                [3., 4.]]) * u.meter
+        >>> sign, logabsdet = u.linalg.slogdet(a)
         >>> sign
         Array(-1., dtype=float32)
         >>> jnp.exp(logabsdet)

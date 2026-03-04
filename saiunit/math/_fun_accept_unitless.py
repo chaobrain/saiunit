@@ -167,9 +167,9 @@ def exp(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.exp(jnp.array([0.0, 1.0]))
+        >>> u.math.exp(jnp.array([0.0, 1.0]))
         Array([1.       , 2.7182817], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.exp, x, unit_to_scale=unit_to_scale)
@@ -199,9 +199,9 @@ def exp2(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.exp2(jnp.array([0.0, 1.0, 2.0]))
+        >>> u.math.exp2(jnp.array([0.0, 1.0, 2.0]))
         Array([1., 2., 4.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.exp2, x, unit_to_scale=unit_to_scale)
@@ -231,9 +231,9 @@ def expm1(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.expm1(jnp.array([0.0, 1e-10]))
+        >>> u.math.expm1(jnp.array([0.0, 1e-10]))
         Array([0.e+00, 1.e-10], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.expm1, x, unit_to_scale=unit_to_scale)
@@ -263,9 +263,9 @@ def log(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.log(jnp.array([1.0, jnp.e, jnp.e**2]))
+        >>> u.math.log(jnp.array([1.0, jnp.e, jnp.e**2]))
         Array([0., 1., 2.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.log, x, unit_to_scale=unit_to_scale)
@@ -295,9 +295,9 @@ def log10(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.log10(jnp.array([1.0, 10.0, 100.0]))
+        >>> u.math.log10(jnp.array([1.0, 10.0, 100.0]))
         Array([0., 1., 2.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.log10, x, unit_to_scale=unit_to_scale)
@@ -329,9 +329,9 @@ def log1p(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.log1p(jnp.array([0.0, 1e-10]))
+        >>> u.math.log1p(jnp.array([0.0, 1e-10]))
         Array([0.e+00, 1.e-10], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.log1p, x, unit_to_scale=unit_to_scale)
@@ -361,9 +361,9 @@ def log2(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.log2(jnp.array([1.0, 2.0, 4.0]))
+        >>> u.math.log2(jnp.array([1.0, 2.0, 4.0]))
         Array([0., 1., 2.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.log2, x, unit_to_scale=unit_to_scale)
@@ -393,9 +393,9 @@ def arccos(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.arccos(jnp.array([1.0, 0.0, -1.0]))
+        >>> u.math.arccos(jnp.array([1.0, 0.0, -1.0]))
         Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arccos, x, unit_to_scale=unit_to_scale)
@@ -425,9 +425,9 @@ def arccosh(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.arccosh(jnp.array([1.0, 2.0, 3.0]))
+        >>> u.math.arccosh(jnp.array([1.0, 2.0, 3.0]))
         Array([0.       , 1.3169578, 1.7627472], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arccosh, x, unit_to_scale=unit_to_scale)
@@ -457,9 +457,9 @@ def arcsin(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.arcsin(jnp.array([0.0, 0.5, 1.0]))
+        >>> u.math.arcsin(jnp.array([0.0, 0.5, 1.0]))
         Array([0.       , 0.5235988, 1.5707964], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arcsin, x, unit_to_scale=unit_to_scale)
@@ -489,9 +489,9 @@ def arcsinh(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.arcsinh(jnp.array([0.0, 1.0]))
+        >>> u.math.arcsinh(jnp.array([0.0, 1.0]))
         Array([0.       , 0.8813736], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arcsinh, x, unit_to_scale=unit_to_scale)
@@ -521,9 +521,9 @@ def arctan(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.arctan(jnp.array([0.0, 1.0]))
+        >>> u.math.arctan(jnp.array([0.0, 1.0]))
         Array([0.       , 0.7853982], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arctan, x, unit_to_scale=unit_to_scale)
@@ -553,9 +553,9 @@ def arctanh(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.arctanh(jnp.array([0.0, 0.5]))
+        >>> u.math.arctanh(jnp.array([0.0, 0.5]))
         Array([0.       , 0.5493061], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arctanh, x, unit_to_scale=unit_to_scale)
@@ -585,9 +585,9 @@ def cos(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.cos(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
+        >>> u.math.cos(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([ 1.0000000e+00, -4.3711388e-08, -1.0000000e+00], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.cos, x, unit_to_scale=unit_to_scale)
@@ -617,9 +617,9 @@ def cosh(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.cosh(jnp.array([0.0, 1.0]))
+        >>> u.math.cosh(jnp.array([0.0, 1.0]))
         Array([1.       , 1.5430806], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.cosh, x, unit_to_scale=unit_to_scale)
@@ -649,9 +649,9 @@ def sin(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.sin(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
+        >>> u.math.sin(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([ 0.0000000e+00,  1.0000000e+00, -8.7422777e-08], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.sin, x, unit_to_scale=unit_to_scale)
@@ -681,9 +681,9 @@ def sinc(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.sinc(jnp.array([0.0, 1.0]))
+        >>> u.math.sinc(jnp.array([0.0, 1.0]))
         Array([ 1.0000000e+00, -3.8981719e-09], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.sinc, x, unit_to_scale=unit_to_scale)
@@ -713,9 +713,9 @@ def sinh(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.sinh(jnp.array([0.0, 1.0]))
+        >>> u.math.sinh(jnp.array([0.0, 1.0]))
         Array([0.       , 1.1752012], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.sinh, x, unit_to_scale=unit_to_scale)
@@ -745,9 +745,9 @@ def tan(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.tan(jnp.array([0.0, jnp.pi / 4]))
+        >>> u.math.tan(jnp.array([0.0, jnp.pi / 4]))
         Array([0.       , 1.0000001], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.tan, x, unit_to_scale=unit_to_scale)
@@ -777,9 +777,9 @@ def tanh(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.tanh(jnp.array([0.0, 1.0]))
+        >>> u.math.tanh(jnp.array([0.0, 1.0]))
         Array([0.       , 0.7615942], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.tanh, x, unit_to_scale=unit_to_scale)
@@ -809,9 +809,9 @@ def deg2rad(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.deg2rad(jnp.array([0.0, 90.0, 180.0]))
+        >>> u.math.deg2rad(jnp.array([0.0, 90.0, 180.0]))
         Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.deg2rad, x, unit_to_scale=unit_to_scale)
@@ -841,9 +841,9 @@ def rad2deg(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.rad2deg(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
+        >>> u.math.rad2deg(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([  0.,  90., 180.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.rad2deg, x, unit_to_scale=unit_to_scale)
@@ -873,9 +873,9 @@ def degrees(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.degrees(jnp.array([0.0, jnp.pi]))
+        >>> u.math.degrees(jnp.array([0.0, jnp.pi]))
         Array([  0., 180.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.degrees, x, unit_to_scale=unit_to_scale)
@@ -905,9 +905,9 @@ def radians(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.radians(jnp.array([0.0, 180.0]))
+        >>> u.math.radians(jnp.array([0.0, 180.0]))
         Array([0.       , 3.1415927], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.radians, x, unit_to_scale=unit_to_scale)
@@ -937,9 +937,9 @@ def angle(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.angle(jnp.array([1.0 + 1.0j, 1.0 + 0.0j]))
+        >>> u.math.angle(jnp.array([1.0 + 1.0j, 1.0 + 0.0j]))
         Array([0.7853982, 0.       ], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.angle, x, unit_to_scale=unit_to_scale)
@@ -974,9 +974,9 @@ def frexp(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> m, e = su.math.frexp(jnp.array([1.0, 2.0, 4.0]))
+        >>> m, e = u.math.frexp(jnp.array([1.0, 2.0, 4.0]))
         >>> m
         Array([0.5, 0.5, 0.5], dtype=float32)
         >>> e
@@ -1054,9 +1054,9 @@ def hypot(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.hypot(jnp.array([3.0]), jnp.array([4.0]))
+        >>> u.math.hypot(jnp.array([3.0]), jnp.array([4.0]))
         Array([5.], dtype=float32)
     """
     return _fun_accept_unitless_binary(jnp.hypot, x, y, unit_to_scale=unit_to_scale)
@@ -1089,9 +1089,9 @@ def arctan2(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.arctan2(jnp.array([1.0, -1.0]),
+        >>> u.math.arctan2(jnp.array([1.0, -1.0]),
         ...                 jnp.array([1.0, 1.0]))
         Array([ 0.7853982, -0.7853982], dtype=float32)
     """
@@ -1127,9 +1127,9 @@ def logaddexp(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.logaddexp(jnp.array([1.0]), jnp.array([2.0]))
+        >>> u.math.logaddexp(jnp.array([1.0]), jnp.array([2.0]))
         Array([2.3132617], dtype=float32)
     """
     return _fun_accept_unitless_binary(jnp.logaddexp, x, y, unit_to_scale=unit_to_scale)
@@ -1164,9 +1164,9 @@ def logaddexp2(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.logaddexp2(jnp.array([1.0]), jnp.array([2.0]))
+        >>> u.math.logaddexp2(jnp.array([1.0]), jnp.array([2.0]))
         Array([2.321928], dtype=float32)
     """
     return _fun_accept_unitless_binary(jnp.logaddexp2, x, y, unit_to_scale=unit_to_scale)
@@ -1402,9 +1402,9 @@ def bitwise_not(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.bitwise_not(jnp.array([True, False]))
+        >>> u.math.bitwise_not(jnp.array([True, False]))
         Array([False,  True], dtype=bool)
     """
     return _fun_accept_unitless_unary(jnp.bitwise_not, x)
@@ -1433,9 +1433,9 @@ def invert(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.invert(jnp.array([True, False]))
+        >>> u.math.invert(jnp.array([True, False]))
         Array([False,  True], dtype=bool)
     """
     return _fun_accept_unitless_unary(jnp.invert, x)
@@ -1490,9 +1490,9 @@ def bitwise_and(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.bitwise_and(jnp.array([True, False]),
+        >>> u.math.bitwise_and(jnp.array([True, False]),
         ...                     jnp.array([True, True]))
         Array([ True, False], dtype=bool)
     """
@@ -1525,9 +1525,9 @@ def bitwise_or(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.bitwise_or(jnp.array([True, False]),
+        >>> u.math.bitwise_or(jnp.array([True, False]),
         ...                    jnp.array([False, False]))
         Array([ True, False], dtype=bool)
     """
@@ -1560,9 +1560,9 @@ def bitwise_xor(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.bitwise_xor(jnp.array([True, False]),
+        >>> u.math.bitwise_xor(jnp.array([True, False]),
         ...                     jnp.array([True, True]))
         Array([False,  True], dtype=bool)
     """
@@ -1595,9 +1595,9 @@ def left_shift(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.left_shift(jnp.array([1, 2]), jnp.array([1, 2]))
+        >>> u.math.left_shift(jnp.array([1, 2]), jnp.array([1, 2]))
         Array([2, 8], dtype=int32)
     """
     return _fun_unitless_binary(jnp.left_shift, x, y)
@@ -1629,9 +1629,9 @@ def right_shift(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.right_shift(jnp.array([8, 16]), jnp.array([1, 2]))
+        >>> u.math.right_shift(jnp.array([8, 16]), jnp.array([1, 2]))
         Array([4, 4], dtype=int32)
     """
     return _fun_unitless_binary(jnp.right_shift, x, y)

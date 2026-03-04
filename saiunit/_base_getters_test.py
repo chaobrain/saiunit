@@ -618,76 +618,76 @@ class TestGetMethodIntegration:
 # --- Docstring example tests ---
 
 
-import saiunit as su
+import saiunit as u
 
 
 def test_docstring_example_is_dimensionless():
     """Verify examples from is_dimensionless docstring."""
-    assert su.is_dimensionless(5.0) is True
-    assert su.is_dimensionless(5.0 * su.volt) is False
-    assert su.is_dimensionless(su.DIMENSIONLESS) is True
+    assert u.is_dimensionless(5.0) is True
+    assert u.is_dimensionless(5.0 * u.volt) is False
+    assert u.is_dimensionless(u.DIMENSIONLESS) is True
 
 
 def test_docstring_example_get_dim():
     """Verify examples from get_dim docstring."""
-    dim_mv = su.get_dim(1.0 * su.mV)
-    dim_volt = su.get_dim(su.volt)
+    dim_mv = u.get_dim(1.0 * u.mV)
+    dim_volt = u.get_dim(u.volt)
     # mV and volt share the same dimension
     assert dim_mv == dim_volt
     # plain scalar is dimensionless
-    assert su.get_dim(5.0) == su.DIMENSIONLESS
+    assert u.get_dim(5.0) == u.DIMENSIONLESS
 
 
 def test_docstring_example_get_unit():
     """Verify examples from get_unit docstring."""
-    assert su.get_unit(3.0 * su.mV) == su.mV
-    assert su.get_unit(5.0) == su.UNITLESS
-    assert su.get_unit(su.volt) is su.volt
+    assert u.get_unit(3.0 * u.mV) == u.mV
+    assert u.get_unit(5.0) == u.UNITLESS
+    assert u.get_unit(u.volt) is u.volt
 
 
 def test_docstring_example_get_mantissa():
     """Verify examples from get_mantissa docstring."""
-    assert float(su.get_mantissa(3.0 * su.mV)) == 3.0
-    assert su.get_mantissa(5.0) == 5.0
+    assert float(u.get_mantissa(3.0 * u.mV)) == 3.0
+    assert u.get_mantissa(5.0) == 5.0
 
 
 def test_docstring_example_display_in_unit():
     """Verify examples from display_in_unit docstring."""
-    result = su.display_in_unit(3 * su.volt, su.mvolt)
+    result = u.display_in_unit(3 * u.volt, u.mvolt)
     assert "3000." in result and "mV" in result
 
-    result2 = su.display_in_unit(123123 * su.msecond, su.second, 2)
+    result2 = u.display_in_unit(123123 * u.msecond, u.second, 2)
     assert "123.12" in result2 and "s" in result2
 
 
 def test_docstring_example_split_mantissa_unit():
     """Verify examples from split_mantissa_unit docstring."""
-    m, unit = su.split_mantissa_unit(3.0 * su.mV)
+    m, unit = u.split_mantissa_unit(3.0 * u.mV)
     assert float(m) == 3.0
-    assert unit == su.mV
+    assert unit == u.mV
 
-    m2, unit2 = su.split_mantissa_unit(5.0)
+    m2, unit2 = u.split_mantissa_unit(5.0)
     assert float(m2) == 5.0
-    assert unit2 == su.UNITLESS
+    assert unit2 == u.UNITLESS
 
 
 def test_docstring_example_have_same_dim():
     """Verify examples from have_same_dim docstring."""
-    assert su.have_same_dim(1.0 * su.mV, 2.0 * su.volt) is True
-    assert su.have_same_dim(1.0 * su.mV, 2.0 * su.second) is False
-    assert su.have_same_dim(1.0, 2.0) is True
+    assert u.have_same_dim(1.0 * u.mV, 2.0 * u.volt) is True
+    assert u.have_same_dim(1.0 * u.mV, 2.0 * u.second) is False
+    assert u.have_same_dim(1.0, 2.0) is True
 
 
 def test_docstring_example_has_same_unit():
     """Verify examples from has_same_unit docstring."""
-    assert su.has_same_unit(1.0 * su.mV, 2.0 * su.mV) is True
-    assert su.has_same_unit(1.0 * su.mV, 2.0 * su.volt) is False
-    assert su.has_same_unit(1.0, 2.0) is True
+    assert u.has_same_unit(1.0 * u.mV, 2.0 * u.mV) is True
+    assert u.has_same_unit(1.0 * u.mV, 2.0 * u.volt) is False
+    assert u.has_same_unit(1.0, 2.0) is True
 
 
 def test_docstring_example_array_with_unit():
     """Verify examples from array_with_unit docstring."""
-    q = su.array_with_unit(5.0, su.volt)
-    assert isinstance(q, su.Quantity)
-    assert q.unit == su.volt
-    assert float(su.get_mantissa(q)) == 5.0
+    q = u.array_with_unit(5.0, u.volt)
+    assert isinstance(q, u.Quantity)
+    assert q.unit == u.volt
+    assert float(u.get_mantissa(q)) == 5.0

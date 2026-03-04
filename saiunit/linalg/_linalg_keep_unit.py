@@ -98,25 +98,25 @@ def norm(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
 
         Vector 2-norm:
 
-        >>> x = jnp.array([3., 4., 12.]) * su.meter
-        >>> su.linalg.norm(x)
+        >>> x = jnp.array([3., 4., 12.]) * u.meter
+        >>> u.linalg.norm(x)
         13. * meter
 
         L1 vector norm:
 
-        >>> su.linalg.norm(x, ord=1)
+        >>> u.linalg.norm(x, ord=1)
         19. * meter
 
         Frobenius matrix norm:
 
         >>> m = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 7.]]) * su.meter
-        >>> su.linalg.norm(m)
+        ...                [4., 5., 7.]]) * u.meter
+        >>> u.linalg.norm(m)
         10.198039 * meter
     """
     return _fun_keep_unit_unary(jnp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims)
@@ -154,12 +154,12 @@ def matrix_norm(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[1, 2, 3],
         ...                [4, 5, 6],
-        ...                [7, 8, 9]]) * su.second
-        >>> su.linalg.matrix_norm(x)
+        ...                [7, 8, 9]]) * u.second
+        >>> u.linalg.matrix_norm(x)
         16.881943 * second
     """
     return _fun_keep_unit_unary(jnp.linalg.matrix_norm,
@@ -202,20 +202,20 @@ def vector_norm(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
 
         Norm of a single vector:
 
-        >>> x = jnp.array([1., 2., 3.]) * su.meter
-        >>> su.linalg.vector_norm(x)
+        >>> x = jnp.array([1., 2., 3.]) * u.meter
+        >>> u.linalg.vector_norm(x)
         3.7416575 * meter
 
         Batch of vectors along axis 1:
 
         >>> x = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 7.]]) * su.meter
-        >>> su.linalg.vector_norm(x, axis=1)
+        ...                [4., 5., 7.]]) * u.meter
+        >>> u.linalg.vector_norm(x, axis=1)
         ArrayImpl([3.7416575, 9.48683262], dtype=float32) * meter
     """
     return _fun_keep_unit_unary(jnp.linalg.vector_norm,
@@ -268,12 +268,12 @@ def qr(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1., 2., 3., 4.],
         ...                [5., 4., 2., 1.],
-        ...                [6., 3., 1., 5.]]) * su.meter
-        >>> Q, R = su.linalg.qr(a)
+        ...                [6., 3., 1., 5.]]) * u.meter
+        >>> Q, R = u.linalg.qr(a)
         >>> Q.shape
         (3, 3)
         >>> R.unit
@@ -345,11 +345,11 @@ def svd(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 6.]]) * su.meter
-        >>> U, S, Vh = su.linalg.svd(x, full_matrices=False)
+        ...                [4., 5., 6.]]) * u.meter
+        >>> U, S, Vh = u.linalg.svd(x, full_matrices=False)
         >>> S
         ArrayImpl([9.50803089, 0.77286941], dtype=float32) * meter
     """
@@ -417,11 +417,11 @@ def svdvals(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 6.]]) * su.meter
-        >>> su.linalg.svdvals(x)
+        ...                [4., 5., 6.]]) * u.meter
+        >>> u.linalg.svdvals(x)
         ArrayImpl([9.50803089, 0.77286941], dtype=float32) * meter
     """
     return svd(x, compute_uv=False)
@@ -455,11 +455,11 @@ def eig(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1., 2.],
-        ...                [2., 1.]]) * su.meter
-        >>> w, v = su.linalg.eig(a)
+        ...                [2., 1.]]) * u.meter
+        >>> w, v = u.linalg.eig(a)
         >>> w  # eigenvalues carry the unit
         ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
     """
@@ -502,11 +502,11 @@ def eigh(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1, -2j],
-        ...                [2j, 1]]) * su.meter
-        >>> w, v = su.linalg.eigh(a)
+        ...                [2j, 1]]) * u.meter
+        >>> w, v = u.linalg.eigh(a)
         >>> w
         Array([-1.,  3.], dtype=float32)
     """
@@ -544,11 +544,11 @@ def eigvals(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1., 2.],
-        ...                [2., 1.]]) * su.meter
-        >>> w = su.linalg.eigvals(a)
+        ...                [2., 1.]]) * u.meter
+        >>> w = u.linalg.eigvals(a)
         >>> w  # eigenvalues carry the unit
         ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
     """
@@ -586,11 +586,11 @@ def eigvalsh(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1, -2j],
-        ...                [2j, 1]]) * su.meter
-        >>> w = su.linalg.eigvalsh(a)
+        ...                [2j, 1]]) * u.meter
+        >>> w = u.linalg.eigvalsh(a)
         >>> w
         Array([-1.,  3.], dtype=float32)
     """
@@ -620,11 +620,11 @@ def matrix_transpose(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[1, 2, 3],
-        ...                [4, 5, 6]]) * su.meter
-        >>> su.linalg.matrix_transpose(x)
+        ...                [4, 5, 6]]) * u.meter
+        >>> u.linalg.matrix_transpose(x)
         ArrayImpl([[1, 4],
                    [2, 5],
                    [3, 6]], dtype=int32) * meter

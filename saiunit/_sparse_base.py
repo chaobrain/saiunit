@@ -63,7 +63,7 @@ class SparseMatrix(JAXSparse, ABC):
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[1., 0.], [0., 2.]])
         >>> csr = susparse.CSR.fromdense(dense)
@@ -99,7 +99,7 @@ class SparseMatrix(JAXSparse, ABC):
         .. code-block:: python
 
             >>> import jax.numpy as jnp
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import saiunit.sparse as susparse
             >>> dense = jnp.array([[1., 0.], [0., 2.]])
             >>> csr = susparse.CSR.fromdense(dense)

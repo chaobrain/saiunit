@@ -78,11 +78,11 @@ def cholesky(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[4.0, 2.0], [2.0, 3.0]]) * (su.meter ** 2)
+        >>> A = jnp.array([[4.0, 2.0], [2.0, 3.0]]) * (u.meter ** 2)
         >>> L = sulax.cholesky(A)
-        >>> su.get_unit(L) == su.meter
+        >>> u.get_unit(L) == u.meter
         True
     """
     return _fun_change_unit_unary(lax.linalg.cholesky,
@@ -133,11 +133,11 @@ def eig(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
         >>> w, vl, vr = sulax.eig(A)
-        >>> su.get_unit(w) == su.second
+        >>> u.get_unit(w) == u.second
         True
     """
     x = maybe_custom_array_tree(x)
@@ -221,11 +221,11 @@ def eigh(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * su.second
+        >>> A = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * u.second
         >>> v, w = sulax.eigh(A)
-        >>> su.get_unit(w) == su.second
+        >>> u.get_unit(w) == u.second
         True
     """
     x = maybe_custom_array(x)
@@ -271,11 +271,11 @@ def hessenberg(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
         >>> h, taus = sulax.hessenberg(A)
-        >>> su.get_unit(h) == su.second
+        >>> u.get_unit(h) == u.second
         True
     """
     x = maybe_custom_array(x)
@@ -319,11 +319,11 @@ def lu(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
         >>> lu_mat, pivots, perm = sulax.lu(A)
-        >>> su.get_unit(lu_mat) == su.second
+        >>> u.get_unit(lu_mat) == u.second
         True
     """
     x = maybe_custom_array(x)
@@ -369,7 +369,7 @@ def householder_product(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> a = jnp.array([[1.0, 2.0], [3.0, 4.0]])
         >>> taus = jnp.array([1.0])
@@ -422,11 +422,11 @@ def qdwh(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
         >>> u, h, num_iters, is_converged = sulax.qdwh(A)
-        >>> su.get_unit(h) == su.second
+        >>> u.get_unit(h) == u.second
         True
     """
     x = maybe_custom_array(x)
@@ -464,11 +464,11 @@ def qr(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
         >>> q, r = sulax.qr(A)
-        >>> su.get_unit(r) == su.meter
+        >>> u.get_unit(r) == u.meter
         True
     """
     x = maybe_custom_array(x)
@@ -516,11 +516,11 @@ def schur(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
         >>> t, q = sulax.schur(A)
-        >>> su.get_unit(q) == su.second
+        >>> u.get_unit(q) == u.second
         True
     """
     x = maybe_custom_array(x)
@@ -579,11 +579,11 @@ def svd(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
         >>> u, s, vh = sulax.svd(A)
-        >>> su.get_unit(s) == su.meter
+        >>> u.get_unit(s) == u.meter
         True
     """
     x = maybe_custom_array(x)
@@ -646,12 +646,12 @@ def triangular_solve(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> A = jnp.array([[2.0, 0.0], [1.0, 3.0]])
-        >>> b = jnp.array([[4.0], [7.0]]) * su.meter
+        >>> b = jnp.array([[4.0], [7.0]]) * u.meter
         >>> X = sulax.triangular_solve(A, b, left_side=True, lower=True)
-        >>> su.get_unit(X) == su.meter
+        >>> u.get_unit(X) == u.meter
         True
     """
     a = maybe_custom_array(a)
@@ -714,11 +714,11 @@ def tridiagonal(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> A = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * su.second
+        >>> A = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * u.second
         >>> a_out, d, e, taus = sulax.tridiagonal(A)
-        >>> su.get_unit(d) == su.second
+        >>> u.get_unit(d) == u.second
         True
     """
     a = maybe_custom_array(a)
@@ -775,14 +775,14 @@ def tridiagonal_solve(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> dl = jnp.array([0.0, 1.0, 1.0])
         >>> d  = jnp.array([2.0, 2.0, 2.0])
         >>> du = jnp.array([1.0, 1.0, 0.0])
-        >>> b  = jnp.array([[1.0], [2.0], [3.0]]) * su.meter
+        >>> b  = jnp.array([[1.0], [2.0], [3.0]]) * u.meter
         >>> X = sulax.tridiagonal_solve(dl, d, du, b)
-        >>> su.get_unit(X) == su.meter
+        >>> u.get_unit(X) == u.meter
         True
     """
     dl = maybe_custom_array(dl)

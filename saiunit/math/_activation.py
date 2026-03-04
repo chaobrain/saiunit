@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Union
+
+from typing import Optional, Union
 
 import jax
 from jax import nn
 
 from saiunit._base_getters import get_mantissa
 from saiunit._base_quantity import Quantity
+from saiunit._base_unit import Unit
 from saiunit._misc import set_module_as, maybe_custom_array
 from ._fun_accept_unitless import _fun_accept_unitless_unary
 from ._fun_array_creation import asarray
@@ -72,8 +74,8 @@ def relu(
         >>> sumath.relu(jnp.array([-2., -1., 0., 1., 2.]))
         Array([0., 0., 0., 1., 2.], dtype=float32)
 
-        >>> import saiunit as su
-        >>> q = su.Quantity(jnp.array([-1., 0., 1.]), unit=su.meter)
+        >>> import saiunit as u
+        >>> q = u.Quantity(jnp.array([-1., 0., 1.]), unit=u.meter)
         >>> sumath.relu(q)  # units are preserved
     """
     return _fun_keep_unit_unary(nn.relu, x)
@@ -82,6 +84,7 @@ def relu(
 @set_module_as('saiunit.math')
 def relu6(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Rectified Linear Unit 6 activation function.
 
@@ -104,6 +107,9 @@ def relu6(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -119,12 +125,13 @@ def relu6(
         >>> sumath.relu6(jnp.array([-1., 0., 3., 7.]))
         Array([0., 0., 3., 6.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.relu6, x)
+    return _fun_accept_unitless_unary(nn.relu6, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sigmoid activation function.
 
@@ -137,6 +144,9 @@ def sigmoid(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -152,12 +162,13 @@ def sigmoid(
         >>> sumath.sigmoid(jnp.array([-2., 0., 2.]))
         Array([0.11920292, 0.5       , 0.8807971 ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.sigmoid, x)
+    return _fun_accept_unitless_unary(nn.sigmoid, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def softplus(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Softplus activation function.
 
@@ -170,6 +181,9 @@ def softplus(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -185,12 +199,13 @@ def softplus(
         >>> sumath.softplus(jnp.array([-2., 0., 2.]))
         Array([0.12692805, 0.6931472 , 2.126928  ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.softplus, x)
+    return _fun_accept_unitless_unary(nn.softplus, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def sparse_plus(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sparse plus function.
 
@@ -213,6 +228,9 @@ def sparse_plus(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -228,12 +246,13 @@ def sparse_plus(
         >>> sumath.sparse_plus(jnp.array([-2., 0., 2.]))
         Array([0.  , 0.25, 2.  ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.sparse_plus, x)
+    return _fun_accept_unitless_unary(nn.sparse_plus, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def sparse_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sparse sigmoid activation function.
 
@@ -258,6 +277,9 @@ def sparse_sigmoid(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -273,12 +295,13 @@ def sparse_sigmoid(
         >>> sumath.sparse_sigmoid(jnp.array([-2., 0., 2.]))
         Array([0. , 0.5, 1. ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.sparse_sigmoid, x)
+    return _fun_accept_unitless_unary(nn.sparse_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def soft_sign(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Soft-sign activation function.
 
@@ -291,6 +314,9 @@ def soft_sign(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -306,12 +332,13 @@ def soft_sign(
         >>> sumath.soft_sign(jnp.array([-2., 0., 2.]))
         Array([-0.6666667,  0.       ,  0.6666667], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.soft_sign, x)
+    return _fun_accept_unitless_unary(nn.soft_sign, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def silu(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""SiLU (aka swish) activation function.
 
@@ -326,6 +353,9 @@ def silu(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -341,12 +371,13 @@ def silu(
         >>> sumath.silu(jnp.array([-2., 0., 2.]))
         Array([-0.23840584,  0.        ,  1.7615942 ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.silu, x)
+    return _fun_accept_unitless_unary(nn.silu, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def swish(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Swish (aka SiLU) activation function.
 
@@ -361,6 +392,9 @@ def swish(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -376,12 +410,13 @@ def swish(
         >>> sumath.swish(jnp.array([-2., 0., 2.]))
         Array([-0.23840584,  0.        ,  1.7615942 ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.silu, x)
+    return _fun_accept_unitless_unary(nn.silu, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def log_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Log-sigmoid activation function.
 
@@ -394,6 +429,9 @@ def log_sigmoid(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -409,7 +447,7 @@ def log_sigmoid(
         >>> sumath.log_sigmoid(jnp.array([-2., 0., 2.]))
         Array([-2.126928  , -0.6931472 , -0.12692805], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.log_sigmoid, x)
+    return _fun_accept_unitless_unary(nn.log_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
@@ -461,6 +499,7 @@ def leaky_relu(
 @set_module_as('saiunit.math')
 def hard_sigmoid(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard Sigmoid activation function.
 
@@ -473,6 +512,9 @@ def hard_sigmoid(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -488,12 +530,13 @@ def hard_sigmoid(
         >>> sumath.hard_sigmoid(jnp.array([-4., 0., 4.]))
         Array([0. , 0.5, 1. ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.hard_sigmoid, x)
+    return _fun_accept_unitless_unary(nn.hard_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def hard_silu(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard SiLU (swish) activation function.
 
@@ -509,6 +552,9 @@ def hard_silu(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -524,7 +570,7 @@ def hard_silu(
         >>> sumath.hard_silu(jnp.array([-4., 0., 4.]))
         Array([-0.,  0.,  4.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.hard_silu, x)
+    return _fun_accept_unitless_unary(nn.hard_silu, x, unit_to_scale=unit_to_scale)
 
 
 hard_swish = hard_silu
@@ -533,6 +579,7 @@ hard_swish = hard_silu
 @set_module_as('saiunit.math')
 def hard_tanh(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard :math:`\mathrm{tanh}` activation function.
 
@@ -549,6 +596,9 @@ def hard_tanh(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -564,13 +614,14 @@ def hard_tanh(
         >>> sumath.hard_tanh(jnp.array([-2., -0.5, 0., 0.5, 2.]))
         Array([-1. , -0.5,  0. ,  0.5,  1. ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.hard_tanh, x)
+    return _fun_accept_unitless_unary(nn.hard_tanh, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def elu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    alpha: jax.typing.ArrayLike = 1.0
+    alpha: jax.typing.ArrayLike = 1.0,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Exponential linear unit activation function.
 
@@ -588,6 +639,9 @@ def elu(
         Input array. Must be unitless if a ``Quantity``.
     alpha : array_like, optional
         Scale for the negative region. Default is 1.0.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -605,13 +659,14 @@ def elu(
         >>> sumath.elu(jnp.array([-1., 1.]), alpha=2.0)
         Array([-1.2642411,  1.       ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.elu, x, alpha=alpha)
+    return _fun_accept_unitless_unary(nn.elu, x, alpha=alpha, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def celu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    alpha: jax.typing.ArrayLike = 1.0
+    alpha: jax.typing.ArrayLike = 1.0,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Continuously-differentiable exponential linear unit activation.
 
@@ -633,6 +688,9 @@ def celu(
         Input array. Must be unitless if a ``Quantity``.
     alpha : array_like, optional
         Scale parameter. Default is 1.0.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -648,12 +706,13 @@ def celu(
         >>> sumath.celu(jnp.array([-2., 0., 2.]))
         Array([-0.86466473,  0.        ,  2.        ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.celu, x, alpha=alpha)
+    return _fun_accept_unitless_unary(nn.celu, x, alpha=alpha, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def selu(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Scaled exponential linear unit activation.
 
@@ -676,6 +735,9 @@ def selu(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -691,13 +753,14 @@ def selu(
         >>> sumath.selu(jnp.array([-2., 0., 2.]))
         Array([-1.5201665,  0.       ,  2.1014020], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.selu, x)
+    return _fun_accept_unitless_unary(nn.selu, x, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def gelu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    approximate: bool = True
+    approximate: bool = True,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Gaussian error linear unit activation function.
 
@@ -722,6 +785,9 @@ def gelu(
         Input array. Must be unitless if a ``Quantity``.
     approximate : bool, optional
         Whether to use the approximate or exact formulation. Default is True.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -737,13 +803,14 @@ def gelu(
         >>> sumath.gelu(jnp.array([-2., 0., 2.]))
         Array([-0.04540231,  0.        ,  1.9545977 ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.gelu, x, approximate=approximate)
+    return _fun_accept_unitless_unary(nn.gelu, x, approximate=approximate, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def glu(
     x: Union[Quantity, jax.typing.ArrayLike],
-    axis: int = -1
+    axis: int = -1,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Gated linear unit activation function.
 
@@ -764,6 +831,9 @@ def glu(
         the dimension specified by *axis* must be even.
     axis : int, optional
         The axis along which to split the input. Default is -1.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -780,13 +850,14 @@ def glu(
         >>> sumath.glu(x)
         Array([[0.95257413, 1.9640275 ]], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.glu, x, axis=axis)
+    return _fun_accept_unitless_unary(nn.glu, x, axis=axis, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def squareplus(
     x: Union[Quantity, jax.typing.ArrayLike],
-    b: jax.typing.ArrayLike = 4
+    b: jax.typing.ArrayLike = 4,
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Squareplus activation function.
 
@@ -803,6 +874,9 @@ def squareplus(
         Input array. Must be unitless if a ``Quantity``.
     b : array_like, optional
         Smoothness parameter. Default is 4.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -818,12 +892,13 @@ def squareplus(
         >>> sumath.squareplus(jnp.array([-2., 0., 2.]))
         Array([0.23606798, 1.        , 2.2360680 ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.squareplus, x, b=b)
+    return _fun_accept_unitless_unary(nn.squareplus, x, b=b, unit_to_scale=unit_to_scale)
 
 
 @set_module_as('saiunit.math')
 def mish(
     x: Union[Quantity, jax.typing.ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Mish activation function.
 
@@ -840,6 +915,9 @@ def mish(
     ----------
     x : array_like or Quantity
         Input array. Must be unitless if a ``Quantity``.
+    unit_to_scale : Unit, optional
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the activation.
 
     Returns
     -------
@@ -855,4 +933,4 @@ def mish(
         >>> sumath.mish(jnp.array([-2., 0., 2.]))
         Array([-0.25250152,  0.        ,  1.9439590 ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(nn.mish, x)
+    return _fun_accept_unitless_unary(nn.mish, x, unit_to_scale=unit_to_scale)

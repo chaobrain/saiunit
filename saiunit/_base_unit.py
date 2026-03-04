@@ -211,14 +211,14 @@ def add_standard_unit(u: 'Unit'):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> my_unit = su.Unit(
-        ...     dim=su.joule.dim,
+        >>> import saiunit as u
+        >>> my_unit = u.Unit(
+        ...     dim=u.joule.dim,
         ...     name='my_energy',
         ...     dispname='myE',
         ...     is_fullname=True,
         ... )
-        >>> su.add_standard_unit(my_unit)
+        >>> u.add_standard_unit(my_unit)
     """
     if (
         isinstance(u.base, (int, float)) and
@@ -585,8 +585,8 @@ class Unit:
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> Nm = su.newton * su.metre
+        >>> import saiunit as u
+        >>> Nm = u.newton * u.metre
 
     You can then do:
 
@@ -602,9 +602,9 @@ class Unit:
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> conductance = 10. * su.nS
-        >>> area = 20000 * su.um ** 2
+        >>> import saiunit as u
+        >>> conductance = 10. * u.nS
+        >>> area = 20000 * u.um ** 2
 
     If you now ask for the conductance density, you will get an "ugly" display
     in basic SI dimensions, as saiunit does not know of a corresponding unit:
@@ -619,7 +619,7 @@ class Unit:
 
     .. code-block:: python
 
-        >>> su.usiemens / su.cm ** 2
+        >>> u.usiemens / u.cm ** 2
         usiemens / (cmetre ** 2)
         >>> conductance / area  # same as before, but now knows about uS/cm^2
         50. * usiemens / (cmetre ** 2)
@@ -631,7 +631,7 @@ class Unit:
 
     .. code-block:: python
 
-        >>> 3 * su.joule
+        >>> 3 * u.joule
         3. * joule
         >>> 3 * Nm
         3. * joule
@@ -642,18 +642,18 @@ class Unit:
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.volt
+        >>> import saiunit as u
+        >>> u.volt
         Unit("V")
-        >>> su.mvolt
+        >>> u.mvolt
         Unit("mV")
 
     Combine units:
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.volt / su.amp
+        >>> import saiunit as u
+        >>> u.volt / u.amp
         Unit("V / A")
 
     """
@@ -748,8 +748,8 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.volt.factor
+            >>> import saiunit as u
+            >>> u.volt.factor
             1.0
         """
         return self._factor
@@ -779,8 +779,8 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.kvolt.base
+            >>> import saiunit as u
+            >>> u.kvolt.base
             10.0
         """
         return self._base
@@ -810,8 +810,8 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.mvolt.scale
+            >>> import saiunit as u
+            >>> u.mvolt.scale
             -3
         """
         return self._scale
@@ -841,10 +841,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.mvolt.magnitude
+            >>> import saiunit as u
+            >>> u.mvolt.magnitude
             0.001
-            >>> su.kvolt.magnitude
+            >>> u.kvolt.magnitude
             1000.0
         """
         # magnitude = factor * base ** scale
@@ -871,8 +871,8 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.volt.dim
+            >>> import saiunit as u
+            >>> u.volt.dim
             metre ** 2 * kilogram * second ** -3 * amp ** -1
         """
         return self._dim
@@ -902,10 +902,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.UNITLESS.is_unitless
+            >>> import saiunit as u
+            >>> u.UNITLESS.is_unitless
             True
-            >>> su.volt.is_unitless
+            >>> u.volt.is_unitless
             False
         """
         return self.dim.is_dimensionless and self.scale == 0 and self.factor == 1.0
@@ -928,10 +928,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.volt.should_display_unit
+            >>> import saiunit as u
+            >>> u.volt.should_display_unit
             True
-            >>> su.UNITLESS.should_display_unit
+            >>> u.UNITLESS.should_display_unit
             False
         """
         if not self.is_unitless:
@@ -954,10 +954,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.volt.name
+            >>> import saiunit as u
+            >>> u.volt.name
             'volt'
-            >>> su.mvolt.name
+            >>> u.mvolt.name
             'mvolt'
         """
         return self._name
@@ -987,10 +987,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.volt.dispname
+            >>> import saiunit as u
+            >>> u.volt.dispname
             'V'
-            >>> su.mvolt.dispname
+            >>> u.mvolt.dispname
             'mV'
         """
         return self._dispname
@@ -1015,8 +1015,8 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> u = su.Unit.create(su.Dimension(kg=1), 'pound', 'lb', factor=0.453592)
+            >>> import saiunit as u
+            >>> u = u.Unit.create(u.Dimension(kg=1), 'pound', 'lb', factor=0.453592)
             >>> u.factor
             0.453592
             >>> u.factorless().factor
@@ -1052,11 +1052,11 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> u = su.volt.copy()
-            >>> u == su.volt
+            >>> import saiunit as u
+            >>> u = u.volt.copy()
+            >>> u == u.volt
             True
-            >>> u is su.volt
+            >>> u is u.volt
             False
         """
         return Unit(
@@ -1115,10 +1115,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.mvolt.has_same_magnitude(su.mamp)
+            >>> import saiunit as u
+            >>> u.mvolt.has_same_magnitude(u.mamp)
             True
-            >>> su.mvolt.has_same_magnitude(su.volt)
+            >>> u.mvolt.has_same_magnitude(u.volt)
             False
         """
         return self.scale == other.scale and self.base == other.base and self.factor == other.factor
@@ -1141,10 +1141,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.volt.has_same_base(su.amp)
+            >>> import saiunit as u
+            >>> u.volt.has_same_base(u.amp)
             True
-            >>> su.volt.has_same_base(su.mvolt)
+            >>> u.volt.has_same_base(u.mvolt)
             True
         """
         return self.base == other.base
@@ -1167,10 +1167,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.volt.has_same_dim(su.mvolt)
+            >>> import saiunit as u
+            >>> u.volt.has_same_dim(u.mvolt)
             True
-            >>> su.volt.has_same_dim(su.amp)
+            >>> u.volt.has_same_dim(u.amp)
             False
         """
         from ._base_getters import get_dim
@@ -1217,10 +1217,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> from saiunit import Dimension
-            >>> energy_dim = su.joule.dim
-            >>> cal = su.Unit.create(energy_dim, 'calorie', 'cal', factor=4.184)
+            >>> energy_dim = u.joule.dim
+            >>> cal = u.Unit.create(energy_dim, 'calorie', 'cal', factor=4.184)
             >>> cal
             Unit("cal")
         """
@@ -1258,8 +1258,8 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> uvolt = su.Unit.create_scaled_unit(su.volt, 'u')
+            >>> import saiunit as u
+            >>> uvolt = u.Unit.create_scaled_unit(u.volt, 'u')
             >>> uvolt.name
             'uvolt'
             >>> uvolt.scale
@@ -1447,10 +1447,10 @@ class Unit:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.second.reverse()
+            >>> import saiunit as u
+            >>> u.second.reverse()
             Unit("Hz")
-            >>> su.metre.reverse()
+            >>> u.metre.reverse()
             Unit("1 / m")
         """
         dim = self.dim ** -1
@@ -1656,9 +1656,9 @@ internally as the neutral element of unit arithmetic.
 
 .. code-block:: python
 
-    >>> import saiunit as su
-    >>> su.UNITLESS.is_unitless
+    >>> import saiunit as u
+    >>> u.UNITLESS.is_unitless
     True
-    >>> su.UNITLESS.dim.is_dimensionless
+    >>> u.UNITLESS.dim.is_dimensionless
     True
 """

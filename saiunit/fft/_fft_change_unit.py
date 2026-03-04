@@ -111,10 +111,10 @@ def fft(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * u.meter
         >>> X = sufft.fft(x)
         >>> x_roundtrip = sufft.ifft(X)
     """
@@ -165,10 +165,10 @@ def rfft(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * u.meter
         >>> X = sufft.rfft(x)
     """
     return _fun_change_unit_unary(
@@ -224,10 +224,10 @@ def ifft(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * u.meter
         >>> X = sufft.fft(x)
         >>> x_back = sufft.ifft(X)
     """
@@ -279,10 +279,10 @@ def irfft(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * u.meter
         >>> X = sufft.rfft(x)
         >>> x_back = sufft.irfft(X)
     """
@@ -331,10 +331,10 @@ def fft2(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
         >>> X = sufft.fft2(x)
         >>> x_back = sufft.ifft2(X)
     """
@@ -381,10 +381,10 @@ def rfft2(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * su.meter
+        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * u.meter
         >>> X = sufft.rfft2(x)
     """
     return _fun_change_unit_unary(jnpfft.rfft2,
@@ -430,10 +430,10 @@ def fftn(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
         >>> X = sufft.fftn(x)
         >>> x_back = sufft.ifftn(X)
     """
@@ -484,10 +484,10 @@ def rfftn(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * su.meter
+        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * u.meter
         >>> X = sufft.rfftn(x)
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
@@ -540,10 +540,10 @@ def ifft2(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
         >>> X = sufft.fft2(x)
         >>> x_back = sufft.ifft2(X)
     """
@@ -589,10 +589,10 @@ def irfft2(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * su.meter
+        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * u.meter
         >>> X = sufft.rfft2(x)
         >>> x_back = sufft.irfft2(X)
     """
@@ -639,10 +639,10 @@ def ifftn(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
         >>> X = sufft.fftn(x)
         >>> x_back = sufft.ifftn(X)
     """
@@ -694,10 +694,10 @@ def irfftn(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * su.meter
+        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * u.meter
         >>> X = sufft.rfftn(x)
         >>> x_back = sufft.irfftn(X)
     """
@@ -803,9 +803,9 @@ def fftfreq(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
-        >>> freqs = sufft.fftfreq(4, 1.0 * su.second)
+        >>> freqs = sufft.fftfreq(4, 1.0 * u.second)
     """
     if isinstance(d, Quantity):
         _validate_time_spacing(d)
@@ -862,9 +862,9 @@ def rfftfreq(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.fft as sufft
-        >>> freqs = sufft.rfftfreq(4, 1.0 * su.second)
+        >>> freqs = sufft.rfftfreq(4, 1.0 * u.second)
     """
     if isinstance(d, Quantity):
         _validate_time_spacing(d)

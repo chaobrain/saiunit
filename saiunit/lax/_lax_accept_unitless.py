@@ -79,7 +79,7 @@ def acos(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
         >>> sulax.acos(jnp.array([0.0, 0.5, 1.0]))
@@ -385,7 +385,7 @@ def erf(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
         >>> sulax.erf(jnp.array([0.0, 0.5, 1.0]))
@@ -461,7 +461,7 @@ def logistic(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
         >>> sulax.logistic(jnp.array([0.0, 1.0, -1.0]))

@@ -72,10 +72,10 @@ def rsqrt(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([4.0, 9.0, 16.0]) * (su.meter ** 2)
+        >>> q = jnp.array([4.0, 9.0, 16.0]) * (u.meter ** 2)
         >>> result = sulax.rsqrt(q)
         >>> result.mantissa
         Array([0.5       , 0.33333334, 0.25      ], dtype=float32)
@@ -199,11 +199,11 @@ def div(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> dist = jnp.array([10.0, 20.0]) * su.meter
-        >>> time = jnp.array([2.0, 4.0]) * su.second
+        >>> dist = jnp.array([10.0, 20.0]) * u.meter
+        >>> time = jnp.array([2.0, 4.0]) * u.second
         >>> speed = sulax.div(dist, time)
         >>> speed.mantissa
         Array([5., 5.], dtype=float32)
@@ -308,10 +308,10 @@ def pow(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([2.0, 3.0]) * su.meter
+        >>> q = jnp.array([2.0, 3.0]) * u.meter
         >>> result = sulax.pow(q, jnp.float32(2.0))
         >>> result.mantissa
         Array([4., 9.], dtype=float32)
@@ -362,10 +362,10 @@ def integer_pow(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([2.0, 3.0]) * su.meter
+        >>> q = jnp.array([2.0, 3.0]) * u.meter
         >>> result = sulax.integer_pow(q, 3)
         >>> result.mantissa
         Array([ 8., 27.], dtype=float32)
@@ -410,11 +410,11 @@ def mul(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([2.0, 3.0]) * su.meter
-        >>> b = jnp.array([4.0, 5.0]) * su.second
+        >>> a = jnp.array([2.0, 3.0]) * u.meter
+        >>> b = jnp.array([4.0, 5.0]) * u.second
         >>> result = sulax.mul(a, b)
         >>> result.mantissa
         Array([ 8., 15.], dtype=float32)
@@ -478,11 +478,11 @@ def batch_matmul(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> x = jnp.ones((2, 3, 4)) * su.meter
-        >>> y = jnp.ones((2, 4, 5)) * su.second
+        >>> x = jnp.ones((2, 3, 4)) * u.meter
+        >>> y = jnp.ones((2, 4, 5)) * u.second
         >>> result = sulax.batch_matmul(x, y)
         >>> result.mantissa.shape
         (2, 3, 5)

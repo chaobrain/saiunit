@@ -107,7 +107,7 @@ def reduce(
 
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
         >>> from jax import lax
@@ -119,12 +119,12 @@ def reduce(
 
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
         >>> from jax import lax
-        >>> q = jnp.array([1.0, 2.0, 3.0]) * su.meter
-        >>> sulax.reduce(q, jnp.float32(0) * su.meter, lax.add, [0])
+        >>> q = jnp.array([1.0, 2.0, 3.0]) * u.meter
+        >>> sulax.reduce(q, jnp.float32(0) * u.meter, lax.add, [0])
         Array(6., dtype=float32)
     """
     operands = maybe_custom_array(operands)
@@ -197,10 +197,10 @@ def reduce_precision(
 
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * su.meter
+        >>> q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * u.meter
         >>> sulax.reduce_precision(q, exponent_bits=5, mantissa_bits=10)
         Array([1.123047, 2.123047], dtype=float32)
     """

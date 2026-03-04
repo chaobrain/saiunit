@@ -770,7 +770,7 @@ class TestAssignUnitsIntegration:
 # --- Docstring example tests ---
 
 
-import saiunit as su
+import saiunit as u
 
 
 class TestDocstringExampleCheckDims:
@@ -778,18 +778,18 @@ class TestDocstringExampleCheckDims:
 
     def test_docstring_example_check_dims_basic(self):
         """Basic dimension checking: I in amps, R in ohms, result in volts."""
-        @su.check_dims(I=su.amp.dim, R=su.ohm.dim, result=su.volt.dim)
+        @u.check_dims(I=u.amp.dim, R=u.ohm.dim, result=u.volt.dim)
         def get_voltage(I, R):
             return I * R
 
-        result = get_voltage(1 * su.amp, 1 * su.ohm)
+        result = get_voltage(1 * u.amp, 1 * u.ohm)
         assert isinstance(result, Quantity)
-        assert result.dim == su.volt.dim
+        assert result.dim == u.volt.dim
         assert jnp.allclose(result.mantissa, 1.0)
 
     def test_docstring_example_check_dims_dimensionless_and_bool(self):
         """Use ``1`` for dimensionless and ``bool`` for boolean arguments."""
-        @su.check_dims(value=1, flag=bool)
+        @u.check_dims(value=1, flag=bool)
         def scale(value, flag):
             return value * 2 if flag else value
 
@@ -801,28 +801,28 @@ class TestDocstringExampleCheckDims:
 
     def test_docstring_example_check_dims_callable_result(self):
         """Callable ``result`` derives return dimension from input dimensions."""
-        @su.check_dims(result=lambda d: d ** 2)
+        @u.check_dims(result=lambda d: d ** 2)
         def square(x):
             return x ** 2
 
-        result = square(3.0 * su.metre)
+        result = square(3.0 * u.metre)
         assert isinstance(result, Quantity)
-        assert result.dim == su.metre.dim ** 2
+        assert result.dim == u.metre.dim ** 2
         assert jnp.allclose(result.mantissa, 9.0)
 
     def test_docstring_example_check_dims_string_reference(self):
         """String reference forces two arguments to share the same dimension."""
-        @su.check_dims(a=None, b='a')
+        @u.check_dims(a=None, b='a')
         def add(a, b):
             return a + b
 
-        result = add(1.0 * su.metre, 2.0 * su.metre)
+        result = add(1.0 * u.metre, 2.0 * u.metre)
         assert isinstance(result, Quantity)
         assert jnp.allclose(result.mantissa, 3.0)
 
         # Mismatched dimensions must raise
         with pytest.raises(DimensionMismatchError):
-            add(1.0 * su.metre, 2.0 * su.second)
+            add(1.0 * u.metre, 2.0 * u.second)
 
 
 class TestDocstringExampleCheckUnits:
@@ -830,18 +830,18 @@ class TestDocstringExampleCheckUnits:
 
     def test_docstring_example_check_units_basic(self):
         """Basic unit checking: I in amp, R in ohm, result in volt."""
-        @su.check_units(I=su.amp, R=su.ohm, result=su.volt)
+        @u.check_units(I=u.amp, R=u.ohm, result=u.volt)
         def get_voltage(I, R):
             return I * R
 
-        result = get_voltage(1 * su.amp, 1 * su.ohm)
+        result = get_voltage(1 * u.amp, 1 * u.ohm)
         assert isinstance(result, Quantity)
-        assert result.unit == su.volt
+        assert result.unit == u.volt
         assert jnp.allclose(result.mantissa, 1.0)
 
     def test_docstring_example_check_units_bool(self):
         """Use ``bool`` to require a boolean argument."""
-        @su.check_units(flag=bool)
+        @u.check_units(flag=bool)
         def toggle(flag):
             return not flag
 
@@ -852,18 +852,18 @@ class TestDocstringExampleCheckUnits:
 
     def test_docstring_example_check_units_string_reference(self):
         """String reference forces two arguments to share the same unit."""
-        @su.check_units(a=None, b='a')
+        @u.check_units(a=None, b='a')
         def add(a, b):
             return a + b
 
-        result = add(1.0 * su.volt, 2.0 * su.volt)
+        result = add(1.0 * u.volt, 2.0 * u.volt)
         assert isinstance(result, Quantity)
-        assert result.unit == su.volt
+        assert result.unit == u.volt
         assert jnp.allclose(result.mantissa, 3.0)
 
         # Different units must raise
         with pytest.raises(UnitMismatchError):
-            add(1.0 * su.volt, 2.0 * su.second)
+            add(1.0 * u.volt, 2.0 * u.second)
 
 
 class TestDocstringExampleAssignUnits:
@@ -871,44 +871,44 @@ class TestDocstringExampleAssignUnits:
 
     def test_docstring_example_assign_units_strip(self):
         """Strip units from inputs so the function body works with plain numbers."""
-        @su.assign_units(v=su.volt)
+        @u.assign_units(v=u.volt)
         def double_voltage(v):
             return v * 2
 
-        result = double_voltage(3.0 * su.volt)
+        result = double_voltage(3.0 * u.volt)
         assert jnp.allclose(result, 6.0)
 
     def test_docstring_example_assign_units_result(self):
         """Assign a unit to the return value."""
-        @su.assign_units(result=su.second)
+        @u.assign_units(result=u.second)
         def make_time():
             return 5
 
         result = make_time()
         assert isinstance(result, Quantity)
-        assert result.unit == su.second
+        assert result.unit == u.second
         assert jnp.allclose(result.mantissa, 5.0)
 
     def test_docstring_example_assign_units_without_result_units(self):
         """``without_result_units`` returns the raw numeric result."""
-        @su.assign_units(x=su.volt, result=su.volt)
+        @u.assign_units(x=u.volt, result=u.volt)
         def identity(x):
             return x
 
-        raw = identity.without_result_units(3.0 * su.volt)
+        raw = identity.without_result_units(3.0 * u.volt)
         assert jnp.allclose(raw, 3.0)
         assert not isinstance(raw, Quantity)
 
     def test_docstring_example_assign_units_tuple_result(self):
         """Strip inputs and assign units to a tuple of return values."""
-        @su.assign_units(result=(su.second, su.volt))
+        @u.assign_units(result=(u.second, u.volt))
         def make_pair():
             return 5, 3
 
         t, v = make_pair()
         assert isinstance(t, Quantity)
         assert isinstance(v, Quantity)
-        assert t.unit == su.second
-        assert v.unit == su.volt
+        assert t.unit == u.second
+        assert v.unit == u.volt
         assert jnp.allclose(t.mantissa, 5.0)
         assert jnp.allclose(v.mantissa, 3.0)
