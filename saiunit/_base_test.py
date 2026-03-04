@@ -1845,7 +1845,7 @@ class TestDisplayRedesign:
         assert r.count("[") == r.count("]"), f"Unbalanced brackets: {r}"
         assert r.count("(") == r.count(")"), f"Unbalanced parens: {r}"
         assert "..." in r  # must use summarization
-        assert "mV" in r   # unit still present (dispname)
+        assert "mV" in r  # unit still present (dispname)
 
     def test_large_array_str_balanced(self):
         """Large array str must have balanced brackets."""
