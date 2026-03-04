@@ -1607,7 +1607,9 @@ class Unit:
                 (other.dim == self.dim) and
                 (other.scale == self.scale) and
                 (other.base == self.base) and
-                (other.factor == self.factor)
+                (other.factor == self.factor) and
+                (other.name == self.name) and
+                (other.dispname == self.dispname)
             )
         else:
             return False

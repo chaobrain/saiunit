@@ -214,15 +214,12 @@ def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
             units.append(None)
 
     if len(units):
+        # Normalize None (plain scalars) to UNITLESS so they are
+        # compatible with explicitly unitless Quantity values.
+        units = [UNITLESS if u is None else u for u in units]
         first_unit = units[0]
-        if first_unit is None:
-            if not all(unit is None for unit in units):
-                raise TypeError(f"All elements must have the same units, but got {units}")
-            first_unit = UNITLESS
-            units = [UNITLESS] * len(units)
-        else:
-            if not all(first_unit.has_same_dim(unit) for unit in units):
-                raise TypeError(f"All elements must have the same units, but got {units}")
+        if not all(first_unit.has_same_dim(unit) for unit in units):
+            raise TypeError(f"All elements must have the same units, but got {units}")
         return jnp.asarray(_zoom_values_with_units(values, units)), first_unit
     else:
         return jnp.asarray(values), UNITLESS

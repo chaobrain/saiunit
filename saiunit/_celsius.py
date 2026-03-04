@@ -99,6 +99,11 @@ def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
 
     """
     value = maybe_custom_array(value)
-    if not (isinstance(value, Quantity) and value.unit == kelvin):
-        raise TypeError("The input value should be a Quantity with kelvin.")
-    return value.mantissa - 273.15
+    if not isinstance(value, Quantity):
+        raise TypeError("The input value should be a Quantity with a temperature unit.")
+    if not value.unit.has_same_dim(kelvin):
+        raise TypeError(
+            f"The input value should be a Quantity with a temperature unit, "
+            f"but got unit {value.unit}."
+        )
+    return value.to_decimal(kelvin) - 273.15
