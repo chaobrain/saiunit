@@ -56,14 +56,13 @@ from ._base_getters import (
 )
 from ._base_quantity import Quantity, compatible_with_equinox
 from ._base_unit import UNITLESS, Unit, add_standard_unit
+from ._celsius import celsius2kelvin, kelvin2celsius
+from ._misc import maybe_custom_array, maybe_custom_array_tree
 from ._unit_common import *
 from ._unit_common import __all__ as _common_all
 from ._unit_constants import *
-from ._unit_constants import __all__ as _constants_all
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
-from ._celsius import celsius2kelvin, kelvin2celsius
-from ._misc import maybe_custom_array, maybe_custom_array_tree
 from .custom_array import CustomArray
 
 # old version compatibility
@@ -146,5 +145,6 @@ __all__ = [
               'gas_constant',
               'magnetic_constant',
               'molar_mass_constant',
-          ] + _common_all + _std_units_all + _constants_all
-del _common_all, _std_units_all, _constants_all, saiunit
+          ] + _common_all + _std_units_all
+del _common_all, _std_units_all, saiunit
+
