@@ -20,9 +20,10 @@ from typing import Callable, Sequence
 
 import jax
 from jax import numpy as jnp
-from ._misc import _check_callable, _argnums_partial, _ensure_index
+
 from saiunit._base import get_unit, maybe_decimal, Quantity, get_mantissa
 from saiunit._misc import maybe_custom_array_tree
+from ._misc import _check_callable, _argnums_partial, _ensure_index
 
 __all__ = [
     'vector_grad',

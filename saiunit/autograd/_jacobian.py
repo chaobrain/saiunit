@@ -21,10 +21,11 @@ from typing import (Sequence, Callable, Any)
 import jax
 import numpy as np
 from jax import numpy as jnp
-from ._misc import _ensure_index, _check_callable, _argnums_partial
+
 from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
 from saiunit._compatible_import import safe_map
 from saiunit._misc import maybe_custom_array_tree
+from ._misc import _ensure_index, _check_callable, _argnums_partial
 
 
 # ---------------------------------------------------------------------------
