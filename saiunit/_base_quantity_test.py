@@ -789,7 +789,8 @@ class TestQuantityIntegration:
         assert_quantity(q.sum(), 10, second)
         assert_quantity(q.trace(), 5, second)
         assert_quantity(q.cumsum(), [1, 3, 6, 10], second)
-        assert_quantity(q.cumprod(), [1, 2, 6, 24], second ** 4)
+        with pytest.raises(TypeError):
+            q.cumprod()  # cumprod not supported for non-dimensionless quantities
         assert_quantity(q.diagonal(), [1, 4], second)
         assert_quantity(q.max(), 4, second)
         assert_quantity(q.mean(), 2.5, second)
@@ -1431,7 +1432,8 @@ class TestNumPyFunctions:
         # Check cumprod
         a = np.arange(1, 10) * mV / mV
         assert u.math.allclose(a.cumprod(), np.asarray(a).cumprod())
-        (np.arange(1, 5) * mV).cumprod()
+        with pytest.raises(TypeError):
+            (np.arange(1, 5) * mV).cumprod()  # non-dimensionless raises
 
     def test_unit_discarding_functions(self):
         """Test functions that discard units."""

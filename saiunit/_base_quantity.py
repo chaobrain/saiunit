@@ -2243,7 +2243,7 @@ class Quantity:
         """
         return Quantity(self.mantissa.item(*args), unit=self.unit)
 
-    def prod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
+    def prod(self, *args, **kwds) -> 'Quantity':
         """
         Return the product of array elements over the given axis.
 
@@ -2280,42 +2280,116 @@ class Quantity:
         # The result is possibly multidimensional but all entries should be
         # identical
         if dim_exponent.size > 1:
-            dim_exponent = dim_exponent[-1]
+            dim_exponent = dim_exponent.ravel()[0]
         r = Quantity(jnp.array(prod_res), unit=self.unit ** dim_exponent)
         return maybe_decimal(r)
 
-    def nanprod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
-        """Return the product of array elements over a given axis treating Not a Numbers (NaNs) as ones."""
+    def nanprod(self, *args, **kwds) -> 'Quantity':
+        """
+        Return the product of array elements over a given axis treating Not a Numbers (NaNs) as ones.
+
+        When reducing along a specific axis, the number of non-NaN elements
+        must be the same for every position in the result so that a single
+        unit exponent can be assigned.  If the non-NaN counts differ and the
+        quantity is not dimensionless, a ``ValueError`` is raised.
+
+        Returns
+        -------
+        Quantity
+            The product (NaNs treated as ones).
+
+        Raises
+        ------
+        ValueError
+            If the non-NaN counts are not uniform along the reduction axis
+            for a non-dimensionless quantity.
+        """
         self = self.factorless()
 
         prod_res = jnp.nanprod(self.mantissa, *args, **kwds)
+
+        if self.is_unitless:
+            return maybe_decimal(Quantity(jnp.array(prod_res), unit=self.unit))
+
+        # Count non-NaN elements along the reduction axis.
         nan_mask = jnp.isnan(self.mantissa)
-        dim_exponent = jnp.cumsum(jnp.where(nan_mask, 0, 1), *args)
-        if dim_exponent.size > 1:
-            dim_exponent = dim_exponent[-1]
+        non_nan_counts = jnp.sum(jnp.where(nan_mask, 0, 1), *args, **kwds)
+
+        # Verify uniform counts when axis is not None (result is not scalar).
+        if non_nan_counts.ndim > 0:
+            if not jnp.all(non_nan_counts == non_nan_counts.ravel()[0]):
+                raise ValueError(
+                    "nanprod over an axis with non-uniform NaN counts is not "
+                    "supported for quantities with units, because the resulting "
+                    "elements would have different unit exponents."
+                )
+            dim_exponent = non_nan_counts.ravel()[0]
+        else:
+            dim_exponent = non_nan_counts
+
         r = Quantity(jnp.array(prod_res), unit=self.unit ** dim_exponent)
         return maybe_decimal(r)
 
-    def cumprod(self, *args, **kwds):  # TODO: check error when axis is not None
-        self = self.factorless()
+    def cumprod(self, *args, **kwds):
+        """
+        Return the cumulative product of elements along a given axis.
 
-        prod_res = jnp.cumprod(self.mantissa, *args, **kwds)
-        dim_exponent = jnp.ones_like(self.mantissa).cumsum(*args, **kwds)
-        if dim_exponent.size > 1:
-            dim_exponent = dim_exponent[-1]
-        r = Quantity(jnp.array(prod_res), unit=self.unit ** dim_exponent)
-        return maybe_decimal(r)
+        Because each position in the result corresponds to a different number
+        of multiplied elements, the unit exponent varies across the output.
+        This is only representable when the quantity is dimensionless.
 
-    def nancumprod(self, *args, **kwds):  # TODO: check error when axis is not None
-        self = self.factorless()
+        Returns
+        -------
+        Quantity
+            The cumulative product.
 
-        prod_res = jnp.nancumprod(self.mantissa, *args, **kwds)
-        nan_mask = jnp.isnan(self.mantissa)
-        dim_exponent = jnp.cumsum(jnp.where(nan_mask, 0, 1), *args)
-        if dim_exponent.size > 1:
-            dim_exponent = dim_exponent[-1]
-        r = Quantity(jnp.array(prod_res), unit=self.unit ** dim_exponent)
-        return maybe_decimal(r)
+        Raises
+        ------
+        TypeError
+            If the quantity is not dimensionless.
+        """
+        if not self.is_unitless:
+            raise TypeError(
+                "cumprod is not supported for quantities with units "
+                f"(has unit {self.unit}), because each element of the result "
+                "would have a different unit exponent. "
+                "Use .prod() for a single reduction, or convert to "
+                "dimensionless first."
+            )
+        return maybe_decimal(
+            Quantity(jnp.cumprod(self.mantissa, *args, **kwds), unit=self.unit)
+        )
+
+    def nancumprod(self, *args, **kwds):
+        """
+        Return the cumulative product of elements along a given axis,
+        treating NaNs as ones.
+
+        Because each position in the result corresponds to a different number
+        of multiplied elements, the unit exponent varies across the output.
+        This is only representable when the quantity is dimensionless.
+
+        Returns
+        -------
+        Quantity
+            The cumulative product (NaNs treated as ones).
+
+        Raises
+        ------
+        TypeError
+            If the quantity is not dimensionless.
+        """
+        if not self.is_unitless:
+            raise TypeError(
+                "nancumprod is not supported for quantities with units "
+                f"(has unit {self.unit}), because each element of the result "
+                "would have a different unit exponent. "
+                "Use .nanprod() for a single reduction, or convert to "
+                "dimensionless first."
+            )
+        return maybe_decimal(
+            Quantity(jnp.nancumprod(self.mantissa, *args, **kwds), unit=self.unit)
+        )
 
     def put(self, indices, values) -> 'Quantity':
         """Replaces specified elements of an array with given values.
