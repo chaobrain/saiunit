@@ -23,7 +23,6 @@ import jax.numpy as jnp
 import numpy as np
 from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 
-from ._fun_array_creation import asarray
 from saiunit._base import (
     Quantity,
     fail_for_dimension_mismatch,
@@ -34,6 +33,7 @@ from saiunit._base import (
     maybe_decimal
 )
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from ._fun_array_creation import asarray
 
 __all__ = [
     # sequence inputs

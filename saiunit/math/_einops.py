@@ -27,13 +27,13 @@ import jax.numpy as jnp
 import numpy as np
 import opt_einsum
 
+from saiunit._base import Quantity, UNITLESS
 from saiunit._compatible_import import safe_map, unzip2
+from saiunit._misc import set_module_as, maybe_custom_array_tree
 from ._einops_parsing import ParsedExpression, _ellipsis, AnonymousAxis, EinopsError
 from ._fun_array_creation import asarray, zeros_like
 from ._fun_keep_unit import reshape, transpose, expand_dims, tile, where, squeeze
 from ._misc import shape
-from saiunit._base import Quantity, UNITLESS
-from saiunit._misc import set_module_as, maybe_custom_array_tree
 
 T = TypeVar('T')
 

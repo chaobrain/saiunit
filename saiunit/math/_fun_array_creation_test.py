@@ -28,6 +28,7 @@ class Array(u.CustomArray):
     def __init__(self, value):
         self.data = value
 
+
 fun_array_creation_given_shape = [
     'empty', 'ones', 'zeros',
 ]
@@ -259,11 +260,11 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
     def test_array_custom_array_compatibility(self):
         test_array = Array(jnp.array([1.0, 2.0, 3.0]) * meter)
-        
+
         assert isinstance(test_array, u.CustomArray)
         assert hasattr(test_array, 'data')
         assert_quantity(test_array.data, jnp.array([1.0, 2.0, 3.0]), unit=meter)
-        
+
         result = um.zeros_like(test_array.data)
         array_result = Array(result)
         assert isinstance(array_result, u.CustomArray)
@@ -272,15 +273,15 @@ class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
     def test_array_creation_with_custom_array_input(self):
         original_data = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * second
         test_array = Array(original_data)
-        
+
         result = um.ones_like(test_array.data)
         expected = jnp.ones((2, 2))
         assert_quantity(result, expected, unit=second)
-        
+
         array_result = Array(result)
         assert isinstance(array_result, u.CustomArray)
         assert_quantity(array_result.data, expected, unit=second)
-        
+
         result = um.empty_like(test_array.data)
         array_result = Array(result)
         assert isinstance(array_result, u.CustomArray)

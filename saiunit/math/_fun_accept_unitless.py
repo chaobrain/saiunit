@@ -19,9 +19,9 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
-from ._exprel import exprel as _exprel_impl, set_exprel_order
 from saiunit._base import Quantity, Unit
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
+from ._exprel import exprel as _exprel_impl, set_exprel_order
 
 __all__ = [
     # math funcs only accept unitless (unary)

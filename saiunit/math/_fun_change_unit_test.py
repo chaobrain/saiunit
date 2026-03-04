@@ -27,6 +27,7 @@ class Array(u.CustomArray):
     def __init__(self, value):
         self.data = value
 
+
 fun_change_unit_unary = [
     'reciprocal', 'var', 'nanvar', 'cbrt', 'square', 'sqrt',
 ]
@@ -104,7 +105,7 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
             q = jnp.array(value) * unit
             result = bm_fun(q)
             expected = jnp_fun(jnp.array(value))
-            
+
             size = len(value)
             result_unit = unit ** size
             assert_quantity(result, expected, unit=result_unit)
@@ -246,16 +247,16 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
     def test_array_with_unit_change_functions(self):
         data = jnp.array([4.0, 9.0, 16.0]) * (meter ** 2)
         test_array = Array(data)
-        
+
         assert isinstance(test_array, u.CustomArray)
         assert hasattr(test_array, 'data')
         assert_quantity(test_array.data, jnp.array([4.0, 9.0, 16.0]), unit=meter ** 2)
-        
+
         sqrt_result = um.sqrt(test_array.data)
         sqrt_array = Array(sqrt_result)
         assert isinstance(sqrt_array, u.CustomArray)
         assert_quantity(sqrt_array.data, jnp.array([2.0, 3.0, 4.0]), unit=meter)
-        
+
         square_result = um.square(test_array.data)
         square_array = Array(square_result)
         assert isinstance(square_array, u.CustomArray)
@@ -264,18 +265,18 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
     def test_array_with_custom_array_binary_operations(self):
         data1 = jnp.array([2.0, 4.0, 6.0]) * meter
         data2 = jnp.array([1.0, 2.0, 3.0]) * second
-        
+
         array1 = Array(data1)
         array2 = Array(data2)
-        
+
         assert isinstance(array1, u.CustomArray)
         assert isinstance(array2, u.CustomArray)
-        
+
         multiply_result = um.multiply(array1.data, array2.data)
         multiply_array = Array(multiply_result)
         assert isinstance(multiply_array, u.CustomArray)
         assert_quantity(multiply_array.data, jnp.array([2.0, 8.0, 18.0]), unit=meter * second)
-        
+
         divide_result = um.divide(array1.data, array2.data)
         divide_array = Array(divide_result)
         assert isinstance(divide_array, u.CustomArray)
@@ -284,14 +285,14 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
     def test_array_with_power_operations(self):
         base_data = jnp.array([2.0, 3.0, 4.0]) * meter
         test_array = Array(base_data)
-        
+
         assert isinstance(test_array, u.CustomArray)
-        
+
         power_result = um.power(test_array.data, 3)
         power_array = Array(power_result)
         assert isinstance(power_array, u.CustomArray)
         assert_quantity(power_array.data, jnp.array([8.0, 27.0, 64.0]), unit=meter ** 3)
-        
+
         float_power_result = um.float_power(test_array.data, 2)
         float_power_array = Array(float_power_result)
         assert isinstance(float_power_array, u.CustomArray)

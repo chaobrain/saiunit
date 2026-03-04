@@ -75,7 +75,6 @@ __all__ = [
     'bartlett', 'blackman', 'hamming', 'hanning', 'kaiser',
 ]
 
-
 bool_ = jnp.bool_
 uint2 = jnp.uint2
 uint4 = jnp.uint4
