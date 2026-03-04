@@ -712,14 +712,14 @@ class TestQuantityIntegration:
     def test_display(self):
         """Test displaying a Quantity in different units."""
         assert_equal(display_in_unit(3. * volt, mvolt), "3000. mV")
-        assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 A * ohm")
+        assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 V")
         with pytest.raises(u.UnitMismatchError):
             display_in_unit(10 * nS, ohm)
 
         brainstate = pytest.importorskip("brainstate")
         with brainstate.environ.context(precision=32):
             assert_equal(display_in_unit(3. * volt, mvolt), "3000. mV")
-            assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 A * ohm")
+            assert_equal(display_in_unit(10. * mV, ohm * amp), "0.01 V")
             with pytest.raises(u.UnitMismatchError):
                 display_in_unit(10 * nS, ohm)
 
@@ -728,7 +728,7 @@ class TestQuantityIntegration:
         assert_equal(str(u.mS / u.cm ** 2), 'mS / cm^2')
 
         assert_equal(display_in_unit(10. * u.mV), '10. mV')
-        assert_equal(display_in_unit(10. * u.ohm * u.amp), '10. A * ohm')
+        assert_equal(display_in_unit(10. * u.ohm * u.amp), '10. V')
         assert_equal(display_in_unit(120. * (u.mS / u.cm ** 2)), '120. mS / cm^2')
         assert_equal(display_in_unit(3.0 * u.kmeter / 130.51 * u.meter), '0.02298674 km * m')
         assert_equal(display_in_unit(3.0 * u.kmeter / (130.51 * u.meter)), '22.986744')
