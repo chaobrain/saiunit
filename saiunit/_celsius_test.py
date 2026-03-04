@@ -233,35 +233,35 @@ class TestArrayCelsius(unittest.TestCase):
 
 
 def test_docstring_example_celsius2kelvin():
-    import saiunit as su
+    import saiunit as u
 
-    result_0 = su.celsius2kelvin(0.0)
-    assert result_0 == 273.15 * su.kelvin
+    result_0 = u.celsius2kelvin(0.0)
+    assert result_0 == 273.15 * u.kelvin
 
-    result_25 = su.celsius2kelvin(25.0)
-    assert result_25 == 298.15 * su.kelvin
+    result_25 = u.celsius2kelvin(25.0)
+    assert result_25 == 298.15 * u.kelvin
 
-    result_neg40 = su.celsius2kelvin(-40.0)
-    assert u.math.allclose(result_neg40, 233.15 * su.kelvin, atol=1e-10 * su.kelvin)
+    result_neg40 = u.celsius2kelvin(-40.0)
+    assert u.math.allclose(result_neg40, 233.15 * u.kelvin, atol=1e-10 * u.kelvin)
 
     # Verify TypeError when passing a Quantity
     with pytest.raises(TypeError):
-        su.celsius2kelvin(100.0 * su.kelvin)
+        u.celsius2kelvin(100.0 * u.kelvin)
 
 
 def test_docstring_example_kelvin2celsius():
-    import saiunit as su
+    import saiunit as u
 
-    result_0 = su.kelvin2celsius(273.15 * su.kelvin)
+    result_0 = u.kelvin2celsius(273.15 * u.kelvin)
     assert np.isclose(float(result_0), 0.0)
 
-    result_25 = su.kelvin2celsius(298.15 * su.kelvin)
+    result_25 = u.kelvin2celsius(298.15 * u.kelvin)
     assert np.isclose(float(result_25), 25.0)
 
-    result_100 = su.kelvin2celsius(373.15 * su.kelvin)
+    result_100 = u.kelvin2celsius(373.15 * u.kelvin)
     assert np.isclose(float(result_100), 100.0)
 
     # Verify TypeError when passing a plain number
     with pytest.raises(TypeError):
-        su.kelvin2celsius(300.0)
+        u.kelvin2celsius(300.0)
 

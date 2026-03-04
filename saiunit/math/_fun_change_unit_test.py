@@ -15,6 +15,7 @@
 
 
 import jax.numpy as jnp
+import pytest
 from absl.testing import parameterized
 
 import saiunit as u
@@ -31,8 +32,11 @@ class Array(u.CustomArray):
 fun_change_unit_unary = [
     'reciprocal', 'var', 'nanvar', 'cbrt', 'square', 'sqrt',
 ]
-fun_change_unit_unary_prod_cumprod = [
-    'prod', 'nanprod', 'cumprod', 'nancumprod',
+fun_change_unit_unary_prod = [
+    'prod', 'nanprod',
+]
+fun_change_unit_unary_cumprod = [
+    'cumprod', 'nancumprod',
 ]
 fun_change_unit_power = [
     'power', 'float_power',
@@ -87,9 +91,9 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
         value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
         unit=[meter, second]
     )
-    def test_fun_change_unit_unary_prod_cumprod_with_array(self, value, unit):
-        bm_fun_list = [getattr(um, fun) for fun in fun_change_unit_unary_prod_cumprod]
-        jnp_fun_list = [getattr(jnp, fun) for fun in fun_change_unit_unary_prod_cumprod]
+    def test_fun_change_unit_unary_prod_with_array(self, value, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_change_unit_unary_prod]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_change_unit_unary_prod]
 
         for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
             print(f'fun: {bm_fun.__name__}')
@@ -119,6 +123,31 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
             assert_quantity(array_result.data, expected, unit=result_unit)
+
+    @parameterized.product(
+        value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
+        unit=[meter, second]
+    )
+    def test_fun_change_unit_unary_cumprod_with_array(self, value, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_change_unit_unary_cumprod]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_change_unit_unary_cumprod]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            # Plain array: should work normally
+            result = bm_fun(jnp.array(value))
+            expected = jnp_fun(jnp.array(value))
+            assert_quantity(result, expected)
+
+            array_result = Array(result)
+            assert isinstance(array_result, u.CustomArray)
+            assert_quantity(array_result.data, expected)
+
+            # Quantity with units: cumprod/nancumprod raise TypeError
+            q = jnp.array(value) * unit
+            with pytest.raises(TypeError):
+                bm_fun(q)
 
     @parameterized.product(
         value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
@@ -325,9 +354,9 @@ class TestFunChangeUnit(parameterized.TestCase):
         value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
         unit=[meter, second]
     )
-    def test_fun_change_unit_unary_prod_cumprod(self, value, unit):
-        bm_fun_list = [getattr(um, fun) for fun in fun_change_unit_unary_prod_cumprod]
-        jnp_fun_list = [getattr(jnp, fun) for fun in fun_change_unit_unary_prod_cumprod]
+    def test_fun_change_unit_unary_prod(self, value, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_change_unit_unary_prod]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_change_unit_unary_prod]
 
         for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
             print(f'fun: {bm_fun.__name__}')
@@ -343,6 +372,27 @@ class TestFunChangeUnit(parameterized.TestCase):
             size = len(value)
             result_unit = unit ** size
             assert_quantity(result, expected, unit=result_unit)
+
+    @parameterized.product(
+        value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
+        unit=[meter, second]
+    )
+    def test_fun_change_unit_unary_cumprod(self, value, unit):
+        bm_fun_list = [getattr(um, fun) for fun in fun_change_unit_unary_cumprod]
+        jnp_fun_list = [getattr(jnp, fun) for fun in fun_change_unit_unary_cumprod]
+
+        for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
+            print(f'fun: {bm_fun.__name__}')
+
+            # Plain array: should work normally
+            result = bm_fun(jnp.array(value))
+            expected = jnp_fun(jnp.array(value))
+            assert_quantity(result, expected)
+
+            # Quantity with units: cumprod/nancumprod raise TypeError
+            q = value * unit
+            with pytest.raises(TypeError):
+                bm_fun(q)
 
     @parameterized.product(
         value=[(1.0, 2.0), (1.23, 2.34, 3.45)],

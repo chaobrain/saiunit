@@ -131,12 +131,12 @@ def get_dim(obj) -> Dimension:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.get_dim(1.0 * su.mV)
+        >>> import saiunit as u
+        >>> u.get_dim(1.0 * u.mV)
         metre ** 2 * kilogram * second ** -3 * amp ** -1
-        >>> su.get_dim(5.0)
+        >>> u.get_dim(5.0)
         1
-        >>> su.get_dim(su.volt)
+        >>> u.get_dim(u.volt)
         metre ** 2 * kilogram * second ** -3 * amp ** -1
     """
     from ._base_quantity import Quantity
@@ -178,12 +178,12 @@ def get_unit(obj) -> 'Unit':
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.get_unit(3.0 * su.mV)
+        >>> import saiunit as u
+        >>> u.get_unit(3.0 * u.mV)
         mV
-        >>> su.get_unit(5.0)
+        >>> u.get_unit(5.0)
         1
-        >>> su.get_unit(su.volt)
+        >>> u.get_unit(u.volt)
         V
     """
     from ._base_quantity import Quantity
@@ -225,10 +225,10 @@ def get_mantissa(obj):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.get_mantissa(3.0 * su.mV)
+        >>> import saiunit as u
+        >>> u.get_mantissa(3.0 * u.mV)
         3.0
-        >>> su.get_mantissa(5.0)
+        >>> u.get_mantissa(5.0)
         5.0
     """
     obj = maybe_custom_array(obj)
@@ -268,16 +268,16 @@ def split_mantissa_unit(obj):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> m, u = su.split_mantissa_unit(3.0 * su.mV)
+        >>> import saiunit as u
+        >>> m, u = u.split_mantissa_unit(3.0 * u.mV)
         >>> float(m)
         3.0
         >>> u
         mV
-        >>> m, u = su.split_mantissa_unit(5.0)
+        >>> m, u = u.split_mantissa_unit(5.0)
         >>> float(m)
         5.0
-        >>> u == su.UNITLESS
+        >>> u == u.UNITLESS
         True
     """
     obj = _to_quantity(obj)
@@ -312,12 +312,12 @@ def have_same_dim(obj1, obj2) -> bool:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.have_same_dim(1.0 * su.mV, 2.0 * su.volt)
+        >>> import saiunit as u
+        >>> u.have_same_dim(1.0 * u.mV, 2.0 * u.volt)
         True
-        >>> su.have_same_dim(1.0 * su.mV, 2.0 * su.second)
+        >>> u.have_same_dim(1.0 * u.mV, 2.0 * u.second)
         False
-        >>> su.have_same_dim(1.0, 2.0)
+        >>> u.have_same_dim(1.0, 2.0)
         True
     """
     # If dimensions are consistently created using get_or_create_dimensions,
@@ -362,12 +362,12 @@ def has_same_unit(obj1, obj2) -> bool:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.has_same_unit(1.0 * su.mV, 2.0 * su.mV)
+        >>> import saiunit as u
+        >>> u.has_same_unit(1.0 * u.mV, 2.0 * u.mV)
         True
-        >>> su.has_same_unit(1.0 * su.mV, 2.0 * su.volt)
+        >>> u.has_same_unit(1.0 * u.mV, 2.0 * u.volt)
         False
-        >>> su.has_same_unit(1.0, 2.0)
+        >>> u.has_same_unit(1.0, 2.0)
         True
     """
     obj1 = maybe_custom_array(obj1)
@@ -423,8 +423,8 @@ def fail_for_dimension_mismatch(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> d1, d2 = su.fail_for_dimension_mismatch(3.0 * su.volt, 5.0 * su.volt)
+        >>> import saiunit as u
+        >>> d1, d2 = u.fail_for_dimension_mismatch(3.0 * u.volt, 5.0 * u.volt)
         >>> d1 == d2
         True
     """
@@ -501,8 +501,8 @@ def fail_for_unit_mismatch(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> u1, u2 = su.fail_for_unit_mismatch(3.0 * su.mV, 5.0 * su.volt)
+        >>> import saiunit as u
+        >>> u1, u2 = u.fail_for_unit_mismatch(3.0 * u.mV, 5.0 * u.volt)
         >>> u1.has_same_dim(u2)
         True
     """
@@ -569,10 +569,10 @@ def display_in_unit(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.display_in_unit(3 * su.volt, su.mvolt)
+        >>> import saiunit as u
+        >>> u.display_in_unit(3 * u.volt, u.mvolt)
         '3000. mV'
-        >>> su.display_in_unit(123123 * su.msecond, su.second, 2)
+        >>> u.display_in_unit(123123 * u.msecond, u.second, 2)
         '123.12 s'
     """
     x = _to_quantity(x)
@@ -609,11 +609,11 @@ def maybe_decimal(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.maybe_decimal(su.Quantity(5.0))
+        >>> import saiunit as u
+        >>> u.maybe_decimal(u.Quantity(5.0))
         5.0
-        >>> q = 1.0 * su.metre
-        >>> su.maybe_decimal(q) == q       # not dimensionless, returned as-is
+        >>> q = 1.0 * u.metre
+        >>> u.maybe_decimal(q) == q       # not dimensionless, returned as-is
         True
     """
     valq = _to_quantity(val)
@@ -651,8 +651,8 @@ def unit_scale_align_to_first(*args) -> 'list[Quantity]':
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> aligned = su.unit_scale_align_to_first(1 * su.mV, 2 * su.volt)
+        >>> import saiunit as u
+        >>> aligned = u.unit_scale_align_to_first(1 * u.mV, 2 * u.volt)
         >>> aligned[0].unit == aligned[1].unit
         True
     """
@@ -705,10 +705,10 @@ def array_with_unit(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.array_with_unit(5.0, su.volt)
+        >>> import saiunit as u
+        >>> u.array_with_unit(5.0, u.volt)
         5. * volt
-        >>> su.array_with_unit(0.001, su.volt)
+        >>> u.array_with_unit(0.001, u.volt)
         1. * mvolt
     """
     from ._base_quantity import Quantity
@@ -744,12 +744,12 @@ def is_dimensionless(obj: 'Quantity | Unit | Dimension | jax.typing.ArrayLike') 
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.is_dimensionless(5.0)
+        >>> import saiunit as u
+        >>> u.is_dimensionless(5.0)
         True
-        >>> su.is_dimensionless(5.0 * su.volt)
+        >>> u.is_dimensionless(5.0 * u.volt)
         False
-        >>> su.is_dimensionless(su.DIMENSIONLESS)
+        >>> u.is_dimensionless(u.DIMENSIONLESS)
         True
     """
     obj = maybe_custom_array(obj)
@@ -786,10 +786,10 @@ def is_unitless(obj: 'Quantity | Unit | jax.typing.ArrayLike') -> bool:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.is_unitless(5.0)
+        >>> import saiunit as u
+        >>> u.is_unitless(5.0)
         True
-        >>> su.is_unitless(5.0 * su.volt)
+        >>> u.is_unitless(5.0 * u.volt)
         False
     """
     obj = maybe_custom_array(obj)
@@ -822,12 +822,12 @@ def is_scalar_type(obj) -> bool:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.is_scalar_type(5)
+        >>> import saiunit as u
+        >>> u.is_scalar_type(5)
         True
-        >>> su.is_scalar_type(5.0 * su.volt)
+        >>> u.is_scalar_type(5.0 * u.volt)
         False
-        >>> su.is_scalar_type("hello")
+        >>> u.is_scalar_type("hello")
         False
     """
     try:
@@ -872,8 +872,8 @@ def assert_quantity(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.assert_quantity(su.Quantity(1, su.mV), 1, su.mV)
+        >>> import saiunit as u
+        >>> u.assert_quantity(u.Quantity(1, u.mV), 1, u.mV)
     """
     from ._base_quantity import Quantity
     mantissa = jnp.asarray(mantissa)

@@ -93,8 +93,8 @@ def reciprocal(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> result = su.math.reciprocal(su.math.array([2.0, 4.0]) * su.second)
+        >>> import saiunit as u
+        >>> result = u.math.reciprocal(u.math.array([2.0, 4.0]) * u.second)
         >>> result.mantissa  # array([0.5 , 0.25])
     """
     return _fun_change_unit_unary(jnp.reciprocal, lambda u: u ** -1, x)
@@ -151,9 +151,9 @@ def var(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> q = su.math.array([1.0, 2.0, 3.0]) * su.meter
-        >>> su.math.var(q)  # unit becomes meter ** 2
+        >>> import saiunit as u
+        >>> q = u.math.array([1.0, 2.0, 3.0]) * u.meter
+        >>> u.math.var(q)  # unit becomes meter ** 2
     """
     return _fun_change_unit_unary(jnp.var,
                                   lambda u: u ** 2,
@@ -213,10 +213,10 @@ def nanvar(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> q = su.math.array([1.0, jnp.nan, 3.0]) * su.meter
-        >>> su.math.nanvar(q)  # unit becomes meter ** 2
+        >>> q = u.math.array([1.0, jnp.nan, 3.0]) * u.meter
+        >>> u.math.nanvar(q)  # unit becomes meter ** 2
     """
     return _fun_change_unit_unary(jnp.nanvar,
                                   lambda u: u ** 2,
@@ -254,9 +254,9 @@ def sqrt(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> q = su.math.array([4.0, 9.0, 16.0]) * (su.meter ** 2)
-        >>> su.math.sqrt(q)  # Quantity with unit meter
+        >>> import saiunit as u
+        >>> q = u.math.array([4.0, 9.0, 16.0]) * (u.meter ** 2)
+        >>> u.math.sqrt(q)  # Quantity with unit meter
     """
     return _fun_change_unit_unary(jnp.sqrt, lambda u: u ** 0.5, x)
 
@@ -287,9 +287,9 @@ def cbrt(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> q = su.math.array([8.0, 27.0]) * (su.meter ** 3)
-        >>> su.math.cbrt(q)  # Quantity with unit meter
+        >>> import saiunit as u
+        >>> q = u.math.array([8.0, 27.0]) * (u.meter ** 3)
+        >>> u.math.cbrt(q)  # Quantity with unit meter
     """
     return _fun_change_unit_unary(jnp.cbrt, lambda u: u ** (1 / 3), x)
 
@@ -320,9 +320,9 @@ def square(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> q = su.math.array([2.0, 3.0, 4.0]) * su.meter
-        >>> su.math.square(q)  # Quantity with unit meter ** 2
+        >>> import saiunit as u
+        >>> q = u.math.array([2.0, 3.0, 4.0]) * u.meter
+        >>> u.math.square(q)  # Quantity with unit meter ** 2
     """
     return _fun_change_unit_unary(jnp.square, lambda u: u ** 2, x)
 
@@ -375,9 +375,9 @@ def prod(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> q = su.math.array([2.0, 3.0]) * su.meter
-        >>> su.math.prod(q)  # product is 6.0, unit is meter ** 2
+        >>> import saiunit as u
+        >>> q = u.math.array([2.0, 3.0]) * u.meter
+        >>> u.math.prod(q)  # product is 6.0, unit is meter ** 2
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -441,10 +441,10 @@ def nanprod(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> q = su.math.array([2.0, jnp.nan, 3.0]) * su.meter
-        >>> su.math.nanprod(q)  # NaN treated as 1, result is 6.0
+        >>> q = u.math.array([2.0, jnp.nan, 3.0]) * u.meter
+        >>> u.math.nanprod(q)  # NaN treated as 1, result is 6.0
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -499,9 +499,9 @@ def cumprod(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> q = su.math.array([1.0, 2.0, 3.0]) * su.meter
-        >>> su.math.cumprod(q)
+        >>> import saiunit as u
+        >>> q = u.math.array([1.0, 2.0, 3.0]) * u.meter
+        >>> u.math.cumprod(q)
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -543,10 +543,10 @@ def nancumprod(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> q = su.math.array([2.0, jnp.nan, 3.0]) * su.meter
-        >>> su.math.nancumprod(q)
+        >>> q = u.math.array([2.0, jnp.nan, 3.0]) * u.meter
+        >>> u.math.nancumprod(q)
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -614,10 +614,10 @@ def multiply(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
-        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
-        >>> su.math.multiply(a, b)  # unit is meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 2.0, 3.0]) * u.meter
+        >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
+        >>> u.math.multiply(a, b)  # unit is meter * second
     """
     return _fun_change_unit_binary(jnp.multiply,
                                    lambda ux, uy: ux * uy,
@@ -652,10 +652,10 @@ def divide(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> distance = su.math.array([10.0, 20.0]) * su.meter
-        >>> time = su.math.array([2.0, 4.0]) * su.second
-        >>> su.math.divide(distance, time)  # unit is meter / second
+        >>> import saiunit as u
+        >>> distance = u.math.array([10.0, 20.0]) * u.meter
+        >>> time = u.math.array([2.0, 4.0]) * u.second
+        >>> u.math.divide(distance, time)  # unit is meter / second
     """
     return _fun_change_unit_binary(jnp.divide,
                                    lambda ux, uy: ux / uy,
@@ -704,10 +704,10 @@ def cross(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 0.0, 0.0]) * su.meter
-        >>> b = su.math.array([0.0, 1.0, 0.0]) * su.second
-        >>> su.math.cross(a, b)  # unit is meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 0.0, 0.0]) * u.meter
+        >>> b = u.math.array([0.0, 1.0, 0.0]) * u.second
+        >>> u.math.cross(a, b)  # unit is meter * second
     """
     return _fun_change_unit_binary(jnp.cross,
                                    lambda ux, uy: ux * uy,
@@ -743,10 +743,10 @@ def true_divide(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([10.0, 20.0]) * su.meter
-        >>> b = su.math.array([2.0, 5.0]) * su.second
-        >>> su.math.true_divide(a, b)  # unit is meter / second
+        >>> import saiunit as u
+        >>> a = u.math.array([10.0, 20.0]) * u.meter
+        >>> b = u.math.array([2.0, 5.0]) * u.second
+        >>> u.math.true_divide(a, b)  # unit is meter / second
     """
     return _fun_change_unit_binary(jnp.true_divide,
                                    lambda ux, uy: ux / uy,
@@ -785,10 +785,10 @@ def divmod(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([7.0, 9.0]) * su.meter
-        >>> b = su.math.array([2.0, 4.0]) * su.second
-        >>> quotient, remainder = su.math.divmod(a, b)
+        >>> import saiunit as u
+        >>> a = u.math.array([7.0, 9.0]) * u.meter
+        >>> b = u.math.array([2.0, 4.0]) * u.second
+        >>> quotient, remainder = u.math.divmod(a, b)
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
@@ -844,10 +844,10 @@ def convolve(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
-        >>> v = su.math.array([0.5, 1.0]) * su.second
-        >>> su.math.convolve(a, v)  # unit is meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 2.0, 3.0]) * u.meter
+        >>> v = u.math.array([0.5, 1.0]) * u.second
+        >>> u.math.convolve(a, v)  # unit is meter * second
     """
     return _fun_change_unit_binary(
         jnp.convolve,
@@ -895,9 +895,9 @@ def power(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> q = su.math.array([2.0, 3.0]) * su.meter
-        >>> su.math.power(q, 3)  # unit is meter ** 3
+        >>> import saiunit as u
+        >>> q = u.math.array([2.0, 3.0]) * u.meter
+        >>> u.math.power(q, 3)  # unit is meter ** 3
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
@@ -953,10 +953,10 @@ def floor_divide(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([7.0, 8.0]) * su.meter
-        >>> b = su.math.array([2.0, 3.0]) * su.second
-        >>> su.math.floor_divide(a, b)  # unit is meter / second
+        >>> import saiunit as u
+        >>> a = u.math.array([7.0, 8.0]) * u.meter
+        >>> b = u.math.array([2.0, 3.0]) * u.second
+        >>> u.math.floor_divide(a, b)  # unit is meter / second
     """
     return _fun_change_unit_binary(jnp.floor_divide, lambda ux, uy: ux / uy, x, y)
 
@@ -997,9 +997,9 @@ def float_power(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> q = su.math.array([2.0, 3.0]) * su.meter
-        >>> su.math.float_power(q, 2)  # unit is meter ** 2
+        >>> import saiunit as u
+        >>> q = u.math.array([2.0, 3.0]) * u.meter
+        >>> u.math.float_power(q, 2)  # unit is meter ** 2
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
@@ -1065,10 +1065,10 @@ def dot(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
-        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
-        >>> su.math.dot(a, b)  # scalar Quantity with unit meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 2.0, 3.0]) * u.meter
+        >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
+        >>> u.math.dot(a, b)  # scalar Quantity with unit meter * second
     """
     return _fun_change_unit_binary(jnp.dot,
                                    lambda x, y: x * y,
@@ -1110,12 +1110,12 @@ def multi_dot(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax
         >>> k1, k2 = jax.random.split(jax.random.key(0))
-        >>> a = jax.random.normal(k1, shape=(3, 4)) * su.meter
-        >>> b = jax.random.normal(k2, shape=(4, 2)) * su.second
-        >>> su.math.multi_dot([a, b])  # unit is meter * second
+        >>> a = jax.random.normal(k1, shape=(3, 4)) * u.meter
+        >>> b = jax.random.normal(k2, shape=(4, 2)) * u.second
+        >>> u.math.multi_dot([a, b])  # unit is meter * second
     """
     new_arrays = []
     unit = UNITLESS
@@ -1168,10 +1168,10 @@ def vdot(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
-        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
-        >>> su.math.vdot(a, b)  # scalar Quantity with unit meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 2.0, 3.0]) * u.meter
+        >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
+        >>> u.math.vdot(a, b)  # scalar Quantity with unit meter * second
     """
     return _fun_change_unit_binary(jnp.vdot,
                                    lambda x, y: x * y,
@@ -1220,10 +1220,10 @@ def vecdot(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
-        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
-        >>> su.math.vecdot(a, b)  # scalar Quantity with unit meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 2.0, 3.0]) * u.meter
+        >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
+        >>> u.math.vecdot(a, b)  # scalar Quantity with unit meter * second
     """
     return _fun_change_unit_binary(jnp.vecdot,
                                    lambda x, y: x * y,
@@ -1270,10 +1270,10 @@ def inner(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
-        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
-        >>> su.math.inner(a, b)  # scalar Quantity with unit meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 2.0, 3.0]) * u.meter
+        >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
+        >>> u.math.inner(a, b)  # scalar Quantity with unit meter * second
     """
     return _fun_change_unit_binary(jnp.inner,
                                    lambda x, y: x * y,
@@ -1315,10 +1315,10 @@ def outer(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 2.0]) * su.meter
-        >>> b = su.math.array([3.0, 4.0, 5.0]) * su.second
-        >>> su.math.outer(a, b)  # shape (2, 3), unit meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 2.0]) * u.meter
+        >>> b = u.math.array([3.0, 4.0, 5.0]) * u.second
+        >>> u.math.outer(a, b)  # shape (2, 3), unit meter * second
     """
     return _fun_change_unit_binary(jnp.outer,
                                    lambda x, y: x * y,
@@ -1353,10 +1353,10 @@ def kron(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([1.0, 2.0]) * su.meter
-        >>> b = su.math.array([3.0, 4.0]) * su.second
-        >>> su.math.kron(a, b)  # unit is meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([1.0, 2.0]) * u.meter
+        >>> b = u.math.array([3.0, 4.0]) * u.second
+        >>> u.math.kron(a, b)  # unit is meter * second
     """
     return _fun_change_unit_binary(jnp.kron,
                                    lambda x, y: x * y,
@@ -1398,10 +1398,10 @@ def matmul(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
-        >>> b = su.math.array([[5.0, 6.0], [7.0, 8.0]]) * su.second
-        >>> su.math.matmul(a, b)  # shape (2, 2), unit meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
+        >>> b = u.math.array([[5.0, 6.0], [7.0, 8.0]]) * u.second
+        >>> u.math.matmul(a, b)  # shape (2, 2), unit meter * second
     """
     return _fun_change_unit_binary(jnp.matmul,
                                    lambda x, y: x * y,
@@ -1447,10 +1447,10 @@ def tensordot(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> a = su.math.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
-        >>> b = su.math.array([[5.0, 6.0], [7.0, 8.0]]) * su.second
-        >>> su.math.tensordot(a, b, axes=1)  # unit is meter * second
+        >>> import saiunit as u
+        >>> a = u.math.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
+        >>> b = u.math.array([[5.0, 6.0], [7.0, 8.0]]) * u.second
+        >>> u.math.tensordot(a, b, axes=1)  # unit is meter * second
     """
     return _fun_change_unit_binary(jnp.tensordot,
                                    lambda x, y: x * y,
@@ -1487,9 +1487,9 @@ def matrix_power(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> m = su.math.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
-        >>> su.math.matrix_power(m, 2)  # unit is meter ** 2
+        >>> import saiunit as u
+        >>> m = u.math.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
+        >>> u.math.matrix_power(m, 2)  # unit is meter ** 2
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -1524,11 +1524,11 @@ def det(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1., 2.],
-        ...                [3., 4.]]) * su.meter
-        >>> su.linalg.det(a)
+        ...                [3., 4.]]) * u.meter
+        >>> u.linalg.det(a)
         -2. * meter2
     """
     a = maybe_custom_array(a)

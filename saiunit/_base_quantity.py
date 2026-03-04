@@ -73,9 +73,9 @@ def compatible_with_equinox(mode: bool = True):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.compatible_with_equinox(True)   # enable
-        >>> su.compatible_with_equinox(False)  # disable
+        >>> import saiunit as u
+        >>> u.compatible_with_equinox(True)   # enable
+        >>> u.compatible_with_equinox(False)  # disable
 
     See Also
     --------
@@ -284,18 +284,18 @@ class Quantity:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> # Scalar with unit
-        >>> q = su.Quantity(3.0, unit=su.mV)
+        >>> q = u.Quantity(3.0, unit=u.mV)
         >>> q
         Quantity(3., "mV")
         >>> # Array with unit via multiplication shorthand
-        >>> arr = jnp.array([1.0, 2.0, 3.0]) * su.mV
+        >>> arr = jnp.array([1.0, 2.0, 3.0]) * u.mV
         >>> arr.shape
         (3,)
         >>> # From a Unit object directly
-        >>> su.Quantity(su.metre)
+        >>> u.Quantity(u.metre)
         Quantity(1., "m")
 
     See Also
@@ -433,10 +433,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> x = jnp.arange(5.0) * su.mV
-            >>> x.at[2].add(10 * su.mV)
+            >>> x = jnp.arange(5.0) * u.mV
+            >>> x.at[2].add(10 * u.mV)
             Quantity([ 0.  1. 12.  3.  4.], "mV")
             >>> x.at[2].get()
             Quantity(2., "mV")
@@ -461,8 +461,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(3.0, unit=su.mV)
+            >>> import saiunit as u
+            >>> q = u.Quantity(3.0, unit=u.mV)
             >>> q.mantissa
             3.0
 
@@ -487,8 +487,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(5.0, unit=su.metre)
+            >>> import saiunit as u
+            >>> q = u.Quantity(5.0, unit=u.metre)
             >>> q.magnitude
             5.0
 
@@ -518,9 +518,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
             >>> q.update_mantissa(jnp.array([4.0, 5.0, 6.0]))
             >>> q
             Quantity([4. 5. 6.], "mV")
@@ -560,8 +560,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(5.0, unit=su.metre)
+            >>> import saiunit as u
+            >>> q = u.Quantity(5.0, unit=u.metre)
             >>> q.dim
             m
 
@@ -596,8 +596,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(5.0, unit=su.mV)
+            >>> import saiunit as u
+            >>> q = u.Quantity(5.0, unit=u.mV)
             >>> q.unit
             mV
 
@@ -642,10 +642,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.to(su.volt)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.to(u.volt)
             Quantity([0.001 0.002 0.003], "V")
 
         See Also
@@ -684,10 +684,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.to_decimal(su.volt)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.to_decimal(u.volt)
             Array([0.001, 0.002, 0.003], dtype=float32)
 
         See Also
@@ -734,10 +734,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.in_unit(su.volt)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.in_unit(u.volt)
             Quantity([0.001 0.002 0.003], "V")
         """
         if not isinstance(unit, Unit):
@@ -779,8 +779,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.Quantity.with_unit(2.0, unit=su.metre)
+            >>> import saiunit as u
+            >>> u.Quantity.with_unit(2.0, unit=u.metre)
             Quantity(2., "m")
         """
         return Quantity(mantissa, unit=unit)
@@ -799,10 +799,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.Quantity(5.0).is_unitless
+            >>> import saiunit as u
+            >>> u.Quantity(5.0).is_unitless
             True
-            >>> su.Quantity(5.0, unit=su.mV).is_unitless
+            >>> u.Quantity(5.0, unit=u.mV).is_unitless
             False
         """
         return self.unit.is_unitless
@@ -828,12 +828,12 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> a = su.Quantity(1.0, unit=su.mV)
-            >>> b = su.Quantity(2.0, unit=su.volt)
+            >>> import saiunit as u
+            >>> a = u.Quantity(1.0, unit=u.mV)
+            >>> b = u.Quantity(2.0, unit=u.volt)
             >>> a.has_same_unit(b)
             True
-            >>> c = su.Quantity(1.0, unit=su.second)
+            >>> c = u.Quantity(1.0, unit=u.second)
             >>> a.has_same_unit(c)
             False
         """
@@ -895,11 +895,11 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> x = su.Quantity(25.0, unit=su.mV)
+            >>> import saiunit as u
+            >>> x = u.Quantity(25.0, unit=u.mV)
             >>> x.repr_in_unit()
             '25. mV'
-            >>> x.to(su.volt).repr_in_unit(3)
+            >>> x.to(u.volt).repr_in_unit(3)
             '0.025 V'
         """
         s = self._format_value(precision=precision)
@@ -923,8 +923,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(3.0, unit=su.mV)
+            >>> import saiunit as u
+            >>> q = u.Quantity(3.0, unit=u.mV)
             >>> q.factorless()
             Quantity(3., "mV")
         """
@@ -947,9 +947,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
             >>> q.dtype
             float32
         """
@@ -982,9 +982,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=u.mV)
             >>> q.shape
             (2, 2)
         """
@@ -1047,9 +1047,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=u.mV)
             >>> q.mT.shape
             (2, 2)
         """
@@ -1208,10 +1208,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.scatter_add(0, su.Quantity(10.0, unit=su.mV))
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.scatter_add(0, u.Quantity(10.0, unit=u.mV))
             Quantity([11.  2.  3.], "mV")
         """
 
@@ -1255,10 +1255,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.scatter_sub(0, su.Quantity(1.0, unit=su.mV))
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.scatter_sub(0, u.Quantity(1.0, unit=u.mV))
             Quantity([0. 2. 3.], "mV")
         """
         return self.scatter_add(index, -value)
@@ -1294,10 +1294,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.scatter_mul(0, su.Quantity(10.0))
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.scatter_mul(0, u.Quantity(10.0))
             Quantity([10.  2.  3.], "mV")
         """
 
@@ -1349,10 +1349,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.scatter_div(0, su.Quantity(2.0))
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.scatter_div(0, u.Quantity(2.0))
             Quantity([0.5 2.  3. ], "mV")
         """
 
@@ -1398,10 +1398,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.scatter_max(0, su.Quantity(10.0, unit=su.mV))
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.scatter_max(0, u.Quantity(10.0, unit=u.mV))
             Quantity([10.  2.  3.], "mV")
         """
 
@@ -1446,10 +1446,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.scatter_min(0, su.Quantity(0.5, unit=su.mV))
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.scatter_min(0, u.Quantity(0.5, unit=u.mV))
             Quantity([0.5 2.  3. ], "mV")
         """
 
@@ -1889,8 +1889,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(1.567, unit=su.mV)
+            >>> import saiunit as u
+            >>> q = u.Quantity(1.567, unit=u.mV)
             >>> q.round(1)
             Quantity(1.6, "mV")
         """
@@ -1917,9 +1917,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
             >>> q.astype(jnp.float64).dtype
             float64
         """
@@ -1955,10 +1955,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> q.clip(min=su.Quantity(1.5, unit=su.mV), max=su.Quantity(2.5, unit=su.mV))
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> q.clip(min=u.Quantity(1.5, unit=u.mV), max=u.Quantity(2.5, unit=u.mV))
             Quantity([1.5 2.  2.5], "mV")
         """
         _, min = unit_scale_align_to_first(self, min)
@@ -1978,8 +1978,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(1.0 + 2.0j, unit=su.mV)
+            >>> import saiunit as u
+            >>> q = u.Quantity(1.0 + 2.0j, unit=u.mV)
             >>> q.conj()
             Quantity((1-2j), "mV")
         """
@@ -2011,8 +2011,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(3.0, unit=su.mV)
+            >>> import saiunit as u
+            >>> q = u.Quantity(3.0, unit=u.mV)
             >>> q2 = q.copy()
             >>> q2
             Quantity(3., "mV")
@@ -2039,10 +2039,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> a = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
-            >>> b = su.Quantity(jnp.array([1.0, 1.0, 1.0]), unit=su.mV)
+            >>> a = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
+            >>> b = u.Quantity(jnp.array([1.0, 1.0, 1.0]), unit=u.mV)
             >>> a.dot(b)
             Quantity(6., "mV^2")
         """
@@ -2071,9 +2071,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.eye(3), unit=su.mV)
+            >>> q = u.Quantity(jnp.eye(3), unit=u.mV)
             >>> q.trace()
             Quantity(3., "mV")
         """
@@ -2101,9 +2101,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=u.mV)
             >>> q.diagonal()
             Quantity([1. 4.], "mV")
         """
@@ -2129,10 +2129,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> a = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
-            >>> b = su.Quantity(jnp.array([3.0, 4.0]), unit=su.second)
+            >>> a = u.Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
+            >>> b = u.Quantity(jnp.array([3.0, 4.0]), unit=u.second)
             >>> a.outer(b).shape
             (2, 2)
         """
@@ -2168,10 +2168,10 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> a = su.Quantity(jnp.array([1.0, 0.0, 0.0]), unit=su.mV)
-            >>> b = su.Quantity(jnp.array([0.0, 1.0, 0.0]), unit=su.second)
+            >>> a = u.Quantity(jnp.array([1.0, 0.0, 0.0]), unit=u.mV)
+            >>> b = u.Quantity(jnp.array([0.0, 1.0, 0.0]), unit=u.second)
             >>> a.cross(b)
             Quantity([0. 0. 1.], "mV * s")
         """
@@ -2209,9 +2209,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=u.mV)
             >>> q.flatten()
             Quantity([1. 2. 3. 4.], "mV")
         """
@@ -2235,9 +2235,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([10.0, 20.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([10.0, 20.0]), unit=u.mV)
             >>> q.item(0)
             Quantity(10., "mV")
         """
@@ -2259,9 +2259,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([2.0, 3.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([2.0, 3.0]), unit=u.mV)
             >>> q.prod()
             Quantity(6., "mV^2")
         """
@@ -2425,9 +2425,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
             >>> q.repeat(2)
             Quantity([1. 1. 2. 2.], "mV")
         """
@@ -2454,9 +2454,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
             >>> q.reshape((3, 1)).shape
             (3, 1)
         """
@@ -2489,9 +2489,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([3.0, 1.0, 2.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([3.0, 1.0, 2.0]), unit=u.mV)
             >>> q.sort()
             Quantity([1. 2. 3.], "mV")
         """
@@ -2516,9 +2516,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([[[1.0]]]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([[[1.0]]]), unit=u.mV)
             >>> q.squeeze().shape
             ()
         """
@@ -2544,9 +2544,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=u.mV)
             >>> q.swapaxes(0, 1).shape
             (2, 2)
         """
@@ -2574,9 +2574,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.mV)
             >>> parts = q.split(3)
             >>> len(parts)
             3
@@ -2619,9 +2619,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([10.0, 20.0, 30.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([10.0, 20.0, 30.0]), unit=u.mV)
             >>> q.take(jnp.array([0, 2]))
             Quantity([10. 30.], "mV")
         """
@@ -2661,9 +2661,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
             >>> q.tolist()
             [Quantity(1., "mV"), Quantity(2., "mV")]
         """
@@ -2694,9 +2694,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=u.mV)
             >>> q.transpose().shape
             (2, 2)
         """
@@ -2720,9 +2720,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
             >>> q.tile(2)
             Quantity([1. 2. 1. 2.], "mV")
         """
@@ -2930,9 +2930,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
             >>> q.unsqueeze(0).shape
             (1, 2)
         """
@@ -2956,9 +2956,9 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import jax.numpy as jnp
-            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q = u.Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
             >>> q.expand_dims(0).shape
             (1, 2)
         """
@@ -3005,8 +3005,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(2.0, unit=su.mV)
+            >>> import saiunit as u
+            >>> q = u.Quantity(2.0, unit=u.mV)
             >>> q.pow(2)
             Quantity(4., "mV^2")
         """
@@ -3025,8 +3025,8 @@ class Quantity:
         --------
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> q = su.Quantity(3.0, unit=su.mV)
+            >>> import saiunit as u
+            >>> q = u.Quantity(3.0, unit=u.mV)
             >>> q.clone()
             Quantity(3., "mV")
         """

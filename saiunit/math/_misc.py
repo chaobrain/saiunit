@@ -138,10 +138,10 @@ def is_quantity(x: Any) -> bool:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.is_quantity(su.Quantity(1.0, unit=su.meter))
+        >>> import saiunit as u
+        >>> u.math.is_quantity(u.Quantity(1.0, unit=u.meter))
         True
-        >>> su.math.is_quantity(1.0)
+        >>> u.math.is_quantity(1.0)
         False
     """
     x = maybe_custom_array(x)
@@ -227,8 +227,8 @@ def ndim(a: Union[Quantity, jax.typing.ArrayLike]) -> int:
         >>> import saiunit.math as sumath
         >>> sumath.ndim(jnp.zeros((2, 3)))
         2
-        >>> import saiunit as su
-        >>> sumath.ndim(su.Quantity(jnp.zeros((2, 3, 4)), unit=su.meter))
+        >>> import saiunit as u
+        >>> sumath.ndim(u.Quantity(jnp.zeros((2, 3, 4)), unit=u.meter))
         3
     """
     a = maybe_custom_array(a)

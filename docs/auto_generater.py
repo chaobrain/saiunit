@@ -291,6 +291,7 @@ def main(package: str):
     module_and_name = [
         ('_linalg_change_unit', 'Functions that Changing Unit'),
         ('_linalg_keep_unit', 'Functions that Keeping Unit'),
+        ('_linalg_remove_unit', 'Functions that Removing Unit'),
     ]
 
     _write_submodules(
@@ -334,4 +335,4 @@ def main(package: str):
 
 
 if __name__ == '__main__':
-    main('brainunit')
+    main('saiunit')

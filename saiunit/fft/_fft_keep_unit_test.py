@@ -201,17 +201,17 @@ class TestFftKeepUnit(parameterized.TestCase):
 
 def test_docstring_example_fftshift():
     """Verify examples from fftshift docstring."""
-    import saiunit as su
+    import saiunit as u
     import saiunit.fft as sufft
 
-    freq = sufft.fftfreq(4, 1.0 * su.second)
-    assert isinstance(freq, su.Quantity)
+    freq = sufft.fftfreq(4, 1.0 * u.second)
+    assert isinstance(freq, u.Quantity)
     assert freq.shape == (4,)
 
     shifted = sufft.fftshift(freq)
-    assert isinstance(shifted, su.Quantity)
+    assert isinstance(shifted, u.Quantity)
     assert shifted.unit == freq.unit
 
     recovered = sufft.ifftshift(shifted)
-    assert isinstance(recovered, su.Quantity)
+    assert isinstance(recovered, u.Quantity)
     assert jnp.allclose(recovered.mantissa, freq.mantissa)

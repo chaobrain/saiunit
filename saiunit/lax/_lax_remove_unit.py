@@ -58,7 +58,7 @@ def population_count(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
         >>> x = jnp.array([1, 3, 7])
@@ -89,7 +89,7 @@ def clz(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
         >>> x = jnp.array([1, 2, 4], dtype=jnp.int32)
@@ -123,11 +123,11 @@ def eq(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([1.0, 2.0, 3.0]) * su.meter
-        >>> b = jnp.array([1.0, 5.0, 3.0]) * su.meter
+        >>> a = jnp.array([1.0, 2.0, 3.0]) * u.meter
+        >>> b = jnp.array([1.0, 5.0, 3.0]) * u.meter
         >>> sulax.eq(a, b)
         Array([ True, False,  True], dtype=bool)
     """
@@ -157,11 +157,11 @@ def ne(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([1.0, 2.0, 3.0]) * su.meter
-        >>> b = jnp.array([1.0, 5.0, 3.0]) * su.meter
+        >>> a = jnp.array([1.0, 2.0, 3.0]) * u.meter
+        >>> b = jnp.array([1.0, 5.0, 3.0]) * u.meter
         >>> sulax.ne(a, b)
         Array([False,  True, False], dtype=bool)
     """
@@ -191,11 +191,11 @@ def ge(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([1.0, 3.0, 2.0]) * su.second
-        >>> b = jnp.array([2.0, 2.0, 2.0]) * su.second
+        >>> a = jnp.array([1.0, 3.0, 2.0]) * u.second
+        >>> b = jnp.array([2.0, 2.0, 2.0]) * u.second
         >>> sulax.ge(a, b)
         Array([False,  True,  True], dtype=bool)
     """
@@ -225,11 +225,11 @@ def gt(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([1.0, 3.0, 2.0]) * su.second
-        >>> b = jnp.array([2.0, 2.0, 2.0]) * su.second
+        >>> a = jnp.array([1.0, 3.0, 2.0]) * u.second
+        >>> b = jnp.array([2.0, 2.0, 2.0]) * u.second
         >>> sulax.gt(a, b)
         Array([False,  True, False], dtype=bool)
     """
@@ -259,11 +259,11 @@ def le(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([1.0, 3.0, 2.0]) * su.second
-        >>> b = jnp.array([2.0, 2.0, 2.0]) * su.second
+        >>> a = jnp.array([1.0, 3.0, 2.0]) * u.second
+        >>> b = jnp.array([2.0, 2.0, 2.0]) * u.second
         >>> sulax.le(a, b)
         Array([ True, False,  True], dtype=bool)
     """
@@ -293,11 +293,11 @@ def lt(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([1.0, 3.0, 2.0]) * su.second
-        >>> b = jnp.array([2.0, 2.0, 2.0]) * su.second
+        >>> a = jnp.array([1.0, 3.0, 2.0]) * u.second
+        >>> b = jnp.array([2.0, 2.0, 2.0]) * u.second
         >>> sulax.lt(a, b)
         Array([ True, False, False], dtype=bool)
     """

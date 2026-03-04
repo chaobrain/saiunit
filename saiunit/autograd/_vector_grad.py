@@ -94,12 +94,12 @@ def vector_grad(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f(x):
         ...     return x ** 2
         >>> vg_fn = suauto.vector_grad(f)
-        >>> vg_fn(jnp.array([3.0, 4.0]) * su.ms)
+        >>> vg_fn(jnp.array([3.0, 4.0]) * u.ms)
         [6.0, 8.0] * ms
 
     Returning both the gradient and the function value:
@@ -107,12 +107,12 @@ def vector_grad(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f(x):
         ...     return x ** 2
         >>> vg_fn = suauto.vector_grad(f, return_value=True)
-        >>> grad, value = vg_fn(jnp.array([3.0, 4.0]) * su.ms)
+        >>> grad, value = vg_fn(jnp.array([3.0, 4.0]) * u.ms)
         >>> grad
         [6.0, 8.0] * ms
         >>> value

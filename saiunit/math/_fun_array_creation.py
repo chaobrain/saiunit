@@ -87,11 +87,11 @@ def full(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.full((2, 3), 7.0)
+        >>> import saiunit as u
+        >>> u.math.full((2, 3), 7.0)
         Array([[7., 7., 7.],
                [7., 7., 7.]], dtype=float32)
-        >>> su.math.full((3,), 5.0 * su.meter)
+        >>> u.math.full((3,), 5.0 * u.meter)
         Quantity([5. 5. 5.], "m")
     """
     fill_value = maybe_custom_array(fill_value)
@@ -138,11 +138,11 @@ def eye(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.eye(2)
+        >>> import saiunit as u
+        >>> u.math.eye(2)
         Array([[1., 0.],
                [0., 1.]], dtype=float32)
-        >>> su.math.eye(2, unit=su.meter)
+        >>> u.math.eye(2, unit=u.meter)
         Quantity([[1. 0.]
                   [0. 1.]], "m")
     """
@@ -185,12 +185,12 @@ def identity(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.identity(3)
+        >>> import saiunit as u
+        >>> u.math.identity(3)
         Array([[1., 0., 0.],
                [0., 1., 0.],
                [0., 0., 1.]], dtype=float32)
-        >>> su.math.identity(2, unit=su.second)
+        >>> u.math.identity(2, unit=u.second)
         Quantity([[1. 0.]
                   [0. 1.]], "s")
     """
@@ -240,12 +240,12 @@ def tri(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.tri(3)
+        >>> import saiunit as u
+        >>> u.math.tri(3)
         Array([[1., 0., 0.],
                [1., 1., 0.],
                [1., 1., 1.]], dtype=float32)
-        >>> su.math.tri(2, 3, unit=su.meter)
+        >>> u.math.tri(2, 3, unit=u.meter)
         Quantity([[1. 0. 0.]
                   [1. 1. 0.]], "m")
     """
@@ -285,12 +285,12 @@ def empty(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> result = su.math.empty((2, 3))
+        >>> import saiunit as u
+        >>> result = u.math.empty((2, 3))
         >>> result.shape
         (2, 3)
-        >>> result = su.math.empty((2,), unit=su.meter)
-        >>> su.get_unit(result) == su.meter
+        >>> result = u.math.empty((2,), unit=u.meter)
+        >>> u.get_unit(result) == u.meter
         True
     """
     if not isinstance(unit, Unit):
@@ -329,10 +329,10 @@ def ones(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.ones((3,))
+        >>> import saiunit as u
+        >>> u.math.ones((3,))
         Array([1., 1., 1.], dtype=float32)
-        >>> su.math.ones((2, 2), unit=su.meter)
+        >>> u.math.ones((2, 2), unit=u.meter)
         Quantity([[1. 1.]
                   [1. 1.]], "m")
     """
@@ -372,10 +372,10 @@ def zeros(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.zeros((3,))
+        >>> import saiunit as u
+        >>> u.math.zeros((3,))
         Array([0., 0., 0.], dtype=float32)
-        >>> su.math.zeros((2,), unit=su.second)
+        >>> u.math.zeros((2,), unit=u.second)
         Quantity([0. 0.], "s")
     """
     if not isinstance(unit, Unit):
@@ -426,11 +426,11 @@ def full_like(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.full_like(jnp.array([1.0, 2.0]), 9.0)
+        >>> u.math.full_like(jnp.array([1.0, 2.0]), 9.0)
         Array([9., 9.], dtype=float32)
-        >>> su.math.full_like(jnp.array([1.0, 2.0]) * su.meter, 9.0 * su.meter)
+        >>> u.math.full_like(jnp.array([1.0, 2.0]) * u.meter, 9.0 * u.meter)
         Quantity([9. 9.], "m")
     """
     a = maybe_custom_array(a)
@@ -500,13 +500,13 @@ def diag(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.diag(jnp.array([1.0, 2.0, 3.0]))
+        >>> u.math.diag(jnp.array([1.0, 2.0, 3.0]))
         Array([[1., 0., 0.],
                [0., 2., 0.],
                [0., 0., 3.]], dtype=float32)
-        >>> su.math.diag(jnp.array([1.0, 2.0]), unit=su.meter)
+        >>> u.math.diag(jnp.array([1.0, 2.0]), unit=u.meter)
         Quantity([[1. 0.]
                   [0. 2.]], "m")
     """
@@ -556,9 +556,9 @@ def tril(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.tril(jnp.ones((3, 3)))
+        >>> u.math.tril(jnp.ones((3, 3)))
         Array([[1., 0., 0.],
                [1., 1., 0.],
                [1., 1., 1.]], dtype=float32)
@@ -613,9 +613,9 @@ def triu(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.triu(jnp.ones((3, 3)))
+        >>> u.math.triu(jnp.ones((3, 3)))
         Array([[1., 1., 1.],
                [0., 1., 1.],
                [0., 0., 1.]], dtype=float32)
@@ -667,9 +667,9 @@ def empty_like(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> result = su.math.empty_like(jnp.array([1.0, 2.0, 3.0]))
+        >>> result = u.math.empty_like(jnp.array([1.0, 2.0, 3.0]))
         >>> result.shape
         (3,)
     """
@@ -719,11 +719,11 @@ def ones_like(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.ones_like(jnp.array([1.0, 2.0, 3.0]))
+        >>> u.math.ones_like(jnp.array([1.0, 2.0, 3.0]))
         Array([1., 1., 1.], dtype=float32)
-        >>> su.math.ones_like(jnp.array([1.0, 2.0]) * su.meter)
+        >>> u.math.ones_like(jnp.array([1.0, 2.0]) * u.meter)
         Quantity([1. 1.], "m")
     """
     if not isinstance(unit, Unit):
@@ -772,11 +772,11 @@ def zeros_like(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.zeros_like(jnp.array([1.0, 2.0, 3.0]))
+        >>> u.math.zeros_like(jnp.array([1.0, 2.0, 3.0]))
         Array([0., 0., 0.], dtype=float32)
-        >>> su.math.zeros_like(jnp.array([1.0, 2.0]) * su.meter)
+        >>> u.math.zeros_like(jnp.array([1.0, 2.0]) * u.meter)
         Quantity([0. 0.], "m")
     """
     if not isinstance(unit, Unit):
@@ -838,12 +838,12 @@ def asarray(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.array([1, 2, 3])
+        >>> import saiunit as u
+        >>> u.math.array([1, 2, 3])
         Array([1, 2, 3], dtype=int32)
-        >>> su.math.array([1, 2, 3] * su.meter)
+        >>> u.math.array([1, 2, 3] * u.meter)
         Quantity([1 2 3], "m")
-        >>> su.math.asarray([1 * su.meter, 2 * su.meter])
+        >>> u.math.asarray([1 * u.meter, 2 * u.meter])
         Quantity([1 2], "m")
     """
     if a is None:
@@ -916,10 +916,10 @@ def arange(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.arange(5)
+        >>> import saiunit as u
+        >>> u.math.arange(5)
         Array([0, 1, 2, 3, 4], dtype=int32)
-        >>> su.math.arange(0 * su.meter, 3 * su.meter, 1 * su.meter)
+        >>> u.math.arange(0 * u.meter, 3 * u.meter, 1 * u.meter)
         Quantity([0 1 2], "m")
     """
     # apply maybe_custom_array to inputs
@@ -1001,10 +1001,10 @@ def linspace(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.linspace(0, 10, 5)
+        >>> import saiunit as u
+        >>> u.math.linspace(0, 10, 5)
         Array([ 0. ,  2.5,  5. ,  7.5, 10. ], dtype=float32)
-        >>> su.math.linspace(0 * su.meter, 10 * su.meter, 5)
+        >>> u.math.linspace(0 * u.meter, 10 * u.meter, 5)
         Quantity([ 0.   2.5  5.   7.5 10. ], "m")
     """
     start = maybe_custom_array(start)
@@ -1071,8 +1071,8 @@ def logspace(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.logspace(0, 2, 4)
+        >>> import saiunit as u
+        >>> u.math.logspace(0, 2, 4)
         Array([  1.       ,   4.6415887,  21.544348 , 100.       ], dtype=float32)
     """
     start = maybe_custom_array(start)
@@ -1128,9 +1128,9 @@ def fill_diagonal(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.fill_diagonal(jnp.zeros((3, 3)), 5.0)
+        >>> u.math.fill_diagonal(jnp.zeros((3, 3)), 5.0)
         Array([[5., 0., 0.],
                [0., 5., 0.],
                [0., 0., 5.]], dtype=float32)
@@ -1186,9 +1186,9 @@ def meshgrid(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> x, y = su.math.meshgrid(jnp.array([1, 2]), jnp.array([3, 4]))
+        >>> x, y = u.math.meshgrid(jnp.array([1, 2]), jnp.array([3, 4]))
         >>> x
         Array([[1, 2],
                [1, 2]], dtype=int32)
@@ -1258,9 +1258,9 @@ def vander(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.vander(jnp.array([1, 2, 3]), 3)
+        >>> u.math.vander(jnp.array([1, 2, 3]), 3)
         Array([[1, 1, 1],
                [4, 2, 1],
                [9, 3, 1]], dtype=int32)
@@ -1314,9 +1314,9 @@ def tril_indices_from(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> row, col = su.math.tril_indices_from(jnp.ones((3, 3)))
+        >>> row, col = u.math.tril_indices_from(jnp.ones((3, 3)))
         >>> row
         Array([0, 1, 1, 2, 2, 2], dtype=int32)
     """
@@ -1355,9 +1355,9 @@ def triu_indices_from(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> row, col = su.math.triu_indices_from(jnp.ones((3, 3)))
+        >>> row, col = u.math.triu_indices_from(jnp.ones((3, 3)))
         >>> row
         Array([0, 0, 0, 1, 1, 2], dtype=int32)
     """
@@ -1396,9 +1396,9 @@ def from_numpy(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import numpy as np
-        >>> su.math.from_numpy(np.array([1.0, 2.0]), unit=su.meter)
+        >>> u.math.from_numpy(np.array([1.0, 2.0]), unit=u.meter)
         Quantity([1. 2.], "m")
     """
     x = maybe_custom_array(x)
@@ -1429,8 +1429,8 @@ def as_numpy(x):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.math.as_numpy(su.math.ones((3,)))
+        >>> import saiunit as u
+        >>> u.math.as_numpy(u.math.ones((3,)))
         array([1., 1., 1.], dtype=float32)
     """
     x = maybe_custom_array(x)
@@ -1459,10 +1459,10 @@ def tree_zeros_like(tree):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> tree = {'a': jnp.array([1.0, 2.0]), 'b': jnp.array([3.0])}
-        >>> su.math.tree_zeros_like(tree)
+        >>> u.math.tree_zeros_like(tree)
         {'a': Array([0., 0.], dtype=float32), 'b': Array([0.], dtype=float32)}
     """
     tree = maybe_custom_array_tree(tree)
@@ -1491,10 +1491,10 @@ def tree_ones_like(tree):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> tree = {'a': jnp.array([1.0, 2.0]), 'b': jnp.array([3.0])}
-        >>> su.math.tree_ones_like(tree)
+        >>> u.math.tree_ones_like(tree)
         {'a': Array([1., 1.], dtype=float32), 'b': Array([1.], dtype=float32)}
     """
     tree = maybe_custom_array_tree(tree)

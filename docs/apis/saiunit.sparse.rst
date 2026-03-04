@@ -11,7 +11,9 @@ Sparse Data Structures
 .. autosummary::
    :toctree: generated/
    :nosignatures:
+   :template: classtemplate.rst
 
+    SparseMatrix
     CSR
     CSC
     COO
@@ -30,4 +32,3 @@ Sparse Data Operations
     csc_fromdense
     coo_todense
     coo_fromdense
-

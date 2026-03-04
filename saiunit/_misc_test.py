@@ -15,10 +15,10 @@
 
 import numpy as np
 
-import saiunit as su
+import saiunit as u
 
 
-class MyArray(su.CustomArray):
+class MyArray(u.CustomArray):
     def __init__(self, value):
         self.data = value
 
@@ -28,24 +28,24 @@ class MyArray(su.CustomArray):
 
 def test_docstring_example_maybe_custom_array():
     # Plain values pass through unchanged
-    assert su._misc.maybe_custom_array(5) == 5
-    assert su._misc.maybe_custom_array(3.14) == 3.14
-    assert su._misc.maybe_custom_array("hello") == "hello"
+    assert u._misc.maybe_custom_array(5) == 5
+    assert u._misc.maybe_custom_array(3.14) == 3.14
+    assert u._misc.maybe_custom_array("hello") == "hello"
 
     # CustomArray instances are unwrapped to their .data
     arr = MyArray(np.array([1, 2, 3]))
-    result = su._misc.maybe_custom_array(arr)
+    result = u._misc.maybe_custom_array(arr)
     np.testing.assert_array_equal(result, np.array([1, 2, 3]))
 
     # Scalar CustomArray
     scalar_arr = MyArray(42)
-    assert su._misc.maybe_custom_array(scalar_arr) == 42
+    assert u._misc.maybe_custom_array(scalar_arr) == 42
 
 
 def test_docstring_example_maybe_custom_array_tree():
     # Nested structure with CustomArray instances
     tree = [MyArray(np.array([1, 2])), 3, {'k': MyArray(np.array([4]))}]
-    result = su._misc.maybe_custom_array_tree(tree)
+    result = u._misc.maybe_custom_array_tree(tree)
 
     np.testing.assert_array_equal(result[0], np.array([1, 2]))
     assert result[1] == 3
@@ -53,13 +53,13 @@ def test_docstring_example_maybe_custom_array_tree():
 
     # Tuple structure
     tree_tuple = (MyArray(np.array([10])), 20)
-    result_tuple = su._misc.maybe_custom_array_tree(tree_tuple)
+    result_tuple = u._misc.maybe_custom_array_tree(tree_tuple)
     np.testing.assert_array_equal(result_tuple[0], np.array([10]))
     assert result_tuple[1] == 20
 
     # Plain tree without any CustomArray should pass through unchanged
     plain_tree = [1, 2, {'a': 3}]
-    result_plain = su._misc.maybe_custom_array_tree(plain_tree)
+    result_plain = u._misc.maybe_custom_array_tree(plain_tree)
     assert result_plain[0] == 1
     assert result_plain[1] == 2
     assert result_plain[2]['a'] == 3

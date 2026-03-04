@@ -50,12 +50,12 @@ def celsius2kelvin(celsius: jax.typing.ArrayLike) -> Quantity:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.celsius2kelvin(0.0)
+        >>> import saiunit as u
+        >>> u.celsius2kelvin(0.0)
         273.15 * kelvin
-        >>> su.celsius2kelvin(25.0)
+        >>> u.celsius2kelvin(25.0)
         298.15 * kelvin
-        >>> su.celsius2kelvin(-40.0)
+        >>> u.celsius2kelvin(-40.0)
         233.14999999999998 * kelvin
 
     """
@@ -89,12 +89,12 @@ def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.kelvin2celsius(273.15 * su.kelvin)
+        >>> import saiunit as u
+        >>> u.kelvin2celsius(273.15 * u.kelvin)
         0.0
-        >>> su.kelvin2celsius(298.15 * su.kelvin)
+        >>> u.kelvin2celsius(298.15 * u.kelvin)
         25.0
-        >>> su.kelvin2celsius(373.15 * su.kelvin)
+        >>> u.kelvin2celsius(373.15 * u.kelvin)
         100.0
 
     """

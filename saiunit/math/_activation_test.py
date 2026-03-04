@@ -974,3 +974,128 @@ class TestDocstringExamples:
         """Verify silu docstring example at x=0."""
         result = um.silu(jnp.array([-2., 0., 2.]))
         np.testing.assert_allclose(result[1], 0.0, atol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# unit_to_scale tests
+# ---------------------------------------------------------------------------
+
+class TestActivationUnitToScale(parameterized.TestCase):
+    """Tests for the unit_to_scale parameter on activation functions."""
+
+    def setUp(self):
+        self.values = jnp.array([-2.0, -0.5, 0.0, 0.5, 2.0])
+        self.q_meter = self.values * u.meter
+        self.q_mvolt = self.values * u.mvolt
+
+    # -- simple (no extra params) activations --------------------------------
+
+    @parameterized.named_parameters(
+        ('relu6', um.relu6, jax.nn.relu6),
+        ('sigmoid', um.sigmoid, jax.nn.sigmoid),
+        ('softplus', um.softplus, jax.nn.softplus),
+        ('sparse_plus', um.sparse_plus, jax.nn.sparse_plus),
+        ('sparse_sigmoid', um.sparse_sigmoid, jax.nn.sparse_sigmoid),
+        ('soft_sign', um.soft_sign, jax.nn.soft_sign),
+        ('silu', um.silu, jax.nn.silu),
+        ('swish', um.swish, jax.nn.silu),
+        ('log_sigmoid', um.log_sigmoid, jax.nn.log_sigmoid),
+        ('hard_sigmoid', um.hard_sigmoid, jax.nn.hard_sigmoid),
+        ('hard_silu', um.hard_silu, jax.nn.hard_silu),
+        ('hard_tanh', um.hard_tanh, jax.nn.hard_tanh),
+        ('selu', um.selu, jax.nn.selu),
+        ('mish', um.mish, jax.nn.mish),
+    )
+    def test_unit_to_scale_simple(self, su_fn, jax_fn):
+        """unit_to_scale converts Quantity to decimal then applies activation."""
+        result = su_fn(self.q_meter, unit_to_scale=u.meter)
+        expected = jax_fn(self.q_meter.to_decimal(u.meter))
+        np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+    @parameterized.named_parameters(
+        ('relu6', um.relu6, jax.nn.relu6),
+        ('sigmoid', um.sigmoid, jax.nn.sigmoid),
+        ('softplus', um.softplus, jax.nn.softplus),
+        ('selu', um.selu, jax.nn.selu),
+        ('mish', um.mish, jax.nn.mish),
+    )
+    def test_unit_to_scale_different_unit(self, su_fn, jax_fn):
+        """unit_to_scale rescales to a different compatible unit."""
+        result = su_fn(self.q_mvolt, unit_to_scale=u.volt)
+        expected = jax_fn(self.q_mvolt.to_decimal(u.volt))
+        np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+    # -- activations with extra params --------------------------------------
+
+    def test_elu_unit_to_scale(self):
+        result = um.elu(self.q_meter, unit_to_scale=u.meter)
+        expected = jax.nn.elu(self.q_meter.to_decimal(u.meter))
+        np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+        result2 = um.elu(self.q_meter, alpha=2.0, unit_to_scale=u.meter)
+        expected2 = jax.nn.elu(self.q_meter.to_decimal(u.meter), alpha=2.0)
+        np.testing.assert_allclose(result2, expected2, rtol=1e-6)
+
+    def test_celu_unit_to_scale(self):
+        result = um.celu(self.q_meter, unit_to_scale=u.meter)
+        expected = jax.nn.celu(self.q_meter.to_decimal(u.meter))
+        np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+        result2 = um.celu(self.q_meter, alpha=2.0, unit_to_scale=u.meter)
+        expected2 = jax.nn.celu(self.q_meter.to_decimal(u.meter), alpha=2.0)
+        np.testing.assert_allclose(result2, expected2, rtol=1e-6)
+
+    def test_gelu_unit_to_scale(self):
+        result = um.gelu(self.q_meter, unit_to_scale=u.meter)
+        expected = jax.nn.gelu(self.q_meter.to_decimal(u.meter))
+        np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+        result2 = um.gelu(self.q_meter, approximate=False, unit_to_scale=u.meter)
+        expected2 = jax.nn.gelu(self.q_meter.to_decimal(u.meter), approximate=False)
+        np.testing.assert_allclose(result2, expected2, rtol=1e-6)
+
+    def test_glu_unit_to_scale(self):
+        q = jnp.array([1., 2., 3., 4.]) * u.meter
+        result = um.glu(q, unit_to_scale=u.meter)
+        expected = jax.nn.glu(q.to_decimal(u.meter))
+        np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+    def test_squareplus_unit_to_scale(self):
+        result = um.squareplus(self.q_meter, unit_to_scale=u.meter)
+        expected = jax.nn.squareplus(self.q_meter.to_decimal(u.meter))
+        np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+        result2 = um.squareplus(self.q_meter, b=2.0, unit_to_scale=u.meter)
+        expected2 = jax.nn.squareplus(self.q_meter.to_decimal(u.meter), b=2.0)
+        np.testing.assert_allclose(result2, expected2, rtol=1e-6)
+
+    # -- error cases --------------------------------------------------------
+
+    @parameterized.named_parameters(
+        ('sigmoid', um.sigmoid),
+        ('silu', um.silu),
+        ('elu', um.elu),
+        ('gelu', um.gelu),
+        ('mish', um.mish),
+    )
+    def test_unit_to_scale_with_plain_array_raises(self, su_fn):
+        """Passing unit_to_scale with a plain array (not Quantity) raises TypeError."""
+        with pytest.raises(TypeError):
+            su_fn(self.values, unit_to_scale=u.meter)
+
+    @parameterized.named_parameters(
+        ('sigmoid', um.sigmoid),
+        ('silu', um.silu),
+        ('elu', um.elu),
+        ('gelu', um.gelu),
+        ('mish', um.mish),
+    )
+    def test_quantity_with_units_no_unit_to_scale_raises(self, su_fn):
+        """Quantity with physical units but no unit_to_scale raises TypeError."""
+        with pytest.raises(TypeError):
+            su_fn(self.q_meter)
+
+    def test_unit_to_scale_invalid_type_raises(self):
+        """Passing a non-Unit as unit_to_scale raises TypeError."""
+        with pytest.raises(TypeError):
+            um.sigmoid(self.q_meter, unit_to_scale="meter")

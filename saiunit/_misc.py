@@ -84,15 +84,15 @@ def maybe_custom_array(x):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su._misc.maybe_custom_array(5)
+        >>> import saiunit as u
+        >>> u._misc.maybe_custom_array(5)
         5
         >>> import numpy as np
-        >>> class MyArray(su.CustomArray):
+        >>> class MyArray(u.CustomArray):
         ...     def __init__(self, value):
         ...         self.data = value
         >>> arr = MyArray(np.array([1, 2, 3]))
-        >>> su._misc.maybe_custom_array(arr)
+        >>> u._misc.maybe_custom_array(arr)
         array([1, 2, 3])
 
     """
@@ -129,13 +129,13 @@ def maybe_custom_array_tree(x):
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import numpy as np
-        >>> class MyArray(su.CustomArray):
+        >>> class MyArray(u.CustomArray):
         ...     def __init__(self, value):
         ...         self.data = value
         >>> tree = [MyArray(np.array([1, 2])), 3, {'k': MyArray(np.array([4]))}]
-        >>> result = su._misc.maybe_custom_array_tree(tree)
+        >>> result = u._misc.maybe_custom_array_tree(tree)
         >>> result[0]
         array([1, 2])
         >>> result[1]

@@ -128,13 +128,13 @@ class Dimension:
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> length_dim = su.meter.dim
+        >>> import saiunit as u
+        >>> length_dim = u.meter.dim
         >>> length_dim.get_dimension('m')
         1.0
         >>> length_dim.is_dimensionless
         False
-        >>> su.DIMENSIONLESS.is_dimensionless
+        >>> u.DIMENSIONLESS.is_dimensionless
         True
     """
 
@@ -233,10 +233,10 @@ class Dimension:
 
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> su.DIMENSIONLESS.is_dimensionless
+            >>> import saiunit as u
+            >>> u.DIMENSIONLESS.is_dimensionless
             True
-            >>> su.meter.dim.is_dimensionless
+            >>> u.meter.dim.is_dimensionless
             False
         """
         return np.allclose(self._dims, 0)
@@ -261,8 +261,8 @@ class Dimension:
 
         .. code-block:: python
 
-            >>> import saiunit as su
-            >>> d = su.meter.dim
+            >>> import saiunit as u
+            >>> d = u.meter.dim
             >>> d.dim is d
             True
         """
@@ -726,12 +726,12 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.get_or_create_dimension(length=1, mass=1, time=-2)
+        >>> import saiunit as u
+        >>> u.get_or_create_dimension(length=1, mass=1, time=-2)
         metre * kilogram * second ** -2
-        >>> su.get_or_create_dimension(m=1, kg=1, s=-2)
+        >>> u.get_or_create_dimension(m=1, kg=1, s=-2)
         metre * kilogram * second ** -2
-        >>> su.get_or_create_dimension([1, 1, -2, 0, 0, 0, 0])
+        >>> u.get_or_create_dimension([1, 1, -2, 0, 0, 0, 0])
         metre * kilogram * second ** -2
     """
     if len(args):
@@ -772,10 +772,10 @@ Examples
 
 .. code-block:: python
 
-    >>> import saiunit as su
-    >>> su.DIMENSIONLESS.is_dimensionless
+    >>> import saiunit as u
+    >>> u.DIMENSIONLESS.is_dimensionless
     True
-    >>> str(su.DIMENSIONLESS)
+    >>> str(u.DIMENSIONLESS)
     '1'
 """
 
@@ -804,10 +804,10 @@ def get_dim_for_display(d):
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> su.get_dim_for_display(su.DIMENSIONLESS)
+        >>> import saiunit as u
+        >>> u.get_dim_for_display(u.DIMENSIONLESS)
         '1'
-        >>> su.get_dim_for_display(su.meter.dim)
+        >>> u.get_dim_for_display(u.meter.dim)
         'm'
     """
     if (isinstance(d, int) and d == 1) or d is DIMENSIONLESS:
@@ -837,8 +837,8 @@ class DimensionMismatchError(Exception):
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> e = su.DimensionMismatchError("Addition", su.meter.dim, su.second.dim)
+        >>> import saiunit as u
+        >>> e = u.DimensionMismatchError("Addition", u.meter.dim, u.second.dim)
         >>> 'Addition' in str(e)
         True
         >>> 'm' in str(e)
@@ -899,8 +899,8 @@ class UnitMismatchError(Exception):
 
     .. code-block:: python
 
-        >>> import saiunit as su
-        >>> e = su.UnitMismatchError("Addition", su.mvolt, su.volt)
+        >>> import saiunit as u
+        >>> e = u.UnitMismatchError("Addition", u.mvolt, u.volt)
         >>> 'Addition' in str(e)
         True
     """

@@ -112,7 +112,7 @@ class COO(SparseMatrix):
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
         >>> coo = susparse.COO.fromdense(dense)
@@ -256,7 +256,7 @@ class COO(SparseMatrix):
         .. code-block:: python
 
             >>> import jax.numpy as jnp
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import saiunit.sparse as susparse
             >>> dense = jnp.array([[1., 0.], [0., 2.]])
             >>> coo = susparse.COO.fromdense(dense)
@@ -289,7 +289,7 @@ class COO(SparseMatrix):
         .. code-block:: python
 
             >>> import jax.numpy as jnp
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import saiunit.sparse as susparse
             >>> dense = jnp.array([[0., 3.], [4., 0.]])
             >>> coo = susparse.COO.fromdense(dense)
@@ -542,7 +542,7 @@ def coo_todense(mat: COO) -> jax.Array | Quantity:
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[5., 0.], [0., 6.]])
         >>> coo = susparse.coo_fromdense(dense)
@@ -582,7 +582,7 @@ def coo_fromdense(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
         >>> coo = susparse.coo_fromdense(dense)
