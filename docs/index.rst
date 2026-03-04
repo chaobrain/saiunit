@@ -219,6 +219,14 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
 .. toctree::
    :hidden:
    :maxdepth: 1
+   :caption: Type Annotations
+
+   type_annotations/type_annotations.ipynb
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
    :caption: Advanced Tutorials
 
    advanced_tutorials/combining_and_defining.ipynb

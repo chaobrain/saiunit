@@ -13,8 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from saiunit._version import __version__, __version_info__
+import saiunit
+__version__ = saiunit.__version__
+__version_info__ = saiunit.__version_info__
 
 from . import autograd
 from . import constants
@@ -23,6 +24,7 @@ from . import lax
 from . import linalg
 from . import math
 from . import sparse
+from . import typing
 from ._base_decorators import assign_units, check_dims, check_units
 from ._base_dimension import (
     DIMENSIONLESS,
@@ -82,6 +84,7 @@ __all__ = [
               'fft',
               'constants',
               'sparse',
+              'typing',
 
               # misc
               'maybe_custom_array',
@@ -145,4 +148,4 @@ __all__ = [
               'magnetic_constant',
               'molar_mass_constant',
           ] + _common_all + _std_units_all + _constants_all
-del _common_all, _std_units_all, _constants_all
+del _common_all, _std_units_all, _constants_all, saiunit

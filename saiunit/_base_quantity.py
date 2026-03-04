@@ -307,6 +307,37 @@ class Quantity:
     _mantissa: jax.Array | np.ndarray
     _unit: Unit
 
+    def __class_getitem__(cls, item):
+        """Enable ``Quantity[unit]`` and ``Quantity["physical_type"]`` annotations.
+
+        Returns a type that supports ``isinstance`` checks and can be used as
+        a type annotation.
+
+        Parameters
+        ----------
+        item : Unit or str
+            A :class:`Unit` instance (e.g. ``u.meter``) or a string naming a
+            physical type (e.g. ``"length"``, ``"speed"``).
+
+        Returns
+        -------
+        type
+            A class supporting ``isinstance(quantity, Quantity[unit])``.
+
+        Examples
+        --------
+        >>> import saiunit as u
+        >>> x = 2.0 * u.kmeter
+        >>> isinstance(x, u.Quantity[u.meter])    # dimension check
+        True
+        >>> isinstance(x, u.Quantity["length"])    # physical type check
+        True
+        >>> isinstance(x, u.Quantity["mass"])      # wrong dimension
+        False
+        """
+        from .typing import _make_annotated_quantity_type
+        return _make_annotated_quantity_type(item)
+
     def __init__(
         self,
         mantissa: PyTree | Unit,
