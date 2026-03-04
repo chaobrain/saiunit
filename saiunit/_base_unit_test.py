@@ -1171,10 +1171,11 @@ def test_docstring_example_unit_class():
     """Test the example from Unit class docstring."""
     import saiunit as u
     Nm = u.newton * u.metre
-    assert 'N' in str(Nm)
+    # newton * metre simplifies to joule
+    assert str(Nm) == 'J'
     q = 1.0 * Nm
     s = q.repr_in_unit(Nm)
-    assert 'N' in s
+    assert 'J' in s
 
 
 def test_docstring_example_unit_is_unitless():

@@ -1293,6 +1293,14 @@ class Unit:
         machine-parseable.
         """
         if self._display_parts is not None:
+            # Check if this compound unit matches a known derived unit
+            # (e.g. mA * ohm → mV, volt * amp → W)
+            _, dispname, is_fullname, _ = _find_standard_unit(
+                self.dim, self.base, self.scale, self.factor,
+                for_composition=True,
+            )
+            if is_fullname:
+                return dispname
             return _format_display_parts(self._display_parts)
         if self.is_fullname:
             return self.dispname

@@ -307,7 +307,7 @@ class Quantity:
     _mantissa: jax.Array | np.ndarray
     _unit: Unit
 
-    def __class_getitem__(cls, item):
+    def __class_getitem__(cls, item: Unit | str) -> type['Quantity']:
         """Enable ``Quantity[unit]`` and ``Quantity["physical_type"]`` annotations.
 
         Returns a type that supports ``isinstance`` checks and can be used as
@@ -334,6 +334,13 @@ class Quantity:
         True
         >>> isinstance(x, u.Quantity["mass"])      # wrong dimension
         False
+
+        Notes
+        -----
+        Some static analyzers may report warnings for
+        ``isinstance(x, Quantity["..."])`` because they interpret this syntax
+        as parameterized generics. For IDE-safe runtime checks, use
+        :func:`saiunit.typing.quantity_type`.
         """
         from .typing import _make_annotated_quantity_type
         return _make_annotated_quantity_type(item)
