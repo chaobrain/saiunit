@@ -23,7 +23,9 @@ from jax.numpy import fft as jnpfft
 from jaxlib import xla_client
 
 from saiunit import _unit_common as uc
-from saiunit._base import Quantity, Unit, get_or_create_dimension
+from saiunit._base_dimension import get_or_create_dimension
+from saiunit._base_unit import Unit
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit._unit_common import second
 from saiunit.math._fun_change_unit import _fun_change_unit_unary

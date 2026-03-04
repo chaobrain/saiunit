@@ -25,7 +25,13 @@ from jax.experimental.sparse import (
     JAXSparse, csr_fromdense_p, csr_todense_p, csr_matvec_p, csr_matmat_p
 )
 
-from saiunit._base import Quantity, split_mantissa_unit, maybe_decimal, get_mantissa, get_unit
+from saiunit._base_getters import (
+    get_mantissa,
+    get_unit,
+    maybe_decimal,
+    split_mantissa_unit,
+)
+from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
 from saiunit._sparse_base import SparseMatrix
 from saiunit.math._fun_array_creation import asarray

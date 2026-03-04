@@ -24,7 +24,7 @@ from absl.testing import parameterized
 import saiunit as bu
 import saiunit.lax as bulax
 from saiunit import meter, second, volt
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(bu.CustomArray):

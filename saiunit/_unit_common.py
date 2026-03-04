@@ -21,7 +21,8 @@
 
 # fmt: off
 # flake8: noqa
-from ._base import (Unit, get_or_create_dimension)
+from ._base_dimension import get_or_create_dimension
+from ._base_unit import Unit
 
 
 __all__ = [

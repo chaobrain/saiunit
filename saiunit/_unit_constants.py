@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from ._base import Unit
+from ._base_unit import Unit
 from ._unit_common import joule, kilogram, second, meter, radian, pascal, meter2, meter3, kelvin, watt, newton
 from .math import pi
 

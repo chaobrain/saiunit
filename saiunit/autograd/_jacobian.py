@@ -22,7 +22,8 @@ import jax
 import numpy as np
 from jax import numpy as jnp
 
-from saiunit._base import Quantity, maybe_decimal, get_magnitude, get_unit
+from saiunit._base_getters import get_magnitude, get_unit, maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import safe_map
 from saiunit._misc import maybe_custom_array_tree
 from ._misc import _ensure_index, _check_callable, _argnums_partial

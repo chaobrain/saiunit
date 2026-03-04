@@ -21,7 +21,8 @@ from typing import Callable, Sequence
 import jax
 from jax import numpy as jnp
 
-from saiunit._base import get_unit, maybe_decimal, Quantity, get_mantissa
+from saiunit._base_getters import get_mantissa, get_unit, maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import maybe_custom_array_tree
 from ._misc import _check_callable, _argnums_partial, _ensure_index
 

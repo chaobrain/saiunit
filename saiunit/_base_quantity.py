@@ -233,9 +233,6 @@ def _quantity_with_unit(mantissa, unit):
     return Quantity(mantissa, unit=unit)
 
 
-_quantity_with_unit.__module__ = 'saiunit._base'
-
-
 # ---------------------------------------------------------------------------
 # Quantity class
 # ---------------------------------------------------------------------------

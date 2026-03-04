@@ -19,7 +19,8 @@ from typing import Any, Callable, Sequence, Union
 import jax
 from jax import lax
 
-from saiunit._base import Quantity, maybe_decimal
+from saiunit._base_getters import maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 
 __all__ = [

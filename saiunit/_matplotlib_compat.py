@@ -18,7 +18,9 @@ from __future__ import annotations
 import importlib.util
 from typing import Any
 
-from ._base import Quantity, fail_for_dimension_mismatch, UNITLESS
+from ._base_getters import fail_for_dimension_mismatch
+from ._base_quantity import Quantity
+from ._base_unit import UNITLESS
 
 
 def _has_matplotlib() -> bool:

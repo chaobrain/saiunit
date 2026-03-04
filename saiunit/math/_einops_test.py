@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import saiunit as bu
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 from saiunit.math._einops import einrearrange, einreduce, einrepeat, _enumerate_directions
 from saiunit.math._einops_parsing import EinopsError
 

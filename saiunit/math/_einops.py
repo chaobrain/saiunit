@@ -27,7 +27,8 @@ import jax.numpy as jnp
 import numpy as np
 import opt_einsum
 
-from saiunit._base import Quantity, UNITLESS
+from saiunit._base_unit import UNITLESS
+from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import safe_map, unzip2
 from saiunit._misc import set_module_as, maybe_custom_array_tree
 from ._einops_parsing import ParsedExpression, _ellipsis, AnonymousAxis, EinopsError

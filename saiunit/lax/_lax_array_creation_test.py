@@ -20,7 +20,7 @@ from absl.testing import parameterized
 
 import saiunit.lax as bulax
 from saiunit import meter, second
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 lax_array_creation_given_array = [
     'zeros_like_array',

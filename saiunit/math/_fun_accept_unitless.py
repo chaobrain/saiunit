@@ -19,7 +19,8 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
-from saiunit._base import Quantity, Unit
+from saiunit._base_unit import Unit
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 from ._exprel import exprel as _exprel_impl, set_exprel_order
 

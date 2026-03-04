@@ -19,7 +19,8 @@ from typing import (Union, Optional, Sequence)
 import jax
 import jax.numpy as jnp
 
-from saiunit._base import Quantity, get_unit
+from saiunit._base_getters import get_unit
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [

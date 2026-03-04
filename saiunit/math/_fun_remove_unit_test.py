@@ -23,7 +23,7 @@ from absl.testing import parameterized
 
 import saiunit as bu
 import saiunit.math as bm
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(bu.CustomArray):

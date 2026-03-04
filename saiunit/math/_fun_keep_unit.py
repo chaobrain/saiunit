@@ -23,15 +23,15 @@ import jax.numpy as jnp
 import numpy as np
 from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 
-from saiunit._base import (
-    Quantity,
+from saiunit._base_unit import UNITLESS
+from saiunit._base_getters import (
     fail_for_dimension_mismatch,
     get_unit,
+    maybe_decimal,
     split_mantissa_unit,
-    UNITLESS,
     unit_scale_align_to_first,
-    maybe_decimal
 )
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ._fun_array_creation import asarray
 

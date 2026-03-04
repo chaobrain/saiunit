@@ -22,7 +22,9 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.fft as ufft
 from saiunit import meter, second
-from saiunit._base import assert_quantity, Unit, get_or_create_dimension
+from saiunit._base_dimension import get_or_create_dimension
+from saiunit._base_unit import Unit
+from saiunit._base_getters import assert_quantity
 
 
 class Array(u.CustomArray):

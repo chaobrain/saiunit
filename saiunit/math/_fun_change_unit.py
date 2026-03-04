@@ -20,7 +20,9 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
-from saiunit._base import UNITLESS, Quantity, maybe_decimal
+from saiunit._base_unit import UNITLESS
+from saiunit._base_getters import maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ._fun_array_creation import asarray
 

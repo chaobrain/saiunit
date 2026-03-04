@@ -22,7 +22,7 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.math as um
 from saiunit import meter, second, UNITLESS
-from saiunit._base import Quantity
+from saiunit._base_quantity import Quantity
 
 
 @jax.tree_util.register_pytree_node_class

@@ -20,7 +20,7 @@ from typing import Union
 import jax
 from jax import lax
 
-from saiunit._base import Quantity
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit.math._fun_remove_unit import _fun_remove_unit_unary, _fun_logic_binary
 

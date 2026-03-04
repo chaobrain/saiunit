@@ -20,7 +20,7 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.fft as ufft
 from saiunit import meter, second
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(u.CustomArray):

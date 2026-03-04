@@ -22,7 +22,7 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.linalg as bulinalg
 from saiunit import second, meter
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(u.CustomArray):

@@ -21,7 +21,8 @@ import jax
 import jax.numpy as jnp
 from jax import Array
 
-from saiunit._base import Quantity, maybe_decimal
+from saiunit._base_getters import maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit.lax import _lax_linalg as lax_linalg
 from saiunit.math._fun_keep_unit import (

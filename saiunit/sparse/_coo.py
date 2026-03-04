@@ -26,7 +26,13 @@ from jax import lax
 from jax import tree_util
 from jax.experimental.sparse import JAXSparse, coo_todense_p, coo_fromdense_p, coo_matmat_p, coo_matvec_p
 
-from saiunit._base import Quantity, split_mantissa_unit, maybe_decimal, get_mantissa, get_unit
+from saiunit._base_getters import (
+    get_mantissa,
+    get_unit,
+    maybe_decimal,
+    split_mantissa_unit,
+)
+from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
 from saiunit._sparse_base import SparseMatrix
 from saiunit.math._fun_array_creation import asarray

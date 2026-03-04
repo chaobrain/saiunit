@@ -22,7 +22,8 @@ import numpy as np
 from jax import lax
 from jax._src.typing import Shape
 
-from saiunit._base import Quantity, maybe_decimal, has_same_unit
+from saiunit._base_getters import has_same_unit, maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from saiunit.math._fun_keep_unit import _fun_keep_unit_unary, _fun_keep_unit_binary
 

@@ -20,7 +20,7 @@ from typing import (Union, Optional)
 import jax
 import jax.numpy as jnp
 
-from saiunit._base import Quantity
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit.math._fun_remove_unit import _fun_remove_unit_unary
 

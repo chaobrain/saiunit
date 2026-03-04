@@ -16,7 +16,7 @@
 
 import jax.typing
 
-from ._base import Quantity
+from ._base_quantity import Quantity
 from ._misc import maybe_custom_array
 from ._unit_common import kelvin
 

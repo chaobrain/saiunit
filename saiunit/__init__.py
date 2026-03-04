@@ -24,31 +24,44 @@ from . import lax
 from . import linalg
 from . import math
 from . import sparse
-from ._base import *
-from ._base import __all__ as _base_all
-from ._celsius import *
-from ._celsius import __all__ as _celsius_all
+from ._base_decorators import assign_units, check_dims, check_units
+from ._base_dimension import (
+    DIMENSIONLESS,
+    Dimension,
+    DimensionMismatchError,
+    UnitMismatchError,
+    get_dim_for_display,
+    get_or_create_dimension,
+)
+from ._base_getters import (
+    array_with_unit,
+    assert_quantity,
+    display_in_unit,
+    fail_for_dimension_mismatch,
+    fail_for_unit_mismatch,
+    get_dim,
+    get_magnitude,
+    get_mantissa,
+    get_unit,
+    has_same_unit,
+    have_same_dim,
+    is_dimensionless,
+    is_scalar_type,
+    is_unitless,
+    maybe_decimal,
+    split_mantissa_unit,
+    unit_scale_align_to_first,
+)
+from ._base_quantity import Quantity, compatible_with_equinox
+from ._base_unit import UNITLESS, Unit, add_standard_unit
+from ._celsius import celsius2kelvin, kelvin2celsius
 from ._misc import maybe_custom_array, maybe_custom_array_tree
 from ._unit_common import *
 from ._unit_common import __all__ as _common_all
 from ._unit_constants import *
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
-from .custom_array import *
-from .custom_array import __all__ as _array_all
-
-__all__ = [
-    'math',
-    'linalg',
-    'autograd',
-    'fft',
-    'constants',
-    'sparse',
-    'maybe_custom_array',
-    'maybe_custom_array_tree',
-]
-__all__ = __all__ + _common_all + _std_units_all + _base_all + _array_all + _celsius_all
-del _common_all, _std_units_all, _base_all, _celsius_all, _matplotlib_compat, _array_all
+from .custom_array import CustomArray
 
 # old version compatibility
 avogadro_constant = constants.avogadro
@@ -60,3 +73,75 @@ faraday_constant = constants.faraday
 gas_constant = constants.gas
 magnetic_constant = constants.magnetic
 molar_mass_constant = constants.molar_mass
+
+__all__ = [
+              # submodules
+              'math',
+              'linalg',
+              'autograd',
+              'fft',
+              'constants',
+              'sparse',
+
+              # misc
+              'maybe_custom_array',
+              'maybe_custom_array_tree',
+              'CustomArray',
+
+              # _base_dimension
+              'Dimension',
+              'DIMENSIONLESS',
+              'DimensionMismatchError',
+              'UnitMismatchError',
+              'get_or_create_dimension',
+              'get_dim_for_display',
+
+              # _base_unit
+              'Unit',
+              'UNITLESS',
+              'add_standard_unit',
+
+              # _base_getters
+              'is_dimensionless',
+              'is_unitless',
+              'is_scalar_type',
+              'get_dim',
+              'get_unit',
+              'get_mantissa',
+              'get_magnitude',
+              'display_in_unit',
+              'split_mantissa_unit',
+              'maybe_decimal',
+              'fail_for_dimension_mismatch',
+              'fail_for_unit_mismatch',
+              'assert_quantity',
+              'have_same_dim',
+              'has_same_unit',
+              'unit_scale_align_to_first',
+              'array_with_unit',
+
+              # _base_quantity
+              'Quantity',
+              'compatible_with_equinox',
+
+              # _base_decorators
+              'check_dims',
+              'check_units',
+              'assign_units',
+
+              # _celsius
+              'celsius2kelvin',
+              'kelvin2celsius',
+
+              # old version compatibility
+              'avogadro_constant',
+              'boltzmann_constant',
+              'electric_constant',
+              'electron_mass',
+              'elementary_charge',
+              'faraday_constant',
+              'gas_constant',
+              'magnetic_constant',
+              'molar_mass_constant',
+          ] + _common_all + _std_units_all
+del _common_all, _std_units_all, _matplotlib_compat

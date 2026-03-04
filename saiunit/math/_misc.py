@@ -22,7 +22,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from saiunit._base import Unit, Quantity, get_unit, is_unitless
+from saiunit._base_unit import Unit
+from saiunit._base_getters import get_unit, is_unitless
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 T = TypeVar("T")

@@ -20,7 +20,8 @@ from typing import Union, Optional, Callable, Sequence
 import jax
 from jax import lax
 
-from saiunit._base import Quantity, Unit
+from saiunit._base_unit import Unit
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit.math._fun_accept_unitless import _fun_accept_unitless_unary, _fun_accept_unitless_binary, _fun_unitless_binary
 

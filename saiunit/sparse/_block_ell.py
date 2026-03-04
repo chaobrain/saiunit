@@ -22,7 +22,8 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental import pallas as pl
 
-from saiunit._base import Quantity, get_mantissa, get_unit, maybe_decimal
+from saiunit._base_getters import get_mantissa, get_unit, maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._sparse_base import SparseMatrix
 
 __all__ = [

@@ -17,7 +17,8 @@ from typing import Union
 import jax
 from jax import nn
 
-from saiunit._base import Quantity, get_mantissa
+from saiunit._base_getters import get_mantissa
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 from ._fun_accept_unitless import _fun_accept_unitless_unary
 from ._fun_array_creation import asarray

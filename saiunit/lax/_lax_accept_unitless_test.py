@@ -22,7 +22,7 @@ from absl.testing import parameterized
 import saiunit as bu
 import saiunit.lax as bulax
 from saiunit import meter
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 # math funcs only accept unitless (unary)
 lax_accept_unitless_unary = [

@@ -20,7 +20,8 @@ from typing import (Any, Sequence, Callable)
 
 import jax
 
-from saiunit._base import get_mantissa, get_unit, Quantity, maybe_decimal
+from saiunit._base_getters import get_mantissa, get_unit, maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
 from saiunit._misc import maybe_custom_array_tree
 from ._misc import _ensure_index
