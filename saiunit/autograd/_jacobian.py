@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 from functools import wraps, partial
-from typing import (Sequence, Callable, Any)
+from typing import Sequence, Callable
 
 import jax
 import numpy as np

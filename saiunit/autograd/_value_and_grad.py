@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import (Any, Sequence, Callable)
+from typing import Any, Sequence, Callable
 
 import jax
 
