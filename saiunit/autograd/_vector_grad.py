@@ -20,9 +20,11 @@ from typing import Callable, Sequence
 
 import jax
 from jax import numpy as jnp
-from ._misc import _check_callable, _argnums_partial, _ensure_index
-from saiunit._base import get_unit, maybe_decimal, Quantity, get_mantissa
+
+from saiunit._base_getters import get_mantissa, get_unit, maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import maybe_custom_array_tree
+from ._misc import _check_callable, _argnums_partial, _ensure_index
 
 __all__ = [
     'vector_grad',
@@ -37,37 +39,84 @@ def vector_grad(
     unit_aware: bool = True,
 ):
     """
-    Unit-aware compute the gradient of a vector with respect to the input.
+    Unit-aware element-wise gradient of a vector-valued function.
 
-    Args:
-        func: A Python callable that computes a vector output given arguments.
-        argnums: Optional, an integer or a tuple of integers. The argument number(s) to differentiate with respect to.
-        return_value: Optional, bool. Whether to return the value of the function.
-        has_aux: Optional, whether `func` returns auxiliary data.
-        unit_aware: Optional, whether to enable unit-aware computation.
+    Unlike :func:`grad` (which requires scalar outputs), ``vector_grad``
+    computes element-wise gradients for vector-valued functions by
+    using a VJP with an all-ones tangent vector. This is equivalent to
+    the diagonal of the Jacobian when the output has the same shape as
+    the input.
 
-    Returns:
-        A function that computes the gradient of `func` with respect to
-        the argument(s) indicated by `argnums`.
+    Parameters
+    ----------
+    func : callable
+        A Python callable that computes a vector output given
+        arguments (possibly carrying physical units).
+    argnums : int or tuple of int, optional
+        Specifies which positional argument(s) to differentiate with
+        respect to. Default is ``0``.
+    return_value : bool, optional
+        If ``True``, the returned function also returns the function
+        value. Default is ``False``.
+    has_aux : bool, optional
+        If ``True``, ``func`` is expected to return ``(output, aux)``
+        where only ``output`` is differentiated. Default is ``False``.
+    unit_aware : bool, optional
+        If ``True``, physical units are propagated through the
+        differentiation. Default is ``True``.
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def simple_function(x):
-    ...    return x ** 2
-    >>> vector_grad_fn = u.autograd.vector_grad(simple_function)
-    >>> vector_grad_fn(jnp.array([3.0, 4.0]) * u.ms)
-    [6.0, 8.0] * ms
+    Returns
+    -------
+    grad_fun : callable
+        A function with the same signature as ``func`` that returns
+        the element-wise gradient. The exact return shape depends on
+        ``return_value`` and ``has_aux``:
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def simple_function(x):
-    ...    return x ** 2
-    >>> vector_grad_fn = u.autograd.vector_grad(simple_function, return_value=True)
-    >>> grad, value = vector_grad_fn(jnp.array([3.0, 4.0]) * u.ms)
-    >>> grad
-    [6.0, 8.0] * ms
-    >>> value
-    [9.0, 16.0] * ms ** 2
+        - Default: ``gradient``
+        - ``return_value=True``: ``(gradient, value)``
+        - ``has_aux=True``: ``(gradient, aux)``
+        - Both: ``(gradient, value, aux)``
+
+    Notes
+    -----
+    When ``unit_aware=True``, ``func`` must return a single array
+    (not a pytree with multiple leaves).
+
+    See Also
+    --------
+    grad : Gradient for scalar-valued functions.
+    jacrev : Full Jacobian via reverse-mode AD.
+
+    Examples
+    --------
+    Element-wise gradient of a squared function with units:
+
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def f(x):
+        ...     return x ** 2
+        >>> vg_fn = suauto.vector_grad(f)
+        >>> vg_fn(jnp.array([3.0, 4.0]) * su.ms)
+        [6.0, 8.0] * ms
+
+    Returning both the gradient and the function value:
+
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def f(x):
+        ...     return x ** 2
+        >>> vg_fn = suauto.vector_grad(f, return_value=True)
+        >>> grad, value = vg_fn(jnp.array([3.0, 4.0]) * su.ms)
+        >>> grad
+        [6.0, 8.0] * ms
+        >>> value
+        [9.0, 16.0] * ms ** 2
     """
 
     _check_callable(func)

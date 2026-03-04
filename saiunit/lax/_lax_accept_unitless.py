@@ -20,7 +20,8 @@ from typing import Union, Optional, Callable, Sequence
 import jax
 from jax import lax
 
-from saiunit._base import Quantity, Unit
+from saiunit._base_unit import Unit
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit.math._fun_accept_unitless import _fun_accept_unitless_unary, _fun_accept_unitless_binary, _fun_unitless_binary
 
@@ -59,7 +60,31 @@ def acos(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise arc cosine: :math:`\mathrm{acos}(x)`."""
+    r"""Elementwise arc cosine: :math:`\mathrm{acos}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled to dimensionless via
+        ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        The arc cosine of ``x``. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> sulax.acos(jnp.array([0.0, 0.5, 1.0]))
+        Array([1.5707964 , 1.0471976 , 0.        ], dtype=float32)
+    """
     return _fun_accept_unitless_unary(lax.acos, x, unit_to_scale=unit_to_scale)
 
 
@@ -68,7 +93,20 @@ def acosh(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise inverse hyperbolic cosine: :math:`\mathrm{acosh}(x)`."""
+    r"""Elementwise inverse hyperbolic cosine: :math:`\mathrm{acosh}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.acosh, x, unit_to_scale=unit_to_scale)
 
 
@@ -77,7 +115,20 @@ def asin(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise arc sine: :math:`\mathrm{asin}(x)`."""
+    r"""Elementwise arc sine: :math:`\mathrm{asin}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.asin, x, unit_to_scale=unit_to_scale)
 
 
@@ -86,7 +137,20 @@ def asinh(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise inverse hyperbolic sine: :math:`\mathrm{asinh}(x)`."""
+    r"""Elementwise inverse hyperbolic sine: :math:`\mathrm{asinh}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.asinh, x, unit_to_scale=unit_to_scale)
 
 
@@ -95,7 +159,20 @@ def atan(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise arc tangent: :math:`\mathrm{atan}(x)`."""
+    r"""Elementwise arc tangent: :math:`\mathrm{atan}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.atan, x, unit_to_scale=unit_to_scale)
 
 
@@ -104,7 +181,20 @@ def atanh(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise inverse hyperbolic tangent: :math:`\mathrm{atanh}(x)`."""
+    r"""Elementwise inverse hyperbolic tangent: :math:`\mathrm{atanh}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.atanh, x, unit_to_scale=unit_to_scale)
 
 
@@ -148,7 +238,24 @@ def cumlogsumexp(
     reverse: Optional[bool] = False,
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    """Computes a cumulative logsumexp along `axis`."""
+    """Compute a cumulative logsumexp along ``axis``.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    axis : int, optional
+        The axis along which to compute. Default is 0.
+    reverse : bool, optional
+        If ``True``, compute in reverse order. Default is ``False``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.cumlogsumexp,
                                       x,
                                       axis,
@@ -162,7 +269,28 @@ def bessel_i0e(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Exponentially scaled modified Bessel function of order 0:
-    :math:`\mathrm{i0e}(x) = e^{-|x|} \mathrm{i0}(x)`
+    :math:`\mathrm{i0e}(x) = e^{-|x|} \mathrm{i0}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> sulax.bessel_i0e(jnp.array([0.0, 1.0, 2.0]))
+        Array([1.        , 0.46575963, 0.30850834], dtype=float32)
     """
     return _fun_accept_unitless_unary(lax.bessel_i0e, x, unit_to_scale=unit_to_scale)
 
@@ -173,7 +301,19 @@ def bessel_i1e(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Exponentially scaled modified Bessel function of order 1:
-    :math:`\mathrm{i1e}(x) = e^{-|x|} \mathrm{i1}(x)`
+    :math:`\mathrm{i1e}(x) = e^{-|x|} \mathrm{i1}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
     """
     return _fun_accept_unitless_unary(lax.bessel_i1e, x, unit_to_scale=unit_to_scale)
 
@@ -183,7 +323,20 @@ def digamma(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise digamma: :math:`\psi(x)`."""
+    r"""Elementwise digamma: :math:`\psi(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.digamma, x, unit_to_scale=unit_to_scale)
 
 
@@ -192,7 +345,20 @@ def lgamma(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise log gamma: :math:`\mathrm{log}(\Gamma(x))`."""
+    r"""Elementwise log gamma: :math:`\mathrm{log}(\Gamma(x))`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.lgamma, x, unit_to_scale=unit_to_scale)
 
 
@@ -201,7 +367,30 @@ def erf(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise error function: :math:`\mathrm{erf}(x)`."""
+    r"""Elementwise error function: :math:`\mathrm{erf}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> sulax.erf(jnp.array([0.0, 0.5, 1.0]))
+        Array([0.       , 0.5204999, 0.8427007], dtype=float32)
+    """
     return _fun_accept_unitless_unary(lax.erf, x, unit_to_scale=unit_to_scale)
 
 
@@ -210,8 +399,20 @@ def erfc(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise complementary error function:
-    :math:`\mathrm{erfc}(x) = 1 - \mathrm{erf}(x)`."""
+    r"""Elementwise complementary error function: :math:`\mathrm{erfc}(x) = 1 - \mathrm{erf}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.erfc, x, unit_to_scale=unit_to_scale)
 
 
@@ -220,7 +421,20 @@ def erf_inv(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise inverse error function: :math:`\mathrm{erf}^{-1}(x)`."""
+    r"""Elementwise inverse error function: :math:`\mathrm{erf}^{-1}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.erf_inv, x, unit_to_scale=unit_to_scale)
 
 
@@ -229,7 +443,30 @@ def logistic(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise logistic (sigmoid) function: :math:`\frac{1}{1 + e^{-x}}`."""
+    r"""Elementwise logistic (sigmoid) function: :math:`\frac{1}{1 + e^{-x}}`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> sulax.logistic(jnp.array([0.0, 1.0, -1.0]))
+        Array([0.5       , 0.7310586 , 0.26894143], dtype=float32)
+    """
     return _fun_accept_unitless_unary(lax.logistic, x, unit_to_scale=unit_to_scale)
 
 
@@ -241,8 +478,31 @@ def atan2(
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise arc tangent of two variables:
-        :math:`\mathrm{atan}({x \over y})`."""
+    r"""Elementwise arc tangent of two variables: :math:`\mathrm{atan}({x \over y})`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    y : array_like or Quantity
+        Second operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, inputs are scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> sulax.atan2(jnp.array([1.0]), jnp.array([1.0]))
+        Array([0.7853982], dtype=float32)
+    """
     return _fun_accept_unitless_binary(lax.atan2, x, y, unit_to_scale=unit_to_scale)
 
 
@@ -252,7 +512,22 @@ def polygamma(
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise polygamma: :math:`\psi^{(m)}(x)`."""
+    r"""Elementwise polygamma: :math:`\psi^{(m)}(x)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        The order of the polygamma function.
+    y : array_like or Quantity
+        The argument.
+    unit_to_scale : Unit, optional
+        If provided, inputs are scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_binary(lax.polygamma, x, y, unit_to_scale=unit_to_scale)
 
 
@@ -262,7 +537,22 @@ def igamma(
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise regularized incomplete gamma function."""
+    r"""Elementwise regularized incomplete gamma function.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    y : array_like or Quantity
+        Second operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, inputs are scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_binary(lax.igamma, x, y, unit_to_scale=unit_to_scale)
 
 
@@ -272,7 +562,22 @@ def igammac(
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise complementary regularized incomplete gamma function."""
+    r"""Elementwise complementary regularized incomplete gamma function.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    y : array_like or Quantity
+        Second operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, inputs are scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_binary(lax.igammac, x, y, unit_to_scale=unit_to_scale)
 
 
@@ -282,7 +587,22 @@ def igamma_grad_a(
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise derivative of the regularized incomplete gamma function."""
+    r"""Elementwise derivative of the regularized incomplete gamma function.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    y : array_like or Quantity
+        Second operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, inputs are scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_binary(lax.igamma_grad_a, x, y, unit_to_scale=unit_to_scale)
 
 
@@ -292,7 +612,22 @@ def random_gamma_grad(
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise derivative of samples from `Gamma(a, 1)`."""
+    r"""Elementwise derivative of samples from ``Gamma(a, 1)``.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    y : array_like or Quantity
+        Second operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, inputs are scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_binary(lax.random_gamma_grad, x, y, unit_to_scale=unit_to_scale)
 
 
@@ -302,7 +637,22 @@ def zeta(
     q: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise Hurwitz zeta function: :math:`\zeta(x, q)`"""
+    r"""Elementwise Hurwitz zeta function: :math:`\zeta(x, q)`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    q : array_like or Quantity
+        Second operand. Must be dimensionless or scaled via ``unit_to_scale``.
+    unit_to_scale : Unit, optional
+        If provided, inputs are scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_accept_unitless_binary(lax.zeta, x, q, unit_to_scale=unit_to_scale)
 
 
@@ -345,7 +695,33 @@ def betainc(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
-    r"""Elementwise regularized incomplete beta integral."""
+    r"""Elementwise regularized incomplete beta integral.
+
+    Parameters
+    ----------
+    a : array_like or Quantity
+        First shape parameter.
+    b : array_like or Quantity
+        Second shape parameter.
+    x : array_like or Quantity
+        Upper limit of integration.
+    unit_to_scale : Unit, optional
+        If provided, all inputs are scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> sulax.betainc(jnp.array([1.0]), jnp.array([1.0]), jnp.array([0.5]))
+        Array([0.5], dtype=float32)
+    """
     return _fun_accept_unitless_nary(lax.betainc, a, b, x,
                                      quantity_num=3,
                                      unit_to_scale=unit_to_scale)
@@ -357,7 +733,20 @@ def shift_left(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> jax.Array:
-    r"""Elementwise left shift: :math:`x \ll y`."""
+    r"""Elementwise left shift: :math:`x \ll y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Values to shift. Must be unitless.
+    y : array_like or Quantity
+        Shift amounts. Must be unitless.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_unitless_binary(lax.shift_left, x, y)
 
 
@@ -366,7 +755,20 @@ def shift_right_arithmetic(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> jax.Array:
-    r"""Elementwise arithmetic right shift: :math:`x \gg y`."""
+    r"""Elementwise arithmetic right shift: :math:`x \gg y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Values to shift. Must be unitless.
+    y : array_like or Quantity
+        Shift amounts. Must be unitless.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_unitless_binary(lax.shift_right_arithmetic, x, y)
 
 
@@ -375,7 +777,20 @@ def shift_right_logical(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> jax.Array:
-    r"""Elementwise logical right shift: :math:`x \gg y`."""
+    r"""Elementwise logical right shift: :math:`x \gg y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Values to shift. Must be unitless.
+    y : array_like or Quantity
+        Shift amounts. Must be unitless.
+
+    Returns
+    -------
+    result : jax.Array
+        Always unitless.
+    """
     return _fun_unitless_binary(lax.shift_right_logical, x, y)
 
 
@@ -387,6 +802,24 @@ def fft(
     fft_lengths: Sequence[int],
     unit_to_scale: Optional[Unit] = None,
 ):
+    """Compute a fast Fourier transform.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be dimensionless or scaled via ``unit_to_scale``.
+    fft_type : FftType or str
+        The type of FFT (e.g., ``'FFT'``, ``'IFFT'``, ``'RFFT'``, ``'IRFFT'``).
+    fft_lengths : sequence of int
+        The lengths of each FFT dimension.
+    unit_to_scale : Unit, optional
+        If provided, ``x`` is scaled by this unit before applying the function.
+
+    Returns
+    -------
+    result : jax.Array
+        The FFT result. Always unitless.
+    """
     return _fun_accept_unitless_unary(lax.fft,
                                       x,
                                       fft_type,

@@ -32,74 +32,78 @@ def hessian(
     holomorphic: bool = False
 ) -> Callable:
     """
-    Physical unit-aware version of `jax.hessian <https://jax.readthedocs.io/en/latest/_autosummary/jax.hessian.html>`_,
-    computing Hessian of ``fun`` as a dense array.
+    Physical unit-aware Hessian of ``fun`` as a dense array.
 
-    Args:
-      fun: Function whose Hessian is to be computed.  Its arguments at positions
-        specified by ``argnums`` should be arrays, scalars, or standard Python
-        containers thereof. It should return arrays, scalars, or standard Python
-        containers thereof.
-      argnums: Optional, integer or sequence of integers. Specifies which
-        positional argument(s) to differentiate with respect to (default ``0``).
-      has_aux: Optional, bool. Indicates whether ``fun`` returns a pair where the
-        first element is considered the output of the mathematical function to be
-        differentiated and the second element is auxiliary data. Default False.
-      holomorphic: Optional, bool. Indicates whether ``fun`` is promised to be
-        holomorphic. Default False.
+    This is the unit-aware counterpart of
+    `jax.hessian <https://jax.readthedocs.io/en/latest/_autosummary/jax.hessian.html>`_.
+    It computes the Hessian (matrix of second derivatives) while
+    correctly propagating physical units. Internally it is implemented
+    as ``jacfwd(jacrev(fun))``.
 
-    Returns:
-      A function with the same arguments as ``fun``, that evaluates the Hessian of
-      ``fun``.
+    Parameters
+    ----------
+    fun : callable
+        Function whose Hessian is to be computed. Its arguments at
+        positions specified by ``argnums`` should be arrays, scalars,
+        or standard Python containers thereof (possibly carrying
+        physical units). It should return a scalar output.
+    argnums : int or tuple of int, optional
+        Specifies which positional argument(s) to differentiate with
+        respect to. Default is ``0``.
+    has_aux : bool, optional
+        If ``True``, ``fun`` is expected to return ``(output, aux)``
+        where only ``output`` is differentiated. Default is ``False``.
+    holomorphic : bool, optional
+        Whether ``fun`` is promised to be holomorphic. Default is
+        ``False``.
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def scalar_function1(x):
-    ...    return x ** 2 + 3 * x * u.ms + 2 * u.msecond2
-    >>> hess_fn = u.autograd.hessian(scalar_function1)
-    >>> hess_fn(jnp.array(1.0) * u.ms)
-    [2]
+    Returns
+    -------
+    hess_fun : callable
+        A function with the same arguments as ``fun`` that evaluates
+        the Hessian. If ``has_aux=True``, it returns
+        ``(hessian, aux)``. Each Hessian leaf carries the correct
+        physical units (output unit / input_i unit / input_j unit).
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def scalar_function2(x):
-    ...     return x ** 3 + 3 * x * u.msecond2 + 2 * u.msecond3
-    >>> hess_fn = u.autograd.hessian(scalar_function2)
-    >>> hess_fn(jnp.array(1.0) * u.ms)
-    [6] * ms
+    Notes
+    -----
+    ``hessian`` generalises to nested Python containers (pytrees).
+    The tree structure of ``hessian(fun)(x)`` is formed by taking a
+    tree product of the structure of ``fun(x)`` with two copies of
+    the structure of ``x``.
 
-    `hessian` is a generalization of the usual definition of the Hessian
-    that supports nested Python containers (i.e. pytrees) as inputs and outputs.
-    The tree structure of ``saiunit.autograd.hessian(fun)(x)`` is given by forming a tree
-    product of the structure of ``fun(x)`` with a tree product of two copies of
-    the structure of ``x``. A tree product of two tree structures is formed by
-    replacing each leaf of the first tree with a copy of the second. For example:
+    See Also
+    --------
+    jacrev : Reverse-mode Jacobian computation.
+    jacfwd : Forward-mode Jacobian computation.
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def dict_function(x):
-    ...     return {'z': x['a'] ** 3 + x['b'] ** 3}
-    >>> x = {'a': jnp.array(1.0) * u.ms, 'b': jnp.array(2.0) * u.ms}
-    >>> u.autograd.hessian(dict_function)(x)
-    {'z': {'a': {'a': 6. * msecond, 'b': 0. * msecond},
-     'b': {'a': 0. * msecond, 'b': 12. * msecond}}}
+    Examples
+    --------
+    Hessian of a unitless quadratic function:
 
-    Thus each leaf in the tree structure of ``saiunit.autograd.hessian(fun)(x)`` corresponds to
-    a leaf of ``fun(x)`` and a pair of leaves of ``x``. For each leaf in
-    ``saiunit.autograd.hessian(fun)(x)``, if the corresponding array leaf of ``fun(x)`` has
-    shape ``(out_1, out_2, ...)`` and the corresponding array leaves of ``x`` have
-    shape ``(in_1_1, in_1_2, ...)`` and ``(in_2_1, in_2_2, ...)`` respectively,
-    then the Hessian leaf has shape ``(out_1, out_2, ..., in_1_1, in_1_2, ...,
-    in_2_1, in_2_2, ...)``. In other words, the Python tree structure represents
-    the block structure of the Hessian, with blocks determined by the input and
-    output pytrees.
+    .. code-block:: python
 
-    In particular, an array is produced (with no pytrees involved) when the
-    function input ``x`` and output ``fun(x)`` are each a single array, as in the
-    ``dict_function`` example above. If ``fun(x)`` has shape ``(out1, out2, ...)`` and ``x``
-    has shape ``(in1, in2, ...)`` then ``saiunit.autograd.hessian(fun)(x)`` has shape
-    ``(out1, out2, ..., in1, in2, ..., in1, in2, ...)``. To flatten pytrees into
-    1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def f(x):
+        ...     return x ** 2 + 3 * x * su.ms + 2 * su.msecond2
+        >>> hess_fn = suauto.hessian(f)
+        >>> hess_fn(jnp.array(1.0) * su.ms)
+        [2]
+
+    Hessian of a cubic function where the result carries units:
+
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def g(x):
+        ...     return x ** 3 + 3 * x * su.msecond2 + 2 * su.msecond3
+        >>> hess_fn = suauto.hessian(g)
+        >>> hess_fn(jnp.array(1.0) * su.ms)
+        [6] * ms
     """
     _check_callable(fun)
 

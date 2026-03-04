@@ -274,5 +274,31 @@ def test_array_custom_array_compatibility_with_hessian():
     assert u.math.allclose(result_array.data, direct_result)
 
 
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+def test_docstring_example_hessian_unitless():
+    """Verify the hessian docstring example with unitless result."""
+    def f(x):
+        return x ** 2 + 3 * x * u.ms + 2 * u.msecond2
+
+    hess_fn = u.autograd.hessian(f)
+    result = hess_fn(np.array(1.0) * u.ms)
+    expected = np.array([[2.0]])
+    np.testing.assert_array_almost_equal(result, expected)
+
+
+def test_docstring_example_hessian_with_unit():
+    """Verify the hessian docstring example with units in result."""
+    def g(x):
+        return x ** 3 + 3 * x * u.msecond2 + 2 * u.msecond3
+
+    hess_fn = u.autograd.hessian(g)
+    result = hess_fn(np.array(1.0) * u.ms)
+    expected = np.array([[6.0]]) * u.ms
+    assert u.math.allclose(result, expected)
+
+
 if __name__ == '__main__':
     pytest.main()

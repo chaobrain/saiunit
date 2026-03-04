@@ -19,6 +19,7 @@ import brainstate
 import jax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 
 import saiunit as u
 
@@ -415,3 +416,264 @@ class TestArray2(unittest.TestCase):
             # This should fail
             with self.assertRaises(ValueError):
                 arr.value = (np.array([1, 2, 3]),)
+
+
+# =========================================================================
+# Integration tests migrated from _base_test.py (TestArrayWithCustomArray)
+# =========================================================================
+
+from saiunit._unit_common import *
+from saiunit._unit_shortcuts import kHz, ms, mV, nS
+
+
+@jax.tree_util.register_pytree_node_class
+class SimpleArray(u.CustomArray):
+    """Standalone CustomArray subclass for integration tests (no brainstate dependency)."""
+
+    def __init__(self, value):
+        self.data = value
+
+
+class TestArrayWithCustomArrayIntegration:
+    """Integration tests for CustomArray subclass with physical units (pytest style)."""
+
+    def test_array_properties(self):
+        array_1d = SimpleArray(np.array([1.0, 2.0, 3.0]))
+        array_2d = SimpleArray(np.array([[1, 2], [3, 4]]))
+
+        assert array_1d.dtype == np.float64
+        assert np.issubdtype(array_2d.dtype, np.integer)
+        assert array_1d.shape == (3,)
+        assert array_2d.shape == (2, 2)
+        assert array_1d.ndim == 1
+        assert array_2d.ndim == 2
+        assert array_1d.size == 3
+        assert array_2d.size == 4
+
+    def test_array_arithmetic_operations(self):
+        arr = SimpleArray(np.array([1.0, 2.0, 3.0]))
+
+        np.testing.assert_array_equal(arr + 2.0, np.array([3.0, 4.0, 5.0]))
+        np.testing.assert_array_equal(2.0 + arr, np.array([3.0, 4.0, 5.0]))
+        np.testing.assert_array_equal(arr - 1.0, np.array([0.0, 1.0, 2.0]))
+        np.testing.assert_array_equal(arr * 2.0, np.array([2.0, 4.0, 6.0]))
+        np.testing.assert_array_equal(arr / 2.0, np.array([0.5, 1.0, 1.5]))
+        np.testing.assert_array_equal(arr ** 2, np.array([1.0, 4.0, 9.0]))
+
+    def test_array_inplace_operations(self):
+        arr = SimpleArray(np.array([1.0, 2.0, 3.0]))
+        arr += 1.0
+        np.testing.assert_array_equal(arr.data, np.array([2.0, 3.0, 4.0]))
+
+        arr -= 1.0
+        np.testing.assert_array_equal(arr.data, np.array([1.0, 2.0, 3.0]))
+
+        arr *= 2.0
+        np.testing.assert_array_equal(arr.data, np.array([2.0, 4.0, 6.0]))
+
+        arr /= 2.0
+        np.testing.assert_array_equal(arr.data, np.array([1.0, 2.0, 3.0]))
+
+    def test_array_comparison_operations(self):
+        arr1 = SimpleArray(np.array([1.0, 2.0, 3.0]))
+        arr2 = SimpleArray(np.array([2.0, 2.0, 2.0]))
+
+        np.testing.assert_array_equal(arr1 == 2.0, np.array([False, True, False]))
+        np.testing.assert_array_equal(arr1 != 2.0, np.array([True, False, True]))
+        np.testing.assert_array_equal(arr1 < arr2, np.array([True, False, False]))
+        np.testing.assert_array_equal(arr1 > arr2, np.array([False, False, True]))
+
+    def test_array_with_units(self):
+        voltage1 = SimpleArray(np.array([1.0, 2.0])) * mV
+        voltage2 = SimpleArray(np.array([3.0, 4.0])) * mV
+
+        voltage_sum = voltage1 + voltage2
+        np.testing.assert_array_almost_equal(voltage_sum.mantissa, np.array([4.0, 6.0]))
+        assert voltage_sum.unit == mV
+
+        voltage_scaled = voltage1 * 2.0
+        np.testing.assert_array_almost_equal(voltage_scaled.mantissa, np.array([2.0, 4.0]))
+        assert voltage_scaled.unit == mV
+
+        voltage_in_v = voltage1.to(volt)
+        np.testing.assert_array_almost_equal(voltage_in_v.mantissa, np.array([0.001, 0.002]))
+
+    def test_array_statistical_methods(self):
+        arr = SimpleArray(np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
+
+        assert float(arr.mean()) == 3.0
+        assert float(arr.sum()) == 15.0
+        assert float(arr.min()) == 1.0
+        assert float(arr.max()) == 5.0
+        assert abs(float(arr.std()) - np.std([1, 2, 3, 4, 5])) < 1e-6
+        assert abs(float(arr.var()) - np.var([1, 2, 3, 4, 5])) < 1e-6
+
+    def test_array_manipulation_methods(self):
+        arr = SimpleArray(np.array([1, 2, 3, 4, 5, 6]))
+        reshaped = arr.reshape(2, 3)
+        assert reshaped.shape == (2, 3)
+        np.testing.assert_array_equal(reshaped, np.array([[1, 2, 3], [4, 5, 6]]))
+
+        arr_2d = SimpleArray(np.array([[1, 2], [3, 4]]))
+        np.testing.assert_array_equal(arr_2d.T, np.array([[1, 3], [2, 4]]))
+
+        np.testing.assert_array_equal(arr_2d.flatten(), np.array([1, 2, 3, 4]))
+
+        arr_squeezable = SimpleArray(np.array([[[1, 2, 3]]]))
+        np.testing.assert_array_equal(arr_squeezable.squeeze(), np.array([1, 2, 3]))
+
+    def test_array_indexing_and_slicing(self):
+        arr = SimpleArray(np.array([10, 20, 30, 40, 50]))
+
+        assert arr[0] == 10
+        assert arr[-1] == 50
+        np.testing.assert_array_equal(arr[1:4], np.array([20, 30, 40]))
+
+        mask = arr > 25
+        np.testing.assert_array_equal(arr[mask], np.array([30, 40, 50]))
+
+        arr_copy = SimpleArray(np.array([10, 20, 30, 40, 50]))
+        arr_copy[1:3] = 99
+        np.testing.assert_array_equal(arr_copy.data, np.array([10, 99, 99, 40, 50]))
+
+    def test_jax_compatibility(self):
+        jax_arr = SimpleArray(jnp.array([1.0, 2.0, 3.0]))
+
+        result = jax_arr * 2.0
+        np.testing.assert_array_equal(result, jnp.array([2.0, 4.0, 6.0]))
+
+        @jax.jit
+        def square_array(x):
+            return x * x
+
+        squared = square_array(jax_arr)
+        np.testing.assert_array_equal(squared, jnp.array([1.0, 4.0, 9.0]))
+
+        @jax.grad
+        def sum_squares(x):
+            return jnp.sum(x * x)
+
+        grad_result = sum_squares(jax_arr)
+        np.testing.assert_array_equal(grad_result, jnp.array([2.0, 4.0, 6.0]))
+
+    def test_array_with_physical_quantities(self):
+        position = SimpleArray(np.array([1.0, 2.0, 3.0])) * meter
+        time_vals = SimpleArray(np.array([1.0, 2.0, 3.0])) * second
+
+        velocity = position / time_vals
+        expected_unit = meter / second
+        assert velocity.unit.dim == expected_unit.dim
+
+        voltage = SimpleArray(np.array([1.0, 2.0])) * mV
+        current = SimpleArray(np.array([10.0, 20.0])) * nS
+        resistance = voltage * current
+        assert resistance.unit.dim == u.mA.dim
+
+    def test_array_error_handling(self):
+        arr = SimpleArray(np.array([1.0, 2.0, 3.0]))
+
+        with pytest.raises(TypeError):
+            arr + "string"
+
+        voltage = SimpleArray(np.array([1.0])) * mV
+        time_val = SimpleArray(np.array([1.0])) * ms
+
+        with pytest.raises(u.UnitMismatchError):
+            voltage + time_val
+
+    def test_array_special_methods(self):
+        arr = SimpleArray(np.array([1, 2, 3]))
+
+        assert len(arr) == 3
+        values = [x for x in arr]
+        assert values == [1, 2, 3]
+
+        non_empty_arr = SimpleArray(np.array([1]))
+        assert bool(non_empty_arr)
+
+        scalar_arr = SimpleArray(5)
+        assert isinstance(hash(scalar_arr), int)
+
+    def test_array_numpy_compatibility(self):
+        arr = SimpleArray(np.array([1.0, 2.0, 3.0]))
+
+        numpy_result = arr.to_numpy()
+        assert isinstance(numpy_result, np.ndarray)
+        np.testing.assert_array_equal(numpy_result, np.array([1.0, 2.0, 3.0]))
+
+        numpy_converted = np.array(arr)
+        np.testing.assert_array_equal(numpy_converted, np.array([1.0, 2.0, 3.0]))
+
+        sin_result = np.sin(arr)
+        np.testing.assert_array_almost_equal(sin_result, np.sin(np.array([1.0, 2.0, 3.0])))
+
+    def test_array_pytorch_style_methods(self):
+        arr = SimpleArray(np.array([1.0, 2.0, 3.0]))
+
+        unsqueezed = arr.unsqueeze(0)
+        assert unsqueezed.shape == (1, 3)
+
+        clamped = arr.clamp(min_data=1.5, max_data=2.5)
+        np.testing.assert_array_equal(clamped, np.array([1.5, 2.0, 2.5]))
+
+        cloned = arr.clone()
+        np.testing.assert_array_equal(cloned, arr.data)
+        assert cloned is not arr.data
+
+    def test_array_advanced_operations(self):
+        arr = SimpleArray(np.array([[1, 2], [3, 4]]))
+        np.testing.assert_array_equal(arr @ arr, np.array([[7, 10], [15, 22]]))
+
+        vec1 = SimpleArray(np.array([1, 2, 3]))
+        vec2 = SimpleArray(np.array([4, 5, 6]))
+        assert float(vec1.dot(vec2)) == 32
+
+        np.testing.assert_array_equal(vec1.cumsum(), np.array([1, 3, 6]))
+        np.testing.assert_array_equal(vec1.cumprod(), np.array([1, 2, 6]))
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_custom_array_class():
+    """Verify basic CustomArray usage described in the class docstring."""
+    # -- Subclass with a plain ``data`` attribute (standalone, no brainstate) --
+    arr = SimpleArray(np.array([1.0, 2.0, 3.0]))
+
+    # Properties
+    assert arr.shape == (3,)
+    assert arr.ndim == 1
+    assert arr.size == 3
+    assert arr.dtype == np.float64
+
+    # Arithmetic
+    np.testing.assert_array_equal(arr + 10, np.array([11.0, 12.0, 13.0]))
+    np.testing.assert_array_equal(arr ** 2, np.array([1.0, 4.0, 9.0]))
+    np.testing.assert_array_equal(arr * 2, np.array([2.0, 4.0, 6.0]))
+
+    # Statistical operations
+    arr5 = SimpleArray(np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
+    assert float(arr5.mean()) == 3.0
+    assert float(arr5.sum()) == 15.0
+    assert abs(float(arr5.std()) - np.std([1, 2, 3, 4, 5])) < 1e-6
+
+    # Array manipulation
+    matrix = SimpleArray(np.array([[1, 2, 3], [4, 5, 6]]))
+    assert matrix.T.shape == (3, 2)
+    np.testing.assert_array_equal(matrix.reshape(6), np.array([1, 2, 3, 4, 5, 6]))
+    np.testing.assert_array_equal(matrix.flatten(), np.array([1, 2, 3, 4, 5, 6]))
+
+    # Conversion methods
+    numpy_arr = arr.to_numpy()
+    assert isinstance(numpy_arr, np.ndarray)
+    np.testing.assert_array_equal(numpy_arr, np.array([1.0, 2.0, 3.0]))
+
+    # JAX compatibility
+    jax_arr = SimpleArray(jnp.array([1.0, 2.0, 3.0]))
+
+    @jax.jit
+    def square(x):
+        return x * x
+
+    result = square(jax_arr)
+    np.testing.assert_array_equal(result, jnp.array([1.0, 4.0, 9.0]))

@@ -13,6 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Unit-aware wrappers for ``jax.lax`` primitives.
+
+This subpackage mirrors ``jax.lax`` but automatically tracks physical units
+through low-level operations such as slicing, scattering, convolutions,
+and element-wise primitives.
+"""
+
 from ._lax_accept_unitless import *
 from ._lax_accept_unitless import __all__ as _lax_accept_unitless_all
 from ._lax_array_creation import *

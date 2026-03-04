@@ -20,9 +20,11 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
-from ._fun_array_creation import asarray
-from saiunit._base import UNITLESS, Quantity, maybe_decimal
+from saiunit._base_unit import UNITLESS
+from saiunit._base_getters import maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
+from ._fun_array_creation import asarray
 
 __all__ = [
 
@@ -71,20 +73,29 @@ def reciprocal(
     """
     Return the reciprocal of the argument, element-wise.
 
-    Calculates ``1/x``.
+    Calculates ``1/x``. When the input carries a unit, the result carries the
+    inverse of that unit.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array.
+    x : array_like or Quantity
+        Input array.
 
     Returns
     -------
-    y : ndarray, Quantity
-      Return array.
-      This is a scalar if `x` is a scalar.
+    y : ndarray or Quantity
+        Return array with the same shape as `x`.
+        This is a scalar if `x` is a scalar.
+        This is a Quantity if the unit of `x` is not dimensionless; the
+        resulting unit is ``1 / x.unit``.
 
-      This is a Quantity if the reciprocal of the unit of `x` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> result = su.math.reciprocal(su.math.array([2.0, 4.0]) * su.second)
+        >>> result.mantissa  # array([0.5 , 0.25])
     """
     return _fun_change_unit_unary(jnp.reciprocal, lambda u: u ** -1, x)
 
@@ -103,49 +114,46 @@ def var(
     Compute the variance along the specified axis.
 
     Returns the variance of the array elements, a measure of the spread of a
-    distribution.  The variance is computed for the flattened array by
-    default, otherwise over the specified axis.
+    distribution. The variance is computed for the flattened array by default,
+    otherwise over the specified axis. The resulting unit is the square of the
+    input unit.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Array containing numbers whose variance is desired.  If `a` is not an
-      array, a conversion is attempted.
+    a : array_like or Quantity
+        Array containing numbers whose variance is desired. If `a` is not an
+        array, a conversion is attempted.
     axis : None or int or tuple of ints, optional
-      Axis or axes along which the variance is computed.  The default is to
-      compute the variance of the flattened array.
-
-      If this is a tuple of ints, a variance is performed over multiple axes,
-      instead of a single axis or all the axes as before.
+        Axis or axes along which the variance is computed. The default is to
+        compute the variance of the flattened array.
     dtype : data-type, optional
-      Type to use in computing the variance.  For arrays of integer type
-      the default is `float64`; for arrays of float types it is the same as
-      the array type.
+        Type to use in computing the variance. For arrays of integer type
+        the default is ``float64``; for arrays of float types it is the same as
+        the array type.
     ddof : int, optional
-      "Delta Degrees of Freedom": the divisor used in the calculation is
-      ``N - ddof``, where ``N`` represents the number of elements. By
-      default `ddof` is zero.
+        "Delta Degrees of Freedom": the divisor used in the calculation is
+        ``N - ddof``, where ``N`` represents the number of elements. By
+        default ``ddof`` is zero.
     keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left
-      in the result as dimensions with size one. With this option,
-      the result will broadcast correctly against the input array.
-
-      If the default value is passed, then `keepdims` will not be
-      passed through to the `var` method of sub-classes of
-      `ndarray`, however any non-default value will be.  If the
-      sub-class' method does not implement `keepdims` any
-      exceptions will be raised.
+        If this is set to True, the axes which are reduced are left in the
+        result as dimensions with size one. With this option, the result will
+        broadcast correctly against the input array.
     where : array_like of bool, optional
-        Elements to include in the variance. See `~numpy.ufunc.reduce` for
-        details.
+        Elements to include in the variance.
 
     Returns
     -------
-    variance : ndarray, quantity, see dtype parameter above
-      If ``out=None``, returns a new array containing the variance;
-      otherwise, a reference to the output array is returned.
+    variance : ndarray or Quantity
+        If the input has a unit, the result is a Quantity whose unit is the
+        square of the input unit.
 
-      This is a Quantity if the square of the unit of `a` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> q = su.math.array([1.0, 2.0, 3.0]) * su.meter
+        >>> su.math.var(q)  # unit becomes meter ** 2
     """
     return _fun_change_unit_unary(jnp.var,
                                   lambda u: u ** 2,
@@ -169,46 +177,46 @@ def nanvar(
     """
     Compute the variance along the specified axis, while ignoring NaNs.
 
-    Returns the variance of the array elements, a measure of the spread of
-    a distribution.  The variance is computed for the flattened array by
-    default, otherwise over the specified axis.
-
-    For all-NaN slices or slices with zero degrees of freedom, NaN is
-    returned and a `RuntimeWarning` is raised.
+    Returns the variance of the array elements, a measure of the spread of a
+    distribution. NaN values are treated as missing. The resulting unit is the
+    square of the input unit.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Array containing numbers whose variance is desired.  If `a` is not an
-      array, a conversion is attempted.
+    x : array_like or Quantity
+        Array containing numbers whose variance is desired. If `x` is not an
+        array, a conversion is attempted.
     axis : {int, tuple of int, None}, optional
-      Axis or axes along which the variance is computed.  The default is to compute
-      the variance of the flattened array.
+        Axis or axes along which the variance is computed. The default is to
+        compute the variance of the flattened array.
     dtype : data-type, optional
-      Type to use in computing the variance.  For arrays of integer type
-      the default is `float64`; for arrays of float types it is the same as
-      the array type.
+        Type to use in computing the variance. For arrays of integer type the
+        default is ``float64``; for arrays of float types it is the same as
+        the array type.
     ddof : int, optional
-      "Delta Degrees of Freedom": the divisor used in the calculation is
-      ``N - ddof``, where ``N`` represents the number of non-NaN
-      elements. By default `ddof` is zero.
+        "Delta Degrees of Freedom": the divisor used in the calculation is
+        ``N - ddof``, where ``N`` represents the number of non-NaN elements.
+        By default ``ddof`` is zero.
     keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left
-      in the result as dimensions with size one. With this option,
-      the result will broadcast correctly against the original `a`.
+        If True, the axes which are reduced are left in the result as
+        dimensions with size one.
     where : array_like of bool, optional
-      Elements to include in the variance. See `~numpy.ufunc.reduce` for
-      details.
+        Elements to include in the variance.
 
     Returns
     -------
-    variance : ndarray, quantity, see dtype parameter above
-      If `out` is None, return a new array containing the variance,
-      otherwise return a reference to the output array. If ddof is >= the
-      number of non-NaN elements in a slice or the slice contains only
-      NaNs, then the result for that slice is NaN.
+    variance : ndarray or Quantity
+        The variance of the non-NaN elements. If the input has a unit, the
+        result is a Quantity whose unit is the square of the input unit.
 
-      This is a Quantity if the square of the unit of `a` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> q = su.math.array([1.0, jnp.nan, 3.0]) * su.meter
+        >>> su.math.nanvar(q)  # unit becomes meter ** 2
     """
     return _fun_change_unit_unary(jnp.nanvar,
                                   lambda u: u ** 2,
@@ -225,25 +233,30 @@ def sqrt(
     x: Union[Quantity, jax.typing.ArrayLike]
 ) -> Union[Quantity, jax.Array]:
     """
-    Compute the square root of each element.
+    Compute the positive square root of each element.
+
+    When the input carries a unit, the resulting unit is the square root of
+    that unit (e.g. ``meter ** 2`` becomes ``meter``).
 
     Parameters
     ----------
-    x : array_like, Quantity
-      The values whose square-roots are required.
+    x : array_like or Quantity
+        The values whose square-roots are required.
 
     Returns
     -------
-    y : ndarray, quantity
-      An array of the same shape as `x`, containing the positive
-      square-root of each element in `x`.  If any element in `x` is
-      complex, a complex array is returned (and the square-roots of
-      negative reals are calculated).  If all of the elements in `x`
-      are real, so is `y`, with negative elements returning ``nan``.
-      If `out` was provided, `y` is a reference to it.
-      This is a scalar if `x` is a scalar.
+    y : ndarray or Quantity
+        An array of the same shape as `x`, containing the positive
+        square-root of each element. If `x` carries a unit, the result is
+        a Quantity whose unit is ``x.unit ** 0.5``.
 
-      This is a Quantity if the square root of the unit of `x` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> q = su.math.array([4.0, 9.0, 16.0]) * (su.meter ** 2)
+        >>> su.math.sqrt(q)  # Quantity with unit meter
     """
     return _fun_change_unit_unary(jnp.sqrt, lambda u: u ** 0.5, x)
 
@@ -255,20 +268,28 @@ def cbrt(
     """
     Compute the cube root of each element.
 
+    When the input carries a unit, the resulting unit is the cube root of
+    that unit (e.g. ``meter ** 3`` becomes ``meter``).
+
     Parameters
     ----------
-    x : array_like, Quantity
-      The values whose cube-roots are required.
+    x : array_like or Quantity
+        The values whose cube-roots are required.
 
     Returns
     -------
-    y : ndarray, quantity
-      An array of the same shape as `x`, containing the cube
-      cube-root of each element in `x`.
-      If `out` was provided, `y` is a reference to it.
-      This is a scalar if `x` is a scalar.
+    y : ndarray or Quantity
+        An array of the same shape as `x`, containing the cube root of each
+        element. If `x` carries a unit, the result is a Quantity whose unit
+        is ``x.unit ** (1/3)``.
 
-      This is a Quantity if the cube root of the unit of `x` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> q = su.math.array([8.0, 27.0]) * (su.meter ** 3)
+        >>> su.math.cbrt(q)  # Quantity with unit meter
     """
     return _fun_change_unit_unary(jnp.cbrt, lambda u: u ** (1 / 3), x)
 
@@ -280,18 +301,28 @@ def square(
     """
     Compute the square of each element.
 
+    When the input carries a unit, the resulting unit is the square of that
+    unit (e.g. ``meter`` becomes ``meter ** 2``).
+
     Parameters
     ----------
-    x : array_like, Quantity
+    x : array_like or Quantity
         Input data.
 
     Returns
     -------
-    out : ndarray, quantity or scalar
-      Element-wise `x*x`, of the same shape and dtype as `x`.
-      This is a scalar if `x` is a scalar.
+    out : ndarray or Quantity
+        Element-wise ``x * x``, of the same shape and dtype as `x`. This is
+        a scalar if `x` is a scalar. If `x` carries a unit, the result is a
+        Quantity whose unit is ``x.unit ** 2``.
 
-      This is a Quantity if the square of the unit of `x` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> q = su.math.array([2.0, 3.0, 4.0]) * su.meter
+        >>> su.math.square(q)  # Quantity with unit meter ** 2
     """
     return _fun_change_unit_unary(jnp.square, lambda u: u ** 2, x)
 
@@ -309,48 +340,44 @@ def prod(
     """
     Return the product of array elements over a given axis.
 
+    When the input is a Quantity, the resulting unit is the input unit raised
+    to the power equal to the number of elements along the reduced axis.
+
     Parameters
     ----------
-    x : array_like, Quantity
-      Input data.
+    x : array_like or Quantity
+        Input data.
     axis : None or int or tuple of ints, optional
-      Axis or axes along which a product is performed.  The default,
-      axis=None, will calculate the product of all the elements in the
-      input array. If axis is negative it counts from the last to the
-      first axis.
-
-      If axis is a tuple of ints, a product is performed on all of the
-      axes specified in the tuple instead of a single axis or all the
-      axes as before.
+        Axis or axes along which a product is performed. The default,
+        ``axis=None``, will calculate the product of all the elements in the
+        input array.
     dtype : dtype, optional
-      The type of the returned array, as well as of the accumulator in
-      which the elements are multiplied.  The dtype of `a` is used by
-      default unless `a` has an integer dtype of less precision than the
-      default platform integer.  In that case, if `a` is signed then the
-      platform integer is used while if `a` is unsigned then an unsigned
-      integer of the same precision as the platform integer is used.
+        The type of the returned array, as well as of the accumulator in
+        which the elements are multiplied.
     keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left in the
-      result as dimensions with size one. With this option, the result
-      will broadcast correctly against the input array.
-
-      If the default value is passed, then `keepdims` will not be
-      passed through to the `prod` method of sub-classes of
-      `ndarray`, however any non-default value will be.  If the
-      sub-class' method does not implement `keepdims` any
-      exceptions will be raised.
+        If True, the axes which are reduced are left in the result as
+        dimensions with size one.
     initial : scalar, optional
-      The starting value for this product. See `~numpy.ufunc.reduce` for details.
+        The starting value for this product.
     where : array_like of bool, optional
-      Elements to include in the product. See `~numpy.ufunc.reduce` for details.
+        Elements to include in the product.
+    promote_integers : bool, optional
+        Whether to promote integer dtypes to the default platform integer.
 
     Returns
     -------
-    product_along_axis : ndarray, see `dtype` parameter above.
-      An array shaped as `a` but with the specified axis removed.
-      Returns a reference to `out` if specified.
+    product_along_axis : ndarray or Quantity
+        An array shaped as `x` but with the specified axis removed. If `x`
+        carries a unit, the result is a Quantity whose unit is
+        ``x.unit ** n`` where ``n`` is the number of elements reduced.
 
-      This is a Quantity if the product of the unit of `x` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> q = su.math.array([2.0, 3.0]) * su.meter
+        >>> su.math.prod(q)  # product is 6.0, unit is meter ** 2
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -380,50 +407,44 @@ def nanprod(
     where: Union[Quantity, jax.typing.ArrayLike] = None
 ):
     """
-    Return the product of array elements over a given axis treating Not a Numbers (NaNs) as one.
+    Return the product of array elements over a given axis treating NaNs as one.
+
+    Behaves like :func:`prod` but treats NaN values as one, so they do not
+    affect the product.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input data.
+    x : array_like or Quantity
+        Input data.
     axis : None or int or tuple of ints, optional
-      Axis or axes along which a product is performed.  The default,
-      axis=None, will calculate the product of all the elements in the
-      input array. If axis is negative it counts from the last to the
-      first axis.
-
-      If axis is a tuple of ints, a product is performed on all of the
-      axes specified in the tuple instead of a single axis or all the
-      axes as before.
+        Axis or axes along which a product is performed. The default,
+        ``axis=None``, will calculate the product of all elements.
     dtype : dtype, optional
-      The type of the returned array, as well as of the accumulator in
-      which the elements are multiplied.  The dtype of `a` is used by
-      default unless `a` has an integer dtype of less precision than the
-      default platform integer.  In that case, if `a` is signed then the
-      platform integer is used while if `a` is unsigned then an unsigned
-      integer of the same precision as the platform integer is used.
+        The type of the returned array, as well as of the accumulator in
+        which the elements are multiplied.
     keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left in the
-      result as dimensions with size one. With this option, the result
-      will broadcast correctly against the input array.
-
-      If the default value is passed, then `keepdims` will not be
-      passed through to the `prod` method of sub-classes of
-      `ndarray`, however any non-default value will be.  If the
-      sub-class' method does not implement `keepdims` any
-      exceptions will be raised.
+        If True, the axes which are reduced are left in the result as
+        dimensions with size one.
     initial : scalar, optional
-      The starting value for this product. See `~numpy.ufunc.reduce` for details.
+        The starting value for this product.
     where : array_like of bool, optional
-      Elements to include in the product. See `~numpy.ufunc.reduce` for details.
+        Elements to include in the product.
 
     Returns
     -------
-    product_along_axis : ndarray, see `dtype` parameter above.
-      An array shaped as `a` but with the specified axis removed.
-      Returns a reference to `out` if specified.
+    product_along_axis : ndarray or Quantity
+        An array shaped as `x` but with the specified axis removed. If `x`
+        carries a unit, the result is a Quantity whose unit is
+        ``x.unit ** n`` where ``n`` is the number of elements reduced.
 
-      This is a Quantity if the product of the unit of `x` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> q = su.math.array([2.0, jnp.nan, 3.0]) * su.meter
+        >>> su.math.nanprod(q)  # NaN treated as 1, result is 6.0
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -453,31 +474,34 @@ def cumprod(
     """
     Return the cumulative product of elements along a given axis.
 
+    Each position *i* in the output contains the product of elements from
+    index 0 to *i*. When the input carries a unit, the unit is raised to
+    the corresponding cumulative power.
+
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array.
+    x : array_like or Quantity
+        Input array.
     axis : int, optional
-      Axis along which the cumulative product is computed.  By default
-      the input is flattened.
+        Axis along which the cumulative product is computed. By default
+        the input is flattened.
     dtype : dtype, optional
-      Type of the returned array, as well as of the accumulator in which
-      the elements are multiplied.  If *dtype* is not specified, it
-      defaults to the dtype of `a`, unless `a` has an integer dtype with
-      a precision less than that of the default platform integer.  In
-      that case, the default platform integer is used instead.
-    out : ndarray, optional
-      Alternative output array in which to place the result. It must
-      have the same shape and buffer length as the expected output
-      but the type of the resulting values will be cast if necessary.
+        Type of the returned array, as well as of the accumulator in which
+        the elements are multiplied.
 
     Returns
     -------
-    cumprod : ndarray, quantity
-      A new array holding the result is returned unless `out` is
-      specified, in which case a reference to out is returned.
+    cumprod : ndarray or Quantity
+        A new array holding the cumulative product. If `x` carries a unit,
+        the result is a Quantity.
 
-      This is a Quantity if the product of the unit of `x` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> q = su.math.array([1.0, 2.0, 3.0]) * su.meter
+        >>> su.math.cumprod(q)
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -493,33 +517,36 @@ def nancumprod(
     dtype: Optional[jax.typing.DTypeLike] = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
-    Return the cumulative product of elements along a given axis treating Not a Numbers (NaNs) as one.
+    Return the cumulative product of elements along a given axis treating NaNs as one.
+
+    Behaves like :func:`cumprod` but treats NaN values as one, so they do not
+    affect the cumulative product.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array.
+    x : array_like or Quantity
+        Input array.
     axis : int, optional
-      Axis along which the cumulative product is computed.  By default
-      the input is flattened.
+        Axis along which the cumulative product is computed. By default
+        the input is flattened.
     dtype : dtype, optional
-      Type of the returned array, as well as of the accumulator in which
-      the elements are multiplied.  If *dtype* is not specified, it
-      defaults to the dtype of `a`, unless `a` has an integer dtype with
-      a precision less than that of the default platform integer.  In
-      that case, the default platform integer is used instead.
-    out : ndarray, optional
-      Alternative output array in which to place the result. It must
-      have the same shape and buffer length as the expected output
-      but the type of the resulting values will be cast if necessary.
+        Type of the returned array, as well as of the accumulator in which
+        the elements are multiplied.
 
     Returns
     -------
-    cumprod : ndarray, quantity
-      A new array holding the result is returned unless `out` is
-      specified, in which case a reference to out is returned.
+    cumprod : ndarray or Quantity
+        A new array holding the cumulative product with NaNs treated as one.
+        If `x` carries a unit, the result is a Quantity.
 
-      This is a Quantity if the product of the unit of `x` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> q = su.math.array([2.0, jnp.nan, 3.0]) * su.meter
+        >>> su.math.nancumprod(q)
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -567,19 +594,30 @@ def multiply(
     """
     Multiply arguments element-wise.
 
+    The resulting unit is the product of the units of the two inputs.
+
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays to be multiplied.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. If ``x.shape != y.shape``, they must be
+        broadcastable to a common shape.
 
     Returns
     -------
-    out : ndarray, Quantity
-      The product of `x` and `y`, element-wise.
-      This is a scalar if both `x` and `y` are scalars.
+    out : ndarray or Quantity
+        The product of `x` and `y`, element-wise. This is a scalar if both
+        `x` and `y` are scalars. The resulting unit is ``x.unit * y.unit``.
 
-      This is a Quantity if the product of the unit of `x` and the unit of `y` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
+        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
+        >>> su.math.multiply(a, b)  # unit is meter * second
     """
     return _fun_change_unit_binary(jnp.multiply,
                                    lambda ux, uy: ux * uy,
@@ -594,19 +632,30 @@ def divide(
     """
     Divide arguments element-wise.
 
+    The resulting unit is the quotient of the units of the two inputs.
+
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays to be divided.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
+    x : array_like or Quantity
+        Dividend array.
+    y : array_like or Quantity
+        Divisor array. If ``x.shape != y.shape``, they must be broadcastable
+        to a common shape.
 
     Returns
     -------
-    out : ndarray, Quantity
-      The quotient of `x` and `y`, element-wise.
-      This is a scalar if both `x` and `y` are scalars.
+    out : ndarray or Quantity
+        The quotient of `x` and `y`, element-wise. This is a scalar if both
+        `x` and `y` are scalars. The resulting unit is ``x.unit / y.unit``.
 
-      This is a Quantity if the product of the unit of `x` and the unit of `y` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> distance = su.math.array([10.0, 20.0]) * su.meter
+        >>> time = su.math.array([2.0, 4.0]) * su.second
+        >>> su.math.divide(distance, time)  # unit is meter / second
     """
     return _fun_change_unit_binary(jnp.divide,
                                    lambda ux, uy: ux / uy,
@@ -626,37 +675,39 @@ def cross(
     Return the cross product of two (arrays of) vectors.
 
     The cross product of `a` and `b` in :math:`R^3` is a vector perpendicular
-    to both `a` and `b`.  If `a` and `b` are arrays of vectors, the vectors
-    are defined by the last axis of `a` and `b` by default, and these axes
-    can have dimensions 2 or 3.  Where the dimension of either `a` or `b` is
-    2, the third component of the input vector is assumed to be zero and the
-    cross product calculated accordingly.  In cases where both input vectors
-    have dimension 2, the z-component of the cross product is returned.
+    to both `a` and `b`. The resulting unit is ``a.unit * b.unit``.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Components of the first vector(s).
-    b : array_like, Quantity
-      Components of the second vector(s).
+    a : array_like or Quantity
+        Components of the first vector(s).
+    b : array_like or Quantity
+        Components of the second vector(s).
     axisa : int, optional
-      Axis of `a` that defines the vector(s).  By default, the last axis.
+        Axis of `a` that defines the vector(s). By default, the last axis.
     axisb : int, optional
-      Axis of `b` that defines the vector(s).  By default, the last axis.
+        Axis of `b` that defines the vector(s). By default, the last axis.
     axisc : int, optional
-      Axis of `c` containing the cross product vector(s).  Ignored if
-      both input vectors have dimension 2, as the return is scalar.
-      By default, the last axis.
+        Axis of `c` containing the cross product vector(s). Ignored if both
+        input vectors have dimension 2. By default, the last axis.
     axis : int, optional
-      If defined, the axis of `a`, `b` and `c` that defines the vector(s)
-      and cross product(s).  Overrides `axisa`, `axisb` and `axisc`.
+        If defined, the axis of `a`, `b` and `c` that defines the vector(s)
+        and cross product(s). Overrides `axisa`, `axisb` and `axisc`.
 
     Returns
     -------
-    c : ndarray, Quantity
-      Vector cross product(s).
+    c : ndarray or Quantity
+        Vector cross product(s). The resulting unit is
+        ``a.unit * b.unit``.
 
-      This is a Quantity if the cross product of the unit of `a` and the unit of `b` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 0.0, 0.0]) * su.meter
+        >>> b = su.math.array([0.0, 1.0, 0.0]) * su.second
+        >>> su.math.cross(a, b)  # unit is meter * second
     """
     return _fun_change_unit_binary(jnp.cross,
                                    lambda ux, uy: ux * uy,
@@ -670,24 +721,32 @@ def true_divide(
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
-    Returns a true division of the inputs, element-wise.
+    Return a true division of the inputs, element-wise.
+
+    Equivalent to ``divide``. The resulting unit is ``x.unit / y.unit``.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Dividend array.
-    y : array_like, Quantity
-      Divisor array.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
+    x : array_like or Quantity
+        Dividend array.
+    y : array_like or Quantity
+        Divisor array. If ``x.shape != y.shape``, they must be broadcastable
+        to a common shape.
 
     Returns
     -------
-    out : ndarray, quantity or scalar
-      The quotient ``x/y``, element-wise.
-      This is a scalar if both `x` and `y` are scalars.
+    out : ndarray or Quantity
+        The quotient ``x / y``, element-wise. This is a scalar if both `x`
+        and `y` are scalars. The resulting unit is ``x.unit / y.unit``.
 
-      This is a Quantity if the division of the unit of `x` and the unit of `y` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([10.0, 20.0]) * su.meter
+        >>> b = su.math.array([2.0, 5.0]) * su.second
+        >>> su.math.true_divide(a, b)  # unit is meter / second
     """
     return _fun_change_unit_binary(jnp.true_divide,
                                    lambda ux, uy: ux / uy,
@@ -701,27 +760,35 @@ def divmod(
 ) -> Tuple[Union[Quantity, jax.typing.ArrayLike], Union[Quantity, jax.typing.ArrayLike]]:
     """
     Return element-wise quotient and remainder simultaneously.
-    ``bu.divmod(x, y)`` is equivalent to ``(x // y, x % y)``, but faster
-    because it avoids redundant work. It is used to implement the Python
-    built-in function ``divmod`` on NumPy arrays.
+
+    Equivalent to ``(x // y, x % y)``, but faster because it avoids
+    redundant work. The quotient carries unit ``x.unit / y.unit`` and the
+    remainder carries ``x.unit``.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Dividend array.
-    y : array_like, Quantity
-      Divisor array.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
+    x : array_like or Quantity
+        Dividend array.
+    y : array_like or Quantity
+        Divisor array. If ``x.shape != y.shape``, they must be broadcastable
+        to a common shape.
 
     Returns
     -------
-    out1 : ndarray, quantity or scalar
-      Element-wise quotient resulting from floor division.
-      This is a scalar if both `x` and `y` are scalars.
-    out2 : ndarray, quantity or scalar
-      Element-wise remainder from floor division.
-      This is a scalar if both `x` and `y` are scalars.
+    out1 : ndarray or Quantity
+        Element-wise quotient resulting from floor division. Unit is
+        ``x.unit / y.unit``.
+    out2 : ndarray or Quantity
+        Element-wise remainder from floor division. Unit is ``x.unit``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([7.0, 9.0]) * su.meter
+        >>> b = su.math.array([2.0, 4.0]) * su.second
+        >>> quotient, remainder = su.math.divmod(a, b)
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
@@ -748,44 +815,39 @@ def convolve(
     preferred_element_type: Optional[jax.typing.DTypeLike] = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
-    Returns the discrete, linear convolution of two one-dimensional sequences.
+    Return the discrete, linear convolution of two one-dimensional sequences.
 
-    The convolution operator is often seen in signal processing, where it
-    models the effect of a linear time-invariant system on a signal [1]_.  In
-    probability theory, the sum of two independent random variables is
-    distributed according to the convolution of their individual
-    distributions.
-
-    If `v` is longer than `a`, the arrays are swapped before computation.
+    The resulting unit is ``a.unit * v.unit``.
 
     Parameters
     ----------
-    a : (N,) array_like, Quantity
-      First one-dimensional input array.
-    v : (M,) array_like, Quantity
-      Second one-dimensional input array.
+    a : (N,) array_like or Quantity
+        First one-dimensional input array.
+    v : (M,) array_like or Quantity
+        Second one-dimensional input array.
     mode : {'full', 'valid', 'same'}, optional
-      'full':
-        By default, mode is 'full'.  This returns the convolution
-        at each point of overlap, with an output shape of (N+M-1,). At
-        the end-points of the convolution, the signals do not overlap
-        completely, and boundary effects may be seen.
-      'same':
-        Mode 'same' returns output of length ``max(M, N)``.  Boundary
-        effects are still visible.
-      'valid':
-        Mode 'valid' returns output of length
-        ``max(M, N) - min(M, N) + 1``.  The convolution product is only given
-        for points where the signals overlap completely.  Values outside
-        the signal boundary have no effect.
+        'full' (default): output shape ``(N+M-1,)``.
+        'same': output length ``max(M, N)``.
+        'valid': output length ``max(M, N) - min(M, N) + 1``.
+    precision : optional
+        Precision for the computation.
+    preferred_element_type : dtype, optional
+        Accumulation and result dtype.
 
     Returns
     -------
-    out : ndarray, quantity or scalar
-      Discrete, linear convolution of `a` and `v`.
-      This is a scalar if both `a` and `v` are scalars.
+    out : ndarray or Quantity
+        Discrete, linear convolution of `a` and `v`. The resulting unit is
+        ``a.unit * v.unit``.
 
-      This is a Quantity if the convolution of the unit of `a` and the unit of `v` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
+        >>> v = su.math.array([0.5, 1.0]) * su.second
+        >>> su.math.convolve(a, v)  # unit is meter * second
     """
     return _fun_change_unit_binary(
         jnp.convolve,
@@ -805,32 +867,37 @@ def power(
     """
     First array elements raised to powers from second array, element-wise.
 
-    Raise each base in `x` to the positionally-corresponding power in
-    `y`.  `x` and `y` must be broadcastable to the same shape.
-
-    An integer type raised to a negative integer power will raise a
-    ``ValueError``.
-
-    Negative values raised to a non-integral value will return ``nan``.
-    To get complex results, cast the input to complex, or specify the
-    ``dtype`` to be ``complex`` (see the example below).
+    Raise each base in `x` to the positionally-corresponding power in `y`.
+    The exponent `y` must be dimensionless. The resulting unit is
+    ``x.unit ** y``.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      The bases.
-    y : array_like, Quantity
-      The exponents.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
+    x : array_like or Quantity
+        The bases.
+    y : array_like or Quantity
+        The exponents. Must be dimensionless if a Quantity. If
+        ``x.shape != y.shape``, they must be broadcastable to a common shape.
 
     Returns
     -------
-    out : ndarray, quantity or scalar
-      The bases in `x` raised to the exponents in `y`.
-      This is a scalar if both `x` and `y` are scalars.
+    out : ndarray or Quantity
+        The bases in `x` raised to the exponents in `y`. This is a scalar
+        if both `x` and `y` are scalars. The resulting unit is
+        ``x.unit ** y``.
 
-      This is a Quantity if the unit of `x` raised to the unit of `y` is not dimensionless.
+    Raises
+    ------
+    TypeError
+        If `y` is a Quantity that is not dimensionless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> q = su.math.array([2.0, 3.0]) * su.meter
+        >>> su.math.power(q, 3)  # unit is meter ** 3
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
@@ -864,24 +931,32 @@ def floor_divide(
 ) -> Union[Quantity, jax.Array]:
     """
     Return the largest integer smaller or equal to the division of the inputs.
-      It is equivalent to the Python ``//`` operator and pairs with the
-      Python ``%`` (`remainder`), function so that ``a = a % b + b * (a // b)``
-      up to roundoff.
+
+    Equivalent to the Python ``//`` operator. The resulting unit is
+    ``x.unit / y.unit``.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Numerator.
-    y : array_like, Quantity
-      Denominator.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
+    x : array_like or Quantity
+        Numerator.
+    y : array_like or Quantity
+        Denominator. If ``x.shape != y.shape``, they must be broadcastable
+        to a common shape.
 
     Returns
     -------
-    out : ndarray
-      out = floor(`x`/`y`)
-      This is a scalar if both `x` and `y` are scalars.
+    out : ndarray or Quantity
+        ``floor(x / y)``, element-wise. This is a scalar if both `x` and
+        `y` are scalars. The resulting unit is ``x.unit / y.unit``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([7.0, 8.0]) * su.meter
+        >>> b = su.math.array([2.0, 3.0]) * su.second
+        >>> su.math.floor_divide(a, b)  # unit is meter / second
     """
     return _fun_change_unit_binary(jnp.floor_divide, lambda ux, uy: ux / uy, x, y)
 
@@ -894,33 +969,37 @@ def float_power(
     """
     First array elements raised to powers from second array, element-wise.
 
-    Raise each base in `x` to the positionally-corresponding power in `y`.
-    `x` and `y` must be broadcastable to the same shape. This differs from
-    the power function in that integers, float16, and float32  are promoted to
+    Like :func:`power`, but integers, float16, and float32 are promoted to
     floats with a minimum precision of float64 so that the result is always
-    inexact.  The intent is that the function will return a usable result for
-    negative powers and seldom overflow for positive powers.
-
-    Negative values raised to a non-integral value will return ``nan``.
-    To get complex results, cast the input to complex, or specify the
-    ``dtype`` to be ``complex`` (see the example below).
+    inexact. The exponent must be dimensionless.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      The bases.
+    x : array_like or Quantity
+        The bases.
     y : array_like
-      The exponents.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
+        The exponents. Must be dimensionless if a Quantity. If
+        ``x.shape != y.shape``, they must be broadcastable to a common shape.
 
     Returns
     -------
-    out : ndarray
-      The bases in `x` raised to the exponents in `y`.
-      This is a scalar if both `x` and `y` are scalars.
+    out : ndarray or Quantity
+        The bases in `x` raised to the exponents in `y`. This is a scalar
+        if both `x` and `y` are scalars. The resulting unit is
+        ``x.unit ** y``.
 
-      This is a Quantity if the unit of `x` raised to the unit of `y` is not dimensionless.
+    Raises
+    ------
+    TypeError
+        If `y` is a Quantity that is not dimensionless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> q = su.math.array([2.0, 3.0]) * su.meter
+        >>> su.math.float_power(q, 2)  # unit is meter ** 2
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
@@ -960,29 +1039,36 @@ def dot(
     preferred_element_type: Optional[jax.typing.DTypeLike] = None
 ) -> Union[jax.Array, Quantity]:
     """
-    Dot product of two arrays or quantities.
+    Compute the dot product of two arrays or quantities.
+
+    The resulting unit is ``a.unit * b.unit``.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      First argument.
-    b : array_like, Quantity
-      Second argument.
-    precision : either ``None`` (default),
-      which means the default precision for the backend, a :class:`~jax.lax.Precision`
-      enum value (``Precision.DEFAULT``, ``Precision.HIGH`` or ``Precision.HIGHEST``)
-      or a tuple of two such values indicating precision of ``a`` and ``b``.
-    preferred_element_type : either ``None`` (default)
-      which means the default accumulation type for the input types, or a datatype,
-      indicating to accumulate results to and return a result with that datatype.
+    a : array_like or Quantity
+        First argument.
+    b : array_like or Quantity
+        Second argument.
+    precision : optional
+        Either ``None`` (default) or a :class:`~jax.lax.Precision` enum
+        value, or a tuple of two such values for `a` and `b`.
+    preferred_element_type : dtype, optional
+        Accumulation and result dtype.
 
     Returns
     -------
-    output : ndarray, Quantity
-      array containing the dot product of the inputs, with batch dimensions of
-      ``a`` and ``b`` stacked rather than broadcast.
+    output : ndarray or Quantity
+        The dot product of the inputs. The resulting unit is
+        ``a.unit * b.unit``.
 
-      This is a Quantity if the final unit is the product of the unit of `a` and the unit of `b`, else an array.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
+        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
+        >>> su.math.dot(a, b)  # scalar Quantity with unit meter * second
     """
     return _fun_change_unit_binary(jnp.dot,
                                    lambda x, y: x * y,
@@ -1001,71 +1087,35 @@ def multi_dot(
     Efficiently compute matrix products between a sequence of arrays.
 
     JAX internally uses the opt_einsum library to compute the most efficient
-    operation order.
+    operation order. The resulting unit is the product of the units of all
+    input arrays.
 
-    Args:
-      arrays: sequence of arrays / quantities. All must be two-dimensional, except the first
-        and last which may be one-dimensional.
-      precision: either ``None`` (default), which means the default precision for
-        the backend, a :class:`~jax.lax.Precision` enum value (``Precision.DEFAULT``,
-        ``Precision.HIGH`` or ``Precision.HIGHEST``).
+    Parameters
+    ----------
+    arrays : sequence of array_like or Quantity
+        Sequence of arrays or quantities. All must be two-dimensional, except
+        the first and last which may be one-dimensional.
+    precision : optional
+        Either ``None`` (default), or a :class:`~jax.lax.Precision` enum
+        value.
 
-    Returns:
-      an array representing the equivalent of ``reduce(jnp.matmul, arrays)``, but
-      evaluated in the optimal order.
+    Returns
+    -------
+    output : ndarray or Quantity
+        An array representing the equivalent of ``reduce(jnp.matmul, arrays)``,
+        evaluated in the optimal order. The resulting unit is the product of
+        all input units.
 
-    This function exists because the cost of computing sequences of matmul operations
-    can differ vastly depending on the order in which the operations are evaluated.
-    For a single matmul, the number of floating point operations (flops) required to
-    compute a matrix product can be approximated this way:
+    Examples
+    --------
+    .. code-block:: python
 
-    >>> def approx_flops(x, y):
-    ...   # for 2D x and y, with x.shape[1] == y.shape[0]
-    ...   return 2 * x.shape[0] * x.shape[1] * y.shape[1]
-
-    Suppose we have three matrices that we'd like to multiply in sequence:
-
-    >>> import saiunit as bu
-    >>> key1, key2, key3 = jax.random.split(jax.random.key(0), 3)
-    >>> x = jax.random.normal(key1, shape=(200, 5)) * bu.mA
-    >>> y = jax.random.normal(key2, shape=(5, 100)) * bu.mV
-    >>> z = jax.random.normal(key3, shape=(100, 10)) * bu.ohm
-
-    Because of associativity of matrix products, there are two orders in which we might
-    evaluate the product ``x @ y @ z``, and both produce equivalent outputs up to floating
-    point precision:
-
-    >>> result1 = (x @ y) @ z
-    >>> result2 = x @ (y @ z)
-    >>> bu.math.allclose(result1, result2, atol=1E-4)
-    Array(True, dtype=bool)
-
-    But the computational cost of these differ greatly:
-
-    >>> print("(x @ y) @ z flops:", approx_flops(x, y) + approx_flops(x @ y, z))
-    (x @ y) @ z flops: 600000
-    >>> print("x @ (y @ z) flops:", approx_flops(y, z) + approx_flops(x, y @ z))
-    x @ (y @ z) flops: 30000
-
-    The second approach is about 20x more efficient in terms of estimated flops!
-
-    ``multi_dot`` is a function that will automatically choose the fastest
-    computational path for such problems:
-
-    >>> result3 = bu.math.multi_dot([x, y, z])
-    >>> bu.math.allclose(result1, result3, atol=1E-4)
-    Array(True, dtype=bool)
-
-    We can use JAX's :ref:`ahead-of-time-lowering` tools to estimate the total flops
-    of each approach, and confirm that ``multi_dot`` is choosing the more efficient
-    option:
-
-    >>> jax.jit(lambda x, y, z: (x @ y) @ z).lower(x, y, z).cost_analysis()['flops']
-    600000.0
-    >>> jax.jit(lambda x, y, z: x @ (y @ z)).lower(x, y, z).cost_analysis()['flops']
-    30000.0
-    >>> jax.jit(bu.math.multi_dot).lower([x, y, z]).cost_analysis()['flops']
-    30000.0
+        >>> import saiunit as su
+        >>> import jax
+        >>> k1, k2 = jax.random.split(jax.random.key(0))
+        >>> a = jax.random.normal(k1, shape=(3, 4)) * su.meter
+        >>> b = jax.random.normal(k2, shape=(4, 2)) * su.second
+        >>> su.math.multi_dot([a, b])  # unit is meter * second
     """
     new_arrays = []
     unit = UNITLESS
@@ -1093,27 +1143,35 @@ def vdot(
     """
     Perform a conjugate multiplication of two 1D vectors.
 
+    Flattens both inputs and computes the dot product of the conjugate of
+    `a` with `b`. The resulting unit is ``a.unit * b.unit``.
+
     Parameters
     ----------
-    a : array_like, Quantity
-      First argument.
-    b : array_like, Quantity
-      Second argument.
-    precision : either ``None`` (default),
-      which means the default precision for the backend, a :class:`~jax.lax.Precision`
-      enum value (``Precision.DEFAULT``, ``Precision.HIGH`` or ``Precision.HIGHEST``)
-      or a tuple of two such values indicating precision of ``a`` and ``b``.
-    preferred_element_type : either ``None`` (default)
-      which means the default accumulation type for the input types, or a datatype,
-      indicating to accumulate results to and return a result with that datatype.
+    a : array_like or Quantity
+        First argument.
+    b : array_like or Quantity
+        Second argument.
+    precision : optional
+        Either ``None`` (default) or a :class:`~jax.lax.Precision` enum
+        value, or a tuple of two such values for `a` and `b`.
+    preferred_element_type : dtype, optional
+        Accumulation and result dtype.
 
     Returns
     -------
-    output : ndarray, Quantity
-      array containing the dot product of the inputs, with batch dimensions of
-      ``a`` and ``b`` stacked rather than broadcast.
+    output : ndarray or Quantity
+        The conjugate dot product of the inputs. The resulting unit is
+        ``a.unit * b.unit``.
 
-      This is a Quantity if the final unit is the product of the unit of `a` and the unit of `b`, else an array.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
+        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
+        >>> su.math.vdot(a, b)  # scalar Quantity with unit meter * second
     """
     return _fun_change_unit_binary(jnp.vdot,
                                    lambda x, y: x * y,
@@ -1131,41 +1189,41 @@ def vecdot(
     precision: jax.lax.PrecisionLike = None,
     preferred_element_type: jax.typing.DTypeLike | None = None
 ):
-    """Perform a conjugate multiplication of two batched vectors.
+    """
+    Perform a conjugate multiplication of two batched vectors.
 
-    Args:
-      a: left-hand side array / Quantity.
-      b: right-hand side array / Quantity. Size of ``b[axis]`` must match size of ``a[axis]``,
+    Computes the conjugate dot product of `a` and `b` along the given axis.
+    The resulting unit is ``a.unit * b.unit``.
+
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Left-hand side array.
+    b : array_like or Quantity
+        Right-hand side array. Size of ``b[axis]`` must match ``a[axis]``,
         and remaining dimensions must be broadcast-compatible.
-      axis: axis along which to compute the dot product (default: -1)
-      precision: either ``None`` (default), which means the default precision for
-        the backend, a :class:`~jax.lax.Precision` enum value (``Precision.DEFAULT``,
-        ``Precision.HIGH`` or ``Precision.HIGHEST``) or a tuple of two
-        such values indicating precision of ``a`` and ``b``.
-      preferred_element_type: either ``None`` (default), which means the default
-        accumulation type for the input types, or a datatype, indicating to
-        accumulate results to and return a result with that datatype.
+    axis : int, optional
+        Axis along which to compute the dot product (default: -1).
+    precision : optional
+        Either ``None`` (default) or a :class:`~jax.lax.Precision` enum
+        value, or a tuple of two such values.
+    preferred_element_type : dtype, optional
+        Accumulation and result dtype.
 
-    Returns:
-      array containing the conjugate dot product of ``a`` and ``b`` along ``axis``.
-      The non-contracted dimensions are broadcast together.
+    Returns
+    -------
+    output : ndarray or Quantity
+        The conjugate dot product of `a` and `b` along `axis`. The resulting
+        unit is ``a.unit * b.unit``.
 
-    Examples:
-      Vector conjugate-dot product of two 1D arrays:
+    Examples
+    --------
+    .. code-block:: python
 
-      >>> import saiunit as bu
-      >>> a = bu.math.array([1j, 2j, 3j]) * bu.ohm
-      >>> b = bu.math.array([4., 5., 6.]) * bu.mA
-      >>> bu.math.vecdot(a, b)
-      Array(0.-32.j, dtype=complex64) * mvolt
-
-      Batched vector dot product of two 2D arrays:
-
-      >>> a = bu.math.array([[1, 2, 3],
-      ...                   [4, 5, 6]]) * bu.ohm
-      >>> b = bu.math.array([[2, 3, 4]]) * bu.mA
-      >>> bu.math.vecdot(a, b, axis=-1)
-      Array([20, 47], dtype=float32) * mV
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
+        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
+        >>> su.math.vecdot(a, b)  # scalar Quantity with unit meter * second
     """
     return _fun_change_unit_binary(jnp.vecdot,
                                    lambda x, y: x * y,
@@ -1184,29 +1242,38 @@ def inner(
     preferred_element_type: Optional[jax.typing.DTypeLike] = None
 ) -> Union[jax.Array, Quantity]:
     """
-    Inner product of two arrays or quantities.
+    Compute the inner product of two arrays or quantities.
+
+    For 1-D arrays, this is the ordinary dot product. For higher dimensions,
+    it is the sum product over the last axes. The resulting unit is
+    ``a.unit * b.unit``.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      First argument.
-    b : array_like, Quantity
-      Second argument.
-    precision : either ``None`` (default),
-      which means the default precision for the backend, a :class:`~jax.lax.Precision`
-      enum value (``Precision.DEFAULT``, ``Precision.HIGH`` or ``Precision.HIGHEST``)
-      or a tuple of two such values indicating precision of ``a`` and ``b``.
-    preferred_element_type : either ``None`` (default)
-      which means the default accumulation type for the input types, or a datatype,
-      indicating to accumulate results to and return a result with that datatype.
+    a : array_like or Quantity
+        First argument.
+    b : array_like or Quantity
+        Second argument.
+    precision : optional
+        Either ``None`` (default) or a :class:`~jax.lax.Precision` enum
+        value, or a tuple of two such values for `a` and `b`.
+    preferred_element_type : dtype, optional
+        Accumulation and result dtype.
 
     Returns
     -------
-    output : ndarray, Quantity
-      array containing the inner product of the inputs, with batch dimensions of
-      ``a`` and ``b`` stacked rather than broadcast.
+    output : ndarray or Quantity
+        The inner product of the inputs. The resulting unit is
+        ``a.unit * b.unit``.
 
-      This is a Quantity if the final unit is the product of the unit of `a` and the unit of `b`, else an array.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 2.0, 3.0]) * su.meter
+        >>> b = su.math.array([4.0, 5.0, 6.0]) * su.second
+        >>> su.math.inner(a, b)  # scalar Quantity with unit meter * second
     """
     return _fun_change_unit_binary(jnp.inner,
                                    lambda x, y: x * y,
@@ -1224,23 +1291,34 @@ def outer(
     """
     Compute the outer product of two vectors or quantities.
 
+    Given two 1-D arrays `a` of length M and `b` of length N, the outer
+    product is an (M, N) array where ``out[i, j] = a[i] * b[j]``. The
+    resulting unit is ``a.unit * b.unit``.
+
     Parameters
     ----------
-    a : array_like, Quantity
-      First argument.
-    b : array_like, Quantity
-      Second argument.
+    a : array_like or Quantity
+        First argument (flattened if not 1-D).
+    b : array_like or Quantity
+        Second argument (flattened if not 1-D).
     out : ndarray, optional
-      A location into which the result is stored. If provided, it must have a shape that the inputs broadcast to.
-      If not provided or None, a freshly-allocated array is returned.
+        A location into which the result is stored. If not provided, a
+        freshly-allocated array is returned.
 
     Returns
     -------
-    output : ndarray, Quantity
-      array containing the outer product of the inputs, with batch dimensions of
-      ``a`` and ``b`` stacked rather than broadcast.
+    output : ndarray or Quantity
+        The outer product of the inputs, shape ``(M, N)``. The resulting
+        unit is ``a.unit * b.unit``.
 
-      This is a Quantity if the final unit is the product of the unit of `a` and the unit of `b`, else an array.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 2.0]) * su.meter
+        >>> b = su.math.array([3.0, 4.0, 5.0]) * su.second
+        >>> su.math.outer(a, b)  # shape (2, 3), unit meter * second
     """
     return _fun_change_unit_binary(jnp.outer,
                                    lambda x, y: x * y,
@@ -1256,19 +1334,29 @@ def kron(
     """
     Compute the Kronecker product of two arrays or quantities.
 
+    The resulting unit is ``a.unit * b.unit``.
+
     Parameters
     ----------
-    a : array_like, Quantity
-      First input.
-    b : array_like, Quantity
-      Second input.
+    a : array_like or Quantity
+        First input.
+    b : array_like or Quantity
+        Second input.
 
     Returns
     -------
-    output : ndarray, Quantity
-      Kronecker product of `a` and `b`.
+    output : ndarray or Quantity
+        Kronecker product of `a` and `b`. The resulting unit is
+        ``a.unit * b.unit``.
 
-      This is a Quantity if the final unit is the product of the unit of `a` and the unit of `b`, else an array.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([1.0, 2.0]) * su.meter
+        >>> b = su.math.array([3.0, 4.0]) * su.second
+        >>> su.math.kron(a, b)  # unit is meter * second
     """
     return _fun_change_unit_binary(jnp.kron,
                                    lambda x, y: x * y,
@@ -1284,29 +1372,36 @@ def matmul(
     preferred_element_type: Optional[jax.typing.DTypeLike] = None
 ) -> Union[jax.Array, Quantity]:
     """
-    Matrix product of two arrays or quantities.
+    Compute the matrix product of two arrays or quantities.
+
+    The resulting unit is ``a.unit * b.unit``.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      First argument.
-    b : array_like, Quantity
-      Second argument.
-    precision : either ``None`` (default),
-      which means the default precision for the backend, a :class:`~jax.lax.Precision`
-      enum value (``Precision.DEFAULT``, ``Precision.HIGH`` or ``Precision.HIGHEST``)
-      or a tuple of two such values indicating precision of ``a`` and ``b``.
-    preferred_element_type : either ``None`` (default)
-      which means the default accumulation type for the input types, or a datatype,
-      indicating to accumulate results to and return a result with that datatype.
+    a : array_like or Quantity
+        First argument.
+    b : array_like or Quantity
+        Second argument.
+    precision : optional
+        Either ``None`` (default) or a :class:`~jax.lax.Precision` enum
+        value, or a tuple of two such values for `a` and `b`.
+    preferred_element_type : dtype, optional
+        Accumulation and result dtype.
 
     Returns
     -------
-    output : ndarray, Quantity
-      array containing the matrix product of the inputs, with batch dimensions of
-      ``a`` and ``b`` stacked rather than broadcast.
+    output : ndarray or Quantity
+        The matrix product of the inputs. The resulting unit is
+        ``a.unit * b.unit``.
 
-      This is a Quantity if the final unit is the product of the unit of `a` and the unit of `b`, else an array.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> b = su.math.array([[5.0, 6.0], [7.0, 8.0]]) * su.second
+        >>> su.math.matmul(a, b)  # shape (2, 2), unit meter * second
     """
     return _fun_change_unit_binary(jnp.matmul,
                                    lambda x, y: x * y,
@@ -1326,42 +1421,36 @@ def tensordot(
     """
     Compute tensor dot product along specified axes.
 
-    Given two tensors, `a` and `b`, and an array_like object containing
-    two array_like objects, ``(a_axes, b_axes)``, sum the products of
-    `a`'s and `b`'s elements (components) over the axes specified by
-    ``a_axes`` and ``b_axes``. The third argument can be a single non-negative
-    integer_like scalar, ``N``; if it is such, then the last ``N`` dimensions
-    of `a` and the first ``N`` dimensions of `b` are summed over.
+    The resulting unit is ``a.unit * b.unit``.
 
     Parameters
     ----------
-    a, b : array_like, Quantity
-      Tensors to "dot".
-
+    a : array_like or Quantity
+        First tensor.
+    b : array_like or Quantity
+        Second tensor.
     axes : int or (2,) array_like
-      * integer_like
-        If an int N, sum over the last N axes of `a` and the first N axes
-        of `b` in order. The sizes of the corresponding axes must match.
-      * (2,) array_like
-        Or, a list of axes to be summed over, first sequence applying to `a`,
-        second to `b`. Both elements array_like must be of the same length.
-    precision : Optional. Either ``None``, which means the default precision for
-      the backend, a :class:`~jax.lax.Precision` enum value
-      (``Precision.DEFAULT``, ``Precision.HIGH`` or ``Precision.HIGHEST``), a
-      string (e.g. 'highest' or 'fastest', see the
-      ``jax.default_matmul_precision`` context manager), or a tuple of two
-      :class:`~jax.lax.Precision` enums or strings indicating precision of
-      ``lhs`` and ``rhs``.
-    preferred_element_type : Optional. Either ``None``, which means the default
-      accumulation type for the input types, or a datatype, indicating to
-      accumulate results to and return a result with that datatype.
+        If an int *N*, sum over the last *N* axes of `a` and the first *N*
+        axes of `b`. Or a list of two sequences of axis indices.
+    precision : optional
+        Either ``None`` (default) or a :class:`~jax.lax.Precision` enum
+        value, or a tuple of two such values.
+    preferred_element_type : dtype, optional
+        Accumulation and result dtype.
 
     Returns
     -------
-    output : ndarray, Quantity
-      The tensor dot product of the input.
+    output : ndarray or Quantity
+        The tensor dot product. The resulting unit is ``a.unit * b.unit``.
 
-      This is a quantity if the product of the units of `a` and `b` is not dimensionless.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> a = su.math.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> b = su.math.array([[5.0, 6.0], [7.0, 8.0]]) * su.second
+        >>> su.math.tensordot(a, b, axes=1)  # unit is meter * second
     """
     return _fun_change_unit_binary(jnp.tensordot,
                                    lambda x, y: x * y,
@@ -1379,19 +1468,28 @@ def matrix_power(
     """
     Raise a square matrix to the (integer) power `n`.
 
+    The resulting unit is ``a.unit ** n``.
+
     Parameters
     ----------
-    a : array_like, Quantity
-      Matrix to be "powered".
+    a : array_like or Quantity
+        Square matrix to be "powered".
     n : int
-      The exponent can be any integer.
+        The exponent can be any integer or zero.
 
     Returns
     -------
-    out : ndarray, Quantity
-      The result of raising `a` to the power `n`.
+    out : ndarray or Quantity
+        The result of raising `a` to the power `n`. The resulting unit is
+        ``a.unit ** n``.
 
-      This is a Quantity if the final unit is the product of the unit of `a` and itself, else an array.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> m = su.math.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> su.math.matrix_power(m, 2)  # unit is meter ** 2
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -1404,22 +1502,34 @@ def matrix_power(
 def det(
     a: Union[jax.typing.ArrayLike, Quantity],
 ) -> Union[jax.typing.ArrayLike, Quantity]:
-    """
-    Compute the determinant of an array.
+    """Compute the determinant of a matrix.
 
-    JAX implementation of :func:`numpy.linalg.det`.
+    SaiUnit implementation of :func:`numpy.linalg.det`.
 
-    Args:
-        a: array of shape ``(..., M, M)`` for which to compute the determinant.
+    For a Quantity with unit *u* and an ``(N, N)`` matrix the resulting
+    unit is ``u ** N``.
 
-    Returns:
-        An array of determinants of shape ``a.shape[:-2]``.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Square input of shape ``(..., M, M)``.
 
-    Examples:
-    >>> a = jnp.array([[1, 2],
-    ...                [3, 4]])
-    >>> saiunit.linalg.det(a)
-    Array(-2., dtype=float32)
+    Returns
+    -------
+    out : ndarray or Quantity
+        Determinant(s) of shape ``a.shape[:-2]``.  Carries unit
+        ``a.unit ** M`` for an ``(M, M)`` matrix.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([[1., 2.],
+        ...                [3., 4.]]) * su.meter
+        >>> su.linalg.det(a)
+        -2. * meter2
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):

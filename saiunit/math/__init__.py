@@ -13,6 +13,26 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Unit-aware mathematical functions for JAX arrays.
+
+This subpackage provides unit-aware wrappers for NumPy-style functions,
+organized by how they handle units:
+
+- **Array creation**: ``array``, ``zeros``, ``ones``, ``arange``, ``linspace``, etc.
+- **Keep unit**: functions that preserve the input unit (``sum``, ``mean``,
+  ``concatenate``, ``reshape``, ``abs``, ``round``, etc.).
+- **Change unit**: functions whose output unit differs from the input
+  (``multiply``, ``divide``, ``square``, ``sqrt``, ``dot``, ``matmul``, etc.).
+- **Remove unit**: functions that return dimensionless results
+  (``equal``, ``greater``, ``argmax``, ``argsort``, ``sign``, etc.).
+- **Accept unitless**: functions that require unitless inputs
+  (``exp``, ``log``, ``sin``, ``cos``, ``arctan``, etc.).
+- **Activations**: neural-network activation functions
+  (``relu``, ``sigmoid``, ``gelu``, ``silu``, etc.).
+- **Einops**: Einstein-notation operations (``einsum``, ``einrearrange``, etc.).
+"""
+
 from . import linalg, fft
 from ._activation import *
 from ._activation import __all__ as _activation_all

@@ -13,8 +13,8 @@ on:
 
   # OPTIONAL: Add other triggers if you want tests to run more often
   # For example, run on pushes and pull requests to the main branch:
-  push:
-     branches: [ main ]
+#  push:
+#     branches: [ main ]
 #  pull_request:
 #     branches: [ main ]
 
@@ -63,6 +63,10 @@ jobs:
             python -m pip install jax==${{ matrix.jax-version }} || exit 1
           fi
           python -m pip install . || exit 1
+      - name: Build and install BrainUnit
+        run: |
+          python make_brainunit_setup.py
+          pip install ./brainunit
       - name: Test with pytest
         run: |
           pytest saiunit/

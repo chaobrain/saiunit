@@ -22,7 +22,7 @@ from absl.testing import parameterized
 import saiunit as bu
 import saiunit.lax as bulax
 from saiunit import meter
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 # math funcs only accept unitless (unary)
 lax_accept_unitless_unary = [
@@ -192,3 +192,37 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
 
         with pytest.raises(bu.UnitMismatchError):
             result = bulax_fun(q1, value2, unit_to_scale=bu.second)
+
+
+class TestLaxAcceptUnitlessDocstringExamples:
+    """Tests verifying the docstring examples for accept-unitless lax functions."""
+
+    def test_acos_unitless(self):
+        """Docstring example: acos on unitless array."""
+        result = bulax.acos(jnp.array([0.0, 0.5, 1.0]))
+        expected = lax.acos(jnp.array([0.0, 0.5, 1.0]))
+        assert_quantity(result, expected)
+
+    def test_erf_unitless(self):
+        """Docstring example: erf on unitless array."""
+        result = bulax.erf(jnp.array([0.0, 0.5, 1.0]))
+        expected = lax.erf(jnp.array([0.0, 0.5, 1.0]))
+        assert_quantity(result, expected)
+
+    def test_logistic_unitless(self):
+        """Docstring example: logistic on unitless array."""
+        result = bulax.logistic(jnp.array([0.0, 1.0, -1.0]))
+        expected = lax.logistic(jnp.array([0.0, 1.0, -1.0]))
+        assert_quantity(result, expected)
+
+    def test_atan2_unitless(self):
+        """Docstring example: atan2 on unitless arrays."""
+        result = bulax.atan2(jnp.array([1.0]), jnp.array([1.0]))
+        expected = lax.atan2(jnp.array([1.0]), jnp.array([1.0]))
+        assert_quantity(result, expected)
+
+    def test_betainc_unitless(self):
+        """Docstring example: betainc on unitless arrays."""
+        result = bulax.betainc(jnp.array([1.0]), jnp.array([1.0]), jnp.array([0.5]))
+        expected = lax.betainc(jnp.array([1.0]), jnp.array([1.0]), jnp.array([0.5]))
+        assert_quantity(result, expected)

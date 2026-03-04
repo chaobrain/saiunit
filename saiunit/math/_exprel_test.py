@@ -36,7 +36,6 @@ import numpy as np
 import pytest
 from scipy.special import exprel as scipy_exprel
 
-import saiunit as u
 from saiunit.math._exprel import (
     exprel,
     set_exprel_order,
@@ -180,6 +179,7 @@ class TestExprelGradients:
 
     def test_grad_function(self):
         """Test that jax.grad works correctly."""
+
         def loss_fn(x):
             return jnp.sum(exprel(x))
 
@@ -317,6 +317,7 @@ class TestExprelNumericalStability:
 
     def test_gradient_stability_at_zero(self):
         """Test that gradient at x=0 is stable and equals 0.5."""
+
         def f(x):
             return jnp.sum(exprel(x))
 
@@ -329,6 +330,7 @@ class TestExprelNumericalStability:
 
     def test_gradient_stability_near_zero(self):
         """Test gradient stability for values near zero."""
+
         def f(x):
             return jnp.sum(exprel(x))
 
@@ -371,6 +373,7 @@ class TestExprelSecondOrder:
 
     def test_hessian_at_zero(self):
         """Test Hessian at x=0."""
+
         def f(x):
             return jnp.sum(exprel(x))
 
@@ -382,6 +385,7 @@ class TestExprelSecondOrder:
 
     def test_hessian_near_zero(self):
         """Test Hessian for values near zero."""
+
         def f(x):
             return jnp.sum(exprel(x))
 
@@ -393,6 +397,7 @@ class TestExprelSecondOrder:
 
     def test_hessian_regular_values(self):
         """Test Hessian for regular values."""
+
         def f(x):
             return jnp.sum(exprel(x))
 
@@ -417,6 +422,7 @@ class TestExprelBatching:
 
     def test_vmap_with_gradients(self):
         """Test vmap with gradients."""
+
         def f(x):
             return jnp.sum(exprel(x))
 
@@ -498,7 +504,7 @@ class TestExprelTaylorOrder:
         # Test exprel coefficients for order 5
         coeffs = _exprel_coefficients(5)
         # Should be [1/6!, 1/5!, 1/4!, 1/3!, 1/2!, 1/1!] = [1/720, 1/120, 1/24, 1/6, 1/2, 1]
-        expected = [1/720, 1/120, 1/24, 1/6, 1/2, 1.0]
+        expected = [1 / 720, 1 / 120, 1 / 24, 1 / 6, 1 / 2, 1.0]
         assert jnp.allclose(jnp.array(coeffs), jnp.array(expected)), \
             f"Coefficient mismatch: {coeffs} vs {expected}"
 
@@ -510,7 +516,7 @@ class TestExprelTaylorOrder:
         # = [6/7!, 5/6!, 4/5!, 3/4!, 2/3!, 1/2!]
         # = [6/5040, 5/720, 4/120, 3/24, 2/6, 1/2]
         # = [1/840, 1/144, 1/30, 1/8, 1/3, 1/2]
-        expected = [1/840, 1/144, 1/30, 1/8, 1/3, 1/2]
+        expected = [1 / 840, 1 / 144, 1 / 30, 1 / 8, 1 / 3, 1 / 2]
         assert jnp.allclose(jnp.array(coeffs), jnp.array(expected)), \
             f"Derivative coefficient mismatch: {coeffs} vs {expected}"
 
@@ -546,6 +552,7 @@ class TestExprelTaylorOrder:
 
     def test_order_parameter_with_grad(self):
         """Test that order parameter works with gradients."""
+
         def loss_order2(x):
             return jnp.sum(exprel(x, order=2))
 
@@ -618,6 +625,7 @@ class TestExprelJIT:
 
     def test_jit_with_grad(self):
         """Test JIT with gradients."""
+
         def f(x):
             return jnp.sum(exprel(x))
 
@@ -643,6 +651,47 @@ class TestExprelJIT:
 
         assert jnp.allclose(result1, result2)
         assert jnp.allclose(result2, result3)
+
+
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+class TestExprelDocstringExamples:
+    """Tests that verify the examples shown in upgraded docstrings."""
+
+    def test_exprel_basic_example(self):
+        """Verify exprel docstring example."""
+        result = exprel(jnp.array([0.0, 1.0, -1.0]))
+        np.testing.assert_allclose(
+            result,
+            jnp.array([1.0, 1.7182819, 0.63212055]),
+            rtol=1e-5,
+        )
+
+    def test_exprel_at_zero_returns_one(self):
+        """Verify exprel(0) = 1 as stated in the docstring."""
+        result = exprel(jnp.array([0.0]))
+        np.testing.assert_allclose(result, jnp.array([1.0]), atol=1e-7)
+
+    def test_set_exprel_order_example(self):
+        """Verify set_exprel_order / get_exprel_order docstring example."""
+        original = get_exprel_order()
+        try:
+            set_exprel_order(10)
+            assert get_exprel_order() == 10
+        finally:
+            set_exprel_order(original)
+
+    def test_exprel_order_parameter(self):
+        """Verify exprel with different order values."""
+        x = jnp.array([0.0, 1e-6, 1.0])
+        r2 = exprel(x, order=2)
+        r5 = exprel(x, order=5)
+        # Both should be close to each other and finite
+        assert not jnp.any(jnp.isnan(r2))
+        assert not jnp.any(jnp.isnan(r5))
+        np.testing.assert_allclose(r2, r5, rtol=1e-4)
 
 
 # Run all tests if executed directly

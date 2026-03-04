@@ -22,7 +22,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from saiunit._base import Unit, Quantity, get_unit, is_unitless
+from saiunit._base_unit import Unit
+from saiunit._base_getters import get_unit, is_unitless
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 T = TypeVar("T")
@@ -75,7 +77,6 @@ __all__ = [
     'bartlett', 'blackman', 'hamming', 'hanning', 'kaiser',
 ]
 
-
 bool_ = jnp.bool_
 uint2 = jnp.uint2
 uint4 = jnp.uint4
@@ -121,18 +122,27 @@ newaxis = jnp.newaxis
 
 
 def is_quantity(x: Any) -> bool:
-    """
-    Check if x is a Quantity.
+    """Check whether *x* is a ``Quantity`` instance.
 
     Parameters
     ----------
     x : Any
-        The input object.
+        The object to test.
 
     Returns
     -------
-    bool
-        A boolean value indicating if x is a Quantity.
+    out : bool
+        ``True`` if *x* is a ``Quantity``, ``False`` otherwise.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su.math.is_quantity(su.Quantity(1.0, unit=su.meter))
+        True
+        >>> su.math.is_quantity(1.0)
+        False
     """
     x = maybe_custom_array(x)
     return isinstance(x, Quantity)
@@ -140,29 +150,56 @@ def is_quantity(x: Any) -> bool:
 
 @set_module_as('saiunit.math')
 def issubdtype(a: T, b: T) -> bool:
-    """
-    Returns True if first argument is a typecode lower/equal in type hierarchy.
+    """Check if a dtype is a sub-dtype of another in the type hierarchy.
 
-    Args:
-      a: dtype
-      b: dtype
+    Parameters
+    ----------
+    a : dtype
+        First dtype to check.
+    b : dtype
+        Second dtype (abstract type class or concrete dtype).
 
-    Returns:
-      bool
+    Returns
+    -------
+    out : bool
+        ``True`` if *a* is lower or equal in the type hierarchy to *b*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.issubdtype(jnp.float32, jnp.floating)
+        True
+        >>> sumath.issubdtype(jnp.int32, jnp.floating)
+        False
     """
     return jnp.issubdtype(a, b)
 
 
 @set_module_as('saiunit.math')
 def result_type(*args):
-    """
-    Determine the result data type.
+    """Determine the result dtype from a set of input arrays or dtypes.
 
-    Args:
-      *args: array_like
+    Parameters
+    ----------
+    *args : array_like or dtype
+        Input arrays or dtypes.
 
-    Returns:
-      dtype: dtype
+    Returns
+    -------
+    out : dtype
+        The result dtype that would arise from operating on the inputs.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.result_type(jnp.float32, jnp.int32)
+        dtype('float32')
     """
     args = maybe_custom_array_tree(args)
     return jnp.result_type(*jax.tree.leaves(args))
@@ -170,14 +207,29 @@ def result_type(*args):
 
 @set_module_as('saiunit.math')
 def ndim(a: Union[Quantity, jax.typing.ArrayLike]) -> int:
-    """
-    Return the number of dimensions of an array.
+    """Return the number of dimensions of an array or ``Quantity``.
 
-    Args:
-      a: array_like, Quantity
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input array.
 
-    Returns:
-      Union[jax.Array, Quantity]: int
+    Returns
+    -------
+    out : int
+        Number of dimensions.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.ndim(jnp.zeros((2, 3)))
+        2
+        >>> import saiunit as su
+        >>> sumath.ndim(su.Quantity(jnp.zeros((2, 3, 4)), unit=su.meter))
+        3
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -188,14 +240,26 @@ def ndim(a: Union[Quantity, jax.typing.ArrayLike]) -> int:
 
 @set_module_as('saiunit.math')
 def isreal(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
-    """
-    Return True if the input array is real.
+    """Test element-wise whether each element is real (has zero imaginary part).
 
-    Args:
-      a: array_like, Quantity
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input array.
 
-    Returns:
-      Union[jax.Array, Quantity]: boolean array
+    Returns
+    -------
+    out : jax.Array
+        Boolean array of the same shape as *a*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.isreal(jnp.array([1.0, 2.0 + 0j, 3.0 + 1j]))
+        Array([ True,  True, False], dtype=bool)
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -206,14 +270,28 @@ def isreal(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
 
 @set_module_as('saiunit.math')
 def isscalar(a: Union[Quantity, jax.typing.ArrayLike]) -> bool:
-    """
-    Return True if the input is a scalar.
+    """Return ``True`` if the input is a scalar (zero-dimensional).
 
-    Args:
-      a: array_like, Quantity
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input value.
 
-    Returns:
-      Union[jax.Array, Quantity]: boolean array
+    Returns
+    -------
+    out : bool
+        ``True`` if *a* is a scalar.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit.math as sumath
+        >>> sumath.isscalar(3.14)
+        True
+        >>> import jax.numpy as jnp
+        >>> sumath.isscalar(jnp.array([1, 2]))
+        False
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -224,14 +302,26 @@ def isscalar(a: Union[Quantity, jax.typing.ArrayLike]) -> bool:
 
 @set_module_as('saiunit.math')
 def isfinite(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
-    """
-    Return each element of the array is finite or not.
+    """Test element-wise for finiteness (not inf and not NaN).
 
-    Args:
-      a: array_like, Quantity
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input array.
 
-    Returns:
-      Union[jax.Array, Quantity]: boolean array
+    Returns
+    -------
+    out : jax.Array
+        Boolean array of the same shape as *a*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.isfinite(jnp.array([1.0, jnp.inf, jnp.nan]))
+        Array([ True, False, False], dtype=bool)
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -242,14 +332,26 @@ def isfinite(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
 
 @set_module_as('saiunit.math')
 def isinf(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
-    """
-    Return each element of the array is infinite or not.
+    """Test element-wise for positive or negative infinity.
 
-    Args:
-      a: array_like, Quantity
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input array.
 
-    Returns:
-      Union[jax.Array, Quantity]: boolean array
+    Returns
+    -------
+    out : jax.Array
+        Boolean array of the same shape as *a*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.isinf(jnp.array([1.0, jnp.inf, -jnp.inf]))
+        Array([False,  True,  True], dtype=bool)
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -260,14 +362,26 @@ def isinf(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
 
 @set_module_as('saiunit.math')
 def isnan(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
-    """
-    Return each element of the array is NaN or not.
+    """Test element-wise for NaN.
 
-    Args:
-      a: array_like, Quantity
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input array.
 
-    Returns:
-      Union[jax.Array, Quantity]: boolean array
+    Returns
+    -------
+    out : jax.Array
+        Boolean array of the same shape as *a*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.isnan(jnp.array([1.0, jnp.nan, 3.0]))
+        Array([False,  True, False], dtype=bool)
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -381,18 +495,25 @@ def iinfo(a: Union[Quantity, jax.typing.ArrayLike]) -> jnp.iinfo:
 
 @set_module_as('saiunit.math')
 def broadcast_shapes(*shapes):
-    """
-    Broadcast a sequence of array shapes.
+    """Broadcast a sequence of array shapes.
 
     Parameters
     ----------
-    *shapes : tuple of ints
+    *shapes : tuple of int
         The shapes of the arrays to broadcast.
 
     Returns
     -------
-    broadcast_shape : tuple of ints
-        The shape of the broadcasted arrays.
+    broadcast_shape : tuple of int
+        The broadcasted shape.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit.math as sumath
+        >>> sumath.broadcast_shapes((2, 1), (1, 3))
+        (2, 3)
     """
     return jnp.broadcast_shapes(*shapes)
 
@@ -402,8 +523,26 @@ environ = None  # type: ignore[assignment]
 
 @set_module_as('brainstate.math')
 def get_dtype(a):
-    """
-    Get the dtype of a.
+    """Get the dtype of an array, ``Quantity``, or Python scalar.
+
+    Parameters
+    ----------
+    a : array_like, Quantity, or scalar
+        The input whose dtype is to be determined.
+
+    Returns
+    -------
+    out : dtype
+        The data type of *a*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.get_dtype(jnp.array([1.0, 2.0]))
+        dtype('float32')
     """
     a = maybe_custom_array(a)
     if hasattr(a, 'dtype'):
@@ -430,14 +569,28 @@ def get_dtype(a):
 
 @set_module_as('brainstate.math')
 def is_float(array):
-    """
-    Check if the array is a floating point array.
+    """Check if the array has a floating-point dtype.
 
-    Args:
-      array: The input array.
+    Parameters
+    ----------
+    array : array_like or Quantity
+        The input array.
 
-    Returns:
-      A boolean value indicating if the array is a floating point array.
+    Returns
+    -------
+    out : bool
+        ``True`` if the array dtype is a floating-point type.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.is_float(jnp.array([1.0]))
+        True
+        >>> sumath.is_float(jnp.array([1]))
+        False
     """
     array = maybe_custom_array(array)
     return jnp.issubdtype(get_dtype(array), jnp.floating)
@@ -445,14 +598,28 @@ def is_float(array):
 
 @set_module_as('brainstate.math')
 def is_int(array):
-    """
-    Check if the array is an integer array.
+    """Check if the array has an integer dtype.
 
-    Args:
-      array: The input array.
+    Parameters
+    ----------
+    array : array_like or Quantity
+        The input array.
 
-    Returns:
-      A boolean value indicating if the array is an integer array.
+    Returns
+    -------
+    out : bool
+        ``True`` if the array dtype is an integer type.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.is_int(jnp.array([1]))
+        True
+        >>> sumath.is_int(jnp.array([1.0]))
+        False
     """
     array = maybe_custom_array(array)
     return jnp.issubdtype(get_dtype(array), jnp.integer)
@@ -508,6 +675,16 @@ def gradient(
       A list of ndarrays (or a single ndarray if there is only one dimension)
       corresponding to the derivatives of f with respect to each dimension.
       Each derivative has the same shape as f.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> f = jnp.array([1., 2., 4., 7., 11.])
+        >>> sumath.gradient(f)
+        Array([1. , 1.5, 2.5, 3.5, 4. ], dtype=float32)
     """
     f, varargs = maybe_custom_array_tree((f, varargs))
     if edge_order is not None:

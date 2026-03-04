@@ -20,12 +20,13 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.math as um
 from saiunit import second, meter, ms
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(u.CustomArray):
     def __init__(self, value):
         self.data = value
+
 
 fun_keep_unit_squence_inputs = [
     'row_stack', 'concatenate', 'stack', 'vstack', 'hstack', 'dstack', 'column_stack', 'block', 'append',
@@ -157,16 +158,16 @@ class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
     def test_fun_keep_unit_array_manipulation_with_array(self):
         data = jnp.array([1.0, 2.0, 3.0, 4.0]) * meter
         test_array = Array(data)
-        
+
         assert isinstance(test_array, u.CustomArray)
         assert hasattr(test_array, 'data')
         assert_quantity(test_array.data, jnp.array([1.0, 2.0, 3.0, 4.0]), unit=meter)
-        
+
         reshape_result = um.reshape(test_array.data, (2, 2))
         reshape_array = Array(reshape_result)
         assert isinstance(reshape_array, u.CustomArray)
         assert_quantity(reshape_array.data, jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=meter)
-        
+
         flip_result = um.flip(test_array.data)
         flip_array = Array(flip_result)
         assert isinstance(flip_array, u.CustomArray)
@@ -175,18 +176,18 @@ class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
     def test_fun_keep_unit_sequence_operations_with_array(self):
         data1 = jnp.array([1.0, 2.0, 3.0]) * second
         data2 = jnp.array([4.0, 5.0, 6.0]) * second
-        
+
         array1 = Array(data1)
         array2 = Array(data2)
-        
+
         assert isinstance(array1, u.CustomArray)
         assert isinstance(array2, u.CustomArray)
-        
+
         vstack_result = um.vstack((array1.data, array2.data))
         vstack_array = Array(vstack_result)
         assert isinstance(vstack_array, u.CustomArray)
         assert_quantity(vstack_array.data, jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), unit=second)
-        
+
         hstack_result = um.hstack((array1.data, array2.data))
         hstack_array = Array(hstack_result)
         assert isinstance(hstack_array, u.CustomArray)
@@ -195,14 +196,14 @@ class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
     def test_fun_keep_unit_selection_with_array(self):
         data = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]) * meter
         test_array = Array(data)
-        
+
         assert isinstance(test_array, u.CustomArray)
-        
+
         where_result = um.where(test_array.data > 3.0 * meter, test_array.data, 0.0 * meter)
         where_array = Array(where_result)
         assert isinstance(where_array, u.CustomArray)
         assert_quantity(where_array.data, jnp.array([0.0, 0.0, 0.0, 4.0, 5.0]), unit=meter)
-        
+
         sort_result = um.sort(test_array.data)
         sort_array = Array(sort_result)
         assert isinstance(sort_array, u.CustomArray)
@@ -211,24 +212,24 @@ class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
     def test_fun_keep_unit_statistical_operations_with_array(self):
         data = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]) * second
         test_array = Array(data)
-        
+
         assert isinstance(test_array, u.CustomArray)
-        
+
         sum_result = um.sum(test_array.data)
         sum_array = Array(sum_result)
         assert isinstance(sum_array, u.CustomArray)
         assert_quantity(sum_array.data, 15.0, unit=second)
-        
+
         mean_result = um.mean(test_array.data)
         mean_array = Array(mean_result)
         assert isinstance(mean_array, u.CustomArray)
         assert_quantity(mean_array.data, 3.0, unit=second)
-        
+
         max_result = um.max(test_array.data)
         max_array = Array(max_result)
         assert isinstance(max_array, u.CustomArray)
         assert_quantity(max_array.data, 5.0, unit=second)
-        
+
         min_result = um.min(test_array.data)
         min_array = Array(min_result)
         assert isinstance(min_array, u.CustomArray)
@@ -237,14 +238,14 @@ class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
     def test_fun_keep_unit_percentile_quantile_with_array(self):
         data = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0]) * meter
         test_array = Array(data)
-        
+
         assert isinstance(test_array, u.CustomArray)
-        
+
         percentile_result = um.percentile(test_array.data, 50)
         percentile_array = Array(percentile_result)
         assert isinstance(percentile_array, u.CustomArray)
         assert_quantity(percentile_array.data, 3.0, unit=meter)
-        
+
         quantile_result = um.quantile(test_array.data, 0.5)
         quantile_array = Array(quantile_result)
         assert isinstance(quantile_array, u.CustomArray)
@@ -253,14 +254,14 @@ class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
     def test_fun_keep_unit_broadcasting_with_array(self):
         data = jnp.array([1.0, 2.0, 3.0]) * second
         test_array = Array(data)
-        
+
         assert isinstance(test_array, u.CustomArray)
-        
+
         atleast_2d_result = um.atleast_2d(test_array.data)
         atleast_2d_array = Array(atleast_2d_result)
         assert isinstance(atleast_2d_array, u.CustomArray)
         assert_quantity(atleast_2d_array.data, jnp.array([[1.0, 2.0, 3.0]]), unit=second)
-        
+
         expand_dims_result = um.expand_dims(test_array.data, axis=0)
         expand_dims_array = Array(expand_dims_result)
         assert isinstance(expand_dims_array, u.CustomArray)
@@ -269,19 +270,19 @@ class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
     def test_fun_keep_unit_rounding_functions_with_array(self):
         data = jnp.array([1.2, 2.7, 3.1, 4.9]) * meter
         test_array = Array(data)
-        
+
         assert isinstance(test_array, u.CustomArray)
-        
+
         round_result = um.round(test_array.data)
         round_array = Array(round_result)
         assert isinstance(round_array, u.CustomArray)
         assert_quantity(round_array.data, jnp.array([1.0, 3.0, 3.0, 5.0]), unit=meter)
-        
+
         floor_result = um.floor(test_array.data)
         floor_array = Array(floor_result)
         assert isinstance(floor_array, u.CustomArray)
         assert_quantity(floor_array.data, jnp.array([1.0, 2.0, 3.0, 4.0]), unit=meter)
-        
+
         ceil_result = um.ceil(test_array.data)
         ceil_array = Array(ceil_result)
         assert isinstance(ceil_array, u.CustomArray)
@@ -291,24 +292,24 @@ class TestFunKeepUnitWithArrayCustomArray(parameterized.TestCase):
         real_data = jnp.array([1.0, 2.0, 3.0]) * second
         imag_data = jnp.array([4.0, 5.0, 6.0]) * second
         complex_data = real_data + 1j * imag_data
-        
+
         test_array = Array(complex_data)
         assert isinstance(test_array, u.CustomArray)
-        
+
         real_result = um.real(test_array.data)
         real_array = Array(real_result)
         assert isinstance(real_array, u.CustomArray)
         assert_quantity(real_array.data, jnp.array([1.0, 2.0, 3.0]), unit=second)
-        
+
         imag_result = um.imag(test_array.data)
         imag_array = Array(imag_result)
         assert isinstance(imag_array, u.CustomArray)
         assert_quantity(imag_array.data, jnp.array([4.0, 5.0, 6.0]), unit=second)
-        
+
         abs_result = um.abs(test_array.data)
         abs_array = Array(abs_result)
         assert isinstance(abs_array, u.CustomArray)
-        expected_abs = jnp.sqrt(jnp.array([1.0, 2.0, 3.0])**2 + jnp.array([4.0, 5.0, 6.0])**2)
+        expected_abs = jnp.sqrt(jnp.array([1.0, 2.0, 3.0]) ** 2 + jnp.array([4.0, 5.0, 6.0]) ** 2)
         assert_quantity(abs_array.data, expected_abs, unit=second)
 
 
@@ -1088,3 +1089,154 @@ class TestGather:
         result3 = u.math.gather(input_tensor * u.mV, 0, jnp.array([[1, 0], [0, 1]]))
         print("Test 3 (dim=0):")
         print("Result:", result3)
+
+
+# ---------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------
+
+
+class TestDocstringExamples:
+    """Tests mirroring the examples shown in the docstrings."""
+
+    # -- concatenate --
+    def test_concatenate_with_quantity(self):
+        a = [1, 2] * u.second
+        b = [3, 4] * u.second
+        result = u.math.concatenate([a, b])
+        assert isinstance(result, u.Quantity)
+        assert result.unit == u.second
+        expected = jnp.concatenate([jnp.array([1, 2]), jnp.array([3, 4])])
+        assert_quantity(result, expected, u.second)
+
+    def test_concatenate_plain_array(self):
+        result = u.math.concatenate([jnp.array([1, 2]), jnp.array([3, 4])])
+        expected = jnp.concatenate([jnp.array([1, 2]), jnp.array([3, 4])])
+        assert jnp.array_equal(result, expected)
+
+    # -- stack --
+    def test_stack_with_quantity(self):
+        a = [1, 2, 3] * u.second
+        b = [4, 5, 6] * u.second
+        result = u.math.stack([a, b])
+        assert isinstance(result, u.Quantity)
+        expected = jnp.stack([jnp.array([1, 2, 3]), jnp.array([4, 5, 6])])
+        assert_quantity(result, expected, u.second)
+
+    def test_stack_plain_array(self):
+        result = u.math.stack([jnp.array([1, 2, 3]), jnp.array([4, 5, 6])])
+        expected = jnp.stack([jnp.array([1, 2, 3]), jnp.array([4, 5, 6])])
+        assert jnp.array_equal(result, expected)
+
+    # -- reshape --
+    def test_reshape_with_quantity(self):
+        a = [1, 2, 3, 4] * u.second
+        result = u.math.reshape(a, (2, 2))
+        assert isinstance(result, u.Quantity)
+        assert result.shape == (2, 2)
+        expected = jnp.reshape(jnp.array([1, 2, 3, 4]), (2, 2))
+        assert_quantity(result, expected, u.second)
+
+    def test_reshape_plain_array(self):
+        result = u.math.reshape(jnp.array([1, 2, 3, 4]), (2, 2))
+        expected = jnp.reshape(jnp.array([1, 2, 3, 4]), (2, 2))
+        assert jnp.array_equal(result, expected)
+
+    # -- sum --
+    def test_sum_with_quantity(self):
+        a = [1.0, 2.0, 3.0] * u.second
+        result = u.math.sum(a)
+        assert isinstance(result, u.Quantity)
+        assert_quantity(result, 6.0, u.second)
+
+    def test_sum_with_axis(self):
+        a = [[1.0, 2.0], [3.0, 4.0]] * u.meter
+        result = u.math.sum(a, axis=0)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([4.0, 6.0])
+        assert_quantity(result, expected, u.meter)
+
+    def test_sum_plain_array(self):
+        result = u.math.sum(jnp.array([1.0, 2.0, 3.0]))
+        expected = jnp.sum(jnp.array([1.0, 2.0, 3.0]))
+        assert jnp.array_equal(result, expected)
+
+    # -- mean --
+    def test_mean_with_quantity(self):
+        a = [1.0, 2.0, 3.0] * u.second
+        result = u.math.mean(a)
+        assert isinstance(result, u.Quantity)
+        assert_quantity(result, 2.0, u.second)
+
+    def test_mean_plain_array(self):
+        result = u.math.mean(jnp.array([1.0, 2.0, 3.0]))
+        expected = jnp.mean(jnp.array([1.0, 2.0, 3.0]))
+        assert jnp.array_equal(result, expected)
+
+    # -- abs --
+    def test_abs_with_quantity(self):
+        a = [-1, -2, 3] * u.meter
+        result = u.math.abs(a)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([1, 2, 3])
+        assert_quantity(result, expected, u.meter)
+
+    def test_abs_plain_array(self):
+        result = u.math.abs(jnp.array([-1, -2, 3]))
+        expected = jnp.abs(jnp.array([-1, -2, 3]))
+        assert jnp.array_equal(result, expected)
+
+    # -- add --
+    def test_add_with_quantity(self):
+        a = [1, 2, 3] * u.meter
+        b = [4, 5, 6] * u.meter
+        result = u.math.add(a, b)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([5, 7, 9])
+        assert_quantity(result, expected, u.meter)
+
+    def test_add_plain_array(self):
+        result = u.math.add(jnp.array([1, 2, 3]), jnp.array([4, 5, 6]))
+        expected = jnp.add(jnp.array([1, 2, 3]), jnp.array([4, 5, 6]))
+        assert jnp.array_equal(result, expected)
+
+    def test_add_mismatched_raises(self):
+        a = [1, 2, 3] * u.meter
+        b = jnp.array([4, 5, 6])
+        with pytest.raises(TypeError):
+            u.math.add(a, b)
+
+    # -- maximum --
+    def test_maximum_with_quantity(self):
+        a = [1, 3, 5] * u.second
+        b = [2, 2, 4] * u.second
+        result = u.math.maximum(a, b)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([2, 3, 5])
+        assert_quantity(result, expected, u.second)
+
+    def test_maximum_plain_array(self):
+        result = u.math.maximum(jnp.array([1, 3, 5]), jnp.array([2, 2, 4]))
+        expected = jnp.maximum(jnp.array([1, 3, 5]), jnp.array([2, 2, 4]))
+        assert jnp.array_equal(result, expected)
+
+    # -- where --
+    def test_where_with_quantity(self):
+        a = [1, 2, 3, 4, 5] * u.meter
+        result = u.math.where(a > 3 * u.meter, a, 0 * u.meter)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([0, 0, 0, 4, 5])
+        assert_quantity(result, expected, u.meter)
+
+    def test_where_plain_array(self):
+        a = jnp.array([1, 2, 3, 4, 5])
+        result = u.math.where(a > 3, a, 0)
+        expected = jnp.where(a > 3, a, 0)
+        assert jnp.array_equal(result, expected)
+
+    def test_where_condition_only(self):
+        a = jnp.array([True, False, True])
+        result = u.math.where(a)
+        expected = jnp.where(a)
+        for r, e in zip(result, expected):
+            assert jnp.array_equal(r, e)

@@ -269,5 +269,52 @@ def test_array_custom_array_compatibility_with_value_and_grad():
     assert u.math.allclose(grad_array.data, direct_grad)
 
 
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+def test_docstring_example_value_and_grad():
+    """Verify the value_and_grad docstring example produces correct results."""
+    def f(x):
+        return x ** 2
+
+    vg = u.autograd.value_and_grad(f)
+    value, grad = vg(jnp.array(3.0) * u.ms)
+    assert u.math.allclose(value, 9.0 * u.ms ** 2)
+    assert u.math.allclose(grad, 6.0 * u.ms)
+
+
+def test_docstring_example_value_and_grad_multi_arg():
+    """Verify the value_and_grad multi-argument docstring example."""
+    def g(x, y):
+        return x * y
+
+    vg = u.autograd.value_and_grad(g, argnums=(0, 1))
+    val, grads = vg(jnp.array(3.0) * u.ms, jnp.array(4.0) * u.mV)
+    assert u.math.allclose(grads[0], 4.0 * u.mV)
+    assert u.math.allclose(grads[1], 3.0 * u.ms)
+
+
+def test_docstring_example_grad():
+    """Verify the grad docstring example produces correct results."""
+    def f(x):
+        return x ** 2
+
+    grad_fn = u.autograd.grad(f)
+    result = grad_fn(jnp.array(3.0) * u.ms)
+    assert u.math.allclose(result, 6.0 * u.ms)
+
+
+def test_docstring_example_grad_with_aux():
+    """Verify the grad has_aux docstring example."""
+    def f_aux(x):
+        return x ** 2, x * 3
+
+    grad_fn = u.autograd.grad(f_aux, has_aux=True)
+    g, aux = grad_fn(jnp.array(3.0) * u.mV)
+    assert u.math.allclose(g, 6.0 * u.mV)
+    assert u.math.allclose(aux, 9.0 * u.mV)
+
+
 if __name__ == "__main__":
     pytest.main()

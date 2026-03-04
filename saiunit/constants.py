@@ -14,17 +14,76 @@
 # ==============================================================================
 
 r"""
-A module providing some physical constants as `Quantity` objects. Note that these
-constants are not imported by wildcard imports, they
-have to be imported explicitly. You can use ``import ... as ...`` to import them
-with shorter names, e.g.::
+Physical constants as :class:`~saiunit.Quantity` objects.
+
+This module provides approximately 90 named physical constants expressed as
+:class:`~saiunit.Quantity` values with appropriate SI-based units.  The
+constants are **not** imported by wildcard imports (``from saiunit import *``);
+they must be imported explicitly.  Short aliases are encouraged::
 
     from saiunit.constants import faraday as F
 
-The available constants are:
+Categories
+----------
+The constants are organised into the following groups:
+
+**Fundamental constants**
+    ``avogadro``, ``boltzmann``, ``electric``, ``electron_mass``,
+    ``elementary_charge``, ``faraday``, ``gas``, ``magnetic``,
+    ``molar_mass``, ``zero_celsius``
+
+**Mass**
+    ``metric_ton``, ``grain``, ``lb`` / ``pound``, ``slinch`` / ``blob``,
+    ``slug``, ``oz`` / ``ounce``, ``stone``, ``long_ton``, ``short_ton``,
+    ``troy_ounce``, ``troy_pound``, ``carat``, ``atomic_mass``
+
+**Angle**
+    ``degree``, ``arcmin`` / ``arcminute``, ``arcsec`` / ``arcsecond``
+
+**Time**
+    ``minute``, ``hour``, ``day``, ``week``, ``month``, ``year``,
+    ``julian_year``
+
+**Length**
+    ``inch``, ``foot``, ``yard``, ``mile``, ``mil``, ``point``, ``pica``,
+    ``survey_foot``, ``survey_mile``, ``nautical_mile``, ``fermi``,
+    ``angstrom``, ``micron``, ``au`` / ``astronomical_unit``,
+    ``light_year``, ``parsec``
+
+**Pressure**
+    ``atm`` / ``atmosphere``, ``bar``, ``mmHg`` / ``torr``, ``psi``
+
+**Area**
+    ``hectare``, ``acre``
+
+**Volume**
+    ``gallon`` / ``gallon_US``, ``gallon_imp``,
+    ``fluid_ounce`` / ``fluid_ounce_US``, ``fluid_ounce_imp``,
+    ``bbl`` / ``barrel``
+
+**Temperature**
+    ``degree_Fahrenheit`` (size of one Fahrenheit degree in kelvin)
+
+**Speed**
+    ``kmh``, ``mph``, ``knot``, ``mach``
+
+**Energy**
+    ``eV`` / ``electronvolt``, ``calorie`` / ``calorie_th``,
+    ``calorie_IT``, ``erg``, ``Btu`` / ``Btu_IT``, ``Btu_th``,
+    ``ton_TNT``
+
+**Power**
+    ``hp`` / ``horsepower``
+
+**Force**
+    ``dyn`` / ``dyne``, ``lbf`` / ``pound_force``,
+    ``kgf`` / ``kilogram_force``, ``IMF``
+
+Fundamental Constants Table
+---------------------------
 
 ==================== ================== ======================= ==================================================================
-Constant             Symbol(s)          name                    Value
+Constant             Symbol(s)          Name                    Value
 ==================== ================== ======================= ==================================================================
 Avogadro constant    :math:`N_A, L`     ``avogadro``            :math:`6.022140857\times 10^{23}\,\mathrm{mol}^{-1}`
 Boltzmann constant   :math:`k`          ``boltzmann``           :math:`1.38064852\times 10^{-23}\,\mathrm{J}\,\mathrm{K}^{-1}`
@@ -35,8 +94,34 @@ Faraday constant     :math:`F`          ``faraday``             :math:`96485.332
 Gas constant         :math:`R`          ``gas``                 :math:`8.3144598\,\mathrm{J}\,\mathrm{mol}^{-1}\,\mathrm{K}^{-1}`
 Magnetic constant    :math:`\mu_0`      ``magnetic``            :math:`12.566370614\times 10^{-7}\,\mathrm{N}\,\mathrm{A}^{-2}`
 Molar mass constant  :math:`M_u`        ``molar_mass``          :math:`1\times 10^{-3}\,\mathrm{kg}\,\mathrm{mol}^{-1}`
-0°C                                     ``zero_celsius``        :math:`273.15\,\mathrm{K}`
+0 deg C                                 ``zero_celsius``        :math:`273.15\,\mathrm{K}`
 ==================== ================== ======================= ==================================================================
+
+Examples
+--------
+Import individual constants:
+
+.. code-block:: python
+
+    import saiunit.constants as constants
+
+    # Fundamental constants carry their units
+    >>> constants.avogadro
+    Quantity(6.02214086e+23, unit=1 / mol)
+
+    # Check the dimension of a constant
+    >>> constants.electron_mass.dim == saiunit.kilogram.dim
+    True
+
+    # Use constants in calculations
+    >>> energy = constants.boltzmann * constants.zero_celsius
+    >>> energy.dim == saiunit.joule.dim
+    True
+
+See Also
+--------
+saiunit._unit_constants : Unit-only versions of the same constants (without
+    numeric prefactors baked into the mantissa).
 """
 
 import numpy as np
@@ -75,6 +160,7 @@ __all__ = [
     'watt', 'yard', 'year', 'zero_celsius'
 ]
 
+# ----- Fundamental Constants -----
 #: Avogadro constant (http://physics.nist.gov/cgi-bin/cuu/Value?na)
 avogadro = np.asarray(6.022140857e23) / mole
 #: Boltzmann constant (physics.nist.gov/cgi-bin/cuu/Value?k)

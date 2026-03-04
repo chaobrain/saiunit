@@ -20,7 +20,7 @@ from absl.testing import parameterized
 
 import saiunit.lax as bulax
 from saiunit import meter, second
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 lax_array_creation_given_array = [
     'zeros_like_array',
@@ -76,3 +76,26 @@ class TestLaxArrayCreation(parameterized.TestCase):
         result = bulax_fun(float, shape, dimension, unit=unit)
         expected = lax_fun(float, shape, dimension)
         assert_quantity(result, expected, unit=unit)
+
+
+class TestLaxArrayCreationDocstringExamples:
+    """Tests verifying the docstring examples for array-creation lax functions."""
+
+    def test_zeros_like_array_with_unit(self):
+        """Docstring example: zeros_like_array preserves unit."""
+        q = jnp.array([3.0, 5.0]) * meter
+        result = bulax.zeros_like_array(q)
+        expected = jnp.array([0.0, 0.0])
+        assert_quantity(result, expected, unit=meter)
+
+    def test_iota_with_unit(self):
+        """Docstring example: iota with unit."""
+        result = bulax.iota(float, 5, unit=second)
+        expected = jnp.array([0., 1., 2., 3., 4.])
+        assert_quantity(result, expected, unit=second)
+
+    def test_broadcasted_iota_with_unit(self):
+        """Docstring example: broadcasted_iota with unit."""
+        result = bulax.broadcasted_iota(float, (2, 3), 1, unit=meter)
+        expected = lax.broadcasted_iota(float, (2, 3), 1)
+        assert_quantity(result, expected, unit=meter)

@@ -19,9 +19,10 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
-from ._exprel import exprel as _exprel_impl, set_exprel_order
-from saiunit._base import Quantity, Unit
+from saiunit._base_unit import Unit
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
+from ._exprel import exprel as _exprel_impl, set_exprel_order
 
 __all__ = [
     # math funcs only accept unitless (unary)
@@ -144,19 +145,32 @@ def exp(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Calculate the exponential of all elements in the input quantity or array.
+    Calculate the exponential of all elements in the input.
+
+    If ``x`` is a Quantity with physical units, ``unit_to_scale`` must be
+    provided to convert ``x`` to a dimensionless value first.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input array or Quantity.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number before
+        applying the exponential.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise exponential.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.exp(jnp.array([0.0, 1.0]))
+        Array([1.       , 2.7182817], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.exp, x, unit_to_scale=unit_to_scale)
 
@@ -167,19 +181,28 @@ def exp2(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Calculate ``2**p`` for all p in the input quantity or array.
+    Calculate ``2**x`` element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input array or Quantity.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise ``2**x``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.exp2(jnp.array([0.0, 1.0, 2.0]))
+        Array([1., 2., 4.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.exp2, x, unit_to_scale=unit_to_scale)
 
@@ -190,21 +213,28 @@ def expm1(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Calculate the exponential of the input elements minus 1.
-
-    Calculate ``exp(x) - 1`` for all elements in the array.
+    Calculate ``exp(x) - 1`` element-wise with improved precision near zero.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input array or Quantity.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise ``exp(x) - 1``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.expm1(jnp.array([0.0, 1e-10]))
+        Array([0.e+00, 1.e-10], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.expm1, x, unit_to_scale=unit_to_scale)
 
@@ -219,15 +249,24 @@ def log(
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input array or Quantity. Must be positive.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise natural logarithm.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.log(jnp.array([1.0, jnp.e, jnp.e**2]))
+        Array([0., 1., 2.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.log, x, unit_to_scale=unit_to_scale)
 
@@ -238,19 +277,28 @@ def log10(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Base-10 logarithm of the input elements.
+    Base-10 logarithm, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input array or Quantity. Must be positive.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise base-10 logarithm.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.log10(jnp.array([1.0, 10.0, 100.0]))
+        Array([0., 1., 2.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.log10, x, unit_to_scale=unit_to_scale)
 
@@ -261,21 +309,30 @@ def log1p(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Natural logarithm of 1 + the input elements.
+    Natural logarithm of ``1 + x``, element-wise.
 
-    Calculates ``log(1 + x)``.
+    More accurate than ``log(1 + x)`` for small ``x``.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input array or Quantity.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise ``log(1 + x)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.log1p(jnp.array([0.0, 1e-10]))
+        Array([0.e+00, 1.e-10], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.log1p, x, unit_to_scale=unit_to_scale)
 
@@ -286,19 +343,28 @@ def log2(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Base-2 logarithm of the input elements.
+    Base-2 logarithm, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input array or Quantity. Must be positive.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise base-2 logarithm.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.log2(jnp.array([1.0, 2.0, 4.0]))
+        Array([0., 1., 2.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.log2, x, unit_to_scale=unit_to_scale)
 
@@ -309,19 +375,28 @@ def arccos(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the arccosine of the input elements.
+    Inverse cosine, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values in the range ``[-1, 1]``.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in radians, in ``[0, pi]``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.arccos(jnp.array([1.0, 0.0, -1.0]))
+        Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arccos, x, unit_to_scale=unit_to_scale)
 
@@ -332,19 +407,28 @@ def arccosh(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the hyperbolic arccosine of the input elements.
+    Inverse hyperbolic cosine, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values, must be >= 1.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise inverse hyperbolic cosine.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.arccosh(jnp.array([1.0, 2.0, 3.0]))
+        Array([0.       , 1.3169578, 1.7627472], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arccosh, x, unit_to_scale=unit_to_scale)
 
@@ -355,19 +439,28 @@ def arcsin(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the arcsine of the input elements.
+    Inverse sine, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values in the range ``[-1, 1]``.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in radians, in ``[-pi/2, pi/2]``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.arcsin(jnp.array([0.0, 0.5, 1.0]))
+        Array([0.       , 0.5235988, 1.5707964], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arcsin, x, unit_to_scale=unit_to_scale)
 
@@ -378,19 +471,28 @@ def arcsinh(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the hyperbolic arcsine of the input elements.
+    Inverse hyperbolic sine, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise inverse hyperbolic sine.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.arcsinh(jnp.array([0.0, 1.0]))
+        Array([0.       , 0.8813736], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arcsinh, x, unit_to_scale=unit_to_scale)
 
@@ -401,19 +503,28 @@ def arctan(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the arctangent of the input elements.
+    Inverse tangent, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in radians, in ``[-pi/2, pi/2]``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.arctan(jnp.array([0.0, 1.0]))
+        Array([0.       , 0.7853982], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arctan, x, unit_to_scale=unit_to_scale)
 
@@ -424,19 +535,28 @@ def arctanh(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the hyperbolic arctangent of the input elements.
+    Inverse hyperbolic tangent, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values in the range ``(-1, 1)``.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise inverse hyperbolic tangent.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.arctanh(jnp.array([0.0, 0.5]))
+        Array([0.       , 0.5493061], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.arctanh, x, unit_to_scale=unit_to_scale)
 
@@ -447,19 +567,28 @@ def cos(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the cosine of the input elements.
+    Cosine, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Angle in radians.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise cosine.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.cos(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
+        Array([ 1.0000000e+00, -4.3711388e-08, -1.0000000e+00], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.cos, x, unit_to_scale=unit_to_scale)
 
@@ -470,19 +599,28 @@ def cosh(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the hyperbolic cosine of the input elements.
+    Hyperbolic cosine, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise hyperbolic cosine.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.cosh(jnp.array([0.0, 1.0]))
+        Array([1.       , 1.5430806], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.cosh, x, unit_to_scale=unit_to_scale)
 
@@ -493,19 +631,28 @@ def sin(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the sine of the input elements.
+    Sine, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Angle in radians.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise sine.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.sin(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
+        Array([ 0.0000000e+00,  1.0000000e+00, -8.7422777e-08], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.sin, x, unit_to_scale=unit_to_scale)
 
@@ -516,19 +663,28 @@ def sinc(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the sinc function of the input elements.
+    Normalized sinc function, ``sin(pi*x) / (pi*x)``, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise sinc.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.sinc(jnp.array([0.0, 1.0]))
+        Array([ 1.0000000e+00, -3.8981719e-09], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.sinc, x, unit_to_scale=unit_to_scale)
 
@@ -539,19 +695,28 @@ def sinh(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the hyperbolic sine of the input elements.
+    Hyperbolic sine, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise hyperbolic sine.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.sinh(jnp.array([0.0, 1.0]))
+        Array([0.       , 1.1752012], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.sinh, x, unit_to_scale=unit_to_scale)
 
@@ -562,19 +727,28 @@ def tan(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the tangent of the input elements.
+    Tangent, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Angle in radians.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise tangent.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.tan(jnp.array([0.0, jnp.pi / 4]))
+        Array([0.       , 1.0000001], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.tan, x, unit_to_scale=unit_to_scale)
 
@@ -585,19 +759,28 @@ def tanh(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Compute the hyperbolic tangent of the input elements.
+    Hyperbolic tangent, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Input values.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise hyperbolic tangent, in ``(-1, 1)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.tanh(jnp.array([0.0, 1.0]))
+        Array([0.       , 0.7615942], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.tanh, x, unit_to_scale=unit_to_scale)
 
@@ -612,15 +795,24 @@ def deg2rad(
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Angle in degrees.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in radians.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.deg2rad(jnp.array([0.0, 90.0, 180.0]))
+        Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.deg2rad, x, unit_to_scale=unit_to_scale)
 
@@ -635,15 +827,24 @@ def rad2deg(
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Angle in radians.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in degrees.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.rad2deg(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
+        Array([  0.,  90., 180.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.rad2deg, x, unit_to_scale=unit_to_scale)
 
@@ -654,19 +855,28 @@ def degrees(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Convert angles from radians to degrees.
+    Convert angles from radians to degrees (alias for :func:`rad2deg`).
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Angle in radians.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in degrees.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.degrees(jnp.array([0.0, jnp.pi]))
+        Array([  0., 180.], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.degrees, x, unit_to_scale=unit_to_scale)
 
@@ -677,19 +887,28 @@ def radians(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Convert angles from degrees to radians.
+    Convert angles from degrees to radians (alias for :func:`deg2rad`).
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Angle in degrees.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in radians.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.radians(jnp.array([0.0, 180.0]))
+        Array([0.       , 3.1415927], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.radians, x, unit_to_scale=unit_to_scale)
 
@@ -700,19 +919,28 @@ def angle(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Return the angle of the complex argument.
+    Return the angle of the complex argument, element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        Complex-valued input.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in radians, in ``(-pi, pi]``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.angle(jnp.array([1.0 + 1.0j, 1.0 + 0.0j]))
+        Array([0.7853982, 0.       ], dtype=float32)
     """
     return _fun_accept_unitless_unary(jnp.angle, x, unit_to_scale=unit_to_scale)
 
@@ -723,27 +951,36 @@ def frexp(
     unit_to_scale: Optional[Unit] = None,
 ) -> Tuple[jax.Array, jax.Array]:
     """
-    Decompose the elements of x into mantissa and twos exponent.
+    Decompose elements into mantissa and base-2 exponent.
 
-    Returns (`mantissa`, `exponent`), where ``x = mantissa * 2**exponent``.
-    The mantissa lies in the open interval(-1, 1), while the twos
-    exponent is a signed integer.
+    Returns ``(mantissa, exponent)`` such that
+    ``x = mantissa * 2**exponent``.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Array of numbers to be decomposed.
+    x : array_like or Quantity
+        Array to decompose.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+        Unit used to convert ``x`` to a dimensionless number first.
 
     Returns
     -------
-    mantissa : ndarray
-      Floating values between -1 and 1.
-      This is a scalar if `x` is a scalar.
-    exponent : ndarray
-      Integer exponents of 2.
-      This is a scalar if `x` is a scalar.
+    mantissa : jax.Array
+        Floating values in ``(-1, 1)``.
+    exponent : jax.Array
+        Integer exponents of 2.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> m, e = su.math.frexp(jnp.array([1.0, 2.0, 4.0]))
+        >>> m
+        Array([0.5, 0.5, 0.5], dtype=float32)
+        >>> e
+        Array([1, 2, 3], dtype=int32)
     """
     return _fun_accept_unitless_unary(jnp.frexp, x, unit_to_scale=unit_to_scale)
 
@@ -795,19 +1032,32 @@ def hypot(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Given the “legs” of a right triangle, return its hypotenuse.
+    Given the legs of a right triangle, return its hypotenuse.
+
+    Computes ``sqrt(x**2 + y**2)`` element-wise.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
-    y : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        First leg.
+    y : array_like or Quantity
+        Second leg. Must be broadcastable with ``x``.
+    unit_to_scale : Unit, optional
+        Unit used to convert both inputs to dimensionless numbers.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Hypotenuse values.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.hypot(jnp.array([3.0]), jnp.array([4.0]))
+        Array([5.], dtype=float32)
     """
     return _fun_accept_unitless_binary(jnp.hypot, x, y, unit_to_scale=unit_to_scale)
 
@@ -819,19 +1069,31 @@ def arctan2(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Element-wise arc tangent of `x1/x2` choosing the quadrant correctly.
+    Element-wise arc tangent of ``x / y`` choosing the quadrant correctly.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
-    y : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        y-coordinates (numerator).
+    y : array_like or Quantity
+        x-coordinates (denominator). Must be broadcastable with ``x``.
+    unit_to_scale : Unit, optional
+        Unit used to convert both inputs to dimensionless numbers.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Angle in radians, in ``(-pi, pi]``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.arctan2(jnp.array([1.0, -1.0]),
+        ...                 jnp.array([1.0, 1.0]))
+        Array([ 0.7853982, -0.7853982], dtype=float32)
     """
     return _fun_accept_unitless_binary(jnp.arctan2, x, y, unit_to_scale=unit_to_scale)
 
@@ -845,17 +1107,30 @@ def logaddexp(
     """
     Logarithm of the sum of exponentiations of the inputs.
 
+    Computes ``log(exp(x) + exp(y))`` in a numerically stable way.
+
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
-    y : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        First input.
+    y : array_like or Quantity
+        Second input. Must be broadcastable with ``x``.
+    unit_to_scale : Unit, optional
+        Unit used to convert both inputs to dimensionless numbers.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise ``log(exp(x) + exp(y))``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.logaddexp(jnp.array([1.0]), jnp.array([2.0]))
+        Array([2.3132617], dtype=float32)
     """
     return _fun_accept_unitless_binary(jnp.logaddexp, x, y, unit_to_scale=unit_to_scale)
 
@@ -867,19 +1142,32 @@ def logaddexp2(
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     """
-    Logarithm of the sum of exponentiations of the inputs in base-2.
+    Logarithm of the sum of exponentiations of the inputs in base 2.
+
+    Computes ``log2(2**x + 2**y)`` in a numerically stable way.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or Quantity.
-    y : array_like, Quantity
-      Input array or Quantity.
+    x : array_like or Quantity
+        First input.
+    y : array_like or Quantity
+        Second input. Must be broadcastable with ``x``.
+    unit_to_scale : Unit, optional
+        Unit used to convert both inputs to dimensionless numbers.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise ``log2(2**x + 2**y)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.logaddexp2(jnp.array([1.0]), jnp.array([2.0]))
+        Array([2.321928], dtype=float32)
     """
     return _fun_accept_unitless_binary(jnp.logaddexp2, x, y, unit_to_scale=unit_to_scale)
 
@@ -1096,17 +1384,28 @@ def bitwise_not(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
     """
-    Compute the bit-wise NOT of an array, element-wise.
+    Compute bit-wise NOT, element-wise.
+
+    The input must be dimensionless.
 
     Parameters
     ----------
-    x: array_like, quantity
-      Input array.
+    x : array_like or Quantity
+        Input array of integers or booleans.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise bit-wise NOT.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.bitwise_not(jnp.array([True, False]))
+        Array([False,  True], dtype=bool)
     """
     return _fun_accept_unitless_unary(jnp.bitwise_not, x)
 
@@ -1116,17 +1415,28 @@ def invert(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
     """
-    Compute bit-wise inversion, or bit-wise NOT, element-wise.
+    Compute bit-wise inversion (NOT), element-wise.
+
+    Alias for :func:`bitwise_not`. The input must be dimensionless.
 
     Parameters
     ----------
-    x: array_like, quantity
-      Input array.
+    x : array_like or Quantity
+        Input array of integers or booleans.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise bit-wise inversion.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.invert(jnp.array([True, False]))
+        Array([False,  True], dtype=bool)
     """
     return _fun_accept_unitless_unary(jnp.invert, x)
 
@@ -1160,19 +1470,31 @@ def bitwise_and(
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> jax.Array:
     """
-    Compute the bit-wise AND of two arrays element-wise.
+    Compute bit-wise AND of two arrays, element-wise.
+
+    Both inputs must be dimensionless.
 
     Parameters
     ----------
-    x: array_like, quantity
-      Input array.
-    y: array_like, quantity
-      Input array.
+    x : array_like or Quantity
+        First input.
+    y : array_like or Quantity
+        Second input.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise bit-wise AND.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.bitwise_and(jnp.array([True, False]),
+        ...                     jnp.array([True, True]))
+        Array([ True, False], dtype=bool)
     """
     return _fun_unitless_binary(jnp.bitwise_and, x, y)
 
@@ -1183,19 +1505,31 @@ def bitwise_or(
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> jax.Array:
     """
-    Compute the bit-wise OR of two arrays element-wise.
+    Compute bit-wise OR of two arrays, element-wise.
+
+    Both inputs must be dimensionless.
 
     Parameters
     ----------
-    x: array_like, quantity
-      Input array.
-    y: array_like, quantity
-      Input array.
+    x : array_like or Quantity
+        First input.
+    y : array_like or Quantity
+        Second input.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise bit-wise OR.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.bitwise_or(jnp.array([True, False]),
+        ...                    jnp.array([False, False]))
+        Array([ True, False], dtype=bool)
     """
     return _fun_unitless_binary(jnp.bitwise_or, x, y)
 
@@ -1206,19 +1540,31 @@ def bitwise_xor(
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> jax.Array:
     """
-    Compute the bit-wise XOR of two arrays element-wise.
+    Compute bit-wise XOR of two arrays, element-wise.
+
+    Both inputs must be dimensionless.
 
     Parameters
     ----------
-    x: array_like, quantity
-      Input array.
-    y: array_like, quantity
-      Input array.
+    x : array_like or Quantity
+        First input.
+    y : array_like or Quantity
+        Second input.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise bit-wise XOR.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.bitwise_xor(jnp.array([True, False]),
+        ...                     jnp.array([True, True]))
+        Array([False,  True], dtype=bool)
     """
     return _fun_unitless_binary(jnp.bitwise_xor, x, y)
 
@@ -1229,19 +1575,30 @@ def left_shift(
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> jax.Array:
     """
-    Shift the bits of an integer to the left.
+    Shift the bits of an integer to the left, element-wise.
+
+    Both inputs must be dimensionless.
 
     Parameters
     ----------
-    x: array_like, quantity
-      Input array.
-    y: array_like, quantity
-      Input array.
+    x : array_like or Quantity
+        Input values.
+    y : array_like or Quantity
+        Number of bits to shift.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise left shift.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.left_shift(jnp.array([1, 2]), jnp.array([1, 2]))
+        Array([2, 8], dtype=int32)
     """
     return _fun_unitless_binary(jnp.left_shift, x, y)
 
@@ -1252,18 +1609,29 @@ def right_shift(
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> jax.Array:
     """
-    Shift the bits of an integer to the right.
+    Shift the bits of an integer to the right, element-wise.
+
+    Both inputs must be dimensionless.
 
     Parameters
     ----------
-    x: array_like, quantity
-      Input array.
-    y: array_like, quantity
-      Input array.
+    x : array_like or Quantity
+        Input values.
+    y : array_like or Quantity
+        Number of bits to shift.
 
     Returns
     -------
     out : jax.Array
-      Output array.
+        Element-wise right shift.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.right_shift(jnp.array([8, 16]), jnp.array([1, 2]))
+        Array([4, 4], dtype=int32)
     """
     return _fun_unitless_binary(jnp.right_shift, x, y)

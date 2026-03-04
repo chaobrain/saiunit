@@ -13,6 +13,14 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Unit-aware linear-algebra routines.
+
+Provides wrappers for ``jax.numpy.linalg`` functions that correctly
+propagate physical units through matrix decompositions, solvers, norms,
+and products.
+"""
+
 from ._linalg_change_unit import *
 from ._linalg_change_unit import __all__ as _linalg_change_unit_all
 from ._linalg_keep_unit import *

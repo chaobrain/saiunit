@@ -20,7 +20,7 @@ from typing import Union
 import jax
 from jax import lax
 
-from saiunit._base import Quantity
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit.math._fun_remove_unit import _fun_remove_unit_unary, _fun_logic_binary
 
@@ -41,7 +41,30 @@ __all__ = [
 def population_count(
     x: Union[jax.typing.ArrayLike, Quantity],
 ) -> jax.Array:
-    r"""Elementwise popcount, count the number of set bits in each element."""
+    r"""Elementwise popcount: count the number of set bits in each element.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input integer array. If a ``Quantity``, the unit is stripped before
+        computing.
+
+    Returns
+    -------
+    result : jax.Array
+        The number of set bits in each element. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> x = jnp.array([1, 3, 7])
+        >>> sulax.population_count(x)
+        Array([1, 2, 3], dtype=int32)
+    """
     return _fun_remove_unit_unary(lax.population_count, x)
 
 
@@ -49,7 +72,30 @@ def population_count(
 def clz(
     x: Union[jax.typing.ArrayLike, Quantity],
 ) -> jax.Array:
-    r"""Elementwise count-leading-zeros."""
+    r"""Elementwise count of leading zeros.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input integer array. If a ``Quantity``, the unit is stripped before
+        computing.
+
+    Returns
+    -------
+    result : jax.Array
+        The count of leading zeros in each element. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> x = jnp.array([1, 2, 4], dtype=jnp.int32)
+        >>> sulax.clz(x)
+        Array([31, 30, 29], dtype=int32)
+    """
     return _fun_remove_unit_unary(lax.clz, x)
 
 
@@ -59,7 +105,32 @@ def eq(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[bool, jax.Array]:
-    r"""Elementwise equals: :math:`x = y`."""
+    r"""Elementwise equals: :math:`x = y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand.
+    y : array_like or Quantity
+        Second operand. Must have the same unit as ``x``.
+
+    Returns
+    -------
+    result : jax.Array
+        Boolean array. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([1.0, 2.0, 3.0]) * su.meter
+        >>> b = jnp.array([1.0, 5.0, 3.0]) * su.meter
+        >>> sulax.eq(a, b)
+        Array([ True, False,  True], dtype=bool)
+    """
     return _fun_logic_binary(lax.eq, x, y)
 
 
@@ -68,7 +139,32 @@ def ne(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[bool, jax.Array]:
-    r"""Elementwise not-equals: :math:`x \neq y`."""
+    r"""Elementwise not-equals: :math:`x \neq y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand.
+    y : array_like or Quantity
+        Second operand. Must have the same unit as ``x``.
+
+    Returns
+    -------
+    result : jax.Array
+        Boolean array. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([1.0, 2.0, 3.0]) * su.meter
+        >>> b = jnp.array([1.0, 5.0, 3.0]) * su.meter
+        >>> sulax.ne(a, b)
+        Array([False,  True, False], dtype=bool)
+    """
     return _fun_logic_binary(lax.ne, x, y)
 
 
@@ -77,7 +173,32 @@ def ge(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[bool, jax.Array]:
-    r"""Elementwise greater-than-or-equals: :math:`x \geq y`."""
+    r"""Elementwise greater-than-or-equals: :math:`x \geq y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand.
+    y : array_like or Quantity
+        Second operand. Must have the same unit as ``x``.
+
+    Returns
+    -------
+    result : jax.Array
+        Boolean array. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([1.0, 3.0, 2.0]) * su.second
+        >>> b = jnp.array([2.0, 2.0, 2.0]) * su.second
+        >>> sulax.ge(a, b)
+        Array([False,  True,  True], dtype=bool)
+    """
     return _fun_logic_binary(lax.ge, x, y)
 
 
@@ -86,7 +207,32 @@ def gt(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[bool, jax.Array]:
-    r"""Elementwise greater-than: :math:`x > y`."""
+    r"""Elementwise greater-than: :math:`x > y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand.
+    y : array_like or Quantity
+        Second operand. Must have the same unit as ``x``.
+
+    Returns
+    -------
+    result : jax.Array
+        Boolean array. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([1.0, 3.0, 2.0]) * su.second
+        >>> b = jnp.array([2.0, 2.0, 2.0]) * su.second
+        >>> sulax.gt(a, b)
+        Array([False,  True, False], dtype=bool)
+    """
     return _fun_logic_binary(lax.gt, x, y)
 
 
@@ -95,7 +241,32 @@ def le(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[bool, jax.Array]:
-    r"""Elementwise less-than-or-equals: :math:`x \leq y`."""
+    r"""Elementwise less-than-or-equals: :math:`x \leq y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand.
+    y : array_like or Quantity
+        Second operand. Must have the same unit as ``x``.
+
+    Returns
+    -------
+    result : jax.Array
+        Boolean array. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([1.0, 3.0, 2.0]) * su.second
+        >>> b = jnp.array([2.0, 2.0, 2.0]) * su.second
+        >>> sulax.le(a, b)
+        Array([ True, False,  True], dtype=bool)
+    """
     return _fun_logic_binary(lax.le, x, y)
 
 
@@ -104,5 +275,30 @@ def lt(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[bool, jax.Array]:
-    r"""Elementwise less-than: :math:`x < y`."""
+    r"""Elementwise less-than: :math:`x < y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand.
+    y : array_like or Quantity
+        Second operand. Must have the same unit as ``x``.
+
+    Returns
+    -------
+    result : jax.Array
+        Boolean array. Always unitless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([1.0, 3.0, 2.0]) * su.second
+        >>> b = jnp.array([2.0, 2.0, 2.0]) * su.second
+        >>> sulax.lt(a, b)
+        Array([ True, False, False], dtype=bool)
+    """
     return _fun_logic_binary(lax.lt, x, y)

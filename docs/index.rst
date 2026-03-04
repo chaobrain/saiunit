@@ -33,11 +33,12 @@ Installation
 
           pip install -U saiunit[cpu]
 
-    .. tab-item:: GPU (CUDA 12.0)
+    .. tab-item:: GPU (CUDA)
 
        .. code-block:: bash
 
           pip install -U saiunit[cuda12]
+          pip install -U saiunit[cuda13]
 
     .. tab-item:: TPU
 

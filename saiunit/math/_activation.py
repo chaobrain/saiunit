@@ -17,11 +17,12 @@ from typing import Union
 import jax
 from jax import nn
 
+from saiunit._base_getters import get_mantissa
+from saiunit._base_quantity import Quantity
+from saiunit._misc import set_module_as, maybe_custom_array
 from ._fun_accept_unitless import _fun_accept_unitless_unary
 from ._fun_array_creation import asarray
 from ._fun_keep_unit import _fun_keep_unit_unary, where
-from saiunit._base import Quantity, get_mantissa
-from saiunit._misc import set_module_as, maybe_custom_array
 
 __all__ = [
     'relu', 'relu6', 'sigmoid', 'softplus', 'sparse_plus', 'sparse_sigmoid', 'soft_sign', 'silu', 'swish',
@@ -50,15 +51,30 @@ def relu(
     `Numerical influence of ReLU’(0) on backpropagation
     <https://openreview.net/forum?id=urrcVI-_jRm>`_.
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. If a ``Quantity`` with physical units is provided,
+        the units are preserved in the output.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array or Quantity
+        An array with the same shape as *x* where negative values are
+        replaced by zero. Units are preserved when present.
 
-    Examples:
-        >>> saiunit.math.relu(jax.numpy.array([-2., -1., -0.5, 0, 0.5, 1., 2.]))
-        Array([0. , 0. , 0. , 0. , 0.5, 1. , 2. ], dtype=float32)
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.relu(jnp.array([-2., -1., 0., 1., 2.]))
+        Array([0., 0., 0., 1., 2.], dtype=float32)
+
+        >>> import saiunit as su
+        >>> q = su.Quantity(jnp.array([-1., 0., 1.]), unit=su.meter)
+        >>> sumath.relu(q)  # units are preserved
     """
     return _fun_keep_unit_unary(nn.relu, x)
 
@@ -84,11 +100,24 @@ def relu6(
     .. math::
         \nabla \mathrm{relu}(6) = 0
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*, clipped to the range [0, 6].
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.relu6(jnp.array([-1., 0., 3., 7.]))
+        Array([0., 0., 3., 6.], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.relu6, x)
 
@@ -104,11 +133,24 @@ def sigmoid(
     .. math::
         \mathrm{sigmoid}(x) = \frac{1}{1 + e^{-x}}
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with values in the range (0, 1).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.sigmoid(jnp.array([-2., 0., 2.]))
+        Array([0.11920292, 0.5       , 0.8807971 ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.sigmoid, x)
 
@@ -124,11 +166,24 @@ def softplus(
     .. math::
         \mathrm{softplus}(x) = \log(1 + e^x)
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with non-negative values.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.softplus(jnp.array([-2., 0., 2.]))
+        Array([0.12692805, 0.6931472 , 2.126928  ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.softplus, x)
 
@@ -154,8 +209,24 @@ def sparse_plus(
     while remaining smooth, convex, monotonic by an adequate definition between
     -1 and 1.
 
-    Args:
-        x: input (float)
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
+
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.sparse_plus(jnp.array([-2., 0., 2.]))
+        Array([0.  , 0.25, 2.  ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.sparse_plus, x)
 
@@ -170,11 +241,11 @@ def sparse_sigmoid(
 
     .. math::
 
-    \mathrm{sparse\_sigmoid}(x) = \begin{cases}
-          0, & x \leq -1\\
-          \frac{1}{2}(x+1), & -1 < x < 1 \\
-          1, & 1 \leq x
-    \end{cases}
+        \mathrm{sparse\_sigmoid}(x) = \begin{cases}
+              0, & x \leq -1\\
+              \frac{1}{2}(x+1), & -1 < x < 1 \\
+              1, & 1 \leq x
+        \end{cases}
 
     This is the twin function of the ``sigmoid`` activation ensuring a zero output
     for inputs less than -1, a 1 output for inputs greater than 1, and a linear
@@ -183,11 +254,24 @@ def sparse_sigmoid(
     For more information, see `Learning with Fenchel-Young Losses (section 6.2)
     <https://arxiv.org/abs/1901.02324>`_.
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with values in the range [0, 1].
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.sparse_sigmoid(jnp.array([-2., 0., 2.]))
+        Array([0. , 0.5, 1. ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.sparse_sigmoid, x)
 
@@ -203,11 +287,24 @@ def soft_sign(
     .. math::
         \mathrm{soft\_sign}(x) = \frac{x}{|x| + 1}
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with values in the range (-1, 1).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.soft_sign(jnp.array([-2., 0., 2.]))
+        Array([-0.6666667,  0.       ,  0.6666667], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.soft_sign, x)
 
@@ -225,11 +322,24 @@ def silu(
 
     :func:`swish` and :func:`silu` are both aliases for the same function.
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.silu(jnp.array([-2., 0., 2.]))
+        Array([-0.23840584,  0.        ,  1.7615942 ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.silu, x)
 
@@ -247,11 +357,24 @@ def swish(
 
     :func:`swish` and :func:`silu` are both aliases for the same function.
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.swish(jnp.array([-2., 0., 2.]))
+        Array([-0.23840584,  0.        ,  1.7615942 ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.silu, x)
 
@@ -267,11 +390,24 @@ def log_sigmoid(
     .. math::
         \mathrm{log\_sigmoid}(x) = \log(\mathrm{sigmoid}(x)) = -\log(1 + e^{-x})
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with non-positive values.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.log_sigmoid(jnp.array([-2., 0., 2.]))
+        Array([-2.126928  , -0.6931472 , -0.12692805], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.log_sigmoid, x)
 
@@ -293,12 +429,29 @@ def leaky_relu(
 
     where :math:`\alpha` = :code:`negative_slope`.
 
-    Args:
-        x : input array
-        negative_slope : array or scalar specifying the negative slope (default: 0.01)
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. If a ``Quantity`` with physical units is provided,
+        the units are preserved in the output.
+    negative_slope : array_like, optional
+        Slope for negative input values. Default is 0.01.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array or Quantity
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.leaky_relu(jnp.array([-2., -1., 0., 1., 2.]))
+        Array([-0.02, -0.01,  0.  ,  1.  ,  2.  ], dtype=float32)
+        >>> sumath.leaky_relu(jnp.array([-1., 1.]), negative_slope=0.1)
+        Array([-0.1,  1. ], dtype=float32)
     """
     x = maybe_custom_array(x)
     x_arr = asarray(x)
@@ -316,11 +469,24 @@ def hard_sigmoid(
     .. math::
         \mathrm{hard\_sigmoid}(x) = \frac{\mathrm{relu6}(x + 3)}{6}
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with values in the range [0, 1].
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.hard_sigmoid(jnp.array([-4., 0., 4.]))
+        Array([0. , 0.5, 1. ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.hard_sigmoid, x)
 
@@ -329,7 +495,7 @@ def hard_sigmoid(
 def hard_silu(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> jax.Array:
-    r"""Hard SiLU (swish) activation function
+    r"""Hard SiLU (swish) activation function.
 
     Computes the element-wise function
 
@@ -339,11 +505,24 @@ def hard_silu(
     Both :func:`hard_silu` and :func:`hard_swish` are aliases for the same
     function.
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.hard_silu(jnp.array([-4., 0., 4.]))
+        Array([-0.,  0.,  4.], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.hard_silu, x)
 
@@ -366,11 +545,24 @@ def hard_tanh(
             1, & 1 < x
         \end{cases}
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with values clipped to the range [-1, 1].
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.hard_tanh(jnp.array([-2., -0.5, 0., 0.5, 2.]))
+        Array([-1. , -0.5,  0. ,  0.5,  1. ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.hard_tanh, x)
 
@@ -390,12 +582,28 @@ def elu(
             \alpha \left(\exp(x) - 1\right), & x \le 0
         \end{cases}
 
-    Args:
-        x : input array
-        alpha : scalar or array of alpha values (default: 1.0)
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
+    alpha : array_like, optional
+        Scale for the negative region. Default is 1.0.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.elu(jnp.array([-2., 0., 2.]))
+        Array([-0.86466473,  0.        ,  2.        ], dtype=float32)
+        >>> sumath.elu(jnp.array([-1., 1.]), alpha=2.0)
+        Array([-1.2642411,  1.       ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.elu, x, alpha=alpha)
 
@@ -419,12 +627,26 @@ def celu(
     `Continuously Differentiable Exponential Linear Units
     <https://arxiv.org/abs/1704.07483>`_.
 
-    Args:
-        x : input array
-        alpha : array or scalar (default: 1.0)
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
+    alpha : array_like, optional
+        Scale parameter. Default is 1.0.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.celu(jnp.array([-2., 0., 2.]))
+        Array([-0.86466473,  0.        ,  2.        ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.celu, x, alpha=alpha)
 
@@ -450,11 +672,24 @@ def selu(
     `Self-Normalizing Neural Networks
     <https://arxiv.org/abs/1706.02515>`_.
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.selu(jnp.array([-2., 0., 2.]))
+        Array([-1.5201665,  0.       ,  2.1014020], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.selu, x)
 
@@ -481,9 +716,26 @@ def gelu(
     For more information, see `Gaussian Error Linear Units (GELUs)
     <https://arxiv.org/abs/1606.08415>`_, section 2.
 
-    Args:
-        x: input array
-        approximate: whether to use the approximate or exact formulation.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
+    approximate : bool, optional
+        Whether to use the approximate or exact formulation. Default is True.
+
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.gelu(jnp.array([-2., 0., 2.]))
+        Array([-0.04540231,  0.        ,  1.9545977 ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.gelu, x, approximate=approximate)
 
@@ -498,19 +750,35 @@ def glu(
     Computes the function:
 
     .. math::
-    \mathrm{glu}(x) =  x\left[\ldots, 0:\frac{n}{2}, \ldots\right] \cdot
-        \mathrm{sigmoid} \left( x\left[\ldots, \frac{n}{2}:n, \ldots\right]
-            \right)
+        \mathrm{glu}(x) =  x\left[\ldots, 0:\frac{n}{2}, \ldots\right] \cdot
+            \mathrm{sigmoid} \left( x\left[\ldots, \frac{n}{2}:n, \ldots\right]
+                \right)
 
     where the array is split into two along ``axis``. The size of the ``axis``
     dimension must be divisible by two.
 
-    Args:
-        x : input array
-        axis: the axis along which the split should be computed (default: -1)
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``. The size of
+        the dimension specified by *axis* must be even.
+    axis : int, optional
+        The axis along which to split the input. Default is -1.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array whose size along *axis* is half that of the input.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> x = jnp.array([[1., 2., 3., 4.]])
+        >>> sumath.glu(x)
+        Array([[0.95257413, 1.9640275 ]], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.glu, x, axis=axis)
 
@@ -529,9 +797,26 @@ def squareplus(
 
     as described in https://arxiv.org/abs/2112.11687.
 
-    Args:
-        x : input array
-        b : smoothness parameter
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
+    b : array_like, optional
+        Smoothness parameter. Default is 4.
+
+    Returns
+    -------
+    out : jax.Array
+        An array with non-negative values.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.squareplus(jnp.array([-2., 0., 2.]))
+        Array([0.23606798, 1.        , 2.2360680 ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.squareplus, x, b=b)
 
@@ -551,10 +836,23 @@ def mish(
     `Mish: A Self Regularized Non-Monotonic Activation Function
     <https://arxiv.org/abs/1908.08681>`_.
 
-    Args:
-        x : input array
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array. Must be unitless if a ``Quantity``.
 
-    Returns:
-        An array.
+    Returns
+    -------
+    out : jax.Array
+        An array with the same shape as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> sumath.mish(jnp.array([-2., 0., 2.]))
+        Array([-0.25250152,  0.        ,  1.9439590 ], dtype=float32)
     """
     return _fun_accept_unitless_unary(nn.mish, x)

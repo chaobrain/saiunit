@@ -21,7 +21,7 @@ from scipy.special import exprel
 import saiunit as u
 from saiunit import math
 from saiunit import meter, second
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(u.CustomArray):

@@ -16,7 +16,6 @@
 from saiunit.fft import *
 from saiunit.fft import __all__ as __all__
 
-
 if __name__ == '__main__':
     fft
     __all__

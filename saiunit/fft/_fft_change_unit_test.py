@@ -22,7 +22,9 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.fft as ufft
 from saiunit import meter, second
-from saiunit._base import assert_quantity, Unit, get_or_create_dimension
+from saiunit._base_dimension import get_or_create_dimension
+from saiunit._base_unit import Unit
+from saiunit._base_getters import assert_quantity
 
 
 class Array(u.CustomArray):
@@ -478,3 +480,52 @@ class TestFftChangeUnit(parameterized.TestCase):
             result = bufft_fun(size, q)
             expected = jnpfft_fun(size, d)
             assert_quantity(result, expected, unit=custom_hertz_unit)
+
+
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+def test_docstring_example_fft():
+    """Verify examples from fft docstring."""
+    import saiunit as su
+    import saiunit.fft as sufft
+    import jax.numpy as jnp
+
+    x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+    X = sufft.fft(x)
+    assert isinstance(X, su.Quantity)
+    assert X.shape == (4,)
+    # unit should be meter * second
+    assert X.unit == su.meter * su.second
+
+    x_roundtrip = sufft.ifft(X)
+    assert isinstance(x_roundtrip, su.Quantity)
+    assert jnp.allclose(x_roundtrip.mantissa.real, x.mantissa, atol=1e-5)
+
+
+def test_docstring_example_ifft():
+    """Verify examples from ifft docstring."""
+    import saiunit as su
+    import saiunit.fft as sufft
+    import jax.numpy as jnp
+
+    x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+    X = sufft.fft(x)
+    x_back = sufft.ifft(X)
+    assert isinstance(x_back, su.Quantity)
+    # round-trip should recover original values
+    assert jnp.allclose(x_back.mantissa.real, x.mantissa, atol=1e-5)
+    # unit should come back to meter
+    assert x_back.unit == su.meter
+
+
+def test_docstring_example_fftfreq():
+    """Verify examples from fftfreq docstring."""
+    import saiunit as su
+    import saiunit.fft as sufft
+
+    freqs = sufft.fftfreq(4, 1.0 * su.second)
+    assert isinstance(freqs, su.Quantity)
+    assert freqs.shape == (4,)
+    assert freqs.unit == su.hertz

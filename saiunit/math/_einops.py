@@ -27,13 +27,14 @@ import jax.numpy as jnp
 import numpy as np
 import opt_einsum
 
+from saiunit._base_unit import UNITLESS
+from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import safe_map, unzip2
+from saiunit._misc import set_module_as, maybe_custom_array_tree
 from ._einops_parsing import ParsedExpression, _ellipsis, AnonymousAxis, EinopsError
 from ._fun_array_creation import asarray, zeros_like
 from ._fun_keep_unit import reshape, transpose, expand_dims, tile, where, squeeze
 from ._misc import shape
-from saiunit._base import Quantity, UNITLESS
-from saiunit._misc import set_module_as, maybe_custom_array_tree
 
 T = TypeVar('T')
 
@@ -524,63 +525,41 @@ def einreduce(
     reduction: Reduction,
     **axes_lengths: int
 ) -> jax.typing.ArrayLike | Quantity:
-    """
-    ``einreduce`` provides combination of reordering and reduction using reader-friendly notation.
+    """Combine reordering and reduction using reader-friendly notation.
 
-    Examples for reduce operation:
-
-    ```python
-    >>> import brainstate as brainstate
-    >>> x = brainstate.random.randn(100, 32, 64)
-
-    # perform max-reduction on the first axis
-    >>> y = einreduce(x, 't b c -> b c', 'max')
-
-    # same as previous, but with clearer axes meaning
-    >>> y = einreduce(x, 'time batch channel -> batch channel', 'max')
-
-    >>> x = brainstate.random.randn(10, 20, 30, 40)
-
-    # 2d max-pooling with kernel size = 2 * 2 for image processing
-    >>> y1 = einreduce(x, 'b c (h1 h2) (w1 w2) -> b c h1 w1', 'max', h2=2, w2=2)
-
-    # if one wants to go back to the original height and width, depth-to-space trick can be applied
-    >>> y2 = einrearrange(y1, 'b (c h2 w2) h1 w1 -> b c (h1 h2) (w1 w2)', h2=2, w2=2)
-    >>> assert einshape(x, 'b _ h w') == einshape(y2, 'b _ h w')
-
-    # Adaptive 2d max-pooling to 3 * 4 grid
-    >>> einreduce(x, 'b c (h1 h2) (w1 w2) -> b c h1 w1', 'max', h1=3, w1=4).shape
-    (10, 20, 3, 4)
-
-    # Global average pooling
-    >>> einreduce(x, 'b c h w -> b c', 'mean').shape
-    (10, 20)
-
-    # Subtracting mean over batch for each channel
-    >>> y = x - einreduce(x, 'b c h w -> () c () ()', 'mean')
-
-    # Subtracting per-image mean for each channel
-    >>> y = x - einreduce(x, 'b c h w -> b c () ()', 'mean')
-
-    ```
+    ``einreduce`` provides combination of reordering and reduction using
+    reader-friendly notation similar to einops.
 
     Parameters
     ----------
-    x: array_like, Quantity
-      Array of any supported library (e.g. numpy.ndarray, tensorflow, pytorch).
-      list of tensors is also accepted, those should be of the same type and shape
-    pattern: string
-     reduction pattern
-    reduction:
-      One of available reductions ('min', 'max', 'sum', 'mean', 'prod'), case-sensitive
-      alternatively, a callable f(tensor, reduced_axes) -> tensor can be provided.
-      This allows using various reductions, examples: np.max, tf.reduce_logsumexp, torch.var, etc.
-    axes_lengths:
-      any additional specifications for dimensions
+    x : array_like, Quantity, or list of array_like
+        Input tensor(s). A list of tensors of the same type and shape
+        is also accepted.
+    pattern : str
+        Reduction pattern in ``'input -> output'`` form. Axes that
+        appear on the left but not on the right are reduced.
+    reduction : {'min', 'max', 'sum', 'mean', 'prod'} or callable
+        Reduction operation to apply. A callable with signature
+        ``f(tensor, reduced_axes) -> tensor`` may also be provided.
+    **axes_lengths : int
+        Additional specifications for dimension sizes.
 
     Returns
     -------
-    out:  tensor of the same type as input
+    out : jax.Array or Quantity
+        The reduced tensor with the same type as the input.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> x = jnp.ones((4, 3, 5))
+        >>> sumath.einreduce(x, 'b c h -> b c', 'sum').shape
+        (4, 3)
+        >>> sumath.einreduce(x, 'b c h -> b c', 'mean').shape
+        (4, 3)
     """
     x = maybe_custom_array_tree(x)
     shape = _get_shape(x)
@@ -604,60 +583,40 @@ def einrearrange(
     pattern: str,
     **axes_lengths
 ) -> jax.typing.ArrayLike | Quantity:
-    """
-    ``einrearrange`` is a reader-friendly smart element reordering for multidimensional tensors.
-    This operation includes functionality of transpose (axes permutation), reshape (view), squeeze, unsqueeze,
-    stack, concatenate and other operations.
+    """Reader-friendly smart element reordering for multidimensional tensors.
 
-    Examples for rearrange operation:
+    This operation includes functionality of transpose (axes permutation),
+    reshape (view), squeeze, unsqueeze, stack, concatenate and other
+    operations. When composing axes, C-order enumeration is used
+    (consecutive elements have different last axis).
 
-    ```python
-    # suppose we have a set of 32 images in "h w c" format (height-width-channel)
-    >>> import brainstate as brainstate
-    >>> images = [brainstate.random.randn(30, 40, 3) for _ in range(32)]
+    Parameters
+    ----------
+    x : array_like, Quantity, or list of array_like
+        Input tensor(s). A list of tensors of the same type and shape
+        is also accepted for stacking.
+    pattern : str
+        Rearrangement pattern in ``'input -> output'`` form.
+    **axes_lengths : int
+        Additional specifications for dimension sizes.
 
-    # stack along first (batch) axis, output is a single array
-    >>> einrearrange(images, 'b h w c -> b h w c').shape
-    (32, 30, 40, 3)
+    Returns
+    -------
+    out : jax.Array or Quantity
+        Tensor of the same type as input. If possible, a view to the
+        original tensor is returned.
 
-    # concatenate images along height (vertical axis), 960 = 32 * 30
-    >>> einrearrange(images, 'b h w c -> (b h) w c').shape
-    (960, 40, 3)
+    Examples
+    --------
+    .. code-block:: python
 
-    # concatenated images along horizontal axis, 1280 = 32 * 40
-    >>> einrearrange(images, 'b h w c -> h (b w) c').shape
-    (30, 1280, 3)
-
-    # reordered axes to "b c h w" format for deep learning
-    >>> einrearrange(images, 'b h w c -> b c h w').shape
-    (32, 3, 30, 40)
-
-    # flattened each image into a vector, 3600 = 30 * 40 * 3
-    >>> einrearrange(images, 'b h w c -> b (c h w)').shape
-    (32, 3600)
-
-    # split each image into 4 smaller (top-left, top-right, bottom-left, bottom-right), 128 = 32 * 2 * 2
-    >>> einrearrange(images, 'b (h1 h) (w1 w) c -> (b h1 w1) h w c', h1=2, w1=2).shape
-    (128, 15, 20, 3)
-
-    # space-to-depth operation
-    >>> einrearrange(images, 'b (h h1) (w w1) c -> b h w (c h1 w1)', h1=2, w1=2).shape
-    (32, 15, 20, 12)
-
-    ```
-
-    When composing axes, C-order enumeration used (consecutive elements have different last axis)
-    Find more examples in einops tutorial.
-
-    Parameters:
-        x: tensor of any supported library (e.g. numpy.ndarray, tensorflow, pytorch).
-                list of tensors is also accepted, those should be of the same type and shape
-        pattern: string, rearrangement pattern
-        axes_lengths: any additional specifications for dimensions
-
-    Returns:
-        tensor of the same type as input. If possible, a view to the original tensor is returned.
-
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> x = jnp.zeros((2, 3, 4))
+        >>> sumath.einrearrange(x, 'b h w -> b (h w)').shape
+        (2, 12)
+        >>> sumath.einrearrange(x, 'b h w -> b w h').shape
+        (2, 4, 3)
     """
     return einreduce(x, pattern, reduction="rearrange", **axes_lengths)
 
@@ -668,52 +627,39 @@ def einrepeat(
     pattern: str,
     **axes_lengths
 ) -> jax.typing.ArrayLike | Quantity:
-    """
-    ``einrepeat`` allows reordering elements and repeating them in arbitrary combinations.
-    This operation includes functionality of repeat, tile, broadcast functions.
+    """Reorder elements and repeat them in arbitrary combinations.
 
-    Examples for repeat operation:
+    This operation includes functionality of repeat, tile, and broadcast
+    functions. When composing axes, C-order enumeration is used
+    (consecutive elements have different last axis).
 
-    ```python
-    # a grayscale image (of shape height x width)
-    >>> import brainstate as brainstate
-    >>> image = brainstate.random.randn(30, 40)
+    Parameters
+    ----------
+    x : array_like, Quantity, or list of array_like
+        Input tensor(s). A list of tensors of the same type and shape
+        is also accepted.
+    pattern : str
+        Repeat pattern in ``'input -> output'`` form. New axes in the
+        output expression are repeated according to *axes_lengths*.
+    **axes_lengths : int
+        Sizes of new or decomposed axes.
 
-    # change it to RGB format by repeating in each channel
-    >>> einrepeat(image, 'h w -> h w c', c=3).shape
-    (30, 40, 3)
+    Returns
+    -------
+    out : jax.Array or Quantity
+        Tensor of the same type as input.
 
-    # repeat image 2 times along height (vertical axis)
-    >>> einrepeat(image, 'h w -> (repeat h) w', repeat=2).shape
-    (60, 40)
+    Examples
+    --------
+    .. code-block:: python
 
-    # repeat image 2 time along height and 3 times along width
-    >>> einrepeat(image, 'h w -> (h2 h) (w3 w)', h2=2, w3=3).shape
-    (60, 120)
-
-    # convert each pixel to a small square 2x2. Upsample image by 2x
-    >>> einrepeat(image, 'h w -> (h h2) (w w2)', h2=2, w2=2).shape
-    (60, 80)
-
-    # pixelate image first by downsampling by 2x, then upsampling
-    >>> downsampled = einreduce(image, '(h h2) (w w2) -> h w', 'mean', h2=2, w2=2)
-    >>> einrepeat(downsampled, 'h w -> (h h2) (w w2)', h2=2, w2=2).shape
-    (30, 40)
-
-    ```
-
-    When composing axes, C-order enumeration used (consecutive elements have different last axis)
-    Find more examples in einops tutorial.
-
-    Parameters:
-        x: tensor of any supported library (e.g. numpy.ndarray, tensorflow, pytorch).
-            list of tensors is also accepted, those should be of the same type and shape
-        pattern: string, rearrangement pattern
-        axes_lengths: any additional specifications for dimensions
-
-    Returns:
-        Tensor of the same type as input. If possible, a view to the original tensor is returned.
-
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> x = jnp.zeros((3, 4))
+        >>> sumath.einrepeat(x, 'h w -> h w c', c=3).shape
+        (3, 4, 3)
+        >>> sumath.einrepeat(x, 'h w -> (repeat h) w', repeat=2).shape
+        (6, 4)
     """
     return einreduce(x, pattern, reduction="repeat", **axes_lengths)
 
@@ -723,31 +669,31 @@ def einshape(
     x: jax.typing.ArrayLike | Quantity,
     pattern: str
 ) -> dict:
-    """
-    Parse a tensor shape to dictionary mapping axes names to their lengths.
+    """Parse a tensor shape to a dictionary mapping axis names to their lengths.
 
-    ```python
-    >>> import jax.numpy as jnp
-    # Use underscore to skip the dimension in parsing.
-    >>> x = jnp.zeros([2, 3, 5, 7])
-    >>> einshape(x, 'batch _ h w')
-    {'batch': 2, 'h': 5, 'w': 7}
+    Use an underscore ``_`` in the pattern to skip a dimension.
 
-    # `parse_shape` output can be used to specify axes_lengths for other operations:
-    >>> y = jnp.zeros([700])
-    >>> einrearrange(y, '(b c h w) -> b c h w', **einshape(x, 'b _ h w')).shape
-    (2, 10, 5, 7)
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Tensor of any supported framework.
+    pattern : str
+        Space-separated axis names. Use ``_`` to skip an axis.
 
-    ```
+    Returns
+    -------
+    out : dict
+        Dictionary mapping axis names to their integer lengths.
 
-    For symbolic frameworks may return symbols, not integers.
+    Examples
+    --------
+    .. code-block:: python
 
-    Parameters:
-        x: tensor of any supported framework
-        pattern: str, space separated names for axes, underscore means skip axis
-
-    Returns:
-        dict, maps axes names to their lengths
+        >>> import jax.numpy as jnp
+        >>> import saiunit.math as sumath
+        >>> x = jnp.zeros((2, 3, 5))
+        >>> sumath.einshape(x, 'batch _ w')
+        {'batch': 2, 'w': 5}
     """
     x = maybe_custom_array_tree(x)
     _shape = _get_shape(x)
@@ -1042,23 +988,27 @@ def einsum(
     the arguments below reflect the most common calling convention. The Examples
     section below demonstrates some of the alternative calling conventions.
 
-    Args:
-      subscripts: string containing axes names separated by commas.
-      *operands: sequence of one or more arrays / quantities corresponding to the subscripts.
-      optimize: specify how to optimize the order of computation. In JAX this defaults
-        to ``"optimal"`` which produces optimized expressions via the opt_einsum_
-        package. Other options are ``True`` (same as ``"optimal"``), ``False``
-        (unoptimized), or any string supported by ``opt_einsum``, which
-        includes ``"auto"``, ``"greedy"``, ``"eager"``, and others.
-      precision: either ``None`` (default), which means the default precision for
-        the backend, a :class:`~jax.lax.Precision` enum value (``Precision.DEFAULT``,
-        ``Precision.HIGH`` or ``Precision.HIGHEST``).
-      preferred_element_type: either ``None`` (default), which means the default
-        accumulation type for the input types, or a datatype, indicating to
-        accumulate results to and return a result with that datatype.
+    Parameters
+    ----------
+    subscripts : str
+        Subscript string in Einstein summation notation, with axes
+        names separated by commas and an optional ``->`` to specify
+        the output.
+    *operands : array_like or Quantity
+        Sequence of one or more arrays / quantities corresponding to
+        the subscripts.
+    optimize : str or bool or list of tuple, optional
+        Optimization strategy. Defaults to ``"optimal"``.
+    precision : jax.lax.PrecisionLike, optional
+        Precision of the computation. Default is ``None``.
+    preferred_element_type : dtype, optional
+        Accumulation and result dtype. Default is ``None``.
 
-    Returns:
-      array containing the result of the einstein summation.
+    Returns
+    -------
+    out : jax.Array or Quantity
+        Result of the Einstein summation. When operands carry physical
+        units, the output unit is derived from the contraction.
 
     Examples:
       The mechanics of ``einsum`` are perhaps best demonstrated by example. Here we

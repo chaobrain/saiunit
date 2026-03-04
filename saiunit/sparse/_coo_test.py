@@ -135,6 +135,15 @@ class TestCOO(unittest.TestCase):
                 )
             )
 
+    def test_with_data_preserves_sorted_flags(self):
+        coo = u.sparse.COO._eye(4, 4, 0)
+        self.assertTrue(coo._rows_sorted)
+        self.assertTrue(coo._cols_sorted)
+
+        coo_new = coo.with_data(coo.data)
+        self.assertTrue(coo_new._rows_sorted)
+        self.assertTrue(coo_new._cols_sorted)
+
     def test_add(self):
         for ux in [
             u.ms,
@@ -320,3 +329,62 @@ class TestCOO(unittest.TestCase):
 
             xs = bst.random.randn(20)
             ys = f(sp, xs)
+
+
+class TestCOODocstringExamples(unittest.TestCase):
+    """Tests verifying the docstring examples for COO and related functions."""
+
+    def test_coo_fromdense_basic(self):
+        """Verify COO.fromdense round-trips through todense."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
+        coo = susparse.COO.fromdense(dense)
+        self.assertEqual(coo.shape, (2, 3))
+        self.assertTrue(jnp.allclose(coo.todense(), dense))
+
+    def test_coo_fromdense_function(self):
+        """Verify coo_fromdense function round-trips through todense."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
+        coo = susparse.coo_fromdense(dense)
+        self.assertEqual(coo.shape, (2, 3))
+        self.assertTrue(jnp.allclose(coo.todense(), dense))
+
+    def test_coo_with_data(self):
+        """Verify COO.with_data replaces values but preserves structure."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0.], [0., 2.]])
+        coo = susparse.COO.fromdense(dense)
+        new_coo = coo.with_data(coo.data * 5)
+        expected = jnp.array([[5., 0.], [0., 10.]])
+        self.assertTrue(jnp.allclose(new_coo.todense(), expected))
+
+    def test_coo_todense_function(self):
+        """Verify the coo_todense standalone function."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[5., 0.], [0., 6.]])
+        coo = susparse.coo_fromdense(dense)
+        result = susparse.coo_todense(coo)
+        self.assertTrue(jnp.allclose(result, dense))
+
+    def test_coo_isinstance_sparse_matrix(self):
+        """Verify COO is a SparseMatrix instance."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0.], [0., 2.]])
+        coo = susparse.COO.fromdense(dense)
+        self.assertIsInstance(coo, susparse.SparseMatrix)

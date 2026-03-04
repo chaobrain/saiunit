@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import saiunit as bu
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 from saiunit.math._einops import einrearrange, einreduce, einrepeat, _enumerate_directions
 from saiunit.math._einops_parsing import EinopsError
 
@@ -27,6 +27,7 @@ from saiunit.math._einops_parsing import EinopsError
 class Array(bu.CustomArray):
     def __init__(self, value):
         self.data = value
+
 
 REDUCTIONS = ("min", "max", "sum", "mean", "prod")
 
@@ -518,12 +519,12 @@ class TestEinopsWithArrayCustomArray:
         self.array_2d = Array(jnp.array([[1, 2, 3.], [4, 5, 6]]))
         self.array_3d = Array(jnp.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]))
         self.array_4d = Array(jnp.arange(2 * 3 * 4 * 5).reshape(2, 3, 4, 5))
-        
+
         # Arrays with units
         self.voltage_array_2d = Array(jnp.array([[1.0, 2.0], [3.0, 4.0]])) * bu.mV
         self.current_array_2d = Array(jnp.array([[10.0, 20.0], [30.0, 40.0]])) * bu.mA
         self.dimensionless_array = Array(jnp.array([[1.0, 2.0], [3.0, 4.0]])) * bu.UNITLESS
-        
+
         # Complex shapes for advanced testing
         self.array_5d = Array(jnp.arange(2 * 3 * 4 * 5 * 6).reshape(2, 3, 4, 5, 6))
         self.array_large = Array(jnp.arange(120).reshape(2, 3, 4, 5))
@@ -534,16 +535,16 @@ class TestEinopsWithArrayCustomArray:
         result = einrearrange(self.array_2d, "h w -> w h")
         expected = jnp.array([[1, 4], [2, 5], [3, 6]])
         assert jnp.array_equal(result, expected)
-        
+
         # Test with parentheses grouping
         result_group = einrearrange(self.array_2d, "h w -> (h w)")
         expected_group = jnp.array([1, 2, 3, 4, 5, 6])
         assert jnp.array_equal(result_group, expected_group)
-        
+
         # Test identity transformation
         result_identity = einrearrange(self.array_2d, "h w -> h w")
         assert jnp.array_equal(result_identity, self.array_2d.data)
-        
+
         # Test with 3D Array
         result_3d = einrearrange(self.array_3d, "batch h w -> batch (h w)")
         expected_3d = jnp.array([[1, 2, 3, 4], [5, 6, 7, 8]])
@@ -555,7 +556,7 @@ class TestEinopsWithArrayCustomArray:
         for pattern in identity_patterns:
             result = einrearrange(self.array_5d, pattern)
             assert jnp.array_equal(result, self.array_5d.data), f"Failed for pattern: {pattern}"
-        
+
         # Test ellipsis equivalences
         for pattern1, pattern2 in equivalent_rearrange_patterns:
             arr = Array(jnp.arange(2 * 3 * 4 * 5 * 6).reshape(2, 3, 4, 5, 6))
@@ -571,7 +572,7 @@ class TestEinopsWithArrayCustomArray:
         assert result_voltage.unit == bu.mV
         expected_voltage = jnp.array([[1.0, 3.0], [2.0, 4.0]])
         assert jnp.allclose(result_voltage.mantissa, expected_voltage)
-        
+
         # Test with dimensionless array
         result_dimensionless = einrearrange(self.dimensionless_array, "h w -> (h w)")
         assert isinstance(result_dimensionless, jax.typing.ArrayLike)
@@ -584,18 +585,18 @@ class TestEinopsWithArrayCustomArray:
         result_sum = einreduce(self.array_2d, "h w -> h", reduction="sum")
         expected_sum = jnp.array([6, 15])  # [1+2+3, 4+5+6]
         assert jnp.array_equal(result_sum, expected_sum)
-        
+
         # Test mean reduction
         result_mean = einreduce(self.array_2d, "h w -> w", reduction="mean")
         expected_mean = jnp.array([2.5, 3.5, 4.5])  # [(1+4)/2, (2+5)/2, (3+6)/2]
         assert jnp.allclose(result_mean, expected_mean)
-        
+
         # Test min/max reduction
         result_min = einreduce(self.array_2d, "h w -> ", reduction="min")
         result_max = einreduce(self.array_2d, "h w -> ", reduction="max")
         assert result_min == 1
         assert result_max == 6
-        
+
         # Test with 3D Array
         result_3d = einreduce(self.array_3d, "batch h w -> batch", reduction="sum")
         expected_3d = jnp.array([10, 26])  # [1+2+3+4, 5+6+7+8]
@@ -609,7 +610,7 @@ class TestEinopsWithArrayCustomArray:
         assert result_voltage_sum.unit == bu.mV
         expected_voltage_sum = jnp.array([3.0, 7.0])  # [1+2, 3+4] mV
         assert jnp.allclose(result_voltage_sum.mantissa, expected_voltage_sum)
-        
+
         # Test mean reduction with current
         result_current_mean = einreduce(self.current_array_2d, "h w ->", reduction="mean")
         assert isinstance(result_current_mean, bu.Quantity)
@@ -623,12 +624,12 @@ class TestEinopsWithArrayCustomArray:
         result_repeat = einrepeat(self.array_1d, "w -> h w", h=3)
         expected_repeat = jnp.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])
         assert jnp.array_equal(result_repeat, expected_repeat)
-        
+
         # Test repeat with grouping
         result_group_repeat = einrepeat(self.array_2d, "h w -> (repeat h) w", repeat=2)
         expected_group_repeat = jnp.array([[1, 2, 3], [4, 5, 6], [1, 2, 3], [4, 5, 6]])
         assert jnp.array_equal(result_group_repeat, expected_group_repeat)
-        
+
         # Test repeat along new axis
         result_new_axis = einrepeat(self.array_1d, "w -> () w", **{})
         expected_new_axis = jnp.array([[1, 2, 3, 4, 5]])
@@ -649,7 +650,7 @@ class TestEinopsWithArrayCustomArray:
         original_size = self.array_4d.size
         rearranged = einrearrange(self.array_4d, "a b c d -> (a b) (c d)")
         assert rearranged.size == original_size
-        
+
         # Test that flatten and reshape are consistent
         flattened = einrearrange(self.array_4d, "a b c d -> (a b c d)")
         reshaped = einrearrange(flattened, "(a b c d) -> a b c d", a=2, b=3, c=4, d=5)
@@ -659,11 +660,11 @@ class TestEinopsWithArrayCustomArray:
         """Test einops with complex patterns using Array."""
         # Test complex rearrangement
         complex_array = Array(jnp.arange(2 * 3 * 4 * 5).reshape(2, 3, 4, 5))
-        
+
         # Test multi-axis grouping
         result_multi = einrearrange(complex_array, "a b c d -> (a c) (b d)")
         assert result_multi.shape == (8, 15)
-        
+
         # Test partial axis specification
         result_partial = einrearrange(complex_array, "a ... d -> d ... a")
         expected_shape = (5, 3, 4, 2)
@@ -672,15 +673,15 @@ class TestEinopsWithArrayCustomArray:
     def test_einops_reductions_all_types_array(self):
         """Test all reduction types with Array."""
         test_array = Array(jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
-        
+
         reductions_to_test = ["sum", "mean", "min", "max", "prod"]
-        
+
         for reduction in reductions_to_test:
             # Test complete reduction
             result_complete = einreduce(test_array, "h w ->", reduction=reduction)
             numpy_result = getattr(test_array.data, reduction)()
             assert jnp.allclose(result_complete, numpy_result), f"Failed for reduction: {reduction}"
-            
+
             # Test partial reduction
             result_partial = einreduce(test_array, "h w -> h", reduction=reduction)
             numpy_partial = getattr(test_array.data, reduction)(axis=1)
@@ -689,13 +690,13 @@ class TestEinopsWithArrayCustomArray:
     def test_einops_with_array_list_inputs(self):
         """Test einops with lists of Arrays."""
         # Create list of Arrays
-        array_list = [Array(jnp.array([i, i+1, i+2])) for i in range(3)]
-        
+        array_list = [Array(jnp.array([i, i + 1, i + 2])) for i in range(3)]
+
         # Test rearrange with list
         result_rearrange = einrearrange(array_list, "batch w -> w batch")
         expected_rearrange = jnp.array([[0, 1, 2], [1, 2, 3], [2, 3, 4]])
         assert jnp.array_equal(result_rearrange, expected_rearrange)
-        
+
         # Test reduce with list
         result_reduce = einreduce(array_list, "batch w -> w", reduction="sum")
         expected_reduce = jnp.array([3, 6, 9])  # [0+1+2, 1+2+3, 2+3+4]
@@ -705,12 +706,12 @@ class TestEinopsWithArrayCustomArray:
         """Test Array with anonymous axes patterns."""
         # Test with 1D case
         test_array = Array(jnp.array([1, 2, 3, 4]))
-        
+
         # Test anonymous axis creation
         result_anon = einrearrange(test_array, "w -> () w")
         expected_anon = jnp.array([[1, 2, 3, 4]])
         assert jnp.array_equal(result_anon, expected_anon)
-        
+
         # Test with more complex anonymous patterns
         test_2d = Array(jnp.array([[1, 2], [3, 4]]))
         result_anon_2d = einrearrange(test_2d, "h w -> h () w")
@@ -721,12 +722,12 @@ class TestEinopsWithArrayCustomArray:
         """Test Array with random permutation patterns."""
         # Test systematic permutations
         test_3d = Array(jnp.arange(8).reshape(2, 2, 2))
-        
+
         # Test simple permutation
         result_perm = einrearrange(test_3d, "a b c -> c a b")
         expected_perm_shape = (2, 2, 2)
         assert result_perm.shape == expected_perm_shape
-        
+
         # Verify element preservation
         assert test_3d.data[0, 1, 1] == result_perm[1, 0, 1]
         assert test_3d.data[1, 0, 0] == result_perm[0, 1, 0]
@@ -750,20 +751,20 @@ class TestEinopsWithArrayCustomArray:
         # Test basic dot product
         array_a = Array(jnp.array([1, 2, 3]))
         array_b = Array(jnp.array([4, 5, 6]))
-        
+
         result_dot = bu.math.einsum('i,i->', array_a, array_b)
         expected_dot = 32  # 1*4 + 2*5 + 3*6
         assert jnp.allclose(result_dot, expected_dot)
-        
+
         # Test outer product
         result_outer = bu.math.einsum('i,j->ij', array_a, array_b)
         expected_outer = jnp.outer(array_a.data, array_b.data)
         assert jnp.allclose(result_outer, expected_outer)
-        
+
         # Test with units
         voltage_1d = Array(jnp.array([1.0, 2.0, 3.0])) * bu.volt
         current_1d = Array(jnp.array([0.1, 0.2, 0.3])) * bu.ampere
-        
+
         power_result = bu.math.einsum('i,i->', voltage_1d, current_1d)
         expected_power = 1.4  # 1*0.1 + 2*0.2 + 3*0.3
         assert_quantity(power_result, expected_power, bu.watt)
@@ -775,15 +776,15 @@ class TestEinopsWithArrayCustomArray:
         assert hasattr(self.array_2d, 'data')
         assert hasattr(self.array_2d, 'shape')
         assert hasattr(self.array_2d, 'dtype')
-        
+
         # Test that einops operations work with CustomArray methods
         original_shape = self.array_2d.shape
         rearranged = einrearrange(self.array_2d, "h w -> w h")
-        
+
         # Verify original Array properties are intact
         assert self.array_2d.shape == original_shape
         assert self.array_2d.dtype == jnp.float32
-        
+
         # Test that we can chain operations
         double_rearranged = einrearrange(Array(rearranged), "w h -> (w h)")
         assert double_rearranged.shape == (6,)
@@ -795,7 +796,7 @@ class TestEinopsWithArrayCustomArray:
         result_small = einreduce(small_array, "h w ->", reduction="sum")
         expected_small = 10e-10
         assert jnp.allclose(result_small, expected_small, rtol=1e-9)
-        
+
         # Test with very large numbers
         large_array = Array(jnp.array([[1e10, 2e10], [3e10, 4e10]]))
         result_large = einreduce(large_array, "h w -> h", reduction="mean")
@@ -806,12 +807,12 @@ class TestEinopsWithArrayCustomArray:
         """Test einops boolean reductions with Array."""
         # Create boolean Array
         bool_array = Array(jnp.array([[True, False, True], [False, True, False]]))
-        
+
         # Test any reduction
         result_any = einreduce(bool_array, "h w -> h", reduction="any")
         expected_any = jnp.array([True, True])
         assert jnp.array_equal(result_any, expected_any)
-        
+
         # Test all reduction
         result_all = einreduce(bool_array, "h w -> w", reduction="all")
         expected_all = jnp.array([False, False, False])
@@ -822,12 +823,12 @@ class TestEinopsWithArrayCustomArray:
         # Compare Array results with direct numpy results
         numpy_array = np.arange(12).reshape(3, 4)
         array_wrapped = Array(jnp.array(numpy_array))
-        
+
         # Test rearrangement consistency
         numpy_result = einrearrange(numpy_array, "h w -> w h")
         array_result = einrearrange(array_wrapped, "h w -> w h")
         assert jnp.array_equal(numpy_result, array_result)
-        
+
         # Test reduction consistency
         numpy_sum = einreduce(numpy_array, "h w -> h", reduction="sum")
         array_sum = einreduce(array_wrapped, "h w -> h", reduction="sum")

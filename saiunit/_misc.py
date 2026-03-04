@@ -18,6 +18,11 @@ import jax
 
 CustomArray = None
 
+__all__ = [
+    'maybe_custom_array',
+    'maybe_custom_array_tree',
+]
+
 
 def set_module_as(module: str):
     """
@@ -57,31 +62,39 @@ def set_module_as(module: str):
 
 def maybe_custom_array(x):
     """
-    Convert a CustomArray to its underlying value if needed.
+    Unwrap a :class:`~saiunit.CustomArray` to its underlying data.
 
-    This function checks if the input is an instance of CustomArray and extracts
-    its value attribute if so. If the input is not a CustomArray, it returns the
-    input unchanged. CustomArray is lazily imported to avoid circular dependencies.
+    If ``x`` is a :class:`~saiunit.CustomArray` instance, return its
+    ``.data`` attribute. Otherwise return ``x`` unchanged. The
+    :class:`~saiunit.CustomArray` class is lazily imported to avoid
+    circular dependencies.
 
     Parameters
     ----------
     x : Any
-        The input value which may be a CustomArray instance.
+        The input value, which may be a :class:`~saiunit.CustomArray`.
 
     Returns
     -------
-    ArrayLikje
-        The underlying value if x is a CustomArray, otherwise x unchanged.
+    Any
+        ``x.data`` if ``x`` is a :class:`~saiunit.CustomArray`,
+        otherwise ``x`` unchanged.
 
     Examples
     --------
-    >>> from saiunit.custom_array import CustomArray
-    >>> regular_value = 5
-    >>> custom_arr = CustomArray(10)  # Assuming CustomArray wraps values
-    >>> maybe_custom_array(regular_value)
-    5
-    >>> maybe_custom_array(custom_arr)
-    10
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su._misc.maybe_custom_array(5)
+        5
+        >>> import numpy as np
+        >>> class MyArray(su.CustomArray):
+        ...     def __init__(self, value):
+        ...         self.data = value
+        >>> arr = MyArray(np.array([1, 2, 3]))
+        >>> su._misc.maybe_custom_array(arr)
+        array([1, 2, 3])
+
     """
     global CustomArray
     if CustomArray is None:
@@ -92,45 +105,44 @@ def maybe_custom_array(x):
         return x
 
 
-# Note: Fixed the typo in the function name from 'maybse_custom_array_tree' to 'maybe_custom_array_tree'
 def maybe_custom_array_tree(x):
     """
-    Apply maybe_custom_array recursively to all elements in a nested structure.
+    Recursively unwrap :class:`~saiunit.CustomArray` instances in a pytree.
 
-    This function traverses a potentially nested data structure (tree) and applies
-    maybe_custom_array to each element. CustomArray instances are treated as leaves
-    during the traversal. CustomArray is lazily imported to avoid circular dependencies.
+    Traverses a JAX-compatible pytree and replaces every
+    :class:`~saiunit.CustomArray` leaf with its ``.data`` attribute using
+    :func:`jax.tree.map`. Non-CustomArray leaves are left unchanged.
 
     Parameters
     ----------
     x : Any
-        The input structure which may contain CustomArray instances.
+        A pytree (nested lists, tuples, dicts, etc.) that may contain
+        :class:`~saiunit.CustomArray` instances as leaves.
 
     Returns
     -------
     Any
-        A new structure with the same shape as x, where each CustomArray has been
-        replaced with its underlying value.
+        A new pytree of the same structure with every
+        :class:`~saiunit.CustomArray` replaced by its underlying data.
 
     Examples
     --------
-    >>> from saiunit.custom_array import CustomArray
-    >>> import jax.numpy as jnp
-    >>> # Create a nested structure with CustomArray instances
-    >>> data = {
-    ...     'a': 1,
-    ...     'b': CustomArray(2),
-    ...     'c': [3, CustomArray(4), jnp.array([5, CustomArray(6)])]
-    ... }
-    >>> result = maybe_custom_array_tree(data)
-    >>> result['a']
-    1
-    >>> result['b']
-    2
-    >>> result['c'][1]
-    4
-    >>> result['c'][2][1]
-    6
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import numpy as np
+        >>> class MyArray(su.CustomArray):
+        ...     def __init__(self, value):
+        ...         self.data = value
+        >>> tree = [MyArray(np.array([1, 2])), 3, {'k': MyArray(np.array([4]))}]
+        >>> result = su._misc.maybe_custom_array_tree(tree)
+        >>> result[0]
+        array([1, 2])
+        >>> result[1]
+        3
+        >>> result[2]['k']
+        array([4])
+
     """
     global CustomArray
     if CustomArray is None:

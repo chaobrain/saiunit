@@ -20,12 +20,13 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.math as um
 from saiunit import meter, second, volt
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(u.CustomArray):
     def __init__(self, value):
         self.data = value
+
 
 fun_change_unit_unary = [
     'reciprocal', 'var', 'nanvar', 'cbrt', 'square', 'sqrt',
@@ -104,7 +105,7 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
             q = jnp.array(value) * unit
             result = bm_fun(q)
             expected = jnp_fun(jnp.array(value))
-            
+
             size = len(value)
             result_unit = unit ** size
             assert_quantity(result, expected, unit=result_unit)
@@ -246,16 +247,16 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
     def test_array_with_unit_change_functions(self):
         data = jnp.array([4.0, 9.0, 16.0]) * (meter ** 2)
         test_array = Array(data)
-        
+
         assert isinstance(test_array, u.CustomArray)
         assert hasattr(test_array, 'data')
         assert_quantity(test_array.data, jnp.array([4.0, 9.0, 16.0]), unit=meter ** 2)
-        
+
         sqrt_result = um.sqrt(test_array.data)
         sqrt_array = Array(sqrt_result)
         assert isinstance(sqrt_array, u.CustomArray)
         assert_quantity(sqrt_array.data, jnp.array([2.0, 3.0, 4.0]), unit=meter)
-        
+
         square_result = um.square(test_array.data)
         square_array = Array(square_result)
         assert isinstance(square_array, u.CustomArray)
@@ -264,18 +265,18 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
     def test_array_with_custom_array_binary_operations(self):
         data1 = jnp.array([2.0, 4.0, 6.0]) * meter
         data2 = jnp.array([1.0, 2.0, 3.0]) * second
-        
+
         array1 = Array(data1)
         array2 = Array(data2)
-        
+
         assert isinstance(array1, u.CustomArray)
         assert isinstance(array2, u.CustomArray)
-        
+
         multiply_result = um.multiply(array1.data, array2.data)
         multiply_array = Array(multiply_result)
         assert isinstance(multiply_array, u.CustomArray)
         assert_quantity(multiply_array.data, jnp.array([2.0, 8.0, 18.0]), unit=meter * second)
-        
+
         divide_result = um.divide(array1.data, array2.data)
         divide_array = Array(divide_result)
         assert isinstance(divide_array, u.CustomArray)
@@ -284,14 +285,14 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
     def test_array_with_power_operations(self):
         base_data = jnp.array([2.0, 3.0, 4.0]) * meter
         test_array = Array(base_data)
-        
+
         assert isinstance(test_array, u.CustomArray)
-        
+
         power_result = um.power(test_array.data, 3)
         power_array = Array(power_result)
         assert isinstance(power_array, u.CustomArray)
         assert_quantity(power_array.data, jnp.array([8.0, 27.0, 64.0]), unit=meter ** 3)
-        
+
         float_power_result = um.float_power(test_array.data, 2)
         float_power_array = Array(float_power_result)
         assert isinstance(float_power_array, u.CustomArray)
@@ -414,3 +415,75 @@ class TestFunChangeUnit(parameterized.TestCase):
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
             assert_quantity(result[0], expected[0], unit=unit1 / unit2)
             assert_quantity(result[1], expected[1], unit=unit1)
+
+
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+
+class TestDocstringExamples(parameterized.TestCase):
+    """Tests that mirror the docstring examples for key functions."""
+
+    def test_multiply_example(self):
+        """Verify the multiply docstring example."""
+        a = um.array([1.0, 2.0, 3.0]) * u.meter
+        b = um.array([4.0, 5.0, 6.0]) * u.second
+        result = um.multiply(a, b)
+        expected = jnp.array([4.0, 10.0, 18.0])
+        assert_quantity(result, expected, unit=u.meter * u.second)
+
+    def test_divide_example(self):
+        """Verify the divide docstring example."""
+        distance = um.array([10.0, 20.0]) * u.meter
+        time = um.array([2.0, 4.0]) * u.second
+        result = um.divide(distance, time)
+        expected = jnp.array([5.0, 5.0])
+        assert_quantity(result, expected, unit=u.meter / u.second)
+
+    def test_square_example(self):
+        """Verify the square docstring example."""
+        q = um.array([2.0, 3.0, 4.0]) * u.meter
+        result = um.square(q)
+        expected = jnp.array([4.0, 9.0, 16.0])
+        assert_quantity(result, expected, unit=u.meter ** 2)
+
+    def test_sqrt_example(self):
+        """Verify the sqrt docstring example."""
+        q = um.array([4.0, 9.0, 16.0]) * (u.meter ** 2)
+        result = um.sqrt(q)
+        expected = jnp.array([2.0, 3.0, 4.0])
+        assert_quantity(result, expected, unit=u.meter)
+
+    def test_dot_example(self):
+        """Verify the dot docstring example."""
+        a = um.array([1.0, 2.0, 3.0]) * u.meter
+        b = um.array([4.0, 5.0, 6.0]) * u.second
+        result = um.dot(a, b)
+        expected = jnp.array(32.0)
+        assert_quantity(result, expected, unit=u.meter * u.second)
+
+    def test_matmul_example(self):
+        """Verify the matmul docstring example."""
+        a = um.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
+        b = um.array([[5.0, 6.0], [7.0, 8.0]]) * u.second
+        result = um.matmul(a, b)
+        expected = jnp.matmul(jnp.array([[1.0, 2.0], [3.0, 4.0]]),
+                              jnp.array([[5.0, 6.0], [7.0, 8.0]]))
+        assert_quantity(result, expected, unit=u.meter * u.second)
+
+    def test_outer_example(self):
+        """Verify the outer docstring example."""
+        a = um.array([1.0, 2.0]) * u.meter
+        b = um.array([3.0, 4.0, 5.0]) * u.second
+        result = um.outer(a, b)
+        expected = jnp.outer(jnp.array([1.0, 2.0]), jnp.array([3.0, 4.0, 5.0]))
+        assert result.shape == (2, 3)
+        assert_quantity(result, expected, unit=u.meter * u.second)
+
+    def test_prod_example(self):
+        """Verify the prod docstring example."""
+        q = um.array([2.0, 3.0]) * u.meter
+        result = um.prod(q)
+        expected = jnp.prod(jnp.array([2.0, 3.0]))
+        assert_quantity(result, expected, unit=u.meter ** 2)

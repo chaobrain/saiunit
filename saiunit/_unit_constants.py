@@ -13,7 +13,60 @@
 # limitations under the License.
 # ==============================================================================
 
-from ._base import Unit
+"""
+Non-SI units commonly used in science and engineering.
+
+This module defines ``Unit`` objects for quantities outside the SI
+system, organized by category:
+
+Mass
+    ``metric_ton``, ``grain``, ``lb``/``pound``, ``slug``, ``oz``/``ounce``,
+    ``stone``, ``long_ton``, ``short_ton``, ``troy_ounce``, ``troy_pound``,
+    ``carat``, ``atomic_mass``/``u``/``um_u``
+
+Angle
+    ``degree``, ``arcmin``/``arcminute``, ``arcsec``/``arcsecond``
+
+Time
+    ``minute``, ``hour``, ``day``, ``week``, ``month``, ``year``,
+    ``julian_year``
+
+Length
+    ``inch``, ``foot``, ``yard``, ``mile``, ``mil``, ``point``, ``pica``,
+    ``survey_foot``, ``survey_mile``, ``nautical_mile``, ``fermi``,
+    ``angstrom``, ``micron``, ``astronomical_unit``/``au``, ``light_year``,
+    ``parsec``
+
+Pressure
+    ``atm``/``atmosphere``, ``bar``, ``mmHg``/``torr``, ``psi``
+
+Area
+    ``hectare``, ``acre``
+
+Volume
+    ``gallon``/``gallon_US``, ``gallon_imp``,
+    ``fluid_ounce``/``fluid_ounce_US``, ``fluid_ounce_imp``,
+    ``bbl``/``barrel``
+
+Speed
+    ``speed_unit``, ``kmh``, ``mph``, ``mach``/``speed_of_sound``, ``knot``
+
+Temperature
+    ``degree_Fahrenheit``
+
+Energy
+    ``eV``/``electron_volt``, ``calorie``/``calorie_th``, ``calorie_IT``,
+    ``erg``, ``Btu``/``Btu_IT``, ``Btu_th``, ``ton_TNT``
+
+Power
+    ``hp``/``horsepower``, ``kcal_per_h``
+
+Force
+    ``dyn``/``dyne``, ``lbf``/``pound_force``, ``kgf``/``kilogram_force``,
+    ``IMF``
+"""
+
+from ._base_unit import Unit
 from ._unit_common import joule, kilogram, second, meter, radian, pascal, meter2, meter3, kelvin, watt, newton
 from .math import pi
 

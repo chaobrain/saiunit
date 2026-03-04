@@ -346,5 +346,32 @@ def test_array_custom_array_compatibility_with_jacobian():
     assert u.math.allclose(result_array.data, direct_result)
 
 
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+def test_docstring_example_jacrev():
+    """Verify the jacrev docstring example produces correct results."""
+    def f(x):
+        return x ** 2
+
+    jac_fn = u.autograd.jacrev(f)
+    result = jac_fn(jnp.array(3.0) * u.ms)
+    assert u.math.allclose(result, jnp.array([6.0]) * u.ms)
+
+
+def test_docstring_example_jacrev_multi_arg():
+    """Verify the jacrev multi-argument docstring example."""
+    def g(x, y):
+        return x * y
+
+    jac_fn = u.autograd.jacrev(g, argnums=(0, 1))
+    x = jnp.array([3.0, 4.0]) * u.ohm
+    y = jnp.array([5.0, 6.0]) * u.mA
+    jac_x, jac_y = jac_fn(x, y)
+    assert u.math.allclose(jac_x, u.math.diag(y))
+    assert u.math.allclose(jac_y, u.math.diag(x))
+
+
 if __name__ == "__main__":
     pytest.main()

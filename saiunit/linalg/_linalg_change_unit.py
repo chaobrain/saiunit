@@ -20,7 +20,9 @@ from typing import Union
 import jax
 import jax.numpy as jnp
 
-from saiunit._base import Quantity, maybe_decimal, UNITLESS
+from saiunit._base_unit import UNITLESS
+from saiunit._base_getters import maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit.math._fun_change_unit import (
     dot, multi_dot, vdot, vecdot, inner,
@@ -55,62 +57,59 @@ def cholesky(
     upper: bool = False,
     symmetrize_input: bool = True,
 ) -> Union[Quantity, jax.Array]:
-    """Compute the Cholesky decomposition of a matrix.
+    """
+    Compute the Cholesky decomposition of a matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.cholesky`.
 
-    The Cholesky decomposition of a matrix `A` is:
+    The Cholesky decomposition of a positive-definite Hermitian matrix
+    `A` is:
 
     .. math::
 
-        A = U^HU
+        A = LL^H \\quad \\text{(lower)} \\qquad \\text{or} \\qquad A = U^HU \\quad \\text{(upper)}
 
-    or
-
-    .. math::
-
-        A = LL^H
-
-    where `U` is an upper-triangular matrix and `L` is a lower-triangular matrix, and
+    where `L` is lower-triangular, `U` is upper-triangular, and
     :math:`X^H` is the Hermitian transpose of `X`.
 
-    Args:
-        a: input quantity, representing a (batched) positive-definite hermitian matrix.
-            Must have shape ``(..., N, N)``.
-        upper: if True, compute the upper Cholesky decomposition `L`. if False
-            (default), compute the lower Cholesky decomposition `U`.
-        symmetrize_input: if True (default), symmetrize the input before decomposition
-            for improved autodiff behavior.
+    For a Quantity with unit *u*, the resulting unit is ``u ** 0.5``.
 
-    Returns:
-        quantity of shape ``(..., N, N)`` representing the Cholesky decomposition
-        of the input. If the input is not Hermitian positive-definite, The result
-        will contain NaN entries.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input quantity representing a (batched) positive-definite Hermitian
+        matrix. Must have shape ``(..., N, N)``.
+    upper : bool, optional
+        If ``True``, compute the upper Cholesky factor `U`. If ``False``
+        (default), compute the lower Cholesky factor `L`.
+    symmetrize_input : bool, optional
+        If ``True`` (default), symmetrize the input before decomposition
+        for improved autodiff behavior.
 
-    Examples:
-        A small real Hermitian positive-definite matrix:
+    Returns
+    -------
+    out : ndarray or Quantity
+        Cholesky factor of shape ``(..., N, N)``. The resulting unit is
+        ``a.unit ** 0.5``. If the input is not Hermitian positive-definite,
+        the result will contain NaN entries.
 
-        >>> import saiunit as u
+    See Also
+    --------
+    saiunit.linalg.inv : Compute the inverse of a matrix.
+    saiunit.linalg.solve : Solve a linear system of equations.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[2., 1.],
-        ...                [1., 2.]]) * u.meter2
-
-        Lower Cholesky factorization:
-
-        >>> u.linalg.cholesky(x)
-        ArrayImpl([[1.4142135 , 0.        ],
-                   [0.70710677, 1.2247449 ]], dtype=float32) * meter2 ** 0.5
-
-        Upper Cholesky factorization:
-
-        >>> u.linalg.cholesky(x, upper=True)
-        ArrayImpl([[1.4142135 , 0.70710677],
-                   [0.        , 1.2247449 ]], dtype=float32) * meter2 ** 0.5
-
-        Reconstructing ``x`` from its factorization:
-
-        >>> L = u.linalg.cholesky(x)
-        >>> u.math.allclose(x, L @ L.T)
+        ...                [1., 2.]]) * su.meter2
+        >>> L = su.linalg.cholesky(x)
+        >>> L.unit
+        Unit("m")
+        >>> su.math.allclose(x, L @ L.T)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_unary(jnp.linalg.cholesky,
@@ -126,38 +125,55 @@ def solve(
     a: Union[jax.typing.ArrayLike, Quantity],
     b: Union[jax.typing.ArrayLike, Quantity],
 ) -> Union[jax.typing.ArrayLike, Quantity]:
-    """Solve a linear system of equations
+    """
+    Solve a linear system of equations.
 
     SaiUnit implementation of :func:`numpy.linalg.solve`.
 
     This solves a (batched) linear system of equations ``a @ x = b``
-    for ``x`` given ``a`` and ``b``.
+    for ``x`` given ``a`` and ``b``. The resulting unit is
+    ``b.unit / a.unit``.
 
-    Args:
-        a: quantity of shape ``(..., N, N)``.
-        b: quantity of shape ``(N,)`` (for 1-dimensional right-hand-side) or
-            ``(..., N, M)`` (for batched 2-dimensional right-hand-side).
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Coefficient matrix of shape ``(..., N, N)``.
+    b : array_like or Quantity
+        Right-hand side of shape ``(N,)`` (for a 1-dimensional right-hand
+        side) or ``(..., N, M)`` (for batched 2-dimensional right-hand side).
 
-    Returns:
-        A quantity containing the result of the linear solve. The result has shape ``(..., N)``
-        if ``b`` is of shape ``(N,)``, and has shape ``(..., N, M)`` otherwise.
+    Returns
+    -------
+    x : ndarray or Quantity
+        Solution array. The result has shape ``(..., N)`` if ``b`` is of
+        shape ``(N,)``, and shape ``(..., N, M)`` otherwise. The resulting
+        unit is ``b.unit / a.unit``.
 
-    Examples:
-        A simple 3x3 linear system:
+    See Also
+    --------
+    saiunit.linalg.inv : Compute the inverse of a matrix.
+    saiunit.linalg.lstsq : Least-squares solution to a linear equation.
+    saiunit.linalg.tensorsolve : Solve the tensor equation ``a x = b``.
 
-        >>> import saiunit as u
+    Notes
+    -----
+    Prefer ``solve`` over explicitly computing ``inv(a) @ b`` for better
+    numerical precision and performance.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
         >>> A = jnp.array([[1., 2., 3.],
         ...                [2., 4., 2.],
-        ...                [3., 2., 1.]]) * u.meter
-        >>> b = jnp.array([14., 16., 10.]) * u.second
-        >>> x = u.linalg.solve(A, b)
-        >>> x
-        ArrayImpl([1., 2., 3.], dtype=float32) * second / meter
-
-        Confirming that the result solves the system:
-
-        >>> u.math.allclose(A @ x, b)
+        ...                [3., 2., 1.]]) * su.meter
+        >>> b = jnp.array([14., 16., 10.]) * su.second
+        >>> x = su.linalg.solve(A, b)
+        >>> x.unit
+        Unit("s / m")
+        >>> su.math.allclose(A @ x, b)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_binary(jnp.linalg.solve,
@@ -173,35 +189,50 @@ def tensorsolve(
     b: Union[jax.typing.ArrayLike, Quantity],
     axes: tuple[int, ...] | None = None
 ) -> Union[jax.typing.ArrayLike, Quantity]:
-    """Solve the tensor equation a x = b for x.
+    """
+    Solve the tensor equation ``a x = b`` for ``x``.
 
     SaiUnit implementation of :func:`numpy.linalg.tensorsolve`.
 
-    Args:
-        a: input quantity. After reordering via ``axes`` (see below), shape must be
-          ``(*b.shape, *x.shape)``.
-        b: right-hand-side quantity.
-        axes: optional tuple specifying axes of ``a`` that should be moved to the end
+    The resulting unit is ``b.unit / a.unit``.
 
-    Returns:
-        qauntity x such that after reordering of axes of ``a``, ``tensordot(a, x, x.ndim)``
-        is equivalent to ``b``.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Coefficient tensor. After reordering via ``axes`` (see below),
+        shape must be ``(*b.shape, *x.shape)``.
+    b : array_like or Quantity
+        Right-hand side tensor.
+    axes : tuple of int or None, optional
+        Axes of ``a`` that should be moved to the end before solving.
 
-    Examples:
-        >>> import saiunit as u
+    Returns
+    -------
+    x : ndarray or Quantity
+        Solution ``x`` such that after reordering of axes of ``a``,
+        ``tensordot(a, x, x.ndim)`` is equivalent to ``b``. The
+        resulting unit is ``b.unit / a.unit``.
+
+    See Also
+    --------
+    saiunit.linalg.solve : Solve a linear system of equations.
+    saiunit.linalg.tensorinv : Compute the tensor inverse.
+    saiunit.linalg.tensordot : Compute tensor dot product.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax
         >>> key1, key2 = jax.random.split(jax.random.key(8675309))
-        >>> a = jax.random.normal(key1, shape=(2, 2, 4)) * u.meter
-        >>> b = jax.random.normal(key2, shape=(2, 2)) * u.second
-        >>> x = u.linalg.tensorsolve(a, b)
+        >>> a = jax.random.normal(key1, shape=(2, 2, 4)) * su.meter
+        >>> b = jax.random.normal(key2, shape=(2, 2)) * su.second
+        >>> x = su.linalg.tensorsolve(a, b)
         >>> x.shape
         (4,)
-
-        Now show that ``x`` can be used to reconstruct ``b`` using
-        :func:`~jax.numpy.linalg.tensordot`:
-
-        >>> b_reconstructed = u.linalg.tensordot(a, x, axes=x.ndim)
-        >>> u.math.allclose(b, b_reconstructed)
+        >>> b_reconstructed = su.linalg.tensordot(a, x, axes=x.ndim)
+        >>> su.math.allclose(b, b_reconstructed)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_binary(jnp.linalg.tensorsolve,
@@ -225,34 +256,54 @@ def lstsq(
 
     SaiUnit implementation of :func:`numpy.linalg.lstsq`.
 
-    Args:
-        a: quantity of shape ``(M, N)`` representing the coefficient matrix.
-        b: quantity of shape ``(M,)`` or ``(M, K)`` representing the right-hand side.
-        rcond: Cut-off ratio for small singular values. Singular values smaller than
-            ``rcond * largest_singular_value`` are treated as zero. If None (default),
-            the optimal value will be used to reduce floating point errors.
-        numpy_resid: If True, compute and return residuals in the same way as NumPy's
-            `linalg.lstsq`. This is necessary if you want to precisely replicate NumPy's
-            behavior. If False (default), a more efficient method is used to compute residuals.
+    Finds ``x`` that minimizes ``||a @ x - b||``. The resulting unit of
+    ``x`` is ``b.unit / a.unit``.
 
-    Returns:
-        Tuple of quantites ``(x, resid, rank, s)`` where
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Coefficient matrix of shape ``(M, N)``.
+    b : array_like or Quantity
+        Right-hand side of shape ``(M,)`` or ``(M, K)``.
+    rcond : float or None, optional
+        Cut-off ratio for small singular values. Singular values smaller
+        than ``rcond * largest_singular_value`` are treated as zero. If
+        ``None`` (default), the optimal value is used to reduce floating
+        point errors.
+    numpy_resid : bool, optional
+        If ``True``, compute and return residuals in the same way as
+        NumPy's ``linalg.lstsq``. If ``False`` (default), a more
+        efficient method is used to compute residuals.
 
-        - ``x`` is a shape ``(N,)`` or ``(N, K)`` quantity containing the least-squares solution.
-        - ``resid`` is the sum of squared residual of shape ``()`` or ``(K,)``.
-        - ``rank`` is the rank of the matrix ``a``.
-        - ``s`` is the singular values of the matrix ``a``.
+    Returns
+    -------
+    x : ndarray or Quantity
+        Least-squares solution of shape ``(N,)`` or ``(N, K)``. The
+        resulting unit is ``b.unit / a.unit``.
+    residuals : ndarray
+        Sum of squared residuals of shape ``()`` or ``(K,)``.
+    rank : ndarray
+        Effective rank of ``a``.
+    s : ndarray
+        Singular values of ``a``.
 
-    Examples:
-        >>> import saiunit as u
+    See Also
+    --------
+    saiunit.linalg.solve : Solve a square linear system exactly.
+    saiunit.linalg.pinv : Compute the Moore-Penrose pseudo-inverse.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1, 2],
-        ...                [3, 4]]) * u.second
-        >>> b = jnp.array([5, 6]) * u.meter
-        >>> x, _, _, _ = u.linalg.lstsq(a, b)
-        >>> with jnp.printoptions(precision=3):
-        ...   print(x)
-        ArrayImpl([-4. ,  4.5], dtype=float32) * meter / second
+        ...                [3, 4]]) * su.second
+        >>> b = jnp.array([5, 6]) * su.meter
+        >>> x, residuals, rank, s = su.linalg.lstsq(a, b)
+        >>> x.unit
+        Unit("m / s")
     """
     a = maybe_custom_array(a)
     b = maybe_custom_array(b)
@@ -274,52 +325,49 @@ def lstsq(
 def inv(
     a: Union[jax.typing.ArrayLike, Quantity],
 ) -> Union[jax.typing.ArrayLike, Quantity]:
-    """Return the inverse of a square matrix
+    """
+    Return the inverse of a square matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.inv`.
 
-    Args:
-        a: quantity of shape ``(..., N, N)`` specifying square array(s) to be inverted.
+    The resulting unit is ``a.unit ** -1``.
 
-    Returns:
-        Quantity of shape ``(..., N, N)`` containing the inverse of the input.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Square input of shape ``(..., N, N)`` specifying square matrix(es)
+        to be inverted.
 
-    Notes:
-        In most cases, explicitly computing the inverse of a matrix is ill-advised. For
-        example, to compute ``x = inv(A) @ b``, it is more performant and numerically
-        precise to use a direct solve, such as :func:`jax.scipy.linalg.solve`.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Inverse matrix of shape ``(..., N, N)``. The resulting unit is
+        ``a.unit ** -1``.
 
-    Examples:
-        Compute the inverse of a 3x3 matrix
+    See Also
+    --------
+    saiunit.linalg.solve : Solve a linear system (preferred over explicit inverse).
+    saiunit.linalg.pinv : Compute the Moore-Penrose pseudo-inverse.
 
-        >>> import saiunit as u
+    Notes
+    -----
+    In most cases, explicitly computing the inverse of a matrix is
+    ill-advised. For example, to compute ``x = inv(A) @ b``, it is more
+    performant and numerically precise to use a direct solve, such as
+    :func:`saiunit.linalg.solve`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1., 2., 3.],
         ...                [2., 4., 2.],
-        ...                [3., 2., 1.]]) * u.second
-        >>> a_inv = u.linalg.inv(a)
-        >>> a_inv  # doctest: +SKIP
-        ArrayImpl([[ 0.        , -0.25      ,  0.5       ],
-                   [-0.25      ,  0.5       , -0.25000003],
-                   [ 0.5       , -0.25      ,  0.        ]], dtype=float32) * becquerel
-
-        Check that multiplying with the inverse gives the identity:
-
-        >>> u.math.allclose(a @ a_inv, jnp.eye(3), atol=1E-5)
+        ...                [3., 2., 1.]]) * su.second
+        >>> a_inv = su.linalg.inv(a)
+        >>> su.math.allclose(a @ a_inv, jnp.eye(3), atol=1e-5)
         Array(True, dtype=bool)
-
-        Multiply the inverse by a vector ``b``, to find a solution to ``a @ x = b``
-
-        >>> b = jnp.array([1., 4., 2.])
-        >>> a_inv @ b
-        Array([ 0.  ,  1.25, -0.5 ], dtype=float32)
-
-        Note, however, that explicitly computing the inverse in such a case can lead
-        to poor performance and loss of precision as the size of the problem grows.
-        Instead, you should use a direct solver like :func:`jax.numpy.linalg.solve`:
-
-        >>> u.linalg.solve(a, b)
-        ArrayImpl([ 0.  ,  1.25, -0.5 ], dtype=float32) * becquerel
     """
     return _fun_change_unit_unary(jnp.linalg.inv,
                                   lambda u: u ** -1,
@@ -335,40 +383,53 @@ def pinv(
     *,
     rcond: jax.typing.ArrayLike | None = None,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
-    """Compute the (Moore-Penrose) pseudo-inverse of a matrix.
+    """
+    Compute the Moore-Penrose pseudo-inverse of a matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.pinv`.
 
-    Args:
-        a: quantity of shape ``(..., M, N)`` containing matrices to pseudo-invert.
-        rtol: float or array_like of shape ``a.shape[:-2]``. Specifies the cutoff
-            for small singular values.of shape ``(...,)``.
-            Cutoff for small singular values; singular values smaller
-            ``rtol * largest_singular_value`` are treated as zero. The default is
-            determined based on the floating point precision of the dtype.
-        hermitian: if True, then the input is assumed to be Hermitian, and a more
-            efficient algorithm is used (default: False)
-        rcond: deprecated alias of the ``rtol`` argument. Will result in a
-            :class:`DeprecationWarning` if used.
+    The resulting unit is ``a.unit ** -1``.
 
-    Returns:
-        A quantity of shape ``(..., N, M)`` containing the pseudo-inverse of ``a``.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input matrix of shape ``(..., M, N)`` to pseudo-invert.
+    rtol : float or array_like, optional
+        Cutoff for small singular values of shape ``a.shape[:-2]``.
+        Singular values smaller than ``rtol * largest_singular_value``
+        are treated as zero. The default is determined based on the
+        floating point precision of the dtype.
+    hermitian : bool, optional
+        If ``True``, the input is assumed to be Hermitian, and a more
+        efficient algorithm is used (default: ``False``).
+    rcond : float or None, optional
+        Deprecated alias for ``rtol``. Will result in a
+        :class:`DeprecationWarning` if used.
 
-    Examples:
-        >>> import saiunit as u
+    Returns
+    -------
+    out : ndarray or Quantity
+        Pseudo-inverse of shape ``(..., N, M)``. The resulting unit is
+        ``a.unit ** -1``.
+
+    See Also
+    --------
+    saiunit.linalg.inv : Compute the inverse of a square matrix.
+    saiunit.linalg.lstsq : Least-squares solution to a linear equation.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1, 2],
         ...                [3, 4],
-        ...                [5, 6]]) * u.second
-        >>> a_pinv = u.linalg.pinv(a)
-        >>> a_pinv  # doctest: +SKIP
-        ArrayImpl([[-1.33333182, -0.33333185,  0.6666652 ],
-                   [ 1.08333182,  0.33333206, -0.41666538]], dtype=float32) * becquerel
-
-        The pseudo-inverse operates as a multiplicative inverse so long as the
-        output is not rank-deficient:
-
-        >>> u.math.allclose(a_pinv @ a, jnp.eye(2), atol=1E-4)
+        ...                [5, 6]]) * su.second
+        >>> a_pinv = su.linalg.pinv(a)
+        >>> a_pinv.shape
+        (2, 3)
+        >>> su.math.allclose(a_pinv @ a, jnp.eye(2), atol=1e-4)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_unary(jnp.linalg.pinv,
@@ -385,31 +446,52 @@ def tensorinv(
     a: Union[jax.typing.ArrayLike, Quantity],
     ind: int = 2,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
-    """Compute the tensor inverse of an array.
+    """
+    Compute the tensor inverse of an array.
 
     SaiUnit implementation of :func:`numpy.linalg.tensorinv`.
 
-    This computes the inverse of the :func:`~jax.numpy.linalg.tensordot`
-    operation with the same ``ind`` value.
+    This computes the inverse of the :func:`~saiunit.linalg.tensordot`
+    operation with the same ``ind`` value. The resulting unit is
+    ``a.unit ** -1``.
 
-    Args:
-        a: quantity to be inverted. Must have ``prod(a.shape[:ind]) == prod(a.shape[ind:])``
-        ind: positive integer specifying the number of indices in the tensor product.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Quantity to be inverted. Must satisfy
+        ``prod(a.shape[:ind]) == prod(a.shape[ind:])``.
+    ind : int, optional
+        Positive integer specifying the number of indices in the tensor
+        product (default: 2).
 
-    Returns:
-        quantity of shape ``(*a.shape[ind:], *a.shape[:ind])`` containing the
-        tensor inverse of ``a``.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Tensor inverse of shape ``(*a.shape[ind:], *a.shape[:ind])``.
+        The resulting unit is ``a.unit ** -1``.
 
-    Examples:
-        >>> import saiunit as u
+    See Also
+    --------
+    saiunit.linalg.tensorsolve : Solve the tensor equation ``a x = b``.
+    saiunit.linalg.tensordot : Compute tensor dot product.
+    saiunit.linalg.inv : Compute the inverse of a square matrix.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax
+        >>> import jax.numpy as jnp
         >>> key = jax.random.key(1337)
-        >>> x = jax.random.normal(key, shape=(2, 2, 4)) * u.second
-        >>> xinv = u.linalg.tensorinv(x, 2)
-        >>> xinv_x = u.linalg.tensordot(xinv, x, axes=2)
-        >>> u.math.allclose(xinv_x, jnp.eye(4), atol=1E-4)
+        >>> x = jax.random.normal(key, shape=(2, 2, 4)) * su.second
+        >>> xinv = su.linalg.tensorinv(x, 2)
+        >>> xinv.shape
+        (4, 2, 2)
+        >>> xinv_x = su.linalg.tensordot(xinv, x, axes=2)
+        >>> su.math.allclose(xinv_x, jnp.eye(4), atol=1e-4)
         Array(True, dtype=bool)
-        """
+    """
     return _fun_change_unit_unary(jnp.linalg.tensorinv,
                                   lambda u: u ** -1,
                                   a,

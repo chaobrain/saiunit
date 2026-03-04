@@ -18,7 +18,7 @@ from typing import Union, Sequence
 import jax
 from jax.numpy import fft as jnpfft
 
-from saiunit._base import Quantity
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit.math._fun_keep_unit import _fun_keep_unit_unary
 
@@ -37,40 +37,39 @@ def fftshift(
     x: Union[Quantity, jax.typing.ArrayLike],
     axes: None | int | Sequence[int] = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Shift zero-frequency fft component to the center of the spectrum.
+    """Shift zero-frequency FFT component to the center of the spectrum.
 
-    saiunit implementation of :func:`numpy.fft.fftshift`.
+    Unit-aware implementation of :func:`numpy.fft.fftshift`.  The unit of
+    the input is preserved in the output.
 
-    Args:
-        x: N-dimensional quantity or array of frequencies.
-        axes: optional integer or sequence of integers specifying which axes to
-            shift. If None (default), then shift all axes.
+    Parameters
+    ----------
+    x : Quantity or array_like
+        N-dimensional input whose zero-frequency components should be
+        shifted to the centre.
+    axes : None, int, or sequence of int, optional
+        Axes over which to shift.  If *None* (default), all axes are
+        shifted.
 
-    Returns:
-        A shifted copy of ``x``.
+    Returns
+    -------
+    Quantity or array_like
+        A shifted copy of ``x`` with the same unit.
 
-    See also:
-        - :func:`saiunit.fft.ifftshift`: inverse of ``fftshift``.
-        - :func:`saiunit.fft.fftfreq`: generate FFT frequencies.
+    See Also
+    --------
+    saiunit.fft.ifftshift : Inverse of ``fftshift``.
+    saiunit.fft.fftfreq : Return sample frequencies for the DFT.
 
-    Examples:
-        Generate FFT frequencies with :func:`~saiunit.fft.fftfreq`:
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
-        >>> freq = u.fft.fftfreq(4, 1 * u.second)
-        >>> freq
-        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
-
-        Use ``fftshift`` to shift the zero-frequency entry to the middle of the array:
-
-        >>> shifted_freq = u.fft.fftshift(freq)
-        >>> shifted_freq
-        ArrayImpl([-0.5 , -0.25,  0.  ,  0.25], dtype=float32) * hertz
-
-        Unshift with :func:`~saiunit.fft.ifftshift` to recover the original frequencies:
-
-        >>> u.fft.ifftshift(shifted_freq)
-        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
+        >>> freq = sufft.fftfreq(4, 1.0 * su.second)
+        >>> shifted = sufft.fftshift(freq)
+        >>> recovered = sufft.ifftshift(shifted)
     """
     return _fun_keep_unit_unary(jnpfft.fftshift, x, axes=axes)
 
@@ -80,40 +79,37 @@ def ifftshift(
     x: Union[Quantity, jax.typing.ArrayLike],
     axes: None | int | Sequence[int] = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """The inverse of :func:`jax.numpy.fft.fftshift`.
+    """Inverse of :func:`saiunit.fft.fftshift`.
 
-    saiunit implementation of :func:`numpy.fft.ifftshift`.
+    Unit-aware implementation of :func:`numpy.fft.ifftshift`.  The unit of
+    the input is preserved in the output.
 
-    Args:
-        x: N-dimensional quantity or array of frequencies.
-        axes: optional integer or sequence of integers specifying which axes to
-            shift. If None (default), then shift all axes.
+    Parameters
+    ----------
+    x : Quantity or array_like
+        N-dimensional input whose components should be inverse-shifted.
+    axes : None, int, or sequence of int, optional
+        Axes over which to shift.  If *None* (default), all axes are
+        shifted.
 
-    Returns:
-        A shifted copy of ``x``.
+    Returns
+    -------
+    Quantity or array_like
+        An inverse-shifted copy of ``x`` with the same unit.
 
-    See also:
-        - :func:`saiunit.fft.fftshift`: inverse of ``ifftshift``.
-        - :func:`saiunit.fft.fftfreq`: generate FFT frequencies.
+    See Also
+    --------
+    saiunit.fft.fftshift : Shift zero-frequency component to the centre.
+    saiunit.fft.fftfreq : Return sample frequencies for the DFT.
 
-    Examples:
-        Generate FFT frequencies with :func:`~saiunit.fft.fftfreq`:
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
-        >>> freq = u.fft.fftfreq(4, 1 * u.second)
-        >>> freq
-        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
-
-        Use :func:`~saiunit.fft.fftshift` to shift the zero-frequency entry
-        to the middle of the array:
-
-        >>> shifted_freq = u.fft.fftshift(freq)
-        >>> shifted_freq
-        ArrayImpl([-0.5 , -0.25,  0.  ,  0.25], dtype=float32) * hertz
-
-        Unshift with ``ifftshift`` to recover the original frequencies:
-
-        >>> u.fft.ifftshift(shifted_freq)
-        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
+        >>> freq = sufft.fftfreq(4, 1.0 * su.second)
+        >>> shifted = sufft.fftshift(freq)
+        >>> recovered = sufft.ifftshift(shifted)
     """
     return _fun_keep_unit_unary(jnpfft.ifftshift, x, axes=axes)

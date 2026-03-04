@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Unit-aware automatic differentiation.
+
+Provides ``grad``, ``value_and_grad``, ``jacobian`` (``jacrev``/``jacfwd``),
+``hessian``, and ``vector_grad`` that correctly track physical units
+through JAX's autodiff transformations.
+"""
 
 __all__ = [
     'value_and_grad',

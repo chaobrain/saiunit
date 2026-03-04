@@ -21,7 +21,7 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.lax as ulax
 from saiunit import second, meter
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(u.CustomArray):
@@ -133,3 +133,53 @@ class TestLaxMisc(parameterized.TestCase):
 
         for result, expected in zip(results, expecteds):
             self.assertTrue(result == expected)
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_reduce():
+    """Verify the docstring examples for ``reduce``."""
+    import saiunit as su
+    import saiunit.lax as sulax
+
+    # Example 1: plain array with lax.add
+    x = jnp.array([1.0, 2.0, 3.0])
+    result = sulax.reduce(x, jnp.float32(0), lax.add, [0])
+    assert float(result) == 6.0
+
+    # Example 2: Quantity input (unit is stripped, mantissa reduced)
+    q = jnp.array([1.0, 2.0, 3.0]) * su.meter
+    result_q = sulax.reduce(q, jnp.float32(0) * su.meter, lax.add, [0])
+    assert float(result_q) == 6.0
+
+
+def test_docstring_example_reduce_precision():
+    """Verify the docstring examples for ``reduce_precision``."""
+    import saiunit as su
+    import saiunit.lax as sulax
+
+    # Example 1: plain array
+    x = jnp.array([1.123456, 2.123456], dtype=jnp.float32)
+    result = sulax.reduce_precision(x, exponent_bits=5, mantissa_bits=10)
+    expected = lax.reduce_precision(x, exponent_bits=5, mantissa_bits=10)
+    assert jnp.allclose(result, expected)
+
+    # Example 2: Quantity input (mantissa extracted, unit stripped)
+    q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * su.meter
+    result_q = sulax.reduce_precision(q, exponent_bits=5, mantissa_bits=10)
+    assert jnp.allclose(result_q, expected)
+
+
+def test_docstring_example_broadcast_shapes():
+    """Verify the docstring examples for ``broadcast_shapes``."""
+    import saiunit.lax as sulax
+
+    # Example 1: basic broadcasting
+    assert sulax.broadcast_shapes((2, 3), (3,)) == (2, 3)
+
+    # Example 2: dimension expansion
+    assert sulax.broadcast_shapes((1, 5), (3, 1)) == (3, 5)
+
+    # Example 3: three shapes
+    assert sulax.broadcast_shapes((1,), (3, 1), (1, 1, 5)) == (1, 3, 5)

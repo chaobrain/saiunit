@@ -14,10 +14,21 @@
 # ==============================================================================
 
 
-from saiunit._base import (is_dimensionless, is_unitless, get_dim, get_unit, get_mantissa, get_magnitude,
-                           display_in_unit, maybe_decimal, check_dims, check_units,
-                           fail_for_dimension_mismatch, fail_for_unit_mismatch,
-                           assert_quantity, get_or_create_dimension)
+from saiunit._base_decorators import check_dims, check_units
+from saiunit._base_dimension import get_or_create_dimension
+from saiunit._base_getters import (
+    assert_quantity,
+    display_in_unit,
+    fail_for_dimension_mismatch,
+    fail_for_unit_mismatch,
+    get_dim,
+    get_magnitude,
+    get_mantissa,
+    get_unit,
+    is_dimensionless,
+    is_unitless,
+    maybe_decimal,
+)
 
 __all__ = [
     'is_dimensionless',

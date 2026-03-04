@@ -24,10 +24,16 @@ import jax.numpy as jnp
 import numpy as np
 from jax import lax
 from jax import tree_util
-from jax._src.lax.lax import _const
 from jax.experimental.sparse import JAXSparse, coo_todense_p, coo_fromdense_p, coo_matmat_p, coo_matvec_p
 
-from saiunit._base import Quantity, split_mantissa_unit, maybe_decimal, get_mantissa, get_unit
+from saiunit._base_getters import (
+    get_mantissa,
+    get_unit,
+    maybe_decimal,
+    split_mantissa_unit,
+)
+from saiunit._base_quantity import Quantity
+from saiunit._compatible_import import concrete_or_error
 from saiunit._sparse_base import SparseMatrix
 from saiunit.math._fun_array_creation import asarray
 from saiunit.math._fun_keep_unit import promote_dtypes
@@ -40,6 +46,10 @@ Dtype = Any
 Shape = tuple[int, ...]
 
 
+def _const_like(x: jax.Array, value: int) -> jax.Array:
+    return jnp.asarray(value, dtype=x.dtype)
+
+
 class COOInfo(NamedTuple):
     shape: Shape
     rows_sorted: bool = False
@@ -48,15 +58,69 @@ class COOInfo(NamedTuple):
 
 @tree_util.register_pytree_node_class
 class COO(SparseMatrix):
-    """Experimental COO matrix implemented in JAX.
+    """
+    Unit-aware Coordinate (COO) sparse matrix.
 
-    Note: this class has minimal compatibility with JAX transforms such as
-    grad and autodiff, and offers very little functionality. In general you
-    should prefer :class:`jax.experimental.sparse.BCOO`.
+    Stores a 2-D sparse matrix in COO (coordinate) format with optional
+    physical-unit support via :class:`~saiunit.Quantity`.
 
-    Additionally, there are known failures in the case that `nse` is larger
-    than the true number of nonzeros in the represented matrix. This situation
-    is better handled in BCOO.
+    Parameters
+    ----------
+    args : tuple of (data, row, col)
+        ``data`` contains the non-zero values (``jax.Array`` or ``Quantity``),
+        ``row`` contains the row indices, and ``col`` contains the column
+        indices.
+    shape : tuple of int
+        The ``(nrows, ncols)`` shape of the matrix.
+    rows_sorted : bool, optional
+        Whether the row indices are sorted. Default is ``False``.
+    cols_sorted : bool, optional
+        Whether the column indices are sorted. Default is ``False``.
+
+    Attributes
+    ----------
+    data : jax.Array or Quantity
+        Non-zero values of shape ``(nse,)``.
+    row : jax.Array
+        Row indices of shape ``(nse,)``.
+    col : jax.Array
+        Column indices of shape ``(nse,)``.
+    shape : tuple of int
+        Shape of the matrix ``(nrows, ncols)``.
+    nse : int
+        Number of stored elements.
+    dtype : dtype
+        Data type of the stored values.
+
+    See Also
+    --------
+    CSR : Unit-aware Compressed Sparse Row matrix.
+    CSC : Unit-aware Compressed Sparse Column matrix.
+    coo_fromdense : Create a COO matrix from a dense array.
+    coo_todense : Convert a COO matrix to a dense array.
+
+    Notes
+    -----
+    This class has minimal compatibility with JAX transforms such as
+    ``grad`` and ``jit``, and offers limited functionality compared to
+    :class:`jax.experimental.sparse.BCOO`. Additionally, there are known
+    failures when ``nse`` is larger than the true number of non-zeros in the
+    represented matrix.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
+        >>> coo = susparse.COO.fromdense(dense)
+        >>> coo.shape
+        (2, 3)
+        >>> coo.todense()
+        Array([[1., 0., 2.],
+               [0., 0., 3.]], dtype=float32)
     """
     data: jax.Array
     row: jax.Array
@@ -160,8 +224,8 @@ class COO(SparseMatrix):
 
         data = jnp.ones(diag_size, dtype=dtype)
         idx = jnp.arange(diag_size, dtype=index_dtype)
-        zero = _const(idx, 0)
-        k = _const(idx, k)
+        zero = _const_like(idx, 0)
+        k = _const_like(idx, k)
         row = lax.sub(idx, lax.cond(k >= 0, lambda: zero, lambda: k))
         col = lax.add(idx, lax.cond(k <= 0, lambda: zero, lambda: k))
         return cls(
@@ -172,12 +236,67 @@ class COO(SparseMatrix):
         )
 
     def with_data(self, data: jax.Array | Quantity) -> COO:
+        """
+        Create a new COO matrix with the same sparsity structure but different data.
+
+        Parameters
+        ----------
+        data : jax.Array or Quantity
+            New non-zero values. Must have the same shape, dtype, and unit as
+            the current ``self.data``.
+
+        Returns
+        -------
+        COO
+            A new COO matrix sharing the same ``row`` and ``col`` indices but
+            holding the provided ``data``.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import jax.numpy as jnp
+            >>> import saiunit as su
+            >>> import saiunit.sparse as susparse
+            >>> dense = jnp.array([[1., 0.], [0., 2.]])
+            >>> coo = susparse.COO.fromdense(dense)
+            >>> new_coo = coo.with_data(coo.data * 5)
+            >>> new_coo.todense()
+            Array([[ 5., 0.],
+                   [ 0., 10.]], dtype=float32)
+        """
         assert data.shape == self.data.shape
         assert data.dtype == self.data.dtype
         assert get_unit(data) == get_unit(self.data)
-        return COO((data, self.row, self.col), shape=self.shape)
+        return COO(
+            (data, self.row, self.col),
+            shape=self.shape,
+            rows_sorted=self._rows_sorted,
+            cols_sorted=self._cols_sorted
+        )
 
     def todense(self) -> jax.Array:
+        """
+        Convert this COO matrix to a dense array.
+
+        Returns
+        -------
+        jax.Array or Quantity
+            Dense 2-D array equivalent to this sparse matrix.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import jax.numpy as jnp
+            >>> import saiunit as su
+            >>> import saiunit.sparse as susparse
+            >>> dense = jnp.array([[0., 3.], [4., 0.]])
+            >>> coo = susparse.COO.fromdense(dense)
+            >>> coo.todense()
+            Array([[0., 3.],
+                   [4., 0.]], dtype=float32)
+        """
         return coo_todense(self)
 
     def transpose(self, axes: Tuple[int, ...] | None = None) -> COO:
@@ -405,12 +524,31 @@ class COO(SparseMatrix):
 
 
 def coo_todense(mat: COO) -> jax.Array | Quantity:
-    """Convert a COO-format sparse matrix to a dense matrix.
+    """
+    Convert a COO-format sparse matrix to a dense matrix.
 
-    Args:
-      mat : COO matrix
-    Returns:
-      mat_dense: dense version of ``mat``
+    Parameters
+    ----------
+    mat : COO
+        The COO sparse matrix to convert.
+
+    Returns
+    -------
+    jax.Array or Quantity
+        Dense 2-D array equivalent to ``mat``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[5., 0.], [0., 6.]])
+        >>> coo = susparse.coo_fromdense(dense)
+        >>> susparse.coo_todense(coo)
+        Array([[5., 0.],
+               [0., 6.]], dtype=float32)
     """
     return _coo_todense(mat.data, mat.row, mat.col, spinfo=mat._info)
 
@@ -421,20 +559,42 @@ def coo_fromdense(
     nse: int | None = None,
     index_dtype: jax.typing.DTypeLike = jnp.int32
 ) -> COO:
-    """Create a COO-format sparse matrix from a dense matrix.
+    """
+    Create a COO-format sparse matrix from a dense matrix.
 
-    Args:
-      mat : array to be converted to COO.
-      nse : number of specified entries in ``mat``. If not specified,
-        it will be computed from the input matrix.
-      index_dtype : dtype of sparse indices
+    Parameters
+    ----------
+    mat : jax.Array or Quantity
+        Dense 2-D array to be converted to COO format.
+    nse : int or None, optional
+        Number of specified (non-zero) entries in ``mat``. If ``None``
+        (default), it is computed automatically from the input matrix.
+    index_dtype : dtype, optional
+        Data type for the sparse index arrays. Default is ``jnp.int32``.
 
-    Returns:
-      mat_coo : COO representation of the matrix.
+    Returns
+    -------
+    COO
+        The COO representation of the input matrix.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
+        >>> coo = susparse.coo_fromdense(dense)
+        >>> coo.shape
+        (2, 3)
+        >>> coo.todense()
+        Array([[1., 0., 0.],
+               [0., 2., 3.]], dtype=float32)
     """
     if nse is None:
         nse = int((get_mantissa(mat) != 0).sum())
-    nse_int = jax.core.concrete_or_error(operator.index, nse, "coo_fromdense nse argument")
+    nse_int = concrete_or_error(operator.index, nse, "coo_fromdense nse argument")
     return COO(
         _coo_fromdense(mat, nse=nse_int, index_dtype=index_dtype),
         shape=mat.shape,
@@ -485,7 +645,7 @@ def _coo_fromdense(
     """
     mat = asarray(mat)
     mat, unit = split_mantissa_unit(mat)
-    nse = jax.core.concrete_or_error(operator.index, nse, "nse argument of coo_fromdense()")
+    nse = concrete_or_error(operator.index, nse, "nse argument of coo_fromdense()")
     r = coo_fromdense_p.bind(mat, nse=nse, index_dtype=index_dtype)
     if unit.is_unitless:
         return r

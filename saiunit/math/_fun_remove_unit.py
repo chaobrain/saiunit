@@ -19,7 +19,8 @@ from typing import (Union, Optional, Sequence)
 import jax
 import jax.numpy as jnp
 
-from saiunit._base import Quantity, get_unit
+from saiunit._base_getters import get_unit
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
@@ -53,14 +54,22 @@ def get_promote_dtypes(
 
     Parameters
     ----------
-    `*args` : array_likes
-        The arrays to promote.
+    *args : array_like or Quantity
+        The arrays whose dtypes should be promoted.
 
     Returns
     -------
-    promoted : list of arrays
-        These arrays have the same shape as the input arrays, with the
-        data type of the most precise input.
+    promoted : dtype
+        The promoted common dtype.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.get_promote_dtypes(jnp.float32, jnp.int32)
+        dtype('float32')
     """
     args = maybe_custom_array_tree(args)
     return jnp.promote_types(*jax.tree.leaves(args))
@@ -83,16 +92,28 @@ def iscomplexobj(
     """
     Return True if x is a complex type or an array of complex numbers.
 
+    Units are stripped before the check is performed.
+
     Parameters
     ----------
-    x : array_like, Quantity
-        Input array.
+    x : array_like or Quantity
+        Input array or Quantity.
 
     Returns
     -------
     out : bool
-        True if `x` is  a complex type or an array of complex numbers.
+        ``True`` if ``x`` is a complex type or an array of complex numbers.
 
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.iscomplexobj(jnp.array([1.0, 2.0]))
+        False
+        >>> su.math.iscomplexobj(jnp.array([1.0 + 2.0j]))
+        True
     """
     return _fun_remove_unit_unary(jnp.iscomplexobj, x)
 
@@ -105,17 +126,32 @@ def heaviside(
     """
     Compute the Heaviside step function.
 
+    The unit is stripped from ``x1`` before evaluation. ``x2`` must be
+    dimensionless (it is the value returned where ``x1 == 0``).
+
     Parameters
     ----------
-    x1: array_like, Quantity
-      Input array.
-    x2: array_like, Quantity
-      Input array.
+    x1 : array_like or Quantity
+        Input values.
+    x2 : array_like or Quantity
+        The value of the function when ``x1`` is zero. Must be
+        dimensionless if given as a Quantity.
 
     Returns
     -------
-    out : jax.Array, Quantity
-      Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+    out : jax.Array
+        The Heaviside step function applied to ``x1`` with half-value
+        ``x2``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.heaviside(jnp.array([-1.0, 0.0, 1.0]),
+        ...                   jnp.array([0.5, 0.5, 0.5]))
+        Array([0. , 0.5, 1. ], dtype=float32)
     """
     x1 = maybe_custom_array(x1)
     x2 = maybe_custom_array(x2)
@@ -133,18 +169,31 @@ def heaviside(
 @set_module_as('saiunit.math')
 def signbit(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
     """
-    Returns element-wise True where signbit is set (less than zero).
+    Return element-wise True where the sign bit is set (less than zero).
+
+    Units are stripped before the check is performed.
 
     Parameters
     ----------
-    x : array_like, Quantity
+    x : array_like or Quantity
         The input value(s).
 
     Returns
     -------
-    result : ndarray of bool
-        Output array, or reference to `out` if that was supplied.
-        This is a scalar if `x` is a scalar.
+    result : jax.Array of bool
+        Boolean array indicating where the sign bit is set.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.signbit(jnp.array([-2.0, 0.0, 3.0]))
+        Array([ True, False, False], dtype=bool)
+        >>> q = jnp.array([-1.0, 1.0]) * su.meter
+        >>> su.math.signbit(q)
+        Array([ True, False], dtype=bool)
     """
     return _fun_remove_unit_unary(jnp.signbit, x)
 
@@ -152,18 +201,32 @@ def signbit(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
 @set_module_as('saiunit.math')
 def sign(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
     """
-    Returns the sign of each element in the input array.
+    Return the sign of each element in the input array.
+
+    Units are stripped before the sign is computed. Returns -1, 0, or +1.
 
     Parameters
     ----------
-    x : array_like, Quantity
-      Input values.
+    x : array_like or Quantity
+        Input values.
 
     Returns
     -------
-    y : ndarray
-      The sign of `x`.
-      This is a scalar if `x` is a scalar.
+    y : jax.Array
+        The sign of ``x``. Contains -1 for negative, 0 for zero, and
+        +1 for positive elements.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.sign(jnp.array([-5.0, 0.0, 3.0]))
+        Array([-1.,  0.,  1.], dtype=float32)
+        >>> q = jnp.array([-2.0, 0.0, 4.0]) * su.second
+        >>> su.math.sign(q)
+        Array([-1.,  0.,  1.], dtype=float32)
     """
     return _fun_remove_unit_unary(jnp.sign, x)
 
@@ -199,9 +262,18 @@ def bincount(
 
     Returns
     -------
-    out : ndarray of ints
-      The result of binning the input array.
-      The length of `out` is equal to ``bu.amax(x)+1``.
+    out : jax.Array of int
+        The result of binning the input array.
+        The length of ``out`` is equal to ``max(x) + 1``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.bincount(jnp.array([0, 1, 1, 2, 2, 2]))
+        Array([1, 2, 3], dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.bincount, x, weights=weights, minlength=minlength, length=length)
 
@@ -243,8 +315,19 @@ def digitize(
 
     Returns
     -------
-    indices : ndarray of ints
-        Output array of indices, of same shape as `x`.
+    indices : jax.Array of int
+        Output array of bin indices, same shape as ``x``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> x = jnp.array([0.5, 1.5, 2.5])
+        >>> bins = jnp.array([0.0, 1.0, 2.0, 3.0])
+        >>> su.math.digitize(x, bins)
+        Array([1, 2, 3], dtype=int32)
     """
     x = maybe_custom_array(x)
     bins = maybe_custom_array(bins)
@@ -291,36 +374,38 @@ def all(
     """
     Test whether all array elements along a given axis evaluate to True.
 
+    The input must be dimensionless; a ``TypeError`` is raised if ``x``
+    carries physical units.
+
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or object that can be converted to an array.
+    x : array_like or Quantity
+        Input array. Must be dimensionless if it is a Quantity.
     axis : None or int or tuple of ints, optional
-      Axis or axes along which a logical AND reduction is performed.
-      The default (``axis=None``) is to perform a logical AND over all
-      the dimensions of the input array. `axis` may be negative, in
-      which case it counts from the last to the first axis.
-
-      If this is a tuple of ints, a reduction is performed on multiple
-      axes, instead of a single axis or all the axes as before.
+        Axis or axes along which a logical AND reduction is performed.
+        The default (``axis=None``) reduces over all dimensions.
     keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left
-      in the result as dimensions with size one. With this option,
-      the result will broadcast correctly against the input array.
-
-      If the default value is passed, then `keepdims` will not be
-      passed through to the `all` method of sub-classes of
-      `ndarray`, however any non-default value will be.  If the
-      sub-class' method does not implement `keepdims` any
-      exceptions will be raised.
+        If True, reduced axes are kept as dimensions with size one.
     where : array_like of bool, optional
-      Elements to include in checking for all `True` values.
+        Elements to include in the check.
 
     Returns
     -------
-    all : ndarray, bool
-      A new boolean or array is returned unless `out` is specified,
-      in which case a reference to `out` is returned.
+    all : jax.Array or bool
+        Boolean result of the AND reduction.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.all(jnp.array([True, True, True]))
+        Array(True, dtype=bool)
+        >>> su.math.all(jnp.array([True, False, True]))
+        Array(False, dtype=bool)
+        >>> su.math.all(jnp.array([[True, False], [True, True]]), axis=1)
+        Array([False,  True], dtype=bool)
     """
     return _fun_logic_unary(jnp.all, x, axis=axis, keepdims=keepdims, where=where)
 
@@ -335,36 +420,36 @@ def any(
     """
     Test whether any array element along a given axis evaluates to True.
 
+    The input must be dimensionless; a ``TypeError`` is raised if ``x``
+    carries physical units.
+
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or object that can be converted to an array.
+    x : array_like or Quantity
+        Input array. Must be dimensionless if it is a Quantity.
     axis : None or int or tuple of ints, optional
-      Axis or axes along which a logical AND reduction is performed.
-      The default (``axis=None``) is to perform a logical AND over all
-      the dimensions of the input array. `axis` may be negative, in
-      which case it counts from the last to the first axis.
-
-      If this is a tuple of ints, a reduction is performed on multiple
-      axes, instead of a single axis or all the axes as before.
+        Axis or axes along which a logical OR reduction is performed.
+        The default (``axis=None``) reduces over all dimensions.
     keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left
-      in the result as dimensions with size one. With this option,
-      the result will broadcast correctly against the input array.
-
-      If the default value is passed, then `keepdims` will not be
-      passed through to the `all` method of sub-classes of
-      `ndarray`, however any non-default value will be.  If the
-      sub-class' method does not implement `keepdims` any
-      exceptions will be raised.
+        If True, reduced axes are kept as dimensions with size one.
     where : array_like of bool, optional
-      Elements to include in checking for all `True` values.
+        Elements to include in the check.
 
     Returns
     -------
-    any : ndarray, bool
-      A new boolean or array is returned unless `out` is specified,
-      in which case a reference to `out` is returned.
+    any : jax.Array or bool
+        Boolean result of the OR reduction.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.any(jnp.array([False, False, True]))
+        Array(True, dtype=bool)
+        >>> su.math.any(jnp.array([False, False, False]))
+        Array(False, dtype=bool)
     """
     return _fun_logic_unary(jnp.any, x, axis=axis, keepdims=keepdims, where=where)
 
@@ -376,16 +461,27 @@ def logical_not(
     """
     Compute the truth value of NOT x element-wise.
 
+    The input must be dimensionless; a ``TypeError`` is raised if ``x``
+    carries physical units.
+
     Parameters
     ----------
-    x : array_like, Quantity
-      Input array or object that can be converted to an array.
+    x : array_like or Quantity
+        Input array. Must be dimensionless if it is a Quantity.
 
     Returns
     -------
-    logical_not : ndarray, bool
-      A new boolean or array is returned unless `out` is specified,
-      in which case a reference to `out` is returned.
+    out : jax.Array or bool
+        Boolean result of the NOT operation applied element-wise.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.logical_not(jnp.array([True, False, True]))
+        Array([False,  True, False], dtype=bool)
     """
     return _fun_logic_unary(jnp.logical_not, x)
 
@@ -436,38 +532,36 @@ def equal(
     **kwargs
 ) -> Union[bool, jax.Array]:
     """
-    equal(x, y, /, out=None, *, where=True, casting='same_kind', order='K', dtype=None, subok=True[, signature, extobj])
+    Return ``(x == y)`` element-wise.
 
-    Return (x == y) element-wise.
+    When both ``x`` and ``y`` are Quantities, ``y`` is converted to the
+    unit of ``x`` before comparison. A ``TypeError`` is raised if only
+    one operand has units.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-      A location into which the result is stored. If provided, it must have
-      a shape that the inputs broadcast to. If not provided or None,
-      a freshly-allocated array is returned. A tuple (possible only as a
-      keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-      This condition is broadcast over the input. At locations where the
-      condition is True, the `out` array will be set to the ufunc result.
-      Elsewhere, the `out` array will retain its original value.
-      Note that if an uninitialized `out` array is created via the default
-      ``out=None``, locations within it where the condition is False will
-      remain uninitialized.
-    **kwargs
-      For other keyword-only arguments, see the
-      :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : ndarray or scalar
-      Output array, element-wise comparison of `x` and `y`.
-      Typically of type bool, unless ``dtype=object`` is passed.
-      This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Element-wise equality comparison.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.equal(jnp.array([1, 2, 3]), jnp.array([1, 0, 3]))
+        Array([ True, False,  True], dtype=bool)
+        >>> a = jnp.array([1.0, 2.0]) * su.meter
+        >>> b = jnp.array([1.0, 2.0]) * su.meter
+        >>> su.math.equal(a, b)
+        Array([ True,  True], dtype=bool)
     """
     return _fun_logic_binary(jnp.equal, x, y, *args, **kwargs)
 
@@ -480,39 +574,31 @@ def not_equal(
     **kwargs
 ) -> Union[bool, jax.Array]:
     """
-    not_equal(x, y, /, out=None, *, where=True, casting='same_kind',
-    order='K', dtype=None, subok=True[, signature, extobj])
+    Return ``(x != y)`` element-wise.
 
-    Return (x != y) element-wise.
+    When both ``x`` and ``y`` are Quantities, ``y`` is converted to the
+    unit of ``x`` before comparison.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-      A location into which the result is stored. If provided, it must have
-      a shape that the inputs broadcast to. If not provided or None,
-      a freshly-allocated array is returned. A tuple (possible only as a
-      keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-      This condition is broadcast over the input. At locations where the
-      condition is True, the `out` array will be set to the ufunc result.
-      Elsewhere, the `out` array will retain its original value.
-      Note that if an uninitialized `out` array is created via the default
-      ``out=None``, locations within it where the condition is False will
-      remain uninitialized.
-    **kwargs
-      For other keyword-only arguments, see the
-      :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : ndarray or scalar
-      Output array, element-wise comparison of `x` and `y`.
-      Typically of type bool, unless ``dtype=object`` is passed.
-      This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Element-wise inequality comparison.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.not_equal(jnp.array([1, 2, 3]), jnp.array([1, 0, 3]))
+        Array([False,  True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.not_equal, x, y, *args, **kwargs)
 
@@ -525,39 +611,35 @@ def greater(
     **kwargs
 ) -> Union[bool, jax.Array]:
     """
-    greater(x, y, /, out=None, *, where=True, casting='same_kind',
-    order='K', dtype=None, subok=True[, signature, extobj])
+    Return ``(x > y)`` element-wise.
 
-    Return the truth value of (x > y) element-wise.
+    When both ``x`` and ``y`` are Quantities, ``y`` is converted to the
+    unit of ``x`` before comparison.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-      A location into which the result is stored. If provided, it must have
-      a shape that the inputs broadcast to. If not provided or None,
-      a freshly-allocated array is returned. A tuple (possible only as a
-      keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-      This condition is broadcast over the input. At locations where the
-      condition is True, the `out` array will be set to the ufunc result.
-      Elsewhere, the `out` array will retain its original value.
-      Note that if an uninitialized `out` array is created via the default
-      ``out=None``, locations within it where the condition is False will
-      remain uninitialized.
-    **kwargs
-      For other keyword-only arguments, see the
-      :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : ndarray or scalar
-      Output array, element-wise comparison of `x` and `y`.
-      Typically of type bool, unless ``dtype=object`` is passed.
-      This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Element-wise greater-than comparison.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.greater(jnp.array([3, 2, 1]), jnp.array([1, 2, 3]))
+        Array([ True, False, False], dtype=bool)
+        >>> a = jnp.array([2.0, 1.0]) * su.meter
+        >>> b = jnp.array([1.0, 2.0]) * su.meter
+        >>> su.math.greater(a, b)
+        Array([ True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.greater, x, y, *args, **kwargs)
 
@@ -571,38 +653,31 @@ def greater_equal(
 ) -> Union[
     bool, jax.Array]:
     """
-    greater_equal(x, y, /, out=None, *, where=True, casting='same_kind', order='K', dtype=None, subok=True[, signature, extobj])
+    Return ``(x >= y)`` element-wise.
 
-    Return the truth value of (x >= y) element-wise.
+    When both ``x`` and ``y`` are Quantities, ``y`` is converted to the
+    unit of ``x`` before comparison.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-      A location into which the result is stored. If provided, it must have
-      a shape that the inputs broadcast to. If not provided or None,
-      a freshly-allocated array is returned. A tuple (possible only as a
-      keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-      This condition is broadcast over the input. At locations where the
-      condition is True, the `out` array will be set to the ufunc result.
-      Elsewhere, the `out` array will retain its original value.
-      Note that if an uninitialized `out` array is created via the default
-      ``out=None``, locations within it where the condition is False will
-      remain uninitialized.
-    **kwargs
-      For other keyword-only arguments, see the
-      :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : bool or ndarray of bool
-      Output array, element-wise comparison of `x` and `y`.
-      Typically of type bool, unless ``dtype=object`` is passed.
-      This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Element-wise greater-than-or-equal comparison.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.greater_equal(jnp.array([3, 2, 1]), jnp.array([1, 2, 3]))
+        Array([ True,  True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.greater_equal, x, y, *args, **kwargs)
 
@@ -615,39 +690,31 @@ def less(
     **kwargs
 ) -> Union[bool, jax.Array]:
     """
-    less(x, y, /, out=None, *, where=True, casting='same_kind',
-    order='K', dtype=None, subok=True[, signature, extobj])
+    Return ``(x < y)`` element-wise.
 
-    Return the truth value of (x < y) element-wise.
+    When both ``x`` and ``y`` are Quantities, ``y`` is converted to the
+    unit of ``x`` before comparison.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-        Input arrays.
-        If ``x.shape != y.shape``, they must be broadcastable to a common
-        shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If provided, it must have
-        a shape that the inputs broadcast to. If not provided or None,
-        a freshly-allocated array is returned. A tuple (possible only as a
-        keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-        This condition is broadcast over the input. At locations where the
-        condition is True, the `out` array will be set to the ufunc result.
-        Elsewhere, the `out` array will retain its original value.
-        Note that if an uninitialized `out` array is created via the default
-        ``out=None``, locations within it where the condition is False will
-        remain uninitialized.
-    **kwargs
-        For other keyword-only arguments, see the
-        :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : ndarray or scalar
-        Output array, element-wise comparison of `x` and `y`.
-        Typically of type bool, unless ``dtype=object`` is passed.
-        This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Element-wise less-than comparison.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.less(jnp.array([1, 2, 3]), jnp.array([3, 2, 1]))
+        Array([ True, False, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.less, x, y, *args, **kwargs)
 
@@ -661,38 +728,31 @@ def less_equal(
 ) -> Union[
     bool, jax.Array]:
     """
-    less_equal(x, y, /, out=None, *, where=True, casting='same_kind', order='K', dtype=None, subok=True[, signature, extobj])
+    Return ``(x <= y)`` element-wise.
 
-    Return the truth value of (x <= y) element-wise.
+    When both ``x`` and ``y`` are Quantities, ``y`` is converted to the
+    unit of ``x`` before comparison.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-      A location into which the result is stored. If provided, it must have
-      a shape that the inputs broadcast to. If not provided or None,
-      a freshly-allocated array is returned. A tuple (possible only as a
-      keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-      This condition is broadcast over the input. At locations where the
-      condition is True, the `out` array will be set to the ufunc result.
-      Elsewhere, the `out` array will retain its original value.
-      Note that if an uninitialized `out` array is created via the default
-      ``out=None``, locations within it where the condition is False will
-      remain uninitialized.
-    **kwargs
-      For other keyword-only arguments, see the
-      :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : ndarray or scalar
-      Output array, element-wise comparison of `x` and `y`.
-      Typically of type bool, unless ``dtype=object`` is passed.
-      This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Element-wise less-than-or-equal comparison.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.less_equal(jnp.array([1, 2, 3]), jnp.array([3, 2, 1]))
+        Array([ True,  True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.less_equal, x, y, *args, **kwargs)
 
@@ -706,21 +766,33 @@ def array_equal(
 ) -> Union[
     bool, jax.Array]:
     """
-    True if two arrays have the same shape and elements, False otherwise.
+    Return True if two arrays have the same shape and elements.
+
+    When both inputs are Quantities, ``y`` is converted to the unit of
+    ``x`` before comparison.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays.
-    equal_nan : bool
-      Whether to compare NaN's as equal. If the dtype of a1 and a2 is
-      complex, values will be considered equal if either the real or the
-      imaginary component of a given value is ``nan``.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array.
 
     Returns
     -------
-    b : bool
-      Returns True if the arrays are equal.
+    out : bool
+        True if the arrays are equal.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.array_equal(jnp.array([1, 2]), jnp.array([1, 2]))
+        Array(True, dtype=bool)
+        >>> su.math.array_equal(jnp.array([1, 2]), jnp.array([1, 3]))
+        Array(False, dtype=bool)
     """
     return _fun_logic_binary(jnp.array_equal, x, y, *args, **kwargs)
 
@@ -756,10 +828,17 @@ def isclose(
 
     Returns
     -------
-    out : array_like
-      Returns a boolean array of where `a` and `b` are equal within the
-      given tolerance. If both `a` and `b` are scalars, returns a single
-      boolean value.
+    out : jax.Array of bool
+        Boolean array where ``x`` and ``y`` are equal within tolerance.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.isclose(jnp.array([1.0, 2.0]), jnp.array([1.0, 2.0001]))
+        Array([ True,  True], dtype=bool)
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
@@ -829,8 +908,17 @@ def allclose(
     Returns
     -------
     allclose : bool
-      Returns True if the two arrays are equal within the given
-      tolerance; False otherwise.
+        True if the two arrays are element-wise equal within tolerance.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.allclose(jnp.array([1.0, 2.0]),
+        ...                  jnp.array([1.0, 2.0]))
+        Array(True, dtype=bool)
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
@@ -879,38 +967,32 @@ def logical_and(
     **kwargs
 ) -> Union[bool, jax.Array]:
     """
-    logical_and(x, y, /, out=None, *, where=True, casting='same_kind', order='K', dtype=None, subok=True[, signature, extobj])
+    Compute the truth value of ``x AND y`` element-wise.
 
-    Compute the truth value of x AND y element-wise.
+    When both inputs are Quantities, ``y`` is converted to the unit of
+    ``x`` before the operation.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Input arrays.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-      A location into which the result is stored. If provided, it must have
-      a shape that the inputs broadcast to. If not provided or None,
-      a freshly-allocated array is returned. A tuple (possible only as a
-      keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-      This condition is broadcast over the input. At locations where the
-      condition is True, the `out` array will be set to the ufunc result.
-      Elsewhere, the `out` array will retain its original value.
-      Note that if an uninitialized `out` array is created via the default
-      ``out=None``, locations within it where the condition is False will
-      remain uninitialized.
-    **kwargs
-      For other keyword-only arguments, see the
-      :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : ndarray or bool
-      Boolean result of the logical AND operation applied to the elements
-      of `x` and `y`; the shape is determined by broadcasting.
-      This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Boolean AND result.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.logical_and(jnp.array([True, False]),
+        ...                     jnp.array([True, True]))
+        Array([ True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.logical_and, x, y, *args, **kwargs)
 
@@ -923,38 +1005,32 @@ def logical_or(
     **kwargs
 ) -> Union[bool, jax.Array]:
     """
-    logical_or(x, y, /, out=None, *, where=True, casting='same_kind', order='K', dtype=None, subok=True[, signature, extobj])
+    Compute the truth value of ``x OR y`` element-wise.
 
-    Compute the truth value of x OR y element-wise.
+    When both inputs are Quantities, ``y`` is converted to the unit of
+    ``x`` before the operation.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Logical OR is applied to the elements of `x` and `y`.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-      A location into which the result is stored. If provided, it must have
-      a shape that the inputs broadcast to. If not provided or None,
-      a freshly-allocated array is returned. A tuple (possible only as a
-      keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-      This condition is broadcast over the input. At locations where the
-      condition is True, the `out` array will be set to the ufunc result.
-      Elsewhere, the `out` array will retain its original value.
-      Note that if an uninitialized `out` array is created via the default
-      ``out=None``, locations within it where the condition is False will
-      remain uninitialized.
-    **kwargs
-      For other keyword-only arguments, see the
-      :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : ndarray or bool
-      Boolean result of the logical OR operation applied to the elements
-      of `x` and `y`; the shape is determined by broadcasting.
-      This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Boolean OR result.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.logical_or(jnp.array([True, False]),
+        ...                    jnp.array([False, False]))
+        Array([ True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.logical_or, x, y, *args, **kwargs)
 
@@ -967,38 +1043,32 @@ def logical_xor(
     **kwargs
 ) -> Union[bool, jax.Array]:
     """
-    logical_xor(x, y, /, out=None, *, where=True, casting='same_kind', order='K', dtype=None, subok=True[, signature, extobj])
+    Compute the truth value of ``x XOR y`` element-wise.
 
-    Compute the truth value of x XOR y, element-wise.
+    When both inputs are Quantities, ``y`` is converted to the unit of
+    ``x`` before the operation.
 
     Parameters
     ----------
-    x, y : array_like, Quantity
-      Logical XOR is applied to the elements of `x` and `y`.
-      If ``x.shape != y.shape``, they must be broadcastable to a common
-      shape (which becomes the shape of the output).
-    out : ndarray, None, or tuple of ndarray and None, optional
-      A location into which the result is stored. If provided, it must have
-      a shape that the inputs broadcast to. If not provided or None,
-      a freshly-allocated array is returned. A tuple (possible only as a
-      keyword argument) must have length equal to the number of outputs.
-    where : array_like, optional
-      This condition is broadcast over the input. At locations where the
-      condition is True, the `out` array will be set to the ufunc result.
-      Elsewhere, the `out` array will retain its original value.
-      Note that if an uninitialized `out` array is created via the default
-      ``out=None``, locations within it where the condition is False will
-      remain uninitialized.
-    **kwargs
-      For other keyword-only arguments, see the
-      :ref:`ufunc docs <ufuncs.kwargs>`.
+    x : array_like or Quantity
+        First input array.
+    y : array_like or Quantity
+        Second input array. Must be broadcastable with ``x``.
 
     Returns
     -------
-    out : bool or ndarray of bool
-      Boolean result of the logical XOR operation applied to the elements
-      of `x` and `y`; the shape is determined by broadcasting.
-      This is a scalar if both `x` and `y` are scalars.
+    out : jax.Array of bool
+        Boolean XOR result.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.logical_xor(jnp.array([True, False]),
+        ...                     jnp.array([True, True]))
+        Array([False,  True], dtype=bool)
     """
     return _fun_logic_binary(jnp.logical_xor, x, y, *args, **kwargs)
 
@@ -1019,29 +1089,42 @@ def argsort(
     descending: bool = False,
 ) -> jax.Array:
     """
-    Returns the indices that would sort an array or a quantity.
+    Return the indices that would sort an array or Quantity.
+
+    Units are stripped before sorting.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Array or quantity to be sorted.
+    a : array_like or Quantity
+        Array or Quantity to be sorted.
     axis : int or None, optional
-      Axis along which to sort. If None, the array is flattened before sorting. The default is -1, which sorts along
-      the last axis.
-    kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
-      Sorting algorithm. The default is 'None'.
-    order : str or list of str, optional
-      When `a` is a quantity, it can be a string or a sequence of strings, which is interpreted as an order the quantity
-      should be sorted. The default is None.
+        Axis along which to sort. Default is -1 (last axis).
+        If None, the array is flattened first.
+    kind : None, optional
+        Sorting algorithm. Unused in JAX.
+    order : None, optional
+        Unused in JAX.
     stable : bool, optional
-      Whether to use a stable sorting algorithm. The default is True.
+        Whether to use a stable sort. Default is True.
     descending : bool, optional
-      Whether to sort in descending order. The default is False.
+        Whether to sort in descending order. Default is False.
 
     Returns
     -------
-    res : ndarray
-      Array of indices that sort the array.
+    indices : jax.Array
+        Array of indices that would sort the input.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.argsort(jnp.array([3.0, 1.0, 2.0]))
+        Array([1, 2, 0], dtype=int32)
+        >>> q = jnp.array([3.0, 1.0, 2.0]) * su.meter
+        >>> su.math.argsort(q)
+        Array([1, 2, 0], dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.argsort,
                                   a,
@@ -1058,19 +1141,34 @@ def argmax(
     axis: Optional[int] = None,
 ) -> jax.Array:
     """
-    Returns indices of the max value along an axis.
+    Return the index of the maximum value along an axis.
+
+    Units are stripped before finding the maximum.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Input data.
-    axis : int, optional
-      By default, the index is into the flattened array, otherwise along the specified axis.
+    a : array_like or Quantity
+        Input data.
+    axis : int or None, optional
+        Axis along which to operate. By default the flattened input is
+        used.
 
     Returns
     -------
-    res : ndarray
-      Array of indices into the array. It has the same shape as `a.shape` with the dimension along `axis` removed.
+    index : jax.Array
+        Index of the maximum value.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.argmax(jnp.array([1.0, 3.0, 2.0]))
+        Array(1, dtype=int32)
+        >>> q = jnp.array([1.0, 3.0, 2.0]) * su.meter
+        >>> su.math.argmax(q)
+        Array(1, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.argmax, a, axis=axis)
 
@@ -1082,22 +1180,33 @@ def argmin(
     keepdims: Optional[bool] = None
 ) -> jax.Array:
     """
-    Returns indices of the min value along an axis.
+    Return the index of the minimum value along an axis.
+
+    Units are stripped before finding the minimum.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Input data.
-    axis : int, optional
-      By default, the index is into the flattened array, otherwise along the specified axis.
-    keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left in the result as dimensions with size one. With this
-      option, the result will broadcast correctly against the input array.
+    a : array_like or Quantity
+        Input data.
+    axis : int or None, optional
+        Axis along which to operate. By default the flattened input is
+        used.
+    keepdims : bool or None, optional
+        If True, reduced axes are kept with size one.
 
     Returns
     -------
-    res : ndarray
-      Array of indices into the array. It has the same shape as `a.shape` with the dimension along `axis` removed.
+    index : jax.Array
+        Index of the minimum value.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.argmin(jnp.array([3.0, 1.0, 2.0]))
+        Array(1, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.argmin, a, axis=axis, keepdims=keepdims)
 
@@ -1109,26 +1218,33 @@ def nanargmax(
     keepdims: bool = False
 ) -> jax.Array:
     """
-    Return the indices of the maximum values in the specified axis ignoring
-    NaNs. For all-NaN slices ``ValueError`` is raised. Warning: the
-    results cannot be trusted if a slice contains only NaNs and -Infs.
+    Return the index of the maximum value, ignoring NaNs.
 
+    Units are stripped before finding the maximum.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Input data.
-    axis : int, optional
-      Axis along which to operate.  By default flattened input is used.
+    a : array_like or Quantity
+        Input data.
+    axis : int or None, optional
+        Axis along which to operate. By default the flattened input is
+        used.
     keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left
-      in the result as dimensions with size one. With this option,
-      the result will broadcast correctly against the array.
+        If True, reduced axes are kept with size one.
 
     Returns
     -------
-    index_array : ndarray
-      An array of indices or a single index value.
+    index : jax.Array
+        Index of the maximum value (NaNs ignored).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.nanargmax(jnp.array([1.0, jnp.nan, 3.0]))
+        Array(2, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.nanargmax,
                                   a,
@@ -1143,25 +1259,33 @@ def nanargmin(
     keepdims: bool = False
 ) -> jax.Array:
     """
-    Return the indices of the minimum values in the specified axis ignoring
-    NaNs. For all-NaN slices ``ValueError`` is raised. Warning: the results
-    cannot be trusted if a slice contains only NaNs and Infs.
+    Return the index of the minimum value, ignoring NaNs.
+
+    Units are stripped before finding the minimum.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Input data.
-    axis : int, optional
-      Axis along which to operate.  By default flattened input is used.
+    a : array_like or Quantity
+        Input data.
+    axis : int or None, optional
+        Axis along which to operate. By default the flattened input is
+        used.
     keepdims : bool, optional
-      If this is set to True, the axes which are reduced are left
-      in the result as dimensions with size one. With this option,
-      the result will broadcast correctly against the array.
+        If True, reduced axes are kept with size one.
 
     Returns
     -------
-    index_array : ndarray
-      An array of indices or a single index value.
+    index : jax.Array
+        Index of the minimum value (NaNs ignored).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.nanargmin(jnp.array([3.0, jnp.nan, 1.0]))
+        Array(2, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.nanargmin,
                                   a,
@@ -1177,22 +1301,34 @@ def argwhere(
     fill_value: Optional[jax.typing.ArrayLike] = None,
 ) -> jax.Array:
     """
-    Find the indices of array elements that are non-zero, grouped by element.
+    Find the indices of array elements that are non-zero.
+
+    Units are stripped before the search.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Input data.
-    size : int, optional
-      The length of the returned axis. By default, the length of the input array along the axis is used.
-    fill_value : scalar, optional
-      The value to use for elements in the output array that are not selected. If None, the output array has the same
-      type as `a` and is filled with zeros.
+    a : array_like or Quantity
+        Input data.
+    size : int or None, optional
+        Fixed output size (for use inside ``jax.jit``).
+    fill_value : scalar or None, optional
+        Fill value for padding when ``size`` is given.
 
     Returns
     -------
-    res : ndarray
-      The indices of elements that are non-zero. The indices are grouped by element.
+    indices : jax.Array
+        Array of shape ``(N, a.ndim)`` containing the indices of
+        non-zero elements.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.argwhere(jnp.array([0, 1, 0, 2]), size=2)
+        Array([[1],
+               [3]], dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.argwhere, a, size=size, fill_value=fill_value)
 
@@ -1205,23 +1341,33 @@ def nonzero(
     fill_value: Optional[jax.typing.ArrayLike] = None,
 ) -> Sequence[jax.Array]:
     """
-    Return the indices of the elements that are non-zero.
+    Return the indices of non-zero elements.
+
+    Units are stripped before the search.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Input data.
-    size : int, optional
-      The length of the returned axis. By default, the length of the input array along the axis is used.
-    fill_value : scalar, optional
-      The value to use for elements in the output array that are not selected. If None, the output array has the same
-      type as `a` and is filled with zeros.
+    a : array_like or Quantity
+        Input data.
+    size : int or None, optional
+        Fixed output size (for use inside ``jax.jit``).
+    fill_value : scalar or None, optional
+        Fill value for padding when ``size`` is given.
 
     Returns
     -------
-    res : tuple of ndarrays
-      Indices of elements that are non-zero along the specified axis. Each array in the tuple has the same shape as the
-      input array.
+    indices : tuple of jax.Array
+        Tuple of arrays, one per dimension, containing the indices of
+        non-zero elements.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.nonzero(jnp.array([0, 1, 0, 2]), size=2)
+        (Array([1, 3], dtype=int32),)
     """
     return _fun_remove_unit_unary(jnp.nonzero, a, size=size, fill_value=fill_value)
 
@@ -1234,22 +1380,32 @@ def flatnonzero(
     fill_value: Optional[jax.typing.ArrayLike] = None,
 ) -> jax.Array:
     """
-    Return indices that are non-zero in the flattened version of the input quantity or array.
+    Return indices that are non-zero in the flattened input.
+
+    Units are stripped before the search.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Input data.
-    size : int, optional
-      The length of the returned axis. By default, the length of the input array along the axis is used.
-    fill_value : scalar, optional
-      The value to use for elements in the output array that are not selected. If None, the output array has the same
-      type as `a` and is filled with zeros.
+    a : array_like or Quantity
+        Input data.
+    size : int or None, optional
+        Fixed output size (for use inside ``jax.jit``).
+    fill_value : scalar or None, optional
+        Fill value for padding when ``size`` is given.
 
     Returns
     -------
-    res : ndarray
-      Output array, containing the indices of the elements of `a.ravel()` that are non-zero.
+    indices : jax.Array
+        Indices of non-zero elements in the flattened array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.flatnonzero(jnp.array([0, 1, 0, 2]), size=2)
+        Array([1, 3], dtype=int32)
     """
     a = maybe_custom_array(a)
     fill_value = maybe_custom_array(fill_value)
@@ -1266,22 +1422,32 @@ def count_nonzero(
     keepdims: Optional[bool] = None
 ) -> jax.Array:
     """
-    Count the number of non-zero values in the quantity or array `a`.
+    Count the number of non-zero values in the input.
+
+    Units are stripped before counting.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      The array for which to count non-zeros.
-    axis : int, optional
-      The axis along which to count the non-zeros. If `None`, count non-zeros over the entire array.
-    keepdims : bool, optional
-      If this is set to `True`, the axes which are counted are left in the result as dimensions with size one. With this
-      option, the result will broadcast correctly against the original array.
+    a : array_like or Quantity
+        Input data.
+    axis : int or None, optional
+        Axis along which to count. Default counts over the whole array.
+    keepdims : bool or None, optional
+        If True, reduced axes are kept with size one.
 
     Returns
     -------
-    res : ndarray
-      Number of non-zero values in the quantity or array along a given axis.
+    count : jax.Array
+        Number of non-zero values along the given axis.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> su.math.count_nonzero(jnp.array([0, 1, 0, 2, 3]))
+        Array(3, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.count_nonzero, a, axis=axis, keepdims=keepdims)
 
@@ -1298,33 +1464,37 @@ def searchsorted(
     """
     Find indices where elements should be inserted to maintain order.
 
-    Find the indices into a sorted array `a` such that, if the corresponding elements in `v` were inserted before the
-    indices, the order of `a` would be preserved.
+    When both ``a`` and ``v`` are Quantities, ``v`` is converted to the
+    unit of ``a`` before searching.
 
     Parameters
     ----------
-    a : array_like, Quantity
-      Input array. It must be sorted in ascending order.
-    v : array_like, Quantity
-      Values to insert into `a`.
+    a : array_like or Quantity
+        Sorted input array.
+    v : array_like or Quantity
+        Values to insert into ``a``.
     side : {'left', 'right'}, optional
-      If 'left', the index of the first suitable location found is given. If 'right', return the last such index. If
-      there is no suitable index, return either 0 or N (where N is the length of `a`).
-    sorter : 1-D array_like, optional
-      Optional array of integer indices that sort array `a` into ascending order. They are typically the result of
-      `argsort`.
-    method : str
-      One of 'scan' (default), 'scan_unrolled', 'sort' or 'compare_all'. Controls the method used by the
-      implementation: 'scan' tends to be more performant on CPU (particularly when ``a`` is
-      very large), 'scan_unrolled' is more performant on GPU at the expense of additional compile time,
-      'sort' is often more performant on accelerator backends like GPU and TPU
-      (particularly when ``v`` is very large), and 'compare_all' can be most performant
-      when ``a`` is very small. The default is 'scan'.
+        If ``'left'``, the first suitable index is returned. Default
+        is ``'left'``.
+    sorter : array_like of int or None, optional
+        Indices that sort ``a`` into ascending order.
+    method : str, optional
+        Algorithm selection. Default is ``'scan'``.
 
     Returns
     -------
-    out : ndarray
-      Array of insertion points with the same shape as `v`.
+    indices : jax.Array
+        Insertion points with the same shape as ``v``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([1.0, 2.0, 3.0, 4.0])
+        >>> su.math.searchsorted(a, jnp.array([2.5]))
+        Array([2], dtype=int32)
     """
     a = maybe_custom_array(a)
     a_unit = get_unit(a)
@@ -1338,29 +1508,29 @@ def searchsorted(
 def diag_indices_from(
     arr: Union[jax.typing.ArrayLike, Quantity],
 ) -> tuple[jax.Array, ...]:
-    """Return indices for accessing the main diagonal of a given array.
+    """
+    Return indices for accessing the main diagonal of a given array.
 
-    JAX implementation of :func:`numpy.diag_indices_from`.
+    Units are stripped before computing the indices.
 
-    Args:
-        arr: Input array. Must be at least 2-dimensional and have equal length along
-            all dimensions.
+    Parameters
+    ----------
+    arr : array_like or Quantity
+        Input array. Must be at least 2-D with equal-length dimensions.
 
-    Returns:
-        A tuple of arrays containing the indices to access the main diagonal of
-        the input array.
+    Returns
+    -------
+    indices : tuple of jax.Array
+        Index arrays to access the main diagonal.
 
-    Examples:
-    >>> arr = jnp.array([[1, 2, 3],
-    ...                  [4, 5, 6],
-    ...                  [7, 8, 9]])
-    >>> jnp.diag_indices_from(arr)
-    (Array([0, 1, 2], dtype=int32), Array([0, 1, 2], dtype=int32))
-    >>> arr = jnp.array([[[1, 2], [3, 4]],
-    ...                  [[5, 6], [7, 8]]])
-    >>> jnp.diag_indices_from(arr)
-    (Array([0, 1], dtype=int32),
-    Array([0, 1], dtype=int32),
-    Array([0, 1], dtype=int32))
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> arr = jnp.array([[1, 2], [3, 4]])
+        >>> su.math.diag_indices_from(arr)
+        (Array([0, 1], dtype=int32), Array([0, 1], dtype=int32))
     """
     return _fun_remove_unit_unary(jnp.diag_indices_from, arr)

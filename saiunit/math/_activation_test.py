@@ -22,15 +22,13 @@ from absl.testing import parameterized
 import saiunit as u
 import saiunit.math as um
 from saiunit import meter, second, UNITLESS
-from saiunit._base import Quantity
-
+from saiunit._base_quantity import Quantity
 
 
 @jax.tree_util.register_pytree_node_class
 class Array(u.CustomArray):
     def __init__(self, value):
         self.data = value
-
 
 
 class TestActivationFunctions(parameterized.TestCase):
@@ -538,14 +536,14 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         self.array_test_data = Array(jnp.array([-3.0, -1.0, -0.5, 0.0, 0.5, 1.0, 3.0]))
         self.array_positive = Array(jnp.array([0.1, 0.5, 1.0, 2.0, 5.0]))
         self.array_negative = Array(jnp.array([-5.0, -2.0, -1.0, -0.5, -0.1]))
-        
+
         # 2D Array for shape testing
         self.array_2d = Array(jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
-        
+
         # Arrays with units
         self.dimensionless_array = Array(jnp.array([-1.0, 0.0, 1.0])) * UNITLESS
         self.meter_array = Array(jnp.array([-1.0, 0.0, 1.0])) * meter
-        
+
         # Complex test cases
         self.array_extreme = Array(jnp.array([-100.0, -10.0, 0.0, 10.0, 100.0]))
         self.array_small = Array(jnp.array([-1e-6, 0.0, 1e-6]))
@@ -556,18 +554,18 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         result = um.relu(self.array_test_data)
         expected = jnp.maximum(self.array_test_data.data, 0)
         np.testing.assert_allclose(result, expected, rtol=1e-6)
-        
+
         # Test with 2D Array
         result_2d = um.relu(self.array_2d)
         expected_2d = jnp.maximum(self.array_2d.data, 0)
         np.testing.assert_allclose(result_2d, expected_2d, rtol=1e-6)
-        
+
         # Test with dimensionless Array quantity
         result_dimensionless = um.relu(self.dimensionless_array)
         assert isinstance(result_dimensionless, Quantity)
         expected_dimensionless = jnp.maximum(self.dimensionless_array.mantissa, 0)
         np.testing.assert_allclose(result_dimensionless.mantissa, expected_dimensionless, rtol=1e-6)
-        
+
         # Test with meter Array quantity (should preserve units)
         result_meter = um.relu(self.meter_array)
         assert isinstance(result_meter, Quantity)
@@ -581,16 +579,16 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         result = um.sigmoid(self.array_test_data)
         expected = 1 / (1 + jnp.exp(-self.array_test_data.data))
         np.testing.assert_allclose(result, expected, rtol=1e-6)
-        
+
         # Verify sigmoid properties
         assert jnp.all(result >= 0)
         assert jnp.all(result <= 1)
-        
+
         # Test with dimensionless Array
         result_dimensionless = um.sigmoid(self.dimensionless_array)
         expected_dimensionless = 1 / (1 + jnp.exp(-self.dimensionless_array.mantissa))
         np.testing.assert_allclose(result_dimensionless, expected_dimensionless, rtol=1e-6)
-        
+
         # Test that it requires unitless input for Array with units
         with pytest.raises(Exception):
             um.sigmoid(self.meter_array)
@@ -601,14 +599,14 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         result = um.softplus(self.array_test_data)
         expected = jnp.log(1 + jnp.exp(self.array_test_data.data))
         np.testing.assert_allclose(result, expected, rtol=1e-6)
-        
+
         # Verify softplus is always positive
         assert jnp.all(result >= 0)
-        
+
         # Test with extreme values to check numerical stability
         result_extreme = um.softplus(self.array_extreme)
         assert jnp.all(jnp.isfinite(result_extreme))
-        
+
         # Test with dimensionless Array
         result_dimensionless = um.softplus(self.dimensionless_array)
         expected_dimensionless = jnp.log(1 + jnp.exp(self.dimensionless_array.mantissa))
@@ -620,12 +618,12 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         silu_result = um.silu(self.array_test_data)
         swish_result = um.swish(self.array_test_data)
         np.testing.assert_allclose(silu_result, swish_result, rtol=1e-6)
-        
+
         # Verify mathematical definition: x * sigmoid(x)
         sigmoid_vals = 1 / (1 + jnp.exp(-self.array_test_data.data))
         expected = self.array_test_data.data * sigmoid_vals
         np.testing.assert_allclose(silu_result, expected, rtol=1e-6)
-        
+
         # Test with dimensionless Array quantity
         silu_dimensionless = um.silu(self.dimensionless_array)
         swish_dimensionless = um.swish(self.dimensionless_array)
@@ -634,7 +632,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
     def test_sparse_plus_with_array_custom_array(self):
         """Test Sparse Plus activation function with Array using CustomArray."""
         result = um.sparse_plus(self.array_test_data)
-        
+
         # Verify piecewise definition for Array values
         for i, x in enumerate(self.array_test_data.data):
             if x <= -1:
@@ -644,7 +642,7 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
             else:  # -1 < x < 1
                 expected_val = 0.25 * (x + 1) ** 2
                 assert abs(result[i] - expected_val) < 1e-6
-        
+
         # Test with dimensionless Array
         result_dimensionless = um.sparse_plus(self.dimensionless_array)
         np.testing.assert_allclose(result_dimensionless, um.sparse_plus(self.dimensionless_array.mantissa), rtol=1e-6)
@@ -652,14 +650,14 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
     def test_array_shape_preservation(self):
         """Test that activation functions preserve Array shapes."""
         activation_funcs = ['relu', 'sigmoid', 'softplus', 'silu', 'swish', 'soft_sign']
-        
+
         for func_name in activation_funcs:
             func = getattr(um, func_name)
-            
+
             # Test with 1D Array
             result_1d = func(self.array_test_data)
             assert result_1d.shape == self.array_test_data.shape
-            
+
             # Test with 2D Array
             result_2d = func(self.array_2d)
             assert result_2d.shape == self.array_2d.shape
@@ -669,37 +667,38 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         # Test ReLU non-negative output
         relu_result = um.relu(self.array_test_data)
         assert jnp.all(relu_result >= 0)
-        
+
         # Test sigmoid bounded output [0, 1]
         sigmoid_result = um.sigmoid(self.array_test_data)
         assert jnp.all(sigmoid_result >= 0)
         assert jnp.all(sigmoid_result <= 1)
-        
+
         # Test soft_sign bounded output [-1, 1]
         soft_sign_result = um.soft_sign(self.array_test_data)
         assert jnp.all(soft_sign_result >= -1)
         assert jnp.all(soft_sign_result <= 1)
-        
+
         # Test log_sigmoid non-positive output
         log_sigmoid_result = um.log_sigmoid(self.array_test_data)
         assert jnp.all(log_sigmoid_result <= 0)
 
     def test_array_with_jax_transformations(self):
         """Test activation functions with Array under JAX transformations."""
+
         # Test with jit compilation
         @jax.jit
         def relu_jitted(x):
             return um.relu(x)
-        
+
         jit_result = relu_jitted(self.array_test_data)
         direct_result = um.relu(self.array_test_data)
         np.testing.assert_allclose(jit_result, direct_result, rtol=1e-6)
-        
+
         # Test with grad
         @jax.grad
         def sigmoid_sum(x):
             return jnp.sum(um.sigmoid(x))
-        
+
         grad_result = sigmoid_sum(self.array_test_data.data)
         assert jnp.all(jnp.isfinite(grad_result))
 
@@ -707,18 +706,18 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test ELU activation function with Array using CustomArray."""
         # Test with default alpha
         result = um.elu(self.array_test_data)
-        
+
         for i, x in enumerate(self.array_test_data.data):
             if x > 0:
                 assert abs(result[i] - x) < 1e-6
             else:
                 expected_val = 1.0 * (jnp.exp(x) - 1)
                 assert abs(result[i] - expected_val) < 1e-6
-        
+
         # Test with custom alpha
         custom_alpha = 2.0
         result_custom = um.elu(self.array_test_data, alpha=custom_alpha)
-        
+
         for i, x in enumerate(self.array_test_data.data):
             if x > 0:
                 assert abs(result_custom[i] - x) < 1e-6
@@ -730,13 +729,13 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test GELU activation function with Array using CustomArray."""
         # Test with approximate=True
         result_approx = um.gelu(self.array_test_data, approximate=True)
-        
+
         # Test with approximate=False
         result_exact = um.gelu(self.array_test_data, approximate=False)
-        
+
         # Results should be close but not identical
         np.testing.assert_allclose(result_approx, result_exact, rtol=1e-1, atol=1e-1)
-        
+
         # Both should be finite
         assert jnp.all(jnp.isfinite(result_approx))
         assert jnp.all(jnp.isfinite(result_exact))
@@ -747,12 +746,12 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         hard_sigmoid_result = um.hard_sigmoid(self.array_test_data)
         assert jnp.all(hard_sigmoid_result >= 0)
         assert jnp.all(hard_sigmoid_result <= 1)
-        
+
         # Test hard_tanh
         hard_tanh_result = um.hard_tanh(self.array_test_data)
         assert jnp.all(hard_tanh_result >= -1)
         assert jnp.all(hard_tanh_result <= 1)
-        
+
         # Test hard_silu and hard_swish equivalence
         hard_silu_result = um.hard_silu(self.array_test_data)
         hard_swish_result = um.hard_swish(self.array_test_data)
@@ -761,12 +760,12 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
     def test_mish_with_array_custom_array(self):
         """Test Mish activation function with Array using CustomArray."""
         result = um.mish(self.array_test_data)
-        
+
         # Verify mathematical definition: x * tanh(softplus(x))
         softplus_vals = jnp.log(1 + jnp.exp(self.array_test_data.data))
         expected = self.array_test_data.data * jnp.tanh(softplus_vals)
         np.testing.assert_allclose(result, expected, rtol=1e-6)
-        
+
         # Test with dimensionless Array
         result_dimensionless = um.mish(self.dimensionless_array)
         softplus_dimensionless = jnp.log(1 + jnp.exp(self.dimensionless_array.mantissa))
@@ -779,10 +778,10 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         result = um.squareplus(self.array_test_data)
         expected = (self.array_test_data.data + jnp.sqrt(self.array_test_data.data ** 2 + 4)) / 2
         np.testing.assert_allclose(result, expected, rtol=1e-6)
-        
+
         # Test that output is always >= 0
         assert jnp.all(result >= 0)
-        
+
         # Test with custom b
         custom_b = 2.0
         result_custom = um.squareplus(self.array_test_data, b=custom_b)
@@ -793,17 +792,17 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test GLU activation function with Array using CustomArray."""
         # Create Array with even number of elements
         test_array_even = Array(jnp.array([[1, 2, 3, 4], [5, 6, 7, 8.]]))
-        
+
         # Test GLU
         result = um.glu(test_array_even)
-        
+
         # Verify GLU computation: first_half * sigmoid(second_half)
         first_half = test_array_even.data[:, :2]
         second_half = test_array_even.data[:, 2:]
         expected = first_half * (1 / (1 + jnp.exp(-second_half)))
-        
+
         np.testing.assert_allclose(result, expected, rtol=1e-6)
-        
+
         # Test with odd dimension (should raise error)
         odd_array = Array(jnp.array([1, 2, 3]))
         with pytest.raises(Exception):
@@ -813,18 +812,18 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test numerical stability of activation functions with Array."""
         # Test with very large values
         large_array = Array(jnp.array([-1000.0, 1000.0]))
-        
+
         # These functions should handle large values gracefully
         stable_funcs = ['sigmoid', 'hard_sigmoid', 'soft_sign', 'hard_tanh']
-        
+
         for func_name in stable_funcs:
             func = getattr(um, func_name)
             result = func(large_array)
             assert jnp.all(jnp.isfinite(result)), f"{func_name} produced non-finite values"
-        
+
         # Test with very small values
         small_array = Array(jnp.array([-1e-10, 0.0, 1e-10]))
-        
+
         for func_name in stable_funcs:
             func = getattr(um, func_name)
             result = func(small_array)
@@ -834,19 +833,19 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test gradient computation for activation functions with Array."""
         # Test functions that should be differentiable
         differentiable_funcs = ['sigmoid', 'softplus', 'silu', 'swish', 'soft_sign', 'mish']
-        
+
         for func_name in differentiable_funcs:
             func = getattr(um, func_name)
-            
+
             # Define a function that sums the activation output
             def sum_activation(x):
                 arr = Array(x)
                 return jnp.sum(func(arr))
-            
+
             # Compute gradient
             grad_func = jax.grad(sum_activation)
             gradient = grad_func(jnp.array([1.0, 2.0, 3.0]))
-            
+
             assert jnp.all(jnp.isfinite(gradient)), f"{func_name} gradient contains non-finite values"
             assert gradient.shape == (3,), f"{func_name} gradient shape mismatch"
 
@@ -854,30 +853,30 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Comprehensive test of unit handling with Array using CustomArray."""
         # Functions that should work with any units (preserve units)
         unit_preserving_funcs = ['relu']
-        
+
         for func_name in unit_preserving_funcs:
             func = getattr(um, func_name)
-            
+
             # Test with meter Array
             result_meter = func(self.meter_array)
             assert isinstance(result_meter, Quantity)
             assert result_meter.unit == meter
-            
+
             # Test with dimensionless Array
             result_dimensionless = func(self.dimensionless_array)
             assert isinstance(result_dimensionless, Quantity)
             assert result_dimensionless.unit == UNITLESS
-        
+
         # Functions that require unitless input
         unitless_required_funcs = ['sigmoid', 'softplus', 'silu', 'swish']
-        
+
         for func_name in unitless_required_funcs:
             func = getattr(um, func_name)
-            
+
             # Should work with dimensionless
             result_dimensionless = func(self.dimensionless_array)
             # Result should be unitless or the same as input
-            
+
             # Should raise exception with units
             with pytest.raises(Exception):
                 func(self.meter_array)
@@ -886,21 +885,92 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         """Test that Array properly inherits from CustomArray and works with activations."""
         # Verify Array is instance of CustomArray
         assert isinstance(self.array_test_data, u.CustomArray)
-        
+
         # Test that CustomArray methods work
         assert hasattr(self.array_test_data, 'data')
         assert hasattr(self.array_test_data, 'shape')
         assert hasattr(self.array_test_data, 'dtype')
-        
+
         # Test activation functions work with Array methods
         relu_result = um.relu(self.array_test_data)
-        
+
         # Verify we can still access CustomArray properties after activation
         assert self.array_test_data.shape == (7,)
         assert self.array_test_data.dtype == jnp.float32
-        
+
         # Test that Array can be used in arithmetic operations
         doubled_array = self.array_test_data * 2
         relu_doubled = um.relu(doubled_array)
-        
+
         assert relu_doubled.shape == self.array_test_data.shape
+
+
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+class TestDocstringExamples:
+    """Tests that verify the examples shown in upgraded docstrings."""
+
+    def test_relu_docstring_example(self):
+        """Verify relu docstring example."""
+        result = um.relu(jnp.array([-2., -1., 0., 1., 2.]))
+        expected = jnp.array([0., 0., 0., 1., 2.])
+        np.testing.assert_allclose(result, expected)
+
+    def test_relu_preserves_units(self):
+        """Verify relu docstring example with units."""
+        q = Quantity(jnp.array([-1., 0., 1.]), unit=u.meter)
+        result = um.relu(q)
+        assert isinstance(result, Quantity)
+        assert result.unit == u.meter
+        np.testing.assert_allclose(result.mantissa, jnp.array([0., 0., 1.]))
+
+    def test_sigmoid_docstring_example(self):
+        """Verify sigmoid docstring example."""
+        result = um.sigmoid(jnp.array([-2., 0., 2.]))
+        np.testing.assert_allclose(
+            result,
+            jnp.array([0.11920292, 0.5, 0.8807971]),
+            rtol=1e-5,
+        )
+
+    def test_gelu_docstring_example(self):
+        """Verify gelu docstring example."""
+        result = um.gelu(jnp.array([-2., 0., 2.]))
+        # Just verify finite and reasonable shape
+        assert result.shape == (3,)
+        assert jnp.all(jnp.isfinite(result))
+        # The approximate gelu at 0 should be 0
+        np.testing.assert_allclose(result[1], 0.0, atol=1e-6)
+
+    def test_leaky_relu_docstring_example(self):
+        """Verify leaky_relu docstring example."""
+        result = um.leaky_relu(jnp.array([-2., -1., 0., 1., 2.]))
+        expected = jnp.array([-0.02, -0.01, 0., 1., 2.])
+        np.testing.assert_allclose(result, expected, rtol=1e-5)
+
+        result2 = um.leaky_relu(jnp.array([-1., 1.]), negative_slope=0.1)
+        expected2 = jnp.array([-0.1, 1.])
+        np.testing.assert_allclose(result2, expected2, rtol=1e-5)
+
+    def test_elu_docstring_example(self):
+        """Verify elu docstring example."""
+        result = um.elu(jnp.array([-2., 0., 2.]))
+        assert result.shape == (3,)
+        np.testing.assert_allclose(result[1], 0.0, atol=1e-6)
+        np.testing.assert_allclose(result[2], 2.0, atol=1e-6)
+
+    def test_hard_sigmoid_docstring_example(self):
+        """Verify hard_sigmoid docstring example."""
+        result = um.hard_sigmoid(jnp.array([-4., 0., 4.]))
+        np.testing.assert_allclose(
+            result,
+            jnp.array([0., 0.5, 1.]),
+            atol=1e-6,
+        )
+
+    def test_silu_docstring_example(self):
+        """Verify silu docstring example at x=0."""
+        result = um.silu(jnp.array([-2., 0., 2.]))
+        np.testing.assert_allclose(result[1], 0.0, atol=1e-6)

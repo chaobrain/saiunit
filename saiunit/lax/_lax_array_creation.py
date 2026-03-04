@@ -19,7 +19,8 @@ import jax
 from jax import lax
 import jax.numpy as jnp
 
-from saiunit._base import Unit, Quantity
+from saiunit._base_unit import Unit
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 
 Shape = Union[int, Sequence[int]]
@@ -40,6 +41,37 @@ def zeros_like_array(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit: Optional[Unit] = None,
 ) -> Union[Quantity, jax.Array]:
+    """Create a zero-filled array with the same shape and dtype as ``x``.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        The template array whose shape and dtype are used.
+    unit : Unit, optional
+        If provided, the result will be a ``Quantity`` with this unit.
+        If ``x`` is already a ``Quantity``, specifying ``unit`` converts
+        ``x`` to that unit first.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        A zero-filled array. If ``x`` is a ``Quantity`` (or ``unit`` is
+        provided), the result is a ``Quantity`` with the corresponding unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([3.0, 5.0]) * su.meter
+        >>> result = sulax.zeros_like_array(q)
+        >>> result.mantissa
+        Array([0., 0.], dtype=float32)
+        >>> result.unit
+        meter
+    """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         if unit is not None:
@@ -63,7 +95,36 @@ def iota(
     size: int,
     unit: Optional[Unit] = None,
 ) -> Union[Quantity, jax.Array]:
-    """Wraps XLA's `Iota  operator."""
+    """Create an iota array (integer sequence) with an optional unit.
+
+    Wraps XLA's ``Iota`` operator.
+
+    Parameters
+    ----------
+    dtype : DTypeLike
+        The element type of the output array.
+    size : int
+        The number of elements.
+    unit : Unit, optional
+        If provided, the result is a ``Quantity`` with this unit.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        An array ``[0, 1, 2, ..., size - 1]`` of the given dtype.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> result = sulax.iota(float, 5, unit=su.second)
+        >>> result.mantissa
+        Array([0., 1., 2., 3., 4.], dtype=float32)
+        >>> result.unit
+        second
+    """
     if unit is not None:
         if not isinstance(unit, Unit):
             raise TypeError('unit must be an instance of Unit.')
@@ -80,7 +141,39 @@ def broadcasted_iota(
     _sharding=None,
     unit: Optional[Unit] = None,
 ) -> Union[Quantity, jax.Array]:
-    """Convenience wrapper around ``iota``."""
+    """Broadcast an iota array into the given shape along one dimension.
+
+    Convenience wrapper around ``iota``.
+
+    Parameters
+    ----------
+    dtype : DTypeLike
+        The element type of the output array.
+    shape : Shape
+        The shape of the output array.
+    dimension : int
+        The dimension along which to broadcast the iota values.
+    _sharding : optional
+        Internal sharding parameter.
+    unit : Unit, optional
+        If provided, the result is a ``Quantity`` with this unit.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        An array of the given shape with iota values along ``dimension``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> result = sulax.broadcasted_iota(float, (2, 3), 1, unit=su.meter)
+        >>> result.mantissa
+        Array([[0., 1., 2.],
+               [0., 1., 2.]], dtype=float32)
+    """
     if unit is not None:
         if not isinstance(unit, Unit):
             raise TypeError('unit must be an instance of Unit.')

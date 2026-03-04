@@ -16,7 +16,7 @@
 
 import jax.typing
 
-from ._base import Quantity
+from ._base_quantity import Quantity
 from ._misc import maybe_custom_array
 from ._unit_common import kelvin
 
@@ -28,28 +28,35 @@ __all__ = [
 
 def celsius2kelvin(celsius: jax.typing.ArrayLike) -> Quantity:
     """
-    Convert Celsius value to kelvin value.
+    Convert a Celsius value to a kelvin :class:`~saiunit.Quantity`.
 
     Parameters
     ----------
     celsius : jax.typing.ArrayLike
-      The celsius value to convert.
+        The temperature in degrees Celsius. Must not be a
+        :class:`~saiunit.Quantity`.
 
     Returns
     -------
-      Quantity: The converted value.
+    Quantity
+        The temperature expressed in kelvin.
 
     Raises
     ------
     TypeError
-      If the input value is a Quantity.
+        If ``celsius`` is already a :class:`~saiunit.Quantity`.
 
     Examples
     --------
-    >>> from saiunit import kelvin, celsius2kelvin
-    >>> celsius = 25.0
-    >>> celsius2kelvin(celsius)
-    298.15 * kelvin
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su.celsius2kelvin(0.0)
+        273.15 * kelvin
+        >>> su.celsius2kelvin(25.0)
+        298.15 * kelvin
+        >>> su.celsius2kelvin(-40.0)
+        233.14999999999998 * kelvin
 
     """
     celsius = maybe_custom_array(celsius)
@@ -60,28 +67,35 @@ def celsius2kelvin(celsius: jax.typing.ArrayLike) -> Quantity:
 
 def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
     """
-    Convert kelvin value to Celsius value.
+    Convert a kelvin :class:`~saiunit.Quantity` to a Celsius value.
 
     Parameters
     ----------
     value : Quantity
-      The kelvin value to convert.
+        The temperature expressed as a :class:`~saiunit.Quantity` with
+        kelvin units.
 
     Returns
     -------
-      Quantity: The converted value.
+    jax.typing.ArrayLike
+        The temperature in degrees Celsius (unitless scalar or array).
 
     Raises
     ------
     TypeError
-      If the input value is not a Quantity with kelvin unit.
+        If ``value`` is not a :class:`~saiunit.Quantity` with kelvin units.
 
     Examples
     --------
-    >>> from saiunit import kelvin, kelvin2celsius
-    >>> value = 298.15 * kelvin
-    >>> kelvin2celsius(value)
-    25.0
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su.kelvin2celsius(273.15 * su.kelvin)
+        0.0
+        >>> su.kelvin2celsius(298.15 * su.kelvin)
+        25.0
+        >>> su.kelvin2celsius(373.15 * su.kelvin)
+        100.0
 
     """
     value = maybe_custom_array(value)

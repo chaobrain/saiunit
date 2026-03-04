@@ -51,8 +51,24 @@ class SparseMatrix(JAXSparse, ABC):
 
     Notes
     -----
-    This class provides NotImplementedError for most operations, requiring concrete
+    This class provides ``NotImplementedError`` for most operations, requiring concrete
     subclasses to implement them according to their specific sparse format.
+
+    Examples
+    --------
+    ``SparseMatrix`` is not instantiated directly. Use a concrete subclass such as
+    :class:`~saiunit.sparse.CSR`, :class:`~saiunit.sparse.CSC`, or
+    :class:`~saiunit.sparse.COO`.
+
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[1., 0.], [0., 2.]])
+        >>> csr = susparse.CSR.fromdense(dense)
+        >>> isinstance(csr, susparse.SparseMatrix)
+        True
     """
 
     def with_data(
@@ -60,13 +76,37 @@ class SparseMatrix(JAXSparse, ABC):
         data: Union[jax.Array, np.ndarray, numbers.Number, 'Quantity']
     ):
         """
-        Create a new sparse matrix with the same structure but different data.
+        Create a new sparse matrix with the same sparsity structure but different data.
 
-        Args:
-            data: The new data.
+        Parameters
+        ----------
+        data : jax.Array, numpy.ndarray, numbers.Number, or Quantity
+            The new non-zero values. Must have the same shape, dtype, and unit
+            as the current ``self.data``.
 
-        Returns:
+        Returns
+        -------
+        SparseMatrix
+            A new sparse matrix of the same type with the provided data.
 
+        Raises
+        ------
+        NotImplementedError
+            If called on the abstract base class directly.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import jax.numpy as jnp
+            >>> import saiunit as su
+            >>> import saiunit.sparse as susparse
+            >>> dense = jnp.array([[1., 0.], [0., 2.]])
+            >>> csr = susparse.CSR.fromdense(dense)
+            >>> new_csr = csr.with_data(csr.data * 3)
+            >>> new_csr.todense()
+            Array([[3., 0.],
+                   [0., 6.]], dtype=float32)
         """
         raise NotImplementedError(f"{self.__class__}.assign_data")
 
@@ -74,13 +114,22 @@ class SparseMatrix(JAXSparse, ABC):
         """
         Sum of the elements of the sparse matrix.
 
-        Args:
-            axis: Axis or axes along which the sum is computed. The default is to compute the sum of the flattened array.
-                Only None is supported.
+        Parameters
+        ----------
+        axis : int, sequence of int, or None, optional
+            Axis or axes along which the sum is computed. The default (``None``)
+            computes the sum of the flattened array. Currently only ``None`` is
+            supported.
 
-        Returns:
-            The sum of the elements of the sparse matrix.
+        Returns
+        -------
+        jax.Array or Quantity
+            The sum of all elements in the sparse matrix.
 
+        Raises
+        ------
+        NotImplementedError
+            If ``axis`` is not ``None``.
         """
         if axis is not None:
             raise NotImplementedError("CSR.sum with axis is not implemented.")

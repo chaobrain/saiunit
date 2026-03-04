@@ -24,7 +24,7 @@ from absl.testing import parameterized
 import saiunit as bu
 import saiunit.lax as bulax
 from saiunit import meter, second, volt
-from saiunit._base import assert_quantity
+from saiunit._base_getters import assert_quantity
 
 
 class Array(bu.CustomArray):
@@ -424,3 +424,44 @@ class TestLaxChangeUnit(parameterized.TestCase):
             result = bulax_fun(q1, q2, dimension_numbers=dimension_numbers)
             expected = lax_fun(jnp.array(lhs), jnp.array(rhs), dimension_numbers=dimension_numbers)
             assert_quantity(result, expected, unit=bulax_fun._unit_change_fun(bu.get_unit(q1), bu.get_unit(q2)))
+
+
+class TestLaxChangeUnitDocstringExamples:
+    """Tests verifying the docstring examples for change-unit lax functions."""
+
+    def test_rsqrt_changes_unit(self):
+        """Docstring example: rsqrt changes unit to u ** -0.5."""
+        q = jnp.array([4.0, 9.0, 16.0]) * (meter ** 2)
+        result = bulax.rsqrt(q)
+        expected = lax.rsqrt(jnp.array([4.0, 9.0, 16.0]))
+        assert_quantity(result, expected, unit=meter ** -1)
+
+    def test_div_changes_unit(self):
+        """Docstring example: div yields unit(x) / unit(y)."""
+        dist = jnp.array([10.0, 20.0]) * meter
+        time = jnp.array([2.0, 4.0]) * second
+        speed = bulax.div(dist, time)
+        expected = jnp.array([5.0, 5.0])
+        assert_quantity(speed, expected, unit=meter / second)
+
+    def test_mul_changes_unit(self):
+        """Docstring example: mul yields unit(x) * unit(y)."""
+        a = jnp.array([2.0, 3.0]) * meter
+        b = jnp.array([4.0, 5.0]) * second
+        result = bulax.mul(a, b)
+        expected = jnp.array([8.0, 15.0])
+        assert_quantity(result, expected, unit=meter * second)
+
+    def test_integer_pow_changes_unit(self):
+        """Docstring example: integer_pow raises unit to the power."""
+        q = jnp.array([2.0, 3.0]) * meter
+        result = bulax.integer_pow(q, 3)
+        expected = lax.integer_pow(jnp.array([2.0, 3.0]), 3)
+        assert_quantity(result, expected, unit=meter ** 3)
+
+    def test_pow_changes_unit(self):
+        """Docstring example: pow changes unit with scalar exponent."""
+        q = jnp.array([2.0, 3.0]) * meter
+        result = bulax.pow(q, jnp.float32(2.0))
+        expected = lax.pow(jnp.array([2.0, 3.0]), jnp.float32(2.0))
+        assert_quantity(result, expected, unit=meter ** 2)

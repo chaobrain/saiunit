@@ -19,7 +19,8 @@ from typing import Any, Callable, Sequence, Union
 import jax
 from jax import lax
 
-from saiunit._base import Quantity, maybe_decimal
+from saiunit._base_getters import maybe_decimal
+from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 
 __all__ = [
@@ -51,16 +52,80 @@ def reduce(
     computation: Callable[[Any, Any], Any],
     dimensions: Sequence[int]
 ) -> Any:
-    """Wraps XLA's `Reduce
+    """Reduce an array along dimensions using a computation.
+
+    Wraps XLA's `Reduce
     <https://www.tensorflow.org/xla/operation_semantics#reduce>`_
     operator.
 
     ``init_values`` and ``computation`` together must form a `monoid
     <https://en.wikipedia.org/wiki/Monoid>`_
-    for correctness. That is ``init_values`` must be an identity of
-    ``computation``, and ``computation`` must be associative. XLA may exploit both
-    of these properties during code generation; if either is violated the result
-    is undefined.
+    for correctness: ``init_values`` must be an identity of
+    ``computation``, and ``computation`` must be associative.
+
+    Parameters
+    ----------
+    operands : array_like or Quantity
+        The array(s) to reduce.  If a :class:`~saiunit.Quantity`, its
+        underlying mantissa is extracted before the XLA operation.  If a
+        :class:`~saiunit.CustomArray`, its ``.data`` attribute is unwrapped.
+    init_values : array_like or Quantity
+        The initial value(s) for the reduction.  Must be an identity element
+        of ``computation``.  Accepts the same types as ``operands``.
+    computation : callable
+        A binary function used to combine elements (e.g. ``jax.lax.add``).
+    dimensions : sequence of int
+        The dimensions along which to reduce.
+
+    Returns
+    -------
+    result : jax.Array
+        The reduced result.  Note that unit information is not preserved
+        through the raw XLA reduce; see Notes.
+
+    Raises
+    ------
+    TypeError
+        If ``operands`` and ``init_values`` have incompatible types after
+        unwrapping.
+
+    See Also
+    --------
+    jax.lax.reduce : The underlying JAX primitive.
+    jax.numpy.sum : A higher-level sum that preserves units in saiunit.
+
+    Notes
+    -----
+    Because this function delegates directly to :func:`jax.lax.reduce`, the
+    unit metadata carried by a :class:`~saiunit.Quantity` is stripped before
+    the reduction.  If you need the result to retain its unit, consider using
+    the higher-level wrappers in :mod:`saiunit.math` (e.g. ``saiunit.math.sum``).
+
+    Examples
+    --------
+    Reducing a plain array with ``lax.add``:
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> from jax import lax
+        >>> x = jnp.array([1.0, 2.0, 3.0])
+        >>> sulax.reduce(x, jnp.float32(0), lax.add, [0])
+        Array(6., dtype=float32)
+
+    Reducing a ``Quantity`` (unit is stripped, raw mantissa is reduced):
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> from jax import lax
+        >>> q = jnp.array([1.0, 2.0, 3.0]) * su.meter
+        >>> sulax.reduce(q, jnp.float32(0) * su.meter, lax.add, [0])
+        Array(6., dtype=float32)
     """
     operands = maybe_custom_array(operands)
     init_values = maybe_custom_array(init_values)
@@ -72,9 +137,72 @@ def reduce_precision(
     exponent_bits: int,
     mantissa_bits: int
 ) -> jax.typing.ArrayLike:
-    """Wraps XLA's `ReducePrecision
+    """Reduce the precision of array elements.
+
+    Wraps XLA's `ReducePrecision
     <https://www.tensorflow.org/xla/operation_semantics#reduceprecision>`_
     operator.
+
+    When the input is a :class:`~saiunit.Quantity`, the precision reduction
+    is applied to the mantissa and the result is returned as a plain
+    :class:`jax.Array` (the unit is stripped).
+
+    Parameters
+    ----------
+    operand : array_like, Quantity, or float
+        The input values whose precision will be reduced.  If a
+        :class:`~saiunit.Quantity`, the precision reduction is applied to its
+        mantissa and the result is a plain array.  If a
+        :class:`~saiunit.CustomArray`, its ``.data`` attribute is unwrapped
+        first.
+    exponent_bits : int
+        Number of exponent bits in the reduced-precision format.
+    mantissa_bits : int
+        Number of mantissa bits in the reduced-precision format.
+
+    Returns
+    -------
+    result : jax.Array
+        Array with reduced-precision values.  Unit information from a
+        :class:`~saiunit.Quantity` input is not preserved.
+
+    See Also
+    --------
+    jax.lax.reduce_precision : The underlying JAX primitive.
+
+    Notes
+    -----
+    This function simulates the effect of converting values to a
+    lower-precision floating-point format and back.  It is useful for
+    exploring the numerical effects of quantization without actually changing
+    the storage dtype.
+
+    The ``exponent_bits`` and ``mantissa_bits`` together define a virtual
+    floating-point format.  For example, ``exponent_bits=5`` and
+    ``mantissa_bits=10`` correspond to IEEE float16.
+
+    Examples
+    --------
+    Reducing precision of a plain array:
+
+    .. code-block:: python
+
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> x = jnp.array([1.123456, 2.123456], dtype=jnp.float32)
+        >>> sulax.reduce_precision(x, exponent_bits=5, mantissa_bits=10)
+        Array([1.123047, 2.123047], dtype=float32)
+
+    Reducing precision of a ``Quantity`` (mantissa is extracted, unit is stripped):
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * su.meter
+        >>> sulax.reduce_precision(q, exponent_bits=5, mantissa_bits=10)
+        Array([1.123047, 2.123047], dtype=float32)
     """
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
@@ -86,5 +214,68 @@ def reduce_precision(
 def broadcast_shapes(
     *shapes
 ):
-    """Returns the shape that results from NumPy broadcasting of `shapes`."""
+    """Return the shape that results from NumPy broadcasting of ``shapes``.
+
+    Computes the shape that would result from broadcasting arrays with the
+    given shapes, following standard NumPy broadcasting rules.  This is a
+    thin wrapper around :func:`jax.lax.broadcast_shapes` and does not involve
+    any unit handling.
+
+    Parameters
+    ----------
+    *shapes : tuple of int
+        Two or more shapes to broadcast together.  Each shape is a tuple of
+        non-negative integers.
+
+    Returns
+    -------
+    result : tuple of int
+        The broadcasted shape.
+
+    Raises
+    ------
+    ValueError
+        If the shapes are not broadcast-compatible (e.g. ``(2,)`` and
+        ``(3,)``).
+
+    See Also
+    --------
+    jax.lax.broadcast_shapes : The underlying JAX function.
+    numpy.broadcast_shapes : The NumPy equivalent.
+
+    Notes
+    -----
+    Broadcasting rules:
+
+    1. If the shapes differ in length, the shorter shape is padded with ones
+       on the left.
+    2. Dimensions are compatible when they are equal, or one of them is 1.
+    3. The resulting dimension is the maximum of the two.
+
+    Examples
+    --------
+    Basic broadcasting of two shapes:
+
+    .. code-block:: python
+
+        >>> import saiunit.lax as sulax
+        >>> sulax.broadcast_shapes((2, 3), (3,))
+        (2, 3)
+
+    Broadcasting with dimension expansion:
+
+    .. code-block:: python
+
+        >>> import saiunit.lax as sulax
+        >>> sulax.broadcast_shapes((1, 5), (3, 1))
+        (3, 5)
+
+    Broadcasting three shapes together:
+
+    .. code-block:: python
+
+        >>> import saiunit.lax as sulax
+        >>> sulax.broadcast_shapes((1,), (3, 1), (1, 1, 5))
+        (1, 3, 5)
+    """
     return lax.broadcast_shapes(*shapes)

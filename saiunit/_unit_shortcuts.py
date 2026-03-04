@@ -14,12 +14,36 @@
 # ==============================================================================
 
 """
-Optional short unit names
+Short aliases for commonly used units.
 
-This module defines the following short unit names:
+This module provides convenient short names that map to
+standard SI-prefixed units from :mod:`saiunit._unit_common`.
 
-mV, mA, uA (micro_amp), nA, pA, mF, uF, nF, nS, mS, uS, ms,
-Hz, kHz, MHz, cm, cm2, cm3, mm, mm2, mm3, um, um2, um3
+Voltage
+    ``mV`` (millivolt)
+
+Current
+    ``mA`` (milliamp), ``uA`` (microamp), ``nA`` (nanoamp), ``pA`` (picoamp)
+
+Capacitance
+    ``pF`` (picofarad), ``uF`` (microfarad), ``nF`` (nanofarad)
+
+Conductance
+    ``nS`` (nanosiemens), ``uS`` (microsiemens), ``mS`` (millisiemens)
+
+Time
+    ``ms`` (millisecond), ``us`` (microsecond)
+
+Frequency
+    ``Hz`` (hertz), ``kHz`` (kilohertz), ``MHz`` (megahertz)
+
+Length
+    ``cm`` / ``cm2`` / ``cm3`` (centimetre and powers),
+    ``mm`` / ``mm2`` / ``mm3`` (millimetre and powers),
+    ``um`` / ``um2`` / ``um3`` (micrometre and powers)
+
+Concentration
+    ``mM`` (millimolar), ``uM`` (micromolar), ``nM`` (nanomolar)
 """
 
 from ._unit_common import (
