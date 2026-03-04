@@ -653,11 +653,30 @@ class TestStandardUnitLookup:
         assert not is_full
 
     def test_add_standard_unit_registers(self):
+        from saiunit._base_unit import _standard_unit_aliases, _unit_name_registry, _ambiguous_keys
         d = get_or_create_dimension([0, 0, 0, 1, 0, 0, 0])
-        u = Unit(d, name="teestamp", dispname="tA", scale=0, base=10., factor=1.)
-        add_standard_unit(u)
         key = (d, 0, 10., 1.)
-        assert key in _standard_units
+        prev_standard = _standard_units.get(key)
+        prev_aliases = list(_standard_unit_aliases.get(key, []))
+        prev_tA = _unit_name_registry.get('tA')
+        prev_teestamp = _unit_name_registry.get('teestamp')
+        was_ambiguous = key in _ambiguous_keys
+        try:
+            u = Unit(d, name="teestamp", dispname="tA", scale=0, base=10., factor=1.)
+            add_standard_unit(u)
+            assert key in _standard_units
+        finally:
+            if prev_standard is None:
+                _standard_units.pop(key, None)
+            else:
+                _standard_units[key] = prev_standard
+            _standard_unit_aliases[key] = prev_aliases
+            if prev_tA is None:
+                _unit_name_registry.pop('tA', None)
+            if prev_teestamp is None:
+                _unit_name_registry.pop('teestamp', None)
+            if not was_ambiguous:
+                _ambiguous_keys.discard(key)
 
 
 # =========================================================================
@@ -1224,12 +1243,34 @@ def test_docstring_example_unitless():
 def test_docstring_example_add_standard_unit():
     """Test the example from add_standard_unit docstring."""
     import saiunit as u
-    from saiunit._base_unit import _standard_units
+    from saiunit._base_unit import (
+        _standard_units, _standard_unit_aliases, _unit_name_registry, _ambiguous_keys
+    )
     dim = u.get_or_create_dimension(length=1, time=-1)
-    vel_unit = u.Unit(dim, name='testvel', dispname='tv', scale=0, base=10., factor=1.)
-    u.add_standard_unit(vel_unit)
     key = (dim, 0, 10., 1.)
-    assert key in _standard_units
+    # Save state before registration
+    prev_standard = _standard_units.get(key)
+    prev_aliases = list(_standard_unit_aliases.get(key, []))
+    prev_tv = _unit_name_registry.get('tv')
+    prev_testvel = _unit_name_registry.get('testvel')
+    was_ambiguous = key in _ambiguous_keys
+    try:
+        vel_unit = u.Unit(dim, name='testvel', dispname='tv', scale=0, base=10., factor=1.)
+        u.add_standard_unit(vel_unit)
+        assert key in _standard_units
+    finally:
+        # Restore global state
+        if prev_standard is None:
+            _standard_units.pop(key, None)
+        else:
+            _standard_units[key] = prev_standard
+        _standard_unit_aliases[key] = prev_aliases
+        if prev_tv is None:
+            _unit_name_registry.pop('tv', None)
+        if prev_testvel is None:
+            _unit_name_registry.pop('testvel', None)
+        if not was_ambiguous:
+            _ambiguous_keys.discard(key)
 
 
 # ---------------------------------------------------------------------------
