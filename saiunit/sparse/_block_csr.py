@@ -23,8 +23,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental import pallas as pl
 
-import saiunit as u
-from saiunit._base import Quantity
+from saiunit._base import Quantity, get_mantissa, get_unit, maybe_decimal
 from saiunit._sparse_base import SparseMatrix
 
 __all__ = [
@@ -80,6 +79,11 @@ class BlockCSR(SparseMatrix):
     def fromdense(cls, dense: jax.Array, *, block_size) -> 'BlockCSR':
         raise NotImplementedError
 
+    def transpose(self, axes=None):
+        if axes is not None:
+            raise NotImplementedError("axes argument to transpose()")
+        raise NotImplementedError("BlockCSR.transpose is not implemented.")
+
     def __matmul__(self, other) -> jax.Array:
         self._validate()
         return sdd_matmul(self, other)
@@ -89,8 +93,8 @@ class BlockCSR(SparseMatrix):
 def _sdd_todense(mat: BlockCSR) -> jax.Array:
     _, n, m = mat.data.shape
     nrows = mat.shape[0] // n
-    unit = u.get_unit(mat.data)
-    blocks = u.get_mantissa(mat.data)
+    unit = get_unit(mat.data)
+    blocks = get_mantissa(mat.data)
 
     def i_body(i_row, out):  # each row
         def j_body(x):  # each block in the row
@@ -106,13 +110,17 @@ def _sdd_todense(mat: BlockCSR) -> jax.Array:
         )[1]
 
     dense = jax.lax.fori_loop(0, nrows, i_body, jnp.zeros(mat.shape, mat.dtype))
-    return u.maybe_decimal(u.Quantity(dense, unit=unit))
+    return maybe_decimal(Quantity(dense, unit=unit))
 
 
 def _check_shape_consistency(x, y):
-    assert isinstance(y, jax.Array), f"Only support jax.Array. But got unsupported type {type(y)}"
-    assert x.ndim == y.ndim == 2
-    assert x.shape[1] == y.shape[0], f"Dimension mismatch: {x.shape} @ {y.shape}"
+    y_mantissa = get_mantissa(y)
+    if not isinstance(y_mantissa, jax.Array):
+        raise TypeError(f"Only support array-like matmul inputs. Got {type(y)}")
+    if x.ndim != 2 or y_mantissa.ndim != 2:
+        raise ValueError(f"Expected rank-2 matmul inputs, got {x.ndim} and {y_mantissa.ndim}")
+    if x.shape[1] != y_mantissa.shape[0]:
+        raise ValueError(f"Dimension mismatch: {x.shape} @ {y_mantissa.shape}")
 
 
 def _sdd_kernel(
@@ -172,11 +180,11 @@ def sdd_matmul(
     )
 
     # call
-    unita = u.get_unit(mat1.data)
-    unitb = u.get_unit(mat2)
-    blocks = u.get_mantissa(mat1.data)
-    r = fn(blocks, mat1.indices, mat1.indptr, u.get_mantissa(mat2))
-    return u.maybe_decimal(u.Quantity(r, unit=unita * unitb))
+    unita = get_unit(mat1.data)
+    unitb = get_unit(mat2)
+    blocks = get_mantissa(mat1.data)
+    r = fn(blocks, mat1.indices, mat1.indptr, get_mantissa(mat2))
+    return maybe_decimal(Quantity(r, unit=unita * unitb))
 
 
 @jax.jit
@@ -206,13 +214,13 @@ def native_sdd_matmul(
         )[1]
         return acc.astype(dtype)
 
-    unita = u.get_unit(mat1.data)
-    unitb = u.get_unit(mat2)
-    blocks = u.get_mantissa(mat1.data)
-    mat2 = u.get_mantissa(mat2)
+    unita = get_unit(mat1.data)
+    unitb = get_unit(mat2)
+    blocks = get_mantissa(mat1.data)
+    mat2 = get_mantissa(mat2)
 
     out = jax.vmap(i_body)(jnp.arange(nrows)).reshape((mat1.shape[0], mat2.shape[1]))
-    return u.maybe_decimal(u.Quantity(out, unit=unita * unitb))
+    return maybe_decimal(Quantity(out, unit=unita * unitb))
 
 
 def sample_sparse_matrix(

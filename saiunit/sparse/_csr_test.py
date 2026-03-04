@@ -345,6 +345,14 @@ class TestCSR(unittest.TestCase):
 
 
 class TestCSC(unittest.TestCase):
+    def test_fromdense_with_nse(self):
+        data = bst.random.rand(10, 20)
+        data = data * (data < 0.3) * u.ms
+
+        nse = int((u.get_mantissa(data) != 0).sum())
+        csc = u.sparse.csc_fromdense(data, nse=nse)
+        self.assertTrue(u.math.allclose(csc.todense(), data))
+
     def test_matvec(self):
         for ux, uy in [
             (u.ms, u.mV),

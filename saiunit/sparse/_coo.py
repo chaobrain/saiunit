@@ -24,10 +24,10 @@ import jax.numpy as jnp
 import numpy as np
 from jax import lax
 from jax import tree_util
-from jax._src.lax.lax import _const
 from jax.experimental.sparse import JAXSparse, coo_todense_p, coo_fromdense_p, coo_matmat_p, coo_matvec_p
 
 from saiunit._base import Quantity, split_mantissa_unit, maybe_decimal, get_mantissa, get_unit
+from saiunit._compatible_import import concrete_or_error
 from saiunit._sparse_base import SparseMatrix
 from saiunit.math._fun_array_creation import asarray
 from saiunit.math._fun_keep_unit import promote_dtypes
@@ -38,6 +38,10 @@ __all__ = [
 
 Dtype = Any
 Shape = tuple[int, ...]
+
+
+def _const_like(x: jax.Array, value: int) -> jax.Array:
+    return jnp.asarray(value, dtype=x.dtype)
 
 
 class COOInfo(NamedTuple):
@@ -160,8 +164,8 @@ class COO(SparseMatrix):
 
         data = jnp.ones(diag_size, dtype=dtype)
         idx = jnp.arange(diag_size, dtype=index_dtype)
-        zero = _const(idx, 0)
-        k = _const(idx, k)
+        zero = _const_like(idx, 0)
+        k = _const_like(idx, k)
         row = lax.sub(idx, lax.cond(k >= 0, lambda: zero, lambda: k))
         col = lax.add(idx, lax.cond(k <= 0, lambda: zero, lambda: k))
         return cls(
@@ -175,7 +179,12 @@ class COO(SparseMatrix):
         assert data.shape == self.data.shape
         assert data.dtype == self.data.dtype
         assert get_unit(data) == get_unit(self.data)
-        return COO((data, self.row, self.col), shape=self.shape)
+        return COO(
+            (data, self.row, self.col),
+            shape=self.shape,
+            rows_sorted=self._rows_sorted,
+            cols_sorted=self._cols_sorted
+        )
 
     def todense(self) -> jax.Array:
         return coo_todense(self)
@@ -434,7 +443,7 @@ def coo_fromdense(
     """
     if nse is None:
         nse = int((get_mantissa(mat) != 0).sum())
-    nse_int = jax.core.concrete_or_error(operator.index, nse, "coo_fromdense nse argument")
+    nse_int = concrete_or_error(operator.index, nse, "coo_fromdense nse argument")
     return COO(
         _coo_fromdense(mat, nse=nse_int, index_dtype=index_dtype),
         shape=mat.shape,
@@ -485,7 +494,7 @@ def _coo_fromdense(
     """
     mat = asarray(mat)
     mat, unit = split_mantissa_unit(mat)
-    nse = jax.core.concrete_or_error(operator.index, nse, "nse argument of coo_fromdense()")
+    nse = concrete_or_error(operator.index, nse, "nse argument of coo_fromdense()")
     r = coo_fromdense_p.bind(mat, nse=nse, index_dtype=index_dtype)
     if unit.is_unitless:
         return r

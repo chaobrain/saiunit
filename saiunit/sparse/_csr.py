@@ -21,12 +21,12 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import tree_util
-from jax._src.lax.lax import _const
 from jax.experimental.sparse import (
     JAXSparse, csr_fromdense_p, csr_todense_p, csr_matvec_p, csr_matmat_p
 )
 
 from saiunit._base import Quantity, split_mantissa_unit, maybe_decimal, get_mantissa, get_unit
+from saiunit._compatible_import import concrete_or_error
 from saiunit._sparse_base import SparseMatrix
 from saiunit.math._fun_array_creation import asarray
 from saiunit.math._fun_keep_unit import promote_dtypes
@@ -38,6 +38,10 @@ __all__ = [
 ]
 
 Shape = tuple[int, ...]
+
+
+def _const_like(x: jax.Array, value: int) -> jax.Array:
+    return jnp.asarray(value, dtype=x.dtype)
 
 
 @tree_util.register_pytree_node_class
@@ -87,8 +91,8 @@ class CSR(SparseMatrix):
 
         data = jnp.ones(diag_size, dtype=dtype)
         idx = jnp.arange(diag_size, dtype=index_dtype)
-        zero = _const(idx, 0)
-        k = _const(idx, k)
+        zero = _const_like(idx, 0)
+        k = _const_like(idx, k)
         col = jax.lax.add(idx, jax.lax.cond(k <= 0, lambda: zero, lambda: k))
         indices = col.astype(index_dtype)
         # TODO(jakevdp): this can be done more efficiently.
@@ -107,7 +111,8 @@ class CSR(SparseMatrix):
         return csr_todense(self)
 
     def transpose(self, axes=None):
-        assert axes is None
+        if axes is not None:
+            raise NotImplementedError("axes argument to transpose()")
         return CSC((self.data, self.indices, self.indptr), shape=self.shape[::-1])
 
     def __abs__(self):
@@ -329,7 +334,8 @@ class CSC(SparseMatrix):
         return csr_todense(self.T).T
 
     def transpose(self, axes=None):
-        assert axes is None
+        if axes is not None:
+            raise NotImplementedError("axes argument to transpose()")
         return CSR((self.data, self.indices, self.indptr), shape=self.shape[::-1])
 
     def __abs__(self):
@@ -530,7 +536,7 @@ def csr_fromdense(
     """
     if nse is None:
         nse = int((get_mantissa(mat) != 0).sum())
-    nse_int = jax.core.concrete_or_error(operator.index, nse, "coo_fromdense nse argument")
+    nse_int = concrete_or_error(operator.index, nse, "csr_fromdense nse argument")
     return CSR(_csr_fromdense(mat, nse=nse_int, index_dtype=index_dtype), shape=mat.shape)
 
 
@@ -542,7 +548,8 @@ def csr_todense(mat: CSR) -> jax.Array | Quantity:
     Returns:
       mat_dense: dense version of ``mat``
     """
-    assert isinstance(mat, CSR), f"Expected CSR, got {type(mat)}"
+    if not isinstance(mat, CSR):
+        raise TypeError(f"Expected CSR, got {type(mat)}")
     return _csr_todense(mat.data, mat.indices, mat.indptr, shape=mat.shape)
 
 
@@ -554,7 +561,8 @@ def csc_todense(mat: CSC) -> jax.Array | Quantity:
     Returns:
       mat_dense: dense version of ``mat``
     """
-    assert isinstance(mat, CSC), f"Expected CSC, got {type(mat)}"
+    if not isinstance(mat, CSC):
+        raise TypeError(f"Expected CSC, got {type(mat)}")
     return mat.todense()
 
 
@@ -564,7 +572,8 @@ def csc_fromdense(
     nse: int | None = None,
     index_dtype: jax.typing.DTypeLike = np.int32
 ) -> CSC:
-    assert nse is None, "nse argument is not supported for CSC"
+    if nse is not None:
+        nse = concrete_or_error(operator.index, nse, "csc_fromdense nse argument")
     return CSC.fromdense(mat, nse=nse, index_dtype=index_dtype)
 
 
@@ -588,7 +597,7 @@ def _csr_fromdense(
     """
     mat = asarray(mat)
     mat, unit = split_mantissa_unit(mat)
-    nse = jax.core.concrete_or_error(operator.index, nse, "nse argument of csr_fromdense()")
+    nse = concrete_or_error(operator.index, nse, "nse argument of csr_fromdense()")
     r = csr_fromdense_p.bind(mat, nse=nse, index_dtype=np.dtype(index_dtype))
     if unit.is_unitless:
         return r

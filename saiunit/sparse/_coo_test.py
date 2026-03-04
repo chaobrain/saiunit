@@ -135,6 +135,15 @@ class TestCOO(unittest.TestCase):
                 )
             )
 
+    def test_with_data_preserves_sorted_flags(self):
+        coo = u.sparse.COO._eye(4, 4, 0)
+        self.assertTrue(coo._rows_sorted)
+        self.assertTrue(coo._cols_sorted)
+
+        coo_new = coo.with_data(coo.data)
+        self.assertTrue(coo_new._rows_sorted)
+        self.assertTrue(coo_new._cols_sorted)
+
     def test_add(self):
         for ux in [
             u.ms,

@@ -22,7 +22,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.experimental import pallas as pl
 
-from saiunit._base import Quantity
+from saiunit._base import Quantity, get_mantissa, get_unit, maybe_decimal
 from saiunit._sparse_base import SparseMatrix
 
 __all__ = [
@@ -75,33 +75,56 @@ class BlockELL(SparseMatrix):
         return _sdd_todense(self)
 
     @classmethod
-    def fromdense(cls, dense: jax.Array, *, block_size) -> 'BlockCSR':
-        nrows, ncols = dense.shape
+    def fromdense(cls, dense: jax.Array | Quantity, *, block_size) -> 'BlockELL':
+        dense_mantissa = get_mantissa(dense)
+        dense_unit = get_unit(dense)
+
+        nrows, ncols = dense_mantissa.shape
         n, m = block_size
-        assert nrows % n == 0
-        assert ncols % m == 0
+        if nrows % n != 0:
+            raise ValueError(f"Row size {nrows} is not divisible by block row size {n}")
+        if ncols % m != 0:
+            raise ValueError(f"Column size {ncols} is not divisible by block column size {m}")
         nrows //= n
         ncols //= m
 
         blocks = []
         blocks_per_row = []
-        indices = []
+        indices_by_row = []
+        global_block_idx = 0
         for i in range(nrows):
-            row_blocks = []
             row_indices = []
             for j in range(ncols):
-                block = dense[i * n:(i + 1) * n, j * m:(j + 1) * m]
+                block = dense_mantissa[i * n:(i + 1) * n, j * m:(j + 1) * m]
                 if not jnp.all(block == 0):
-                    row_blocks.append(block)
-                    row_indices.append([j, len(row_blocks) - 1])
-            blocks_per_row.append(len(row_blocks))
-            blocks.extend(row_blocks)
-            indices.append(row_indices)
+                    blocks.append(block)
+                    row_indices.append([j, global_block_idx])
+                    global_block_idx += 1
+            blocks_per_row.append(len(row_indices))
+            indices_by_row.append(row_indices)
+
+        max_num_blocks_per_row = max(blocks_per_row, default=0)
+        indices = np.zeros((nrows, max_num_blocks_per_row, 2), dtype=np.int32)
+        for i, row_indices in enumerate(indices_by_row):
+            for j, index_pair in enumerate(row_indices):
+                indices[i, j] = index_pair
+
+        if blocks:
+            blocks = jnp.stack(blocks)
+        else:
+            blocks = jnp.empty((0, n, m), dtype=dense_mantissa.dtype)
+
+        blocks = maybe_decimal(Quantity(blocks, unit=dense_unit))
 
         return cls(
-            (jnp.asarray(blocks), jnp.asarray(blocks_per_row), jnp.asarray(indices)),
-            shape=dense.shape
+            (blocks, jnp.asarray(blocks_per_row, dtype=jnp.int32), jnp.asarray(indices, dtype=jnp.int32)),
+            shape=dense_mantissa.shape
         )
+
+    def transpose(self, axes=None):
+        if axes is not None:
+            raise NotImplementedError("axes argument to transpose()")
+        raise NotImplementedError("BlockELL.transpose is not implemented.")
 
     def __matmul__(self, other) -> jax.Array:
         self._validate()
@@ -112,23 +135,30 @@ class BlockELL(SparseMatrix):
 def _sdd_todense(mat: BlockELL) -> jax.Array:
     _, n, m = mat.data.shape
     nrows = mat.shape[0] // n
+    unit = get_unit(mat.data)
+    blocks = get_mantissa(mat.data)
     out = jnp.zeros(mat.shape, mat.dtype)
 
     def i_body(i, val1):  # each row
         def j_body(j, val2):  # each block in the row
             i_col, i_block = mat.indices[i, j]
-            val2 = jax.lax.dynamic_update_slice(val2, mat.data[i_block], (i * n, i_col * m))
+            val2 = jax.lax.dynamic_update_slice(val2, blocks[i_block], (i * n, i_col * m))
             return val2
 
         return jax.lax.fori_loop(0, mat.blocks_per_row[i], j_body, val1)
 
-    return jax.lax.fori_loop(0, nrows, i_body, out)
+    out = jax.lax.fori_loop(0, nrows, i_body, out)
+    return maybe_decimal(Quantity(out, unit=unit))
 
 
 def _check_shape_consistency(x, y):
-    assert isinstance(y, jax.Array), f"Only support jax.Array. But got unsupported type {type(y)}"
-    assert x.ndim == y.ndim == 2
-    assert x.shape[1] == y.shape[0], f"Dimension mismatch: {x.shape} @ {y.shape}"
+    y_mantissa = get_mantissa(y)
+    if not isinstance(y_mantissa, jax.Array):
+        raise TypeError(f"Only support array-like matmul inputs. Got {type(y)}")
+    if x.ndim != 2 or y_mantissa.ndim != 2:
+        raise ValueError(f"Expected rank-2 matmul inputs, got {x.ndim} and {y_mantissa.ndim}")
+    if x.shape[1] != y_mantissa.shape[0]:
+        raise ValueError(f"Dimension mismatch: {x.shape} @ {y_mantissa.shape}")
 
 
 def _sdd_kernel(
@@ -163,7 +193,7 @@ def _sdd_kernel(
 @functools.partial(jax.jit, static_argnames=["debug", 'interpret', 'block_size'])
 def sdd_matmul(
     mat1: BlockELL,
-    mat2: jax.Array,
+    mat2: jax.Array | Quantity,
     *,
     debug: bool = False,
     interpret: bool = False,
@@ -171,10 +201,12 @@ def sdd_matmul(
 ) -> jax.Array:
     _check_shape_consistency(mat1, mat2)
 
+    mat2_mantissa = get_mantissa(mat2)
+
     # shape and dtype
-    m, n, k = mat1.shape[0], mat1.shape[1], mat2.shape[1]
+    m, n, k = mat1.shape[0], mat1.shape[1], mat2_mantissa.shape[1]
     _, bm, bn = mat1.data.shape
-    dtype = jnp.result_type(mat1.dtype, mat2.dtype)
+    dtype = jnp.result_type(mat1.dtype, mat2_mantissa.dtype)
 
     # kernel
     fn = pl.pallas_call(
@@ -186,17 +218,21 @@ def sdd_matmul(
     )
 
     # call
-    return fn(mat1.data, mat1.indices, mat1.blocks_per_row, mat2)
+    unita = get_unit(mat1.data)
+    unitb = get_unit(mat2)
+    data = get_mantissa(mat1.data)
+    r = fn(data, mat1.indices, mat1.blocks_per_row, mat2_mantissa)
+    return maybe_decimal(Quantity(r, unit=unita * unitb))
 
 
 @jax.jit
 def native_sdd_matmul(
     mat1: BlockELL,
-    mat2: jax.Array,
+    mat2: jax.Array | Quantity,
 ):
     _check_shape_consistency(mat1, mat2)
 
-    dtype = jnp.result_type(mat1.dtype, mat2.dtype)
+    dtype = jnp.result_type(mat1.dtype, get_mantissa(mat2).dtype)
     _, n, m = mat1.data.shape
     nrows = mat1.shape[0] // n
 
@@ -206,14 +242,20 @@ def native_sdd_matmul(
         def k_body(k, val):
             i_col, i_block = mat1.indices[i, k]
             chunk = jax.lax.dynamic_slice(mat2, [i_col * m, 0], (m, mat2.shape[1]))  # [m, mat2.shape[1]]
-            block = mat1.data[i_block]
+            block = data[i_block]
             return val + block.dot(chunk)
 
         acc = jax.lax.fori_loop(0, num_blocks_in_row, k_body, jnp.zeros((n, mat2.shape[1]), dtype=jnp.float32))
         return acc.astype(dtype)
 
+    unita = get_unit(mat1.data)
+    unitb = get_unit(mat2)
+    data = get_mantissa(mat1.data)
+    mat2 = get_mantissa(mat2)
+
     out = jax.vmap(i_body)(jnp.arange(nrows))
-    return out.reshape((mat1.shape[0], mat2.shape[1]))
+    out = out.reshape((mat1.shape[0], mat2.shape[1]))
+    return maybe_decimal(Quantity(out, unit=unita * unitb))
 
 
 def sample_sparse_matrix(
