@@ -1,4 +1,4 @@
-# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
+# Copyright 2026 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,11 +57,29 @@ compat_with_equinox = False
 
 def compatible_with_equinox(mode: bool = True):
     """
-    This function is developed to set the compatibility with equinox.
-    See `unit-aware diffrax <https://github.com/chaoming0625/diffrax>`_.
+    Enable or disable compatibility with the Equinox library.
 
-    Args:
-        mode: bool, optional. The mode to set the compatibility with equinox.
+    When enabled, ``Quantity`` objects interact correctly with Equinox
+    transformations such as those used in
+    `unit-aware diffrax <https://github.com/chaoming0625/diffrax>`_.
+
+    Parameters
+    ----------
+    mode : bool, optional
+        If ``True`` (default), enable Equinox compatibility.
+        If ``False``, disable it.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su.compatible_with_equinox(True)   # enable
+        >>> su.compatible_with_equinox(False)  # disable
+
+    See Also
+    --------
+    Quantity : The core physical-quantity class affected by this setting.
     """
     global compat_with_equinox
     compat_with_equinox = mode
@@ -239,8 +257,51 @@ _quantity_with_unit.__module__ = 'saiunit._base_quantity'
 @register_pytree_node_class
 class Quantity:
     """
-    The `Quantity` class represents a physical quantity with a mantissa and a unit.
-    It is used to represent all physical quantities in ``saiunit``.
+    A numerical value paired with a physical unit.
+
+    ``Quantity`` is the central data structure in ``saiunit``.  It stores a
+    *mantissa* (the raw numerical data, typically a JAX array) together with a
+    :class:`Unit` that describes the physical dimensions and scale.  Arithmetic
+    on ``Quantity`` objects automatically tracks and checks units, raising
+    :class:`UnitMismatchError` when incompatible quantities are combined.
+
+    ``Quantity`` is registered as a JAX pytree, so it works transparently with
+    ``jax.jit``, ``jax.grad``, ``jax.vmap``, and other JAX transformations.
+
+    Parameters
+    ----------
+    mantissa : array_like, number, Unit, or Quantity
+        The numerical value(s).  If a :class:`Unit` is passed, the mantissa is
+        set to ``1.0`` and that unit is adopted.  If a :class:`Quantity` is
+        passed, its mantissa and unit are used (converted to *unit* when
+        given).
+    unit : Unit, optional
+        The physical unit.  Defaults to ``UNITLESS``.
+    dtype : dtype, optional
+        If provided, the mantissa is cast to this dtype on construction.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> # Scalar with unit
+        >>> q = su.Quantity(3.0, unit=su.mV)
+        >>> q
+        Quantity(3., "mV")
+        >>> # Array with unit via multiplication shorthand
+        >>> arr = jnp.array([1.0, 2.0, 3.0]) * su.mV
+        >>> arr.shape
+        (3,)
+        >>> # From a Unit object directly
+        >>> su.Quantity(su.metre)
+        Quantity(1., "m")
+
+    See Also
+    --------
+    Unit : Represents a physical unit (dimension + scale).
+    compatible_with_equinox : Toggle Equinox interoperability.
     """
 
     __module__ = "saiunit"
@@ -370,71 +431,99 @@ class Quantity:
 
         Examples
         --------
-        >>> import saiunit as bu
-        >>> x = jnp.arange(5.0) * bu.mV
-        >>> x
-        Array([0., 1., 2., 3., 4.], dtype=float32) * mvolt
-        >>> x.at[2].add(10)
-        saiunit.UnitMismatchError: Cannot convert to a unit with different dimensions. (units are Unit(1.0) and mV).
-        >>> x.at[2].add(10 * bu.mV)
-        ArrayImpl([ 0.,  1., 12.,  3.,  4.], dtype=float32) * mvolt
-        >>> x.at[10].add(10 * bu.mV)  # out-of-bounds indices are ignored
-        ArrayImpl([0., 1., 2., 3., 4.], dtype=float32) * mvolt
-        >>> x.at[20].add(10 * bu.mV, mode='clip')
-        ArrayImpl([ 0.,  1.,  2.,  3., 14.], dtype=float32) * mvolt
-        >>> x.at[2].get()
-        2. * mvolt
-        >>> x.at[20].get()  # out-of-bounds indices clipped
-        4. * mvolt
-        >>> x.at[20].get(mode='fill')  # out-of-bounds indices filled with NaN
-        nan * mvolt
-        >>> x.at[20].get(mode='fill', fill_value=-1)  # custom fill value
-        saiunit.UnitMismatchError: Cannot convert to a unit with different dimensions. (units are Unit(1.0) and mV).
-        >>> x.at[20].get(mode='fill', fill_value=-1 * bu.mV)  # custom fill value
-        -1. * mvolt
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> x = jnp.arange(5.0) * su.mV
+            >>> x.at[2].add(10 * su.mV)
+            Quantity([ 0.  1. 12.  3.  4.], "mV")
+            >>> x.at[2].get()
+            Quantity(2., "mV")
         """
         return _IndexUpdateHelper(self)
 
     @property
     def mantissa(self) -> jax.typing.ArrayLike:
         r"""
-        The mantissa of the array.
+        The raw numerical data of this quantity (without the unit).
 
-        In the scientific notation, :math:`x = a * 10^b`, the mantissa :math:`a` is the part of
-        a floating-point number that contains its significant digits. For example, in the number
-        :math:`3.14 * 10^5`, the mantissa is :math:`3.14`.
+        In scientific notation :math:`x = a \times 10^{b}`, the *mantissa* is
+        the coefficient :math:`a`.  For a ``Quantity``, it is the underlying
+        JAX/NumPy array (or Python scalar) that stores the numeric value.
 
-        Returns:
-          The mantissa of the array.
+        Returns
+        -------
+        array_like
+            The mantissa array or scalar.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(3.0, unit=su.mV)
+            >>> q.mantissa
+            3.0
+
+        See Also
+        --------
+        magnitude : Alias for ``mantissa``.
+        unit : The physical unit attached to this quantity.
         """
         return self._mantissa
 
     @property
     def magnitude(self) -> jax.typing.ArrayLike:
         """
-        The magnitude of the array.
+        Alias for :attr:`mantissa`.
 
-        Same as :py:meth:`mantissa`.
+        Returns
+        -------
+        array_like
+            The raw numerical data of this quantity.
 
-        In the scientific notation, :math:`x = a * 10^b`, the magnitude :math:`b` is the exponent
-        of the power of ten. For example, in the number :math:`3.14 * 10^5`, the magnitude is :math:`5`.
+        Examples
+        --------
+        .. code-block:: python
 
-        Returns:
-          The magnitude of the array.
+            >>> import saiunit as su
+            >>> q = su.Quantity(5.0, unit=su.metre)
+            >>> q.magnitude
+            5.0
+
+        See Also
+        --------
+        mantissa : Primary accessor for the numerical data.
         """
         return self.mantissa
 
     def update_mantissa(self, mantissa: PyTree) -> None:
         """
-        Set the mantissa of the array.
+        Replace the mantissa in-place, keeping the same unit.
 
-        Examples::
+        The new mantissa must have the same shape and dtype as the current one.
 
-        >>> a = jax.numpy.array([1, 2, 3]) * mV
-        >>> a[:] = jax.numpy.array([4, 5, 6]) * mV
+        Parameters
+        ----------
+        mantissa : array_like
+            The new numerical data.  Must not be a :class:`Quantity`.
 
-        Args:
-          mantissa: The new mantissa of the array.
+        Raises
+        ------
+        ValueError
+            If *mantissa* is a ``Quantity``, or if shape/dtype do not match.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.update_mantissa(jnp.array([4.0, 5.0, 6.0]))
+            >>> q
+            Quantity([4. 5. 6.], "mV")
         """
         self_value = self.mantissa
         if isinstance(mantissa, Quantity):
@@ -457,26 +546,28 @@ class Quantity:
     @property
     def dim(self) -> Dimension:
         """
-        Returns the physical dimensions of this Quantity object.
+        The physical dimension of this quantity (e.g. length, mass, time).
 
-        The dimensions represent the physical properties (such as length, mass, time)
-        that define the quantity, independent of the specific units used.
+        The dimension is independent of scale (metres vs kilometres both have
+        the *length* dimension).
 
         Returns
         -------
         Dimension
-            The physical dimensions of this Quantity object, accessed through its unit.
+            The physical dimension object.
 
         Examples
         --------
-        >>> from saiunit import *
-        >>> q = Quantity(5, metre)
-        >>> q.dim  # Returns dimensions of length
-        metre
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(5.0, unit=su.metre)
+            >>> q.dim
+            m
 
         See Also
         --------
-        unit : The complete unit information including scale and factor
+        unit : The full unit (dimension + scale).
         """
         return self.unit.dim
 
@@ -491,29 +582,29 @@ class Quantity:
     @property
     def unit(self) -> 'Unit':
         """
-        Returns the unit of this Quantity object.
+        The :class:`Unit` attached to this quantity.
 
-        The unit contains both the dimensions (such as length, mass) and the specific
-        scale information (e.g., meters vs kilometers).
+        The unit carries both the physical dimension and the scale factor
+        (e.g. ``mV`` has dimension ``voltage`` with scale ``1e-3``).
 
         Returns
         -------
         Unit
-            The complete unit information of this Quantity object.
+            The unit of this quantity.
 
         Examples
         --------
-        >>> from saiunit import *
-        >>> q = Quantity(5, kilometre)
-        >>> q.unit  # Returns kilometre unit
-        kilometre
-        >>> q.unit.magnitude  # Access the magnitude through the unit
-        1000.0
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(5.0, unit=su.mV)
+            >>> q.unit
+            mV
 
         See Also
         --------
-        dim : The physical dimensions without scale information
-        mantissa : The numerical value of the quantity
+        dim : The physical dimension without scale information.
+        mantissa : The numerical value.
         """
         return self._unit
 
@@ -527,37 +618,81 @@ class Quantity:
 
     def to(self, new_unit: Unit) -> 'Quantity':
         """
-        Convert the given :py:class:`Quantity` into the given unit.
+        Convert this quantity to a different (compatible) unit.
 
-        Examples::
+        The mantissa is rescaled so that the physical value stays the same,
+        and the returned ``Quantity`` carries *new_unit*.
 
-        >>> a = jax.numpy.array([1, 2, 3]) * mV
-        >>> a.to(volt)
-        array([0.001, 0.002, 0.003]) * volt
+        Parameters
+        ----------
+        new_unit : Unit
+            Target unit.  Must have the same dimension as ``self.unit``.
 
-        Args:
-          new_unit: The new unit to convert the quantity to.
+        Returns
+        -------
+        Quantity
+            A new ``Quantity`` expressed in *new_unit*.
 
-        Returns:
-          The new quantity with the given unit.
+        Raises
+        ------
+        UnitMismatchError
+            If *new_unit* has a different dimension.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.to(su.volt)
+            Quantity([0.001 0.002 0.003], "V")
+
+        See Also
+        --------
+        in_unit : Identical behaviour (``to`` delegates to ``in_unit``).
+        to_decimal : Convert to a plain number in the target unit.
         """
         return self.in_unit(new_unit)
 
     def to_decimal(self, unit: Unit = UNITLESS) -> jax.typing.ArrayLike:
         """
-        Convert the given :py:class:`Quantity` into the decimal number.
+        Return the numerical value expressed in the given unit, without wrapping
+        the result in a ``Quantity``.
 
-        Examples::
+        This is useful when you need a plain JAX array for downstream
+        computation that does not support units.
 
-        >>> a = jax.numpy.array([1, 2, 3]) * mV
-        >>> a.to_decimal(volt)
-        array([0.001, 0.002, 0.003])
+        Parameters
+        ----------
+        unit : Unit, optional
+            The reference unit.  Defaults to ``UNITLESS``.
 
-        Args:
-          unit: The new unit to convert the quantity to.
+        Returns
+        -------
+        array_like
+            A plain number or JAX array representing the quantity in *unit*.
 
-        Returns:
-          The decimal number of the quantity based on the given unit.
+        Raises
+        ------
+        TypeError
+            If *unit* is not a :class:`Unit`.
+        UnitMismatchError
+            If *unit* has a different dimension than ``self.unit``.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.to_decimal(su.volt)
+            Array([0.001, 0.002, 0.003], dtype=float32)
+
+        See Also
+        --------
+        to : Convert while keeping the ``Quantity`` wrapper.
         """
         if not isinstance(unit, Unit):
             raise TypeError(f"Expected a Unit, but got {unit}.")
@@ -574,20 +709,36 @@ class Quantity:
 
     def in_unit(self, unit: Unit, err_msg: str = None) -> 'Quantity':
         """
-        Convert the given :py:class:`Quantity` into the given unit.
+        Convert this quantity to a compatible unit.
 
-        Examples::
+        Behaves identically to :meth:`to`; kept for API compatibility.
 
-        >>> a = jax.numpy.array([1, 2, 3]) * mV
-        >>> a.in_unit(volt)
-        array([0.001, 0.002, 0.003]) * volt
+        Parameters
+        ----------
+        unit : Unit
+            Target unit.  Must share the same dimension as ``self.unit``.
+        err_msg : str, optional
+            Custom error message used when the dimensions do not match.
 
-        Args:
-            unit: The new unit to convert the quantity to.
-            err_msg: The error message to show when the conversion is not possible.
+        Returns
+        -------
+        Quantity
+            A new ``Quantity`` expressed in *unit*.
 
-        Returns:
-            The new quantity with the given unit.
+        Raises
+        ------
+        UnitMismatchError
+            If *unit* has a different dimension.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.in_unit(su.volt)
+            Quantity([0.001 0.002 0.003], "V")
         """
         if not isinstance(unit, Unit):
             raise TypeError(f"Expected a Unit, but got {unit}.")
@@ -607,53 +758,84 @@ class Quantity:
     @staticmethod
     def with_unit(mantissa: PyTree, unit: Unit):
         """
-        Create a `Array` object with the given units.
+        Create a :class:`Quantity` from a raw value and a unit.
+
+        This is a convenience factory that reads more naturally in some
+        contexts than the standard constructor.
 
         Parameters
         ----------
-        mantissa : {array_like, number}
-            The mantissa of the dimension
+        mantissa : array_like or number
+            The numerical value(s).
         unit : Unit
-            The unit of the dimension
+            The physical unit.
 
         Returns
         -------
-        q : `Quantity`
-            A `Array` object with the given dim
+        Quantity
+            A new ``Quantity`` with the given mantissa and unit.
 
         Examples
         --------
-        All of these define an equivalent `Array` object:
+        .. code-block:: python
 
-        >>> from saiunit import *
-        >>> Quantity.with_unit(2, unit=metre)
-        2. * metre
+            >>> import saiunit as su
+            >>> su.Quantity.with_unit(2.0, unit=su.metre)
+            Quantity(2., "m")
         """
         return Quantity(mantissa, unit=unit)
 
     @property
     def is_unitless(self) -> bool:
         """
-        Whether the array does not have unit.
+        ``True`` if this quantity is dimensionless (has no physical unit).
 
-        Returns:
-          bool: True if the array does not have unit.
+        Returns
+        -------
+        bool
+            Whether the quantity is unitless.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.Quantity(5.0).is_unitless
+            True
+            >>> su.Quantity(5.0, unit=su.mV).is_unitless
+            False
         """
         return self.unit.is_unitless
 
     def has_same_unit(self, other):
         """
-        Whether this Array has the same unit dimensions as another Array
+        Check whether this quantity shares the same physical dimension as *other*.
+
+        Two quantities that differ only in scale (e.g. ``mV`` vs ``V``) are
+        considered to have the same unit dimension.
 
         Parameters
         ----------
-        other : Unit
-            The other Array to compare with
+        other : Quantity or Unit
+            The object to compare with.
 
         Returns
         -------
         bool
-            Whether the two Arrays have the same unit dimensions
+            ``True`` if both have identical physical dimensions.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> a = su.Quantity(1.0, unit=su.mV)
+            >>> b = su.Quantity(2.0, unit=su.volt)
+            >>> a.has_same_unit(b)
+            True
+            >>> c = su.Quantity(1.0, unit=su.second)
+            >>> a.has_same_unit(c)
+            False
         """
         self_dim = get_dim(self.dim)
         other_dim = get_dim(other.dim)
@@ -693,30 +875,32 @@ class Quantity:
         precision: int | None = None,
     ) -> str:
         """
-        Represent the Quantity in its current unit.
+        Return a human-readable string of this quantity in its current unit.
 
-        Returns the canonical ``"value unit"`` format, e.g.
-        ``"3.0 mV"`` or ``"[1. 2. 3.] mV"``.
+        The format is ``"<value> <unit>"``, e.g. ``"3. mV"`` or
+        ``"[1. 2. 3.] mV"``.
 
         Parameters
         ----------
-        precision : `int`, optional
-            The number of digits of precision (in the given unit).
-            If no value is given, numpy's `get_printoptions` is used.
+        precision : int, optional
+            Number of significant digits.  When *None* the value from
+            ``numpy.get_printoptions`` is used.
 
         Returns
         -------
-        s : `str`
-            The string representation of the Quantity.
+        str
+            The formatted string.
 
         Examples
         --------
-        >>> from saiunit import *
-        >>> x = 25.123456 * mV
-        >>> x.repr_in_unit()
-        '25.123456 mV'
-        >>> x.in_unit(volt).repr_in_unit(3)
-        '0.025 V'
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> x = su.Quantity(25.0, unit=su.mV)
+            >>> x.repr_in_unit()
+            '25. mV'
+            >>> x.to(su.volt).repr_in_unit(3)
+            '0.025 V'
         """
         s = self._format_value(precision=precision)
         if self.unit.should_display_unit:
@@ -725,12 +909,24 @@ class Quantity:
 
     def factorless(self) -> 'Quantity':
         """
-        Return the Quantity object without the factor.
+        Return an equivalent quantity whose unit has ``factor == 1.0``.
+
+        If the unit already has no extra factor the original object is
+        returned unchanged.
 
         Returns
         -------
-        out : Quantity
-            The Quantity object without the factor.
+        Quantity
+            A quantity with the factor folded into the mantissa.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(3.0, unit=su.mV)
+            >>> q.factorless()
+            Quantity(3., "mV")
         """
         if self.unit.factor != 1.0:
             return Quantity(self.mantissa * self.unit.factor, unit=self.unit.factorless())
@@ -739,7 +935,24 @@ class Quantity:
 
     @property
     def dtype(self):
-        """Variable dtype."""
+        """
+        The data type of the mantissa.
+
+        Returns
+        -------
+        dtype
+            The JAX/NumPy dtype of the underlying array.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q.dtype
+            float32
+        """
         a = self.mantissa
         if hasattr(a, 'dtype'):
             return a.dtype
@@ -757,7 +970,24 @@ class Quantity:
 
     @property
     def shape(self) -> tuple[int, ...]:
-        """Variable shape."""
+        """
+        The shape of the mantissa array.
+
+        Returns
+        -------
+        tuple of int
+            Shape tuple, identical to ``jnp.shape(self.mantissa)``.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q.shape
+            (2, 2)
+        """
         return jnp.shape(self.mantissa)
 
     @property
@@ -803,6 +1033,26 @@ class Quantity:
 
     @property
     def mT(self) -> 'Quantity':
+        """
+        Matrix transpose of the last two dimensions, preserving units.
+
+        The array must be at least 2-D.
+
+        Returns
+        -------
+        Quantity
+            The matrix-transposed quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q.mT.shape
+            (2, 2)
+        """
         return Quantity(jnp.asarray(self.mantissa).mT, unit=self.unit)
 
     @property
@@ -940,19 +1190,29 @@ class Quantity:
         value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
-        Scatter-add the given value to the given index.
+        Return a copy with *value* added at *index*.
 
         Parameters
         ----------
         index : int or array_like
-            The index to scatter-add the value to.
+            Target index (indices).
         value : Quantity
-            The value to scatter-add.
+            The value to add.  Must have the same unit dimension.
 
         Returns
         -------
-        out : Quantity
-            The scatter-added value.
+        Quantity
+            A new quantity with the update applied.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.scatter_add(0, su.Quantity(10.0, unit=su.mV))
+            Quantity([11.  2.  3.], "mV")
         """
 
         # check value
@@ -977,19 +1237,29 @@ class Quantity:
         value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
-        Scatter-sub the given value to the given index.
+        Return a copy with *value* subtracted at *index*.
 
         Parameters
         ----------
         index : int or array_like
-            The index to scatter-add the value to.
+            Target index (indices).
         value : Quantity
-            The value to scatter-add.
+            The value to subtract.  Must have the same unit dimension.
 
         Returns
         -------
-        out : Quantity
-            The scatter-subbed value.
+        Quantity
+            A new quantity with the update applied.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.scatter_sub(0, su.Quantity(1.0, unit=su.mV))
+            Quantity([0. 2. 3.], "mV")
         """
         return self.scatter_add(index, -value)
 
@@ -999,19 +1269,36 @@ class Quantity:
         value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
-        Scatter-mul the given value to the given index.
+        Return a copy with the element at *index* multiplied by *value*.
+
+        *value* must be dimensionless (a pure scale factor).
 
         Parameters
         ----------
         index : int or array_like
-            The index to scatter-mul the value to.
-        value : Quantity
-            The value to scatter-mul.
+            Target index (indices).
+        value : Quantity or number
+            Dimensionless scale factor.
 
         Returns
         -------
-        out : Quantity
-            The scatter-multiplied value.
+        Quantity
+            A new quantity with the update applied.
+
+        Raises
+        ------
+        TypeError
+            If *value* is not dimensionless.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.scatter_mul(0, su.Quantity(10.0))
+            Quantity([10.  2.  3.], "mV")
         """
 
         # check value: scatter_mul requires a dimensionless scale factor
@@ -1037,19 +1324,36 @@ class Quantity:
         value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
-        Scatter-div the given value to the given index.
+        Return a copy with the element at *index* divided by *value*.
+
+        *value* must be dimensionless (a pure scale factor).
 
         Parameters
         ----------
         index : int or array_like
-            The index to scatter-div the value to.
-        value : Quantity
-            The value to scatter-div.
+            Target index (indices).
+        value : Quantity or number
+            Dimensionless scale factor.
 
         Returns
         -------
-        out : Quantity
-            The scatter-divided value.
+        Quantity
+            A new quantity with the update applied.
+
+        Raises
+        ------
+        TypeError
+            If *value* is not dimensionless.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.scatter_div(0, su.Quantity(2.0))
+            Quantity([0.5 2.  3. ], "mV")
         """
 
         # check value: scatter_div requires a dimensionless scale factor
@@ -1075,19 +1379,30 @@ class Quantity:
         value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
-        Scatter-max the given value to the given index.
+        Return a copy where the element at *index* is the maximum of
+        the current value and *value*.
 
         Parameters
         ----------
         index : int or array_like
-            The index to scatter-max the value to.
+            Target index (indices).
         value : Quantity
-            The value to scatter-max.
+            The comparison value.  Must have the same unit dimension.
 
         Returns
         -------
-        out : Quantity
-            The scatter-maximum value.
+        Quantity
+            A new quantity with the update applied.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.scatter_max(0, su.Quantity(10.0, unit=su.mV))
+            Quantity([10.  2.  3.], "mV")
         """
 
         # check value
@@ -1112,19 +1427,30 @@ class Quantity:
         value: 'Quantity | jax.typing.ArrayLike'
     ) -> 'Quantity':
         """
-        Scatter-min the given value to the given index.
+        Return a copy where the element at *index* is the minimum of
+        the current value and *value*.
 
         Parameters
         ----------
         index : int or array_like
-            The index to scatter-min the value to.
+            Target index (indices).
         value : Quantity
-            The value to scatter-min.
+            The comparison value.  Must have the same unit dimension.
 
         Returns
         -------
-        out : Quantity
-            The scatter-minimum value.
+        Quantity
+            A new quantity with the update applied.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.scatter_min(0, su.Quantity(0.5, unit=su.mV))
+            Quantity([0.5 2.  3. ], "mV")
         """
 
         # check value
@@ -1546,24 +1872,27 @@ class Quantity:
         decimals: int = 0,
     ) -> 'Quantity':
         """
-        Evenly round to the given number of decimals.
+        Evenly round the mantissa to the given number of decimals.
 
         Parameters
         ----------
         decimals : int, optional
-            Number of decimal places to round to (default: 0).  If
-            decimals is negative, it specifies the number of positions to
-            the left of the decimal point.
+            Number of decimal places (default ``0``).  Negative values
+            round to positions left of the decimal point.
 
         Returns
         -------
-        rounded_array : Quantity
-            An array of the same type as `a`, containing the rounded values.
-            Unless `out` was specified, a new array is created.  A reference to
-            the result is returned.
+        Quantity
+            A new quantity with the rounded mantissa.
 
-            The real and imaginary parts of complex numbers are rounded
-            separately.  The result of rounding a float is a float.
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(1.567, unit=su.mV)
+            >>> q.round(1)
+            Quantity(1.6, "mV")
         """
         return Quantity(jnp.round(self.mantissa, decimals), unit=self.unit)
 
@@ -1571,12 +1900,28 @@ class Quantity:
         self,
         dtype: jax.typing.DTypeLike
     ) -> 'Quantity':
-        """Copy of the array, cast to a specified type.
+        """
+        Return a copy of this quantity with the mantissa cast to *dtype*.
 
         Parameters
         ----------
-        dtype: str, dtype
-          Typecode or data-type to which the array is cast.
+        dtype : str or dtype
+            Target data type (e.g. ``jnp.float64``).
+
+        Returns
+        -------
+        Quantity
+            A new quantity with the converted dtype.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q.astype(jnp.float64).dtype
+            float64
         """
         if dtype is None:
             return Quantity(self.mantissa, unit=self.unit)
@@ -1589,45 +1934,247 @@ class Quantity:
         max: 'Quantity | jax.typing.ArrayLike' = None,
     ) -> 'Quantity':
         """
-        Return an array whose values are limited to [min, max]. One of max or min must be given.
+        Clip (limit) the values in the array to ``[min, max]``.
+
+        At least one of *min* or *max* must be given.  Both must be
+        compatible with the unit of ``self``.
+
+        Parameters
+        ----------
+        min : Quantity or array_like, optional
+            Minimum value.
+        max : Quantity or array_like, optional
+            Maximum value.
+
+        Returns
+        -------
+        Quantity
+            The clipped quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.clip(min=su.Quantity(1.5, unit=su.mV), max=su.Quantity(2.5, unit=su.mV))
+            Quantity([1.5 2.  2.5], "mV")
         """
         _, min = unit_scale_align_to_first(self, min)
         _, max = unit_scale_align_to_first(self, max)
         return Quantity(jnp.clip(self.mantissa, min.mantissa, max.mantissa), unit=self.unit)
 
     def conj(self) -> 'Quantity':
-        """Complex-conjugate all elements."""
+        """
+        Return the complex conjugate, element-wise, preserving units.
+
+        Returns
+        -------
+        Quantity
+            The conjugated quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(1.0 + 2.0j, unit=su.mV)
+            >>> q.conj()
+            Quantity((1-2j), "mV")
+        """
         return Quantity(jnp.conj(self.mantissa), unit=self.unit)
 
     def conjugate(self) -> 'Quantity':
-        """Return the complex conjugate, element-wise."""
+        """
+        Return the complex conjugate, element-wise.
+
+        Alias for :meth:`conj`.
+
+        Returns
+        -------
+        Quantity
+            The conjugated quantity.
+        """
         return Quantity(jnp.conjugate(self.mantissa), unit=self.unit)
 
     def copy(self) -> 'Quantity':
-        """Return a copy of the quantity."""
+        """
+        Return a deep copy of this quantity.
+
+        Returns
+        -------
+        Quantity
+            An independent copy with the same mantissa and unit.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(3.0, unit=su.mV)
+            >>> q2 = q.copy()
+            >>> q2
+            Quantity(3., "mV")
+        """
         return type(self)(jnp.copy(self.mantissa), unit=self.unit)
 
     def dot(self, b) -> 'Quantity':
-        """Dot product of two arrays."""
+        """
+        Dot product of two arrays.
+
+        The resulting unit is ``self.unit * b.unit``.
+
+        Parameters
+        ----------
+        b : Quantity or array_like
+            Second operand.
+
+        Returns
+        -------
+        Quantity
+            The dot product.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> a = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> b = su.Quantity(jnp.array([1.0, 1.0, 1.0]), unit=su.mV)
+            >>> a.dot(b)
+            Quantity(6., "mV^2")
+        """
         r = self._binary_operation(b, jnp.dot, operator.mul, operator_str="@")
         return maybe_decimal(r)
 
     def trace(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':
-        """Sum along diagonals of the array, preserving units."""
+        """
+        Sum along diagonals of the array, preserving units.
+
+        Parameters
+        ----------
+        offset : int, optional
+            Offset of the diagonal from the main diagonal (default ``0``).
+        axis1 : int, optional
+            First axis of the 2-D sub-arrays (default ``0``).
+        axis2 : int, optional
+            Second axis of the 2-D sub-arrays (default ``1``).
+
+        Returns
+        -------
+        Quantity
+            The trace value(s).
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.eye(3), unit=su.mV)
+            >>> q.trace()
+            Quantity(3., "mV")
+        """
         return Quantity(jnp.trace(self.mantissa, offset=offset, axis1=axis1, axis2=axis2), unit=self.unit)
 
     def diagonal(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':
-        """Return specified diagonals, preserving units."""
+        """
+        Return specified diagonals, preserving units.
+
+        Parameters
+        ----------
+        offset : int, optional
+            Offset from the main diagonal (default ``0``).
+        axis1 : int, optional
+            First axis (default ``0``).
+        axis2 : int, optional
+            Second axis (default ``1``).
+
+        Returns
+        -------
+        Quantity
+            The diagonal elements.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q.diagonal()
+            Quantity([1. 4.], "mV")
+        """
         return Quantity(jnp.diagonal(self.mantissa, offset=offset, axis1=axis1, axis2=axis2), unit=self.unit)
 
     def outer(self, b: 'Quantity') -> 'Quantity':
-        """Outer product of two 1-D arrays; result unit = self.unit * b.unit."""
+        """
+        Outer product of two 1-D arrays.
+
+        The resulting unit is ``self.unit * b.unit``.
+
+        Parameters
+        ----------
+        b : Quantity or array_like
+            Second operand.
+
+        Returns
+        -------
+        Quantity
+            The outer product matrix.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> a = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> b = su.Quantity(jnp.array([3.0, 4.0]), unit=su.second)
+            >>> a.outer(b).shape
+            (2, 2)
+        """
         b = _to_quantity(b)
         r = self._binary_operation(b, jnp.outer, operator.mul, operator_str="outer")
         return maybe_decimal(r)
 
     def cross(self, b: 'Quantity', axisa: int = -1, axisb: int = -1, axisc: int = -1, axis: int = None) -> 'Quantity':
-        """Cross product of two arrays; result unit = self.unit * b.unit."""
+        """
+        Cross product of two arrays.
+
+        The resulting unit is ``self.unit * b.unit``.
+
+        Parameters
+        ----------
+        b : Quantity
+            Second operand.
+        axisa : int, optional
+            Axis of *self* that defines the vector(s) (default ``-1``).
+        axisb : int, optional
+            Axis of *b* that defines the vector(s) (default ``-1``).
+        axisc : int, optional
+            Axis of the result containing the cross product (default ``-1``).
+        axis : int, optional
+            Overrides *axisa*, *axisb*, and *axisc* simultaneously.
+
+        Returns
+        -------
+        Quantity
+            The cross product.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> a = su.Quantity(jnp.array([1.0, 0.0, 0.0]), unit=su.mV)
+            >>> b = su.Quantity(jnp.array([0.0, 1.0, 0.0]), unit=su.second)
+            >>> a.cross(b)
+            Quantity([0. 0. 1.], "mV * s")
+        """
         b = _to_quantity(b)
         kwargs = dict(axisa=axisa, axisb=axisb, axisc=axisc)
         if axis is not None:
@@ -1650,14 +2197,74 @@ class Quantity:
         return self
 
     def flatten(self) -> 'Quantity':
+        """
+        Return a 1-D copy of this quantity.
+
+        Returns
+        -------
+        Quantity
+            Flattened quantity with the same unit.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q.flatten()
+            Quantity([1. 2. 3. 4.], "mV")
+        """
         return Quantity(jnp.reshape(self.mantissa, -1), unit=self.unit)
 
     def item(self, *args) -> 'Quantity':
-        """Copy an element of an array to a standard Python scalar and return it."""
+        """
+        Extract a single element as a scalar ``Quantity``.
+
+        Parameters
+        ----------
+        *args : int
+            Index into the flat array.
+
+        Returns
+        -------
+        Quantity
+            A 0-D ``Quantity`` containing the selected element.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([10.0, 20.0]), unit=su.mV)
+            >>> q.item(0)
+            Quantity(10., "mV")
+        """
         return Quantity(self.mantissa.item(*args), unit=self.unit)
 
     def prod(self, *args, **kwds) -> 'Quantity':  # TODO: check error when axis is not None
-        """Return the product of the array elements over the given axis."""
+        """
+        Return the product of array elements over the given axis.
+
+        The unit of the result is ``self.unit ** n`` where *n* is the number
+        of elements multiplied together.
+
+        Returns
+        -------
+        Quantity
+            The product.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([2.0, 3.0]), unit=su.mV)
+            >>> q.prod()
+            Quantity(6., "mV^2")
+        """
         self = self.factorless()
 
         prod_res = jnp.prod(self.mantissa, *args, **kwds)
@@ -1725,12 +2332,60 @@ class Quantity:
         return self
 
     def repeat(self, repeats, axis=None) -> 'Quantity':
-        """Repeat elements of an array."""
+        """
+        Repeat elements of the array.
+
+        Parameters
+        ----------
+        repeats : int or array of ints
+            Number of repetitions for each element.
+        axis : int, optional
+            Axis along which to repeat.
+
+        Returns
+        -------
+        Quantity
+            The repeated quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q.repeat(2)
+            Quantity([1. 1. 2. 2.], "mV")
+        """
         r = jnp.repeat(self.mantissa, repeats=repeats, axis=axis)
         return Quantity(r, unit=self.unit)
 
     def reshape(self, shape, order='C') -> 'Quantity':
-        """Returns an array containing the same data with a new shape."""
+        """
+        Return a quantity with the same data but a new shape.
+
+        Parameters
+        ----------
+        shape : int or tuple of ints
+            New shape.
+        order : {'C', 'F'}, optional
+            Memory layout order (default ``'C'``).
+
+        Returns
+        -------
+        Quantity
+            Reshaped quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> q.reshape((3, 1)).shape
+            (3, 1)
+        """
         return Quantity(jnp.reshape(self.mantissa, shape, order=order), unit=self.unit)
 
     def resize(self, new_shape) -> 'Quantity':
@@ -1739,60 +2394,118 @@ class Quantity:
         return self
 
     def sort(self, axis=-1, stable=True, order=None) -> 'Quantity':
-        """Sort an array in-place.
+        """
+        Sort the array in-place along the given axis.
 
         Parameters
         ----------
         axis : int, optional
-            Axis along which to sort. Default is -1, which means sort along the
-            last axis.
+            Axis along which to sort (default ``-1``).
         stable : bool, optional
-            Whether to use a stable sorting algorithm. The default is True.
+            Whether to use a stable sort (default ``True``).
         order : str or list of str, optional
-            When `a` is an array with fields defined, this argument specifies
-            which fields to compare first, second, etc.  A single field can
-            be specified as a string, and not all fields need be specified,
-            but unspecified fields will still be used, in the order in which
-            they come up in the dtype, to break ties.
+            Field ordering for structured arrays.
+
+        Returns
+        -------
+        Quantity
+            ``self``, with the mantissa sorted in-place.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([3.0, 1.0, 2.0]), unit=su.mV)
+            >>> q.sort()
+            Quantity([1. 2. 3.], "mV")
         """
         self.update_mantissa(jnp.sort(self.mantissa, axis=axis, stable=stable, order=order))
         return self
 
     def squeeze(self, axis=None) -> 'Quantity':
-        """Remove axes of length one from ``a``."""
-        return Quantity(jnp.squeeze(self.mantissa, axis=axis), unit=self.unit)
-
-    def swapaxes(self, axis1, axis2) -> 'Quantity':
-        """Return a view of the array with `axis1` and `axis2` interchanged."""
-        return Quantity(jnp.swapaxes(self.mantissa, axis1, axis2), unit=self.unit)
-
-    def split(self, indices_or_sections, axis=0) -> 'list[Quantity]':
-        """Split an array into multiple sub-arrays as views into ``ary``.
+        """
+        Remove length-one axes from the array.
 
         Parameters
         ----------
-        indices_or_sections : int, 1-D array
-          If `indices_or_sections` is an integer, N, the array will be divided
-          into N equal arrays along `axis`.  If such a split is not possible,
-          an error is raised.
-
-          If `indices_or_sections` is a 1-D array of sorted integers, the entries
-          indicate where along `axis` the array is split.  For example,
-          ``[2, 3]`` would, for ``axis=0``, result in
-
-            - ary[:2]
-            - ary[2:3]
-            - ary[3:]
-
-          If an index exceeds the dimension of the array along `axis`,
-          an empty sub-array is returned correspondingly.
-        axis : int, optional
-          The axis along which to split, default is 0.
+        axis : int or tuple of ints, optional
+            Axes to remove.  If ``None``, all length-one axes are removed.
 
         Returns
         -------
-        sub-arrays : list of ndarrays
-          A list of sub-arrays as views into `ary`.
+        Quantity
+            The squeezed quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([[[1.0]]]), unit=su.mV)
+            >>> q.squeeze().shape
+            ()
+        """
+        return Quantity(jnp.squeeze(self.mantissa, axis=axis), unit=self.unit)
+
+    def swapaxes(self, axis1, axis2) -> 'Quantity':
+        """
+        Interchange two axes of the array.
+
+        Parameters
+        ----------
+        axis1 : int
+            First axis.
+        axis2 : int
+            Second axis.
+
+        Returns
+        -------
+        Quantity
+            The quantity with axes swapped.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q.swapaxes(0, 1).shape
+            (2, 2)
+        """
+        return Quantity(jnp.swapaxes(self.mantissa, axis1, axis2), unit=self.unit)
+
+    def split(self, indices_or_sections, axis=0) -> 'list[Quantity]':
+        """
+        Split the array into multiple sub-arrays.
+
+        Parameters
+        ----------
+        indices_or_sections : int or 1-D array
+            If an integer *N*, the array is divided into *N* equal parts.
+            If a sorted 1-D array of indices, the entries indicate split
+            points along *axis*.
+        axis : int, optional
+            Axis along which to split (default ``0``).
+
+        Returns
+        -------
+        list of Quantity
+            Sub-arrays, each carrying the same unit.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+            >>> parts = q.split(3)
+            >>> len(parts)
+            3
         """
         return [Quantity(a, unit=self.unit) for a in jnp.split(self.mantissa, indices_or_sections, axis=axis)]
 
@@ -1805,7 +2518,39 @@ class Quantity:
         indices_are_sorted=False,
         fill_value=None,
     ) -> 'Quantity':
-        """Return an array formed from the elements of a at the given indices."""
+        """
+        Select elements from the array at the given indices.
+
+        Parameters
+        ----------
+        indices : array_like
+            Indices of the values to extract.
+        axis : int, optional
+            Axis along which to take (default flattened).
+        mode : str, optional
+            Out-of-bounds index handling.
+        unique_indices : bool, optional
+            Hint that indices are unique.
+        indices_are_sorted : bool, optional
+            Hint that indices are sorted.
+        fill_value : Quantity or scalar, optional
+            Value for out-of-bounds positions when *mode* is ``'fill'``.
+
+        Returns
+        -------
+        Quantity
+            The selected elements.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([10.0, 20.0, 30.0]), unit=su.mV)
+            >>> q.take(jnp.array([0, 2]))
+            Quantity([10. 30.], "mV")
+        """
 
         if isinstance(fill_value, Quantity):
             fail_for_dimension_mismatch(self, fill_value, "take")
@@ -1827,14 +2572,26 @@ class Quantity:
         )
 
     def tolist(self):
-        """Return the array as an ``a.ndim``-levels deep nested list of Python scalars.
+        """
+        Convert the array to a (nested) Python list of ``Quantity`` scalars.
 
-        Return a copy of the array data as a (nested) Python list.
-        Data items are converted to the nearest compatible builtin Python type, via
-        the `~numpy.ndarray.item` function.
+        Each leaf element is a 0-D ``Quantity`` with the same unit.
 
-        If ``a.ndim`` is 0, then since the depth of the nested list is 0, it will
-        not be a list at all, but a simple Python scalar.
+        Returns
+        -------
+        list or Quantity
+            A nested list of scalar ``Quantity`` objects, or a single
+            ``Quantity`` for 0-D arrays.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q.tolist()
+            [Quantity(1., "mV"), Quantity(2., "mV")]
         """
         if isinstance(self.mantissa, numbers.Number):
             list_mantissa = self.mantissa
@@ -1843,65 +2600,57 @@ class Quantity:
         return _replace_with_array(list_mantissa, self.unit)
 
     def transpose(self, *axes) -> 'Quantity':
-        """Returns a view of the array with axes transposed.
+        """
+        Return the array with axes transposed.
 
-        For a 1-D array this has no effect, as a transposed vector is simply the
-        same vector. To convert a 1-D array into a 2D column vector, an additional
-        dimension must be added. `jnp.atleast2d(a).T` achieves this, as does
-        `a[:, jnp.newaxis]`.
-        For a 2-D array, this is a standard matrix transpose.
-        For an n-D array, if axes are given, their order indicates how the
-        axes are permuted (see Examples). If axes are not provided and
-        ``a.shape = (i[0], i[1], ... i[n-2], i[n-1])``, then
-        ``a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0])``.
+        For a 2-D array this is the standard matrix transpose.
 
         Parameters
         ----------
-        axes : None, tuple of ints, or `n` ints
-
-         * None or no argument: reverses the order of the axes.
-
-         * tuple of ints: `i` in the `j`-th place in the tuple means `a`'s
-           `i`-th axis becomes `a.transpose()`'s `j`-th axis.
-
-         * `n` ints: same as an n-tuple of the same ints (this form is
-           intended simply as a "convenience" alternative to the tuple form)
+        *axes : None, tuple of ints, or n ints
+            If omitted, axes are reversed.  Otherwise specifies the
+            permutation.
 
         Returns
         -------
-        out : ndarray
-            View of `a`, with axes suitably permuted.
+        Quantity
+            Transposed quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+            >>> q.transpose().shape
+            (2, 2)
         """
         return Quantity(jnp.transpose(self.mantissa, *axes), unit=self.unit)
 
     def tile(self, reps) -> 'Quantity':
-        """Construct an array by repeating A the number of times given by reps.
-
-        If `reps` has length ``d``, the result will have dimension of
-        ``max(d, A.ndim)``.
-
-        If ``A.ndim < d``, `A` is promoted to be d-dimensional by prepending new
-        axes. So a shape (3,) array is promoted to (1, 3) for 2-D replication,
-        or shape (1, 1, 3) for 3-D replication. If this is not the desired
-        behavior, promote `A` to d-dimensions manually before calling this
-        function.
-
-        If ``A.ndim > d``, `reps` is promoted to `A`.ndim by pre-pending 1's to it.
-        Thus for an `A` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as
-        (1, 1, 2, 2).
-
-        Note : Although tile may be used for broadcasting, it is strongly
-        recommended to use numpy's broadcasting operations and functions.
+        """
+        Construct an array by repeating this quantity.
 
         Parameters
         ----------
-        reps : array_like
-            The number of repetitions of `A` along each axis.
+        reps : int or array_like
+            Number of repetitions along each axis.
 
         Returns
         -------
-        c : ndarray
-            The tiled output array.
+        Quantity
+            The tiled quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q.tile(2)
+            Quantity([1. 2. 1. 2.], "mV")
         """
         return Quantity(jnp.tile(self.mantissa, reps), unit=self.unit)
 
@@ -2091,27 +2840,53 @@ class Quantity:
 
     def unsqueeze(self, axis: int) -> 'Quantity':
         """
-        Array.unsqueeze(dim) -> Array, or so called Tensor
-        equals
-        Array.expand_dims(dim)
+        Insert a length-one axis (PyTorch-style alias for :meth:`expand_dims`).
 
-        See :func:`brainstate.math.unsqueeze`
+        Parameters
+        ----------
+        axis : int
+            Position where the new axis is inserted.
+
+        Returns
+        -------
+        Quantity
+            The quantity with an extra dimension.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q.unsqueeze(0).shape
+            (1, 2)
         """
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
     def expand_dims(self, axis: int | Sequence[int]) -> 'Quantity':
         """
-        Expand the shape of an array.
+        Insert new axes at the given positions.
 
         Parameters
         ----------
         axis : int or tuple of ints
-            Position in the expanded axes where the new axis is placed.
+            Position(s) where the new axis (axes) are placed.
 
         Returns
         -------
-        expanded : Quantity
-            A view with the new axis inserted.
+        Quantity
+            The expanded quantity.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> import jax.numpy as jnp
+            >>> q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+            >>> q.expand_dims(0).shape
+            (1, 2)
         """
         return Quantity(jnp.expand_dims(self.mantissa, axis), unit=self.unit)
 
@@ -2136,9 +2911,51 @@ class Quantity:
         return Quantity(jnp.broadcast_to(self.mantissa, array), unit=self.unit)
 
     def pow(self, oc) -> 'Quantity':
+        """
+        Raise this quantity to the power *oc*.
+
+        The exponent must be dimensionless.  The resulting unit is
+        ``self.unit ** oc``.
+
+        Parameters
+        ----------
+        oc : int, float, or dimensionless Quantity
+            The exponent.
+
+        Returns
+        -------
+        Quantity
+            ``self ** oc``.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(2.0, unit=su.mV)
+            >>> q.pow(2)
+            Quantity(4., "mV^2")
+        """
         return self.__pow__(oc)
 
     def clone(self) -> 'Quantity':
+        """
+        Return a copy of this quantity (PyTorch-style alias for :meth:`copy`).
+
+        Returns
+        -------
+        Quantity
+            An independent copy.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> q = su.Quantity(3.0, unit=su.mV)
+            >>> q.clone()
+            Quantity(3., "mV")
+        """
         return self.copy()
 
     def tree_flatten(self) -> tuple[tuple[jax.typing.ArrayLike], Unit]:

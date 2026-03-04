@@ -393,3 +393,236 @@ class TestLinalgChangeUnit(parameterized.TestCase):
         q = a * meter * meter
         result = bulinalg.cholesky(q, symmetrize_input=False)
         assert_quantity(result, expected, unit=meter)
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_cholesky():
+    """Verify the cholesky docstring example."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    x = jnp.array([[2., 1.],
+                    [1., 2.]]) * su.meter2
+    L = su.linalg.cholesky(x)
+    assert L.unit == su.meter
+    assert su.math.allclose(x, L @ L.T)
+
+
+def test_docstring_example_solve():
+    """Verify the solve docstring example."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    A = jnp.array([[1., 2., 3.],
+                    [2., 4., 2.],
+                    [3., 2., 1.]]) * su.meter
+    b = jnp.array([14., 16., 10.]) * su.second
+    x = su.linalg.solve(A, b)
+    assert x.unit == su.second / su.meter
+    assert su.math.allclose(A @ x, b)
+
+
+def test_docstring_example_tensorsolve():
+    """Verify the tensorsolve docstring example."""
+    import saiunit as su
+    import jax
+
+    key1, key2 = jax.random.split(jax.random.key(8675309))
+    a = jax.random.normal(key1, shape=(2, 2, 4)) * su.meter
+    b = jax.random.normal(key2, shape=(2, 2)) * su.second
+    x = su.linalg.tensorsolve(a, b)
+    assert x.shape == (4,)
+    b_reconstructed = su.linalg.tensordot(a, x, axes=x.ndim)
+    assert su.math.allclose(b, b_reconstructed)
+
+
+def test_docstring_example_lstsq():
+    """Verify the lstsq docstring example."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([[1, 2],
+                    [3, 4]]) * su.second
+    b = jnp.array([5, 6]) * su.meter
+    x, residuals, rank, s = su.linalg.lstsq(a, b)
+    assert x.unit == su.meter / su.second
+
+
+def test_docstring_example_inv():
+    """Verify the inv docstring example."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([[1., 2., 3.],
+                    [2., 4., 2.],
+                    [3., 2., 1.]]) * su.second
+    a_inv = su.linalg.inv(a)
+    assert su.math.allclose(a @ a_inv, jnp.eye(3), atol=1e-5)
+
+
+def test_docstring_example_pinv():
+    """Verify the pinv docstring example."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([[1, 2],
+                    [3, 4],
+                    [5, 6]]) * su.second
+    a_pinv = su.linalg.pinv(a)
+    assert a_pinv.shape == (2, 3)
+    assert su.math.allclose(a_pinv @ a, jnp.eye(2), atol=1e-4)
+
+
+def test_docstring_example_tensorinv():
+    """Verify the tensorinv docstring example."""
+    import saiunit as su
+    import jax
+    import jax.numpy as jnp
+
+    key = jax.random.key(1337)
+    x = jax.random.normal(key, shape=(2, 2, 4)) * su.second
+    xinv = su.linalg.tensorinv(x, 2)
+    assert xinv.shape == (4, 2, 2)
+    xinv_x = su.linalg.tensordot(xinv, x, axes=2)
+    assert su.math.allclose(xinv_x, jnp.eye(4), atol=1e-4)
+
+
+def test_docstring_example_dot():
+    """Verify the dot docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([1.0, 2.0, 3.0]) * su.meter
+    b = jnp.array([4.0, 5.0, 6.0]) * su.second
+    result = su.linalg.dot(a, b)
+    assert result.unit == su.meter * su.second
+    expected = jnp.dot(jnp.array([1.0, 2.0, 3.0]), jnp.array([4.0, 5.0, 6.0]))
+    assert jnp.allclose(result.mantissa, expected)
+
+
+def test_docstring_example_multi_dot():
+    """Verify the multi_dot docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax
+
+    k1, k2 = jax.random.split(jax.random.key(0))
+    a = jax.random.normal(k1, shape=(3, 4)) * su.meter
+    b = jax.random.normal(k2, shape=(4, 2)) * su.second
+    result = su.linalg.multi_dot([a, b])
+    assert result.shape == (3, 2)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_vdot():
+    """Verify the vdot docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([1.0, 2.0, 3.0]) * su.meter
+    b = jnp.array([4.0, 5.0, 6.0]) * su.second
+    result = su.linalg.vdot(a, b)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_vecdot():
+    """Verify the vecdot docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([1.0, 2.0, 3.0]) * su.meter
+    b = jnp.array([4.0, 5.0, 6.0]) * su.second
+    result = su.linalg.vecdot(a, b)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_inner():
+    """Verify the inner docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([1.0, 2.0, 3.0]) * su.meter
+    b = jnp.array([4.0, 5.0, 6.0]) * su.second
+    result = su.linalg.inner(a, b)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_outer():
+    """Verify the outer docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([1.0, 2.0]) * su.meter
+    b = jnp.array([3.0, 4.0, 5.0]) * su.second
+    result = su.linalg.outer(a, b)
+    assert result.shape == (2, 3)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_kron():
+    """Verify the kron docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([1.0, 2.0]) * su.meter
+    b = jnp.array([3.0, 4.0]) * su.second
+    result = su.linalg.kron(a, b)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_matmul():
+    """Verify the matmul docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+    b = jnp.array([[5.0, 6.0], [7.0, 8.0]]) * su.second
+    result = su.linalg.matmul(a, b)
+    assert result.shape == (2, 2)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_tensordot():
+    """Verify the tensordot docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+    b = jnp.array([[5.0, 6.0], [7.0, 8.0]]) * su.second
+    result = su.linalg.tensordot(a, b, axes=1)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_matrix_power():
+    """Verify the matrix_power docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    m = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+    result = su.linalg.matrix_power(m, 2)
+    assert result.unit == su.meter ** 2
+
+
+def test_docstring_example_cross():
+    """Verify the cross docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([1.0, 0.0, 0.0]) * su.meter
+    b = jnp.array([0.0, 1.0, 0.0]) * su.second
+    result = su.linalg.cross(a, b)
+    assert result.unit == su.meter * su.second
+
+
+def test_docstring_example_det():
+    """Verify the det docstring example (re-exported from math)."""
+    import saiunit as su
+    import jax.numpy as jnp
+
+    a = jnp.array([[1., 2.],
+                    [3., 4.]]) * su.meter
+    result = su.linalg.det(a)
+    assert result.unit == su.meter ** 2
+    expected = jnp.linalg.det(jnp.array([[1., 2.], [3., 4.]]))
+    assert jnp.allclose(result.mantissa, expected)

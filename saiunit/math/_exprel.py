@@ -44,22 +44,36 @@ _current_order = _DEFAULT_ORDER
 
 
 def set_exprel_order(order: int) -> None:
-    """
-    Set the Taylor series order for exprel computation.
+    """Set the Taylor series order used by :func:`exprel` near zero.
 
     Parameters
     ----------
     order : int
-        The order of the Taylor series expansion. Higher order provides better
-        accuracy near x=0 but requires more computation. Default is 5.
-        Valid range: 2-20.
+        The order of the Taylor series expansion. Higher values provide
+        better accuracy near ``x = 0`` but require more computation.
+        Valid range is 2 to 20 inclusive. The default module value is 5.
+
+    Raises
+    ------
+    ValueError
+        If *order* is not an integer in the range [2, 20].
 
     Notes
     -----
-    The Taylor expansion for exprel(x) = (exp(x) - 1) / x is:
-    f(x) = 1 + x/2! + x²/3! + ... + x^n/(n+1)!
+    The Taylor expansion for ``exprel(x) = (exp(x) - 1) / x`` is:
 
-    For order=5, this gives accuracy to about x^5 term.
+    .. math::
+        f(x) = 1 + \\frac{x}{2!} + \\frac{x^2}{3!} + \\cdots + \\frac{x^n}{(n+1)!}
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> from saiunit.math._exprel import set_exprel_order, get_exprel_order
+        >>> set_exprel_order(10)
+        >>> get_exprel_order()
+        10
+        >>> set_exprel_order(5)  # restore default
     """
     global _current_order
     if not isinstance(order, int) or order < 2 or order > 20:
@@ -297,38 +311,43 @@ def _exprel_deriv(x, order: Optional[int] = None):
 
 
 def exprel(x, /, order: int = 2):
-    """
-    Compute (exp(x) - 1) / x in a numerically stable way.
+    """Compute ``(exp(x) - 1) / x`` in a numerically stable way.
 
-    This function handles the removable singularity at x = 0 by using
-    Taylor expansion for small |x|.
+    This function handles the removable singularity at ``x = 0`` by
+    using a Taylor expansion for small ``|x|`` and switching to direct
+    computation otherwise. The threshold is adaptive based on the input
+    dtype. Forward- and reverse-mode derivatives are both numerically
+    stable.
 
     Parameters
     ----------
     x : array_like
         Input array.
-    order: int
-        The order of the Taylor series expansion to use for small |x|.
+    order : int, optional
+        The order of the Taylor series expansion to use for small
+        ``|x|``. Default is 2.
 
     Returns
     -------
-    y : ndarray
-        (exp(x) - 1) / x, with the singularity at x = 0 handled correctly.
+    y : jax.Array
+        ``(exp(x) - 1) / x``, with the singularity at ``x = 0``
+        handled correctly (returns 1).
 
     Notes
     -----
-    - At x = 0, the function returns 1 (the limit value).
-    - For small |x|, Taylor expansion is used for numerical stability.
-      The threshold is adaptive based on the input dtype.
-    - The function, its JVP, and VJP are all numerically stable.
-    - Use `set_exprel_order(n)` to control Taylor series order (default: 5).
+    - At ``x = 0``, the function returns 1 (the limit value).
+    - For small ``|x|``, Taylor expansion is used for numerical stability.
+    - Use :func:`set_exprel_order` to control the module-level default
+      Taylor series order (default: 5).
 
     Examples
     --------
-    >>> import jax.numpy as jnp
-    >>> from saiunit.math import exprel
-    >>> exprel(jnp.array([0.0, 1.0, -1.0]))
-    Array([1.        , 1.7182819 , 0.63212055], dtype=float32)
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> from saiunit.math import exprel
+        >>> exprel(jnp.array([0.0, 1.0, -1.0]))
+        Array([1.        , 1.7182819 , 0.63212055], dtype=float32)
     """
     x = jnp.asarray(x)
     return exprel_p.bind(x, order=order)

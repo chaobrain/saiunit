@@ -630,3 +630,50 @@ class TestArrayWithCustomArrayIntegration:
 
         np.testing.assert_array_equal(vec1.cumsum(), np.array([1, 3, 6]))
         np.testing.assert_array_equal(vec1.cumprod(), np.array([1, 2, 6]))
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_custom_array_class():
+    """Verify basic CustomArray usage described in the class docstring."""
+    # -- Subclass with a plain ``data`` attribute (standalone, no brainstate) --
+    arr = SimpleArray(np.array([1.0, 2.0, 3.0]))
+
+    # Properties
+    assert arr.shape == (3,)
+    assert arr.ndim == 1
+    assert arr.size == 3
+    assert arr.dtype == np.float64
+
+    # Arithmetic
+    np.testing.assert_array_equal(arr + 10, np.array([11.0, 12.0, 13.0]))
+    np.testing.assert_array_equal(arr ** 2, np.array([1.0, 4.0, 9.0]))
+    np.testing.assert_array_equal(arr * 2, np.array([2.0, 4.0, 6.0]))
+
+    # Statistical operations
+    arr5 = SimpleArray(np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
+    assert float(arr5.mean()) == 3.0
+    assert float(arr5.sum()) == 15.0
+    assert abs(float(arr5.std()) - np.std([1, 2, 3, 4, 5])) < 1e-6
+
+    # Array manipulation
+    matrix = SimpleArray(np.array([[1, 2, 3], [4, 5, 6]]))
+    assert matrix.T.shape == (3, 2)
+    np.testing.assert_array_equal(matrix.reshape(6), np.array([1, 2, 3, 4, 5, 6]))
+    np.testing.assert_array_equal(matrix.flatten(), np.array([1, 2, 3, 4, 5, 6]))
+
+    # Conversion methods
+    numpy_arr = arr.to_numpy()
+    assert isinstance(numpy_arr, np.ndarray)
+    np.testing.assert_array_equal(numpy_arr, np.array([1.0, 2.0, 3.0]))
+
+    # JAX compatibility
+    jax_arr = SimpleArray(jnp.array([1.0, 2.0, 3.0]))
+
+    @jax.jit
+    def square(x):
+        return x * x
+
+    result = square(jax_arr)
+    np.testing.assert_array_equal(result, jnp.array([1.0, 4.0, 9.0]))

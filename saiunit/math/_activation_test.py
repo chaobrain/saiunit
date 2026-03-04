@@ -903,3 +903,74 @@ class TestActivationFunctionsWithArrayCustomArray(parameterized.TestCase):
         relu_doubled = um.relu(doubled_array)
 
         assert relu_doubled.shape == self.array_test_data.shape
+
+
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+class TestDocstringExamples:
+    """Tests that verify the examples shown in upgraded docstrings."""
+
+    def test_relu_docstring_example(self):
+        """Verify relu docstring example."""
+        result = um.relu(jnp.array([-2., -1., 0., 1., 2.]))
+        expected = jnp.array([0., 0., 0., 1., 2.])
+        np.testing.assert_allclose(result, expected)
+
+    def test_relu_preserves_units(self):
+        """Verify relu docstring example with units."""
+        q = Quantity(jnp.array([-1., 0., 1.]), unit=u.meter)
+        result = um.relu(q)
+        assert isinstance(result, Quantity)
+        assert result.unit == u.meter
+        np.testing.assert_allclose(result.mantissa, jnp.array([0., 0., 1.]))
+
+    def test_sigmoid_docstring_example(self):
+        """Verify sigmoid docstring example."""
+        result = um.sigmoid(jnp.array([-2., 0., 2.]))
+        np.testing.assert_allclose(
+            result,
+            jnp.array([0.11920292, 0.5, 0.8807971]),
+            rtol=1e-5,
+        )
+
+    def test_gelu_docstring_example(self):
+        """Verify gelu docstring example."""
+        result = um.gelu(jnp.array([-2., 0., 2.]))
+        # Just verify finite and reasonable shape
+        assert result.shape == (3,)
+        assert jnp.all(jnp.isfinite(result))
+        # The approximate gelu at 0 should be 0
+        np.testing.assert_allclose(result[1], 0.0, atol=1e-6)
+
+    def test_leaky_relu_docstring_example(self):
+        """Verify leaky_relu docstring example."""
+        result = um.leaky_relu(jnp.array([-2., -1., 0., 1., 2.]))
+        expected = jnp.array([-0.02, -0.01, 0., 1., 2.])
+        np.testing.assert_allclose(result, expected, rtol=1e-5)
+
+        result2 = um.leaky_relu(jnp.array([-1., 1.]), negative_slope=0.1)
+        expected2 = jnp.array([-0.1, 1.])
+        np.testing.assert_allclose(result2, expected2, rtol=1e-5)
+
+    def test_elu_docstring_example(self):
+        """Verify elu docstring example."""
+        result = um.elu(jnp.array([-2., 0., 2.]))
+        assert result.shape == (3,)
+        np.testing.assert_allclose(result[1], 0.0, atol=1e-6)
+        np.testing.assert_allclose(result[2], 2.0, atol=1e-6)
+
+    def test_hard_sigmoid_docstring_example(self):
+        """Verify hard_sigmoid docstring example."""
+        result = um.hard_sigmoid(jnp.array([-4., 0., 4.]))
+        np.testing.assert_allclose(
+            result,
+            jnp.array([0., 0.5, 1.]),
+            atol=1e-6,
+        )
+
+    def test_silu_docstring_example(self):
+        """Verify silu docstring example at x=0."""
+        result = um.silu(jnp.array([-2., 0., 2.]))
+        np.testing.assert_allclose(result[1], 0.0, atol=1e-6)

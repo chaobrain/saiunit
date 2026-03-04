@@ -649,3 +649,111 @@ class TestCSC(unittest.TestCase):
 
             xs = bst.random.randn(20)
             ys = f(csc, xs)
+
+
+class TestCSRDocstringExamples(unittest.TestCase):
+    """Tests verifying the docstring examples for CSR and related functions."""
+
+    def test_csr_fromdense_basic(self):
+        """Verify CSR.fromdense round-trips through todense."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
+        csr = susparse.CSR.fromdense(dense)
+        self.assertEqual(csr.shape, (2, 3))
+        self.assertTrue(jnp.allclose(csr.todense(), dense))
+
+    def test_csr_fromdense_function(self):
+        """Verify csr_fromdense function round-trips through todense."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
+        csr = susparse.csr_fromdense(dense)
+        self.assertEqual(csr.shape, (2, 3))
+        self.assertTrue(jnp.allclose(csr.todense(), dense))
+
+    def test_csr_with_data(self):
+        """Verify CSR.with_data replaces values but preserves structure."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0.], [0., 2.]])
+        csr = susparse.CSR.fromdense(dense)
+        new_csr = csr.with_data(csr.data * 5)
+        expected = jnp.array([[5., 0.], [0., 10.]])
+        self.assertTrue(jnp.allclose(new_csr.todense(), expected))
+
+    def test_csr_todense_function(self):
+        """Verify the csr_todense standalone function."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[5., 0.], [0., 6.]])
+        csr = susparse.csr_fromdense(dense)
+        result = susparse.csr_todense(csr)
+        self.assertTrue(jnp.allclose(result, dense))
+
+    def test_csr_isinstance_sparse_matrix(self):
+        """Verify CSR is a SparseMatrix instance."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0.], [0., 2.]])
+        csr = susparse.CSR.fromdense(dense)
+        self.assertIsInstance(csr, susparse.SparseMatrix)
+
+
+class TestCSCDocstringExamples(unittest.TestCase):
+    """Tests verifying the docstring examples for CSC and related functions."""
+
+    def test_csc_fromdense_basic(self):
+        """Verify CSC.fromdense round-trips through todense."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
+        csc = susparse.CSC.fromdense(dense)
+        self.assertEqual(csc.shape, (2, 3))
+        self.assertTrue(jnp.allclose(csc.todense(), dense))
+
+    def test_csc_fromdense_function(self):
+        """Verify csc_fromdense function round-trips through todense."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
+        csc = susparse.csc_fromdense(dense)
+        self.assertEqual(csc.shape, (2, 3))
+        self.assertTrue(jnp.allclose(csc.todense(), dense))
+
+    def test_csc_with_data(self):
+        """Verify CSC.with_data replaces values but preserves structure."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[1., 0.], [0., 2.]])
+        csc = susparse.CSC.fromdense(dense)
+        new_csc = csc.with_data(csc.data * 5)
+        expected = jnp.array([[5., 0.], [0., 10.]])
+        self.assertTrue(jnp.allclose(new_csc.todense(), expected))
+
+    def test_csc_todense_function(self):
+        """Verify the csc_todense standalone function."""
+        import jax.numpy as jnp
+        import saiunit as su
+        import saiunit.sparse as susparse
+
+        dense = jnp.array([[5., 0.], [0., 6.]])
+        csc = susparse.csc_fromdense(dense)
+        result = susparse.csc_todense(csc)
+        self.assertTrue(jnp.allclose(result, dense))

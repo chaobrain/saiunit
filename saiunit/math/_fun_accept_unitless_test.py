@@ -642,3 +642,97 @@ def test_exprel():
     print()
     print(grad1)
     print(grad2)
+
+
+# =========================================================================
+# Docstring example tests
+# =========================================================================
+
+
+class TestDocstringExamplesAcceptUnitless(parameterized.TestCase):
+    """Tests verifying the examples shown in function docstrings."""
+
+    # --- exp ---
+
+    def test_exp_plain(self):
+        result = u.math.exp(jnp.array([0.0, 1.0]))
+        expected = jnp.exp(jnp.array([0.0, 1.0]))
+        assert jnp.allclose(result, expected)
+
+    def test_exp_quantity_with_unit_to_scale(self):
+        q = jnp.array([0.001, 0.002]) * u.volt
+        result = u.math.exp(q, unit_to_scale=u.mV)
+        expected = jnp.exp(jnp.array([1.0, 2.0]))
+        assert jnp.allclose(result, expected)
+
+    def test_exp_quantity_without_scale_raises(self):
+        q = jnp.array([1.0, 2.0]) * u.meter
+        with pytest.raises(TypeError, match='requires a dimensionless "x"'):
+            u.math.exp(q)
+
+    # --- log ---
+
+    def test_log_plain(self):
+        result = u.math.log(jnp.array([1.0, jnp.e, jnp.e ** 2]))
+        expected = jnp.array([0.0, 1.0, 2.0])
+        assert jnp.allclose(result, expected)
+
+    def test_log_quantity_with_unit_to_scale(self):
+        q = jnp.array([0.001]) * u.volt
+        result = u.math.log(q, unit_to_scale=u.mV)
+        expected = jnp.log(jnp.array([1.0]))
+        assert jnp.allclose(result, expected)
+
+    # --- sin ---
+
+    def test_sin_plain(self):
+        result = u.math.sin(jnp.array([0.0, jnp.pi / 2]))
+        expected = jnp.sin(jnp.array([0.0, jnp.pi / 2]))
+        assert jnp.allclose(result, expected)
+
+    def test_sin_quantity_without_scale_raises(self):
+        q = jnp.array([1.0]) * u.meter
+        with pytest.raises(TypeError, match='requires a dimensionless "x"'):
+            u.math.sin(q)
+
+    # --- cos ---
+
+    def test_cos_plain(self):
+        result = u.math.cos(jnp.array([0.0, jnp.pi]))
+        expected = jnp.cos(jnp.array([0.0, jnp.pi]))
+        assert jnp.allclose(result, expected)
+
+    def test_cos_dimensionless_quantity(self):
+        q = u.Quantity(jnp.array([0.0, jnp.pi]))
+        result = u.math.cos(q)
+        expected = jnp.cos(jnp.array([0.0, jnp.pi]))
+        assert jnp.allclose(result, expected)
+
+    # --- arctan2 ---
+
+    def test_arctan2_plain(self):
+        result = u.math.arctan2(
+            jnp.array([1.0, -1.0]),
+            jnp.array([1.0, 1.0])
+        )
+        expected = jnp.arctan2(
+            jnp.array([1.0, -1.0]),
+            jnp.array([1.0, 1.0])
+        )
+        assert jnp.allclose(result, expected)
+
+    def test_arctan2_quantity_with_unit_to_scale(self):
+        y = jnp.array([1.0, -1.0]) * meter
+        x = jnp.array([1.0, 1.0]) * meter
+        result = u.math.arctan2(y, x, unit_to_scale=u.dametre)
+        expected = jnp.arctan2(
+            y.to_decimal(u.dametre),
+            x.to_decimal(u.dametre)
+        )
+        assert jnp.allclose(result, expected)
+
+    def test_arctan2_quantity_without_scale_raises(self):
+        y = jnp.array([1.0]) * meter
+        x = jnp.array([1.0]) * meter
+        with pytest.raises(TypeError, match='requires a dimensionless "x"'):
+            u.math.arctan2(y, x)

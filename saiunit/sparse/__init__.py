@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Unit-aware sparse matrix types.
+
+Provides CSR, CSC, and COO sparse matrix classes that carry physical
+units, with conversion utilities between dense and sparse formats.
+"""
+
 from ._coo import COO, coo_todense, coo_fromdense
 from ._csr import CSR, CSC, csr_todense, csr_fromdense, csc_fromdense, csc_todense
 from .._sparse_base import SparseMatrix

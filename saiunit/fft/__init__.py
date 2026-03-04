@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+Unit-aware FFT (Fast Fourier Transform) functions.
+
+Provides wrappers for ``jax.numpy.fft`` that correctly transform units
+between time/space and frequency domains.
+"""
+
 from ._fft_change_unit import *
 from ._fft_change_unit import __all__ as _fft_change_unit_all
 from ._fft_keep_unit import *

@@ -911,3 +911,66 @@ class TestLaxBroadcastingArrays(parameterized.TestCase):
     def test_broadcast_to_rank(self):
         # TODO: no test in JAX
         ...
+
+
+class TestLaxKeepUnitDocstringExamples:
+    """Tests verifying the docstring examples for keep-unit lax functions."""
+
+    def test_neg_preserves_unit(self):
+        """Docstring example: neg preserves unit."""
+        q = jnp.array([1.0, -2.0, 3.0]) * u.meter
+        result = ulax.neg(q)
+        expected = jnp.array([-1., 2., -3.])
+        assert_quantity(result, expected, unit=u.meter)
+
+    def test_cumsum_preserves_unit(self):
+        """Docstring example: cumsum preserves unit."""
+        q = jnp.array([1.0, 2.0, 3.0, 4.0]) * u.meter
+        result = ulax.cumsum(q)
+        expected = jnp.array([1., 3., 6., 10.])
+        assert_quantity(result, expected, unit=u.meter)
+
+    def test_cummax_preserves_unit(self):
+        """Docstring example: cummax preserves unit."""
+        q = jnp.array([3.0, 1.0, 4.0, 1.0]) * u.second
+        result = ulax.cummax(q)
+        expected = jnp.array([3., 3., 4., 4.])
+        assert_quantity(result, expected, unit=u.second)
+
+    def test_cummin_preserves_unit(self):
+        """Docstring example: cummin preserves unit."""
+        q = jnp.array([3.0, 1.0, 4.0, 1.0]) * u.second
+        result = ulax.cummin(q)
+        expected = jnp.array([3., 1., 1., 1.])
+        assert_quantity(result, expected, unit=u.second)
+
+    def test_sub_preserves_unit(self):
+        """Docstring example: sub preserves unit."""
+        a = jnp.array([5.0, 8.0]) * u.meter
+        b = jnp.array([1.0, 3.0]) * u.meter
+        result = ulax.sub(a, b)
+        expected = jnp.array([4., 5.])
+        assert_quantity(result, expected, unit=u.meter)
+
+    def test_broadcast_preserves_unit(self):
+        """Docstring example: broadcast preserves unit."""
+        q = jnp.array([1.0, 2.0]) * u.second
+        result = ulax.broadcast(q, sizes=(3,))
+        assert result.mantissa.shape == (3, 2)
+        assert result.unit == u.second
+
+    def test_broadcast_in_dim_preserves_unit(self):
+        """Docstring example: broadcast_in_dim preserves unit."""
+        q = jnp.array([1.0, 2.0]) * u.meter
+        result = ulax.broadcast_in_dim(q, shape=(3, 2), broadcast_dimensions=(1,))
+        assert result.mantissa.shape == (3, 2)
+
+    def test_sort_key_val_preserves_unit(self):
+        """Docstring example: sort_key_val preserves unit."""
+        keys = jnp.array([3.0, 1.0, 2.0]) * u.meter
+        vals = jnp.array([30, 10, 20])
+        sorted_keys, sorted_vals = ulax.sort_key_val(keys, vals)
+        expected_keys = jnp.array([1., 2., 3.])
+        expected_vals = jnp.array([10, 20, 30])
+        assert_quantity(sorted_keys, expected_keys, unit=u.meter)
+        assert jnp.all(sorted_vals == expected_vals)

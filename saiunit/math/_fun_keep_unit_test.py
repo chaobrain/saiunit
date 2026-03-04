@@ -1089,3 +1089,154 @@ class TestGather:
         result3 = u.math.gather(input_tensor * u.mV, 0, jnp.array([[1, 0], [0, 1]]))
         print("Test 3 (dim=0):")
         print("Result:", result3)
+
+
+# ---------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------
+
+
+class TestDocstringExamples:
+    """Tests mirroring the examples shown in the docstrings."""
+
+    # -- concatenate --
+    def test_concatenate_with_quantity(self):
+        a = [1, 2] * u.second
+        b = [3, 4] * u.second
+        result = u.math.concatenate([a, b])
+        assert isinstance(result, u.Quantity)
+        assert result.unit == u.second
+        expected = jnp.concatenate([jnp.array([1, 2]), jnp.array([3, 4])])
+        assert_quantity(result, expected, u.second)
+
+    def test_concatenate_plain_array(self):
+        result = u.math.concatenate([jnp.array([1, 2]), jnp.array([3, 4])])
+        expected = jnp.concatenate([jnp.array([1, 2]), jnp.array([3, 4])])
+        assert jnp.array_equal(result, expected)
+
+    # -- stack --
+    def test_stack_with_quantity(self):
+        a = [1, 2, 3] * u.second
+        b = [4, 5, 6] * u.second
+        result = u.math.stack([a, b])
+        assert isinstance(result, u.Quantity)
+        expected = jnp.stack([jnp.array([1, 2, 3]), jnp.array([4, 5, 6])])
+        assert_quantity(result, expected, u.second)
+
+    def test_stack_plain_array(self):
+        result = u.math.stack([jnp.array([1, 2, 3]), jnp.array([4, 5, 6])])
+        expected = jnp.stack([jnp.array([1, 2, 3]), jnp.array([4, 5, 6])])
+        assert jnp.array_equal(result, expected)
+
+    # -- reshape --
+    def test_reshape_with_quantity(self):
+        a = [1, 2, 3, 4] * u.second
+        result = u.math.reshape(a, (2, 2))
+        assert isinstance(result, u.Quantity)
+        assert result.shape == (2, 2)
+        expected = jnp.reshape(jnp.array([1, 2, 3, 4]), (2, 2))
+        assert_quantity(result, expected, u.second)
+
+    def test_reshape_plain_array(self):
+        result = u.math.reshape(jnp.array([1, 2, 3, 4]), (2, 2))
+        expected = jnp.reshape(jnp.array([1, 2, 3, 4]), (2, 2))
+        assert jnp.array_equal(result, expected)
+
+    # -- sum --
+    def test_sum_with_quantity(self):
+        a = [1.0, 2.0, 3.0] * u.second
+        result = u.math.sum(a)
+        assert isinstance(result, u.Quantity)
+        assert_quantity(result, 6.0, u.second)
+
+    def test_sum_with_axis(self):
+        a = [[1.0, 2.0], [3.0, 4.0]] * u.meter
+        result = u.math.sum(a, axis=0)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([4.0, 6.0])
+        assert_quantity(result, expected, u.meter)
+
+    def test_sum_plain_array(self):
+        result = u.math.sum(jnp.array([1.0, 2.0, 3.0]))
+        expected = jnp.sum(jnp.array([1.0, 2.0, 3.0]))
+        assert jnp.array_equal(result, expected)
+
+    # -- mean --
+    def test_mean_with_quantity(self):
+        a = [1.0, 2.0, 3.0] * u.second
+        result = u.math.mean(a)
+        assert isinstance(result, u.Quantity)
+        assert_quantity(result, 2.0, u.second)
+
+    def test_mean_plain_array(self):
+        result = u.math.mean(jnp.array([1.0, 2.0, 3.0]))
+        expected = jnp.mean(jnp.array([1.0, 2.0, 3.0]))
+        assert jnp.array_equal(result, expected)
+
+    # -- abs --
+    def test_abs_with_quantity(self):
+        a = [-1, -2, 3] * u.meter
+        result = u.math.abs(a)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([1, 2, 3])
+        assert_quantity(result, expected, u.meter)
+
+    def test_abs_plain_array(self):
+        result = u.math.abs(jnp.array([-1, -2, 3]))
+        expected = jnp.abs(jnp.array([-1, -2, 3]))
+        assert jnp.array_equal(result, expected)
+
+    # -- add --
+    def test_add_with_quantity(self):
+        a = [1, 2, 3] * u.meter
+        b = [4, 5, 6] * u.meter
+        result = u.math.add(a, b)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([5, 7, 9])
+        assert_quantity(result, expected, u.meter)
+
+    def test_add_plain_array(self):
+        result = u.math.add(jnp.array([1, 2, 3]), jnp.array([4, 5, 6]))
+        expected = jnp.add(jnp.array([1, 2, 3]), jnp.array([4, 5, 6]))
+        assert jnp.array_equal(result, expected)
+
+    def test_add_mismatched_raises(self):
+        a = [1, 2, 3] * u.meter
+        b = jnp.array([4, 5, 6])
+        with pytest.raises(TypeError):
+            u.math.add(a, b)
+
+    # -- maximum --
+    def test_maximum_with_quantity(self):
+        a = [1, 3, 5] * u.second
+        b = [2, 2, 4] * u.second
+        result = u.math.maximum(a, b)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([2, 3, 5])
+        assert_quantity(result, expected, u.second)
+
+    def test_maximum_plain_array(self):
+        result = u.math.maximum(jnp.array([1, 3, 5]), jnp.array([2, 2, 4]))
+        expected = jnp.maximum(jnp.array([1, 3, 5]), jnp.array([2, 2, 4]))
+        assert jnp.array_equal(result, expected)
+
+    # -- where --
+    def test_where_with_quantity(self):
+        a = [1, 2, 3, 4, 5] * u.meter
+        result = u.math.where(a > 3 * u.meter, a, 0 * u.meter)
+        assert isinstance(result, u.Quantity)
+        expected = jnp.array([0, 0, 0, 4, 5])
+        assert_quantity(result, expected, u.meter)
+
+    def test_where_plain_array(self):
+        a = jnp.array([1, 2, 3, 4, 5])
+        result = u.math.where(a > 3, a, 0)
+        expected = jnp.where(a > 3, a, 0)
+        assert jnp.array_equal(result, expected)
+
+    def test_where_condition_only(self):
+        a = jnp.array([True, False, True])
+        result = u.math.where(a)
+        expected = jnp.where(a)
+        for r, e in zip(result, expected):
+            assert jnp.array_equal(r, e)

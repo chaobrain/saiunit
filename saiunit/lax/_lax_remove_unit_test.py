@@ -86,3 +86,38 @@ class TestLaxRemoveUnit(parameterized.TestCase):
 
             with pytest.raises(TypeError):
                 result = bulax_fun(q1, jnp.array(x2))
+
+
+class TestLaxRemoveUnitDocstringExamples:
+    """Tests verifying the docstring examples for remove-unit lax functions."""
+
+    def test_eq_returns_bool(self):
+        """Docstring example: eq returns boolean array."""
+        a = jnp.array([1.0, 2.0, 3.0]) * meter
+        b = jnp.array([1.0, 5.0, 3.0]) * meter
+        result = bulax.eq(a, b)
+        expected = jnp.array([True, False, True])
+        assert jnp.all(result == expected)
+
+    def test_ne_returns_bool(self):
+        """Docstring example: ne returns boolean array."""
+        a = jnp.array([1.0, 2.0, 3.0]) * meter
+        b = jnp.array([1.0, 5.0, 3.0]) * meter
+        result = bulax.ne(a, b)
+        expected = jnp.array([False, True, False])
+        assert jnp.all(result == expected)
+
+    def test_gt_returns_bool(self):
+        """Docstring example: gt returns boolean array."""
+        a = jnp.array([1.0, 3.0, 2.0]) * second
+        b = jnp.array([2.0, 2.0, 2.0]) * second
+        result = bulax.gt(a, b)
+        expected = jnp.array([False, True, False])
+        assert jnp.all(result == expected)
+
+    def test_population_count(self):
+        """Docstring example: population_count counts set bits."""
+        x = jnp.array([1, 3, 7])
+        result = bulax.population_count(x)
+        expected = jnp.array([1, 2, 3])
+        assert jnp.all(result == expected)

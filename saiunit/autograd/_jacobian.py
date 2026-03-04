@@ -145,93 +145,75 @@ def jacrev(
     allow_int: bool = False
 ) -> Callable:
     """
-    Physical unit-aware version of `jax.jacrev <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacrev.html>`_.
+    Physical unit-aware reverse-mode Jacobian of ``fun``.
 
-    Args:
-        fun: Function whose Jacobian is to be computed.
-        argnums: Optional, integer or sequence of integers. Specifies which
-            positional argument(s) to differentiate with respect to (default ``0``).
-        has_aux: Optional, bool. Indicates whether ``fun`` returns a pair where the
-            first element is considered the output of the mathematical function to be
-            differentiated and the second element is auxiliary data. Default False.
-        holomorphic: Optional, bool. Indicates whether ``fun`` is promised to be holomorphic. Default False.
-        allow_int: Optional, bool. Indicates whether integer arguments are allowed. Default False.
+    This is the unit-aware counterpart of
+    `jax.jacrev <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacrev.html>`_.
+    It computes the Jacobian matrix via reverse-mode automatic
+    differentiation while correctly propagating physical units.
 
-    Returns:
-        A function that computes the Jacobian of ``fun`` through reverse-mode automatic differentiation.
+    Parameters
+    ----------
+    fun : callable
+        Function whose Jacobian is to be computed. Its arguments at
+        positions specified by ``argnums`` should be arrays, scalars,
+        or standard Python containers thereof (possibly carrying
+        physical units).
+    argnums : int or tuple of int, optional
+        Specifies which positional argument(s) to differentiate with
+        respect to. Default is ``0``.
+    has_aux : bool, optional
+        If ``True``, ``fun`` is expected to return ``(output, aux)``
+        where only ``output`` is differentiated. Default is ``False``.
+    holomorphic : bool, optional
+        Whether ``fun`` is promised to be holomorphic. Default is
+        ``False``.
+    allow_int : bool, optional
+        Whether integer-valued inputs are allowed. Default is ``False``.
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def simple_function1(x):
-    ...    return x ** 2
-    >>> jac_fn = u.autograd.jacrev(simple_function1)
-    >>> jac_fn(jnp.array(3.0) * u.ms)
-    6.0 * ms
+    Returns
+    -------
+    jacfun : callable
+        A function with the same signature as ``fun`` that returns the
+        Jacobian computed via reverse-mode AD. If ``has_aux=True``, it
+        returns ``(jacobian, aux)``. Each Jacobian leaf carries the
+        correct physical units (output unit / input unit).
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def simple_function2(x, y):
-    ...    return x * y
-    >>> jac_fn = u.autograd.jacrev(simple_function2, argnums=(0, 1))
-    >>> x = jnp.array([3.0, 4.0]) * u.ohm
-    >>> y = jnp.array([5.0, 6.0]) * u.mA
-    >>> jac_fn(x, y)
-    ([[5., 0.],
-      [0., 6.]] * mA,
-     [[3., 0.],
-      [0., 4.]] * ohm)
+    Notes
+    -----
+    ``jacrev`` generalises the standard Jacobian to nested Python
+    containers (pytrees). The tree structure of
+    ``jacrev(fun)(x)`` is formed by taking a tree product of the
+    structure of ``fun(x)`` with the structure of ``x``.
 
-    `jacrev` is a generalization of the usual definition of the JacRev(Jacobian Reverse Mode).
-    that supports nested Python containers (i.e. pytrees) as inputs and outputs.
-    The tree structure of ``saiunit.autograd.jacrev(fun)(x)`` is given by forming a tree
-    product of the structure of ``fun(x)`` with a tree product of two copies of
-    the structure of ``x``. A tree product of two tree structures is formed by
-    replacing each leaf of the first tree with a copy of the second. For example:
+    Examples
+    --------
+    Jacobian of a scalar-to-scalar function with units:
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def dict_function(inputs):
-    ...    o1 = inputs['x'] * inputs['y']
-    ...    o2 = inputs['x'] * inputs['z']
-    ...    r = {'o1': o1, 'o2': o2}
-    ...    return r, r
-    >>> jac_fn = u.autograd.jacrev(dict_function, has_aux=True)
-    >>> x = jnp.array([3.0, 4.0]) * u.ohm
-    >>> y = jnp.array([5.0, 6.0]) * u.mA
-    >>> z = jnp.array([7.0, 8.0]) * u.siemens
-    >>> inp = {'x': x, 'y': y, 'z': z}
-    >>> jac_fn(inp)
-    ({'o1': {'x': ArrayImpl([[5., 0.],
-                  [0., 6.]], dtype=float32) * mampere,
-       'y': ArrayImpl([[3., 0.],
-                  [0., 4.]], dtype=float32) * ohm,
-       'z': ArrayImpl([[0., 0.],
-                  [0., 0.]], dtype=float32) * mvolt / siemens},
-      'o2': {'x': ArrayImpl([[7., 0.],
-                  [0., 8.]], dtype=float32) * siemens,
-       'y': ArrayImpl([[0., 0.],
-                  [0., 0.]], dtype=float32) * 10.0^3 * amp ** -1,
-       'z': ArrayImpl([[3., 0.],
-                  [0., 4.]], dtype=float32) * ohm}},
-     {'o1': ArrayImpl([15., 24.], dtype=float32) * mvolt,
-      'o2': Array([21., 32.], dtype=float32)})
+    .. code-block:: python
 
-    Thus each leaf in the tree structure of ``saiunit.autograd.jacrev(fun)(x)`` corresponds to
-    a leaf of ``fun(x)`` and a pair of leaves of ``x``. For each leaf in
-    ``saiunit.autograd.jacrev(fun)(x)``, if the corresponding array leaf of ``fun(x)`` has
-    shape ``(out_1, out_2, ...)`` and the corresponding array leaves of ``x`` have
-    shape ``(in_1_1, in_1_2, ...)`` and ``(in_2_1, in_2_2, ...)`` respectively,
-    then the JacRev leaf has shape ``(out_1, out_2, ..., in_1_1, in_1_2, ...,
-    in_2_1, in_2_2, ...)``. In other words, the Python tree structure represents
-    the block structure of the Hessian, with blocks determined by the input and
-    output pytrees.
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def f(x):
+        ...     return x ** 2
+        >>> jac_fn = suauto.jacrev(f)
+        >>> jac_fn(jnp.array(3.0) * su.ms)
+        6.0 * ms
 
-    In particular, an array is produced (with no pytrees involved) when the
-    function input ``x`` and output ``fun(x)`` are each a single array, as in the
-    ``simple_function`` example above. If ``fun(x)`` has shape ``(out1, out2, ...)`` and ``x``
-    has shape ``(in1, in2, ...)`` then ``saiunit.autograd.jacrev(fun)(x)`` has shape
-    ``(out1, out2, ..., in1, in2, ..., in1, in2, ...)``. To flatten pytrees into
-    1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
+    Jacobian with multiple arguments:
+
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def g(x, y):
+        ...     return x * y
+        >>> jac_fn = suauto.jacrev(g, argnums=(0, 1))
+        >>> x = jnp.array([3.0, 4.0]) * su.ohm
+        >>> y = jnp.array([5.0, 6.0]) * su.mA
+        >>> jac_x, jac_y = jac_fn(x, y)
     """
     _check_callable(fun)
     argnums = _ensure_index(argnums)
@@ -274,18 +256,48 @@ def jacobian(
     """
     Alias of :func:`jacrev`.
 
-    Args:
-        fun: Function whose Jacobian is to be computed.
-        argnums: Optional, integer or sequence of integers. Specifies which
-            positional argument(s) to differentiate with respect to (default ``0``).
-        has_aux: Optional, bool. Indicates whether ``fun`` returns a pair where the
-            first element is considered the output of the mathematical function to be
-            differentiated and the second element is auxiliary data. Default False.
-        holomorphic: Optional, bool. Indicates whether ``fun`` is promised to be holomorphic. Default False.
-        allow_int: Optional, bool. Indicates whether integer arguments are allowed. Default False.
+    This is a convenience alias that delegates directly to
+    :func:`jacrev`. See :func:`jacrev` for full documentation.
 
-    Returns:
-        A function that computes the Jacobian of ``fun`` through reverse-mode automatic differentiation.
+    Parameters
+    ----------
+    fun : callable
+        Function whose Jacobian is to be computed.
+    argnums : int or tuple of int, optional
+        Specifies which positional argument(s) to differentiate with
+        respect to. Default is ``0``.
+    has_aux : bool, optional
+        If ``True``, ``fun`` returns ``(output, aux)`` and only
+        ``output`` is differentiated. Default is ``False``.
+    holomorphic : bool, optional
+        Whether ``fun`` is promised to be holomorphic. Default is
+        ``False``.
+    allow_int : bool, optional
+        Whether integer-valued inputs are allowed. Default is ``False``.
+
+    Returns
+    -------
+    jacfun : callable
+        A function that computes the Jacobian of ``fun`` through
+        reverse-mode automatic differentiation.
+
+    See Also
+    --------
+    jacrev : The primary implementation.
+    jacfwd : Forward-mode Jacobian computation.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def f(x):
+        ...     return x ** 2
+        >>> jac_fn = suauto.jacobian(f)
+        >>> jac_fn(jnp.array(3.0) * su.ms)
+        6.0 * ms
     """
     return jacrev(
         fun,
@@ -303,92 +315,82 @@ def jacfwd(
     holomorphic: bool = False,
 ) -> Callable:
     """
-    Physical unit-aware version of `jax.jacfwd <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacfwd.html>`_.
+    Physical unit-aware forward-mode Jacobian of ``fun``.
 
-    Args:
-        fun: Function whose Jacobian is to be computed.
-        argnums: Optional, integer or sequence of integers. Specifies which
-            positional argument(s) to differentiate with respect to (default ``0``).
-        has_aux: Optional, bool. Indicates whether ``fun`` returns a pair where the
-            first element is considered the output of the mathematical function to be
-            differentiated and the second element is auxiliary data. Default False.
-        holomorphic: Optional, bool. Indicates whether ``fun`` is promised to be holomorphic. Default False.
+    This is the unit-aware counterpart of
+    `jax.jacfwd <https://jax.readthedocs.io/en/latest/_autosummary/jax.jacfwd.html>`_.
+    It computes the Jacobian matrix via forward-mode automatic
+    differentiation while correctly propagating physical units.
 
-    Returns:
-        A function that computes the Jacobian of ``fun`` through forward-mode automatic differentiation.
+    Parameters
+    ----------
+    fun : callable
+        Function whose Jacobian is to be computed. Its arguments at
+        positions specified by ``argnums`` should be arrays, scalars,
+        or standard Python containers thereof (possibly carrying
+        physical units).
+    argnums : int or tuple of int, optional
+        Specifies which positional argument(s) to differentiate with
+        respect to. Default is ``0``.
+    has_aux : bool, optional
+        If ``True``, ``fun`` is expected to return ``(output, aux)``
+        where only ``output`` is differentiated. Default is ``False``.
+    holomorphic : bool, optional
+        Whether ``fun`` is promised to be holomorphic. Default is
+        ``False``.
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def simple_function(x):
-    ...    return x ** 2
-    >>> jac_fn = u.autograd.jacfwd(simple_function)
-    >>> jac_fn(jnp.array(3.0) * u.ms)
-    6.0 * ms
+    Returns
+    -------
+    jacfun : callable
+        A function with the same signature as ``fun`` that returns the
+        Jacobian computed via forward-mode AD. If ``has_aux=True``, it
+        returns ``(jacobian, aux)``. Each Jacobian leaf carries the
+        correct physical units (output unit / input unit).
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def simple_function(x, y):
-    ...    return x * y
-    >>> jac_fn = u.autograd.jacfwd(simple_function, argnums=(0, 1))
-    >>> x = jnp.array([3.0, 4.0]) * u.ohm
-    >>> y = jnp.array([5.0, 6.0]) * u.mA
-    >>> jac_fn(x, y)
-    ([[5., 0.],
-      [0., 6.]] * mA,
-     [[3., 0.],
-      [0., 4.]] * ohm)
+    Notes
+    -----
+    Forward-mode (``jacfwd``) is more efficient than reverse-mode
+    (``jacrev``) when the number of inputs is smaller than the number
+    of outputs.
 
-    `jacfwd` is a generalization of the usual definition of the JacFwd(Jacobian Forward Mode).
-    that supports nested Python containers (i.e. pytrees) as inputs and outputs.
-    The tree structure of ``saiunit.autograd.jacfwd(fun)(x)`` is given by forming a tree
-    product of the structure of ``fun(x)`` with a tree product of two copies of
-    the structure of ``x``. A tree product of two tree structures is formed by
-    replacing each leaf of the first tree with a copy of the second. For example:
+    ``jacfwd`` generalises the standard Jacobian to nested Python
+    containers (pytrees). The tree structure of
+    ``jacfwd(fun)(x)`` is formed by taking a tree product of the
+    structure of ``fun(x)`` with the structure of ``x``.
 
-    >>> import jax.numpy as jnp
-    >>> import saiunit as u
-    >>> def dict_function(inputs):
-    ...    o1 = inputs['x'] * inputs['y']
-    ...    o2 = inputs['x'] * inputs['z']
-    ...    r = {'o1': o1, 'o2': o2}
-    ...    return r, r
-    >>> jac_fn = u.autograd.jacfwd(dict_function, has_aux=True)
-    >>> x = jnp.array([3.0, 4.0]) * u.ohm
-    >>> y = jnp.array([5.0, 6.0]) * u.mA
-    >>> z = jnp.array([7.0, 8.0]) * u.siemens
-    >>> inp = {'x': x, 'y': y, 'z': z}
-    >>> jac_fn(inp)
-    ({'o1': {'x': ArrayImpl([[5., 0.],
-                  [0., 6.]], dtype=float32) * mampere,
-       'y': ArrayImpl([[3., 0.],
-                  [0., 4.]], dtype=float32) * ohm,
-       'z': ArrayImpl([[0., 0.],
-                  [0., 0.]], dtype=float32) * mvolt / siemens},
-      'o2': {'x': ArrayImpl([[7., 0.],
-                  [0., 8.]], dtype=float32) * siemens,
-       'y': ArrayImpl([[0., 0.],
-                  [0., 0.]], dtype=float32) * 10.0^3 * amp ** -1,
-       'z': ArrayImpl([[3., 0.],
-                  [0., 4.]], dtype=float32) * ohm}},
-     {'o1': ArrayImpl([15., 24.], dtype=float32) * mvolt,
-      'o2': Array([21., 32.], dtype=float32)})
+    See Also
+    --------
+    jacrev : Reverse-mode Jacobian computation.
+    jacobian : Alias of ``jacrev``.
 
-    Thus each leaf in the tree structure of ``saiunit.autograd.jacfwd(fun)(x)`` corresponds to
-    a leaf of ``fun(x)`` and a pair of leaves of ``x``. For each leaf in
-    ``saiunit.autograd.jacfwd(fun)(x)``, if the corresponding array leaf of ``fun(x)`` has
-    shape ``(out_1, out_2, ...)`` and the corresponding array leaves of ``x`` have
-    shape ``(in_1_1, in_1_2, ...)`` and ``(in_2_1, in_2_2, ...)`` respectively,
-    then the JacFwd leaf has shape ``(out_1, out_2, ..., in_1_1, in_1_2, ...,
-    in_2_1, in_2_2, ...)``. In other words, the Python tree structure represents
-    the block structure of the Hessian, with blocks determined by the input and
-    output pytrees.
+    Examples
+    --------
+    Jacobian of a scalar-to-scalar function with units:
 
-    In particular, an array is produced (with no pytrees involved) when the
-    function input ``x`` and output ``fun(x)`` are each a single array, as in the
-    ``simple_function`` example above. If ``fun(x)`` has shape ``(out1, out2, ...)`` and ``x``
-    has shape ``(in1, in2, ...)`` then ``saiunit.autograd.jacfwd(fun)(x)`` has shape
-    ``(out1, out2, ..., in1, in2, ..., in1, in2, ...)``. To flatten pytrees into
-    1D vectors, consider using :py:func:`jax.flatten_util.flatten_pytree`.
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def f(x):
+        ...     return x ** 2
+        >>> jac_fn = suauto.jacfwd(f)
+        >>> jac_fn(jnp.array(3.0) * su.ms)
+        6.0 * ms
+
+    Jacobian with multiple arguments:
+
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.autograd as suauto
+        >>> def g(x, y):
+        ...     return x * y
+        >>> jac_fn = suauto.jacfwd(g, argnums=(0, 1))
+        >>> x = jnp.array([3.0, 4.0]) * su.ohm
+        >>> y = jnp.array([5.0, 6.0]) * su.mA
+        >>> jac_x, jac_y = jac_fn(x, y)
     """
     _check_callable(fun)
     argnums = _ensure_index(argnums)

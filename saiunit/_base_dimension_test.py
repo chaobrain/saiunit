@@ -430,3 +430,69 @@ class TestUnitMismatchError:
         data = pickle.dumps(e)
         e2 = pickle.loads(data)
         assert str(e) == str(e2)
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_dimension_class():
+    """Test the example from Dimension class docstring."""
+    import saiunit as su
+    length_dim = su.meter.dim
+    assert length_dim.get_dimension('m') == 1.0
+    assert not length_dim.is_dimensionless
+    assert su.DIMENSIONLESS.is_dimensionless
+
+
+def test_docstring_example_is_dimensionless():
+    """Test the example from Dimension.is_dimensionless docstring."""
+    import saiunit as su
+    assert su.DIMENSIONLESS.is_dimensionless is True
+    assert su.meter.dim.is_dimensionless is False
+
+
+def test_docstring_example_dim_property():
+    """Test the example from Dimension.dim docstring."""
+    import saiunit as su
+    d = su.meter.dim
+    assert d.dim is d
+
+
+def test_docstring_example_get_or_create_dimension():
+    """Test the example from get_or_create_dimension docstring."""
+    import saiunit as su
+    d1 = su.get_or_create_dimension(length=1, mass=1, time=-2)
+    d2 = su.get_or_create_dimension(m=1, kg=1, s=-2)
+    d3 = su.get_or_create_dimension([1, 1, -2, 0, 0, 0, 0])
+    assert d1 is d2
+    assert d2 is d3
+    assert repr(d1) == "metre * kilogram * second ** -2"
+
+
+def test_docstring_example_dimensionless():
+    """Test the example from DIMENSIONLESS docstring."""
+    import saiunit as su
+    assert su.DIMENSIONLESS.is_dimensionless is True
+    assert str(su.DIMENSIONLESS) == '1'
+
+
+def test_docstring_example_get_dim_for_display():
+    """Test the example from get_dim_for_display docstring."""
+    import saiunit as su
+    assert su.get_dim_for_display(su.DIMENSIONLESS) == '1'
+    assert su.get_dim_for_display(su.meter.dim) == 'm'
+
+
+def test_docstring_example_dimension_mismatch_error():
+    """Test the example from DimensionMismatchError docstring."""
+    import saiunit as su
+    e = su.DimensionMismatchError("Addition", su.meter.dim, su.second.dim)
+    assert 'Addition' in str(e)
+    assert 'm' in str(e)
+
+
+def test_docstring_example_unit_mismatch_error():
+    """Test the example from UnitMismatchError docstring."""
+    import saiunit as su
+    e = su.UnitMismatchError("Addition", su.mvolt, su.volt)
+    assert 'Addition' in str(e)

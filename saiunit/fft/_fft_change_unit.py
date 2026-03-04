@@ -81,74 +81,42 @@ def fft(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Compute a one-dimensional discrete Fourier transform along a given axis.
 
-    saiunit implementation of :func:`numpy.fft.fft`.
+    Unit-aware implementation of :func:`numpy.fft.fft`.  The output unit
+    is ``input_unit * second`` because the DFT integrates over time.
 
-    Args:
-        a: input quantity or array.
-        n: int. Specifies the dimension of the result along ``axis``. If not specified,
-            it will default to the dimension of ``a`` along ``axis``.
-        axis: int, default=-1. Specifies the axis along which the transform is computed.
-            If not specified, the transform is computed along axis -1.
-        norm: string. The normalization mode. "backward", "ortho" and "forward" are
-            supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input signal.
+    n : int, optional
+        Length of the transformed axis in the output.  If not given,
+        defaults to the length of ``a`` along *axis*.
+    axis : int, default=-1
+        Axis along which the FFT is computed.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the one-dimensional discrete Fourier transform of ``a``.
+    Returns
+    -------
+    Quantity or array_like
+        The one-dimensional DFT of ``a``.  When ``a`` carries a unit,
+        the result has unit ``a.unit * second``.
 
-    See also:
-        - :func:`saiunit.fft.ifft`: Computes a one-dimensional inverse discrete
-            Fourier transform.
-        - :func:`saiunit.fft.fftn`: Computes a multidimensional discrete Fourier
-            transform.
-        - :func:`saiunit.fft.ifftn`: Computes a multidimensional inverse discrete
-            Fourier transform.
+    See Also
+    --------
+    saiunit.fft.ifft : One-dimensional inverse DFT.
+    saiunit.fft.fftn : N-dimensional DFT.
 
-    Examples:
-        ``saiunit.fft.fft`` computes the transform along ``axis -1`` by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1, 2, 4, 7],
-        ...                [5, 3, 1, 9]]) * u.meter
-        >>> u.fft.fft(x)
-        ArrayImpl([[14.+0.j, -3.+5.j, -4.+0.j, -3.-5.j],
-                   [18.+0.j,  4.+6.j, -6.+0.j,  4.-6.j]], dtype=complex64) * meter * second
-        The units have changed here, transitioning from meters in the spatial domain
-        to meter * second in the frequency domain.
-        This is because the Fourier transform converts between the time domain
-        and the frequency domain:
-
-        - Time-domain signal (unit: second) → Frequency-domain signal (unit: hertz = 1/second)
-        - Spatial-domain signal (unit: meter) → Wavenumber-domain signal (unit: 1/meter)
-        In this case, the original signal B is in the spatial domain,
-        but the FFT operation inherently assumes a time-domain input,
-        resulting in output units of meter * second.
-        This unit conversion reflects the physical meaning of the Fourier transform.
-
-        When ``n=3``, dimension of the transform along axis -1 will be ``3`` and
-        dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fft(x, n=3))
-        ArrayImpl([[ 7.+0.j  , -2.+1.73j, -2.-1.73j],
-                   [ 9.+0.j  ,  3.-1.73j,  3.+1.73j]], dtype=complex64) * meter * second
-
-        When ``n=3`` and ``axis=0``, dimension of the transform along ``axis 0`` will
-        be ``3`` and dimension along other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fft(x, n=3, axis=0))
-        ArrayImpl([[ 6. +0.j  ,  5. +0.j  ,  5. +0.j  , 16. +0.j  ],
-                   [-1.5-4.33j,  0.5-2.6j ,  3.5-0.87j,  2.5-7.79j],
-                   [-1.5+4.33j,  0.5+2.6j ,  3.5+0.87j,  2.5+7.79j]],
-                  dtype=complex64) * meter * second
-
-        ``jnp.fft.ifft`` can be used to reconstruct ``x`` from the result of
-        ``jnp.fft.fft``.
-
-        >>> x_fft = u.fft.fft(x)
-        >>> u.math.allclose(x, u.fft.ifft(x_fft))
-        Array(True, dtype=bool)
+        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> X = sufft.fft(x)
+        >>> x_roundtrip = sufft.ifft(X)
     """
     # check target_time_unit.dim == second.dim
     return _fun_change_unit_unary(jnpfft.fft,
@@ -163,62 +131,45 @@ def rfft(
     axis: int = -1,
     norm: str | None = None,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    r"""Compute a one-dimensional discrete Fourier transform of a real-valued array.
+    r"""Compute a one-dimensional DFT of a real-valued array.
 
-    saiunit implementation of :func:`numpy.fft.rfft`.
+    Unit-aware implementation of :func:`numpy.fft.rfft`.  Only the
+    positive-frequency half of the spectrum is returned.  The output
+    unit is ``input_unit * second``.
 
-    Args:
-        a: real-valued input quantity or array.
-        n: int. Specifies the effective dimension of the input along ``axis``. If not
-            specified, it will default to the dimension of input along ``axis``.
-        axis: int, default=-1. Specifies the axis along which the transform is computed.
-            If not specified, the transform is computed along axis -1.
-        norm: string. The normalization mode. "backward", "ortho" and "forward" are
-            supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Real-valued input signal.
+    n : int, optional
+        Effective length of the input along *axis*.  Defaults to the
+        actual length.
+    axis : int, default=-1
+        Axis along which the transform is computed.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the one-dimensional discrete Fourier transform of ``a``.
-        The dimension of the array along ``axis`` is ``(n/2)+1``, if ``n`` is even and
-        ``(n+1)/2``, if ``n`` is odd.
+    Returns
+    -------
+    Quantity or array_like
+        The one-dimensional real DFT of ``a``.  The length along *axis*
+        is ``n // 2 + 1``.
 
-    See also:
-        - :func:`saiunit.fft.fft`: Computes a one-dimensional discrete Fourier
-            transform.
-        - :func:`saiunit.fft.irfft`: Computes a one-dimensional inverse discrete
-            Fourier transform for real input.
-        - :func:`saiunit.fft.rfftn`: Computes a multidimensional discrete Fourier
-            transform for real input.
-        - :func:`saiunit.fft.irfftn`: Computes a multidimensional inverse discrete
-            Fourier transform for real input.
+    See Also
+    --------
+    saiunit.fft.fft : Full one-dimensional DFT.
+    saiunit.fft.irfft : Inverse of ``rfft``.
+    saiunit.fft.rfftn : N-dimensional real DFT.
 
-    Examples:
-        ``saiunit.fft.rfft`` computes the transform along ``axis -1`` by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1, 3, 5],
-        ...                [2, 4, 6]]) * u.meter
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   u.fft.rfft(x)
-        ArrayImpl([[ 9.+0.j  , -3.+1.73j],
-                   [12.+0.j  , -3.+1.73j]], dtype=complex64) * meter * second
-
-        When ``n=5``, dimension of the transform along axis -1 will be ``(5+1)/2 =3``
-        and dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   u.fft.rfft(x, n=5)
-        ArrayImpl([[ 9.  +0.j  , -2.12-5.79j,  0.12+2.99j],
-                   [12.  +0.j  , -1.62-7.33j,  0.62+3.36j]], dtype=complex64) * meter * second
-
-        When ``n=4`` and ``axis=0``, dimension of the transform along ``axis 0`` will
-        be ``(4/2)+1 =3`` and dimension along other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   u.fft.rfft(x, n=4, axis=0)
-        ArrayImpl([[ 3.+0.j,  7.+0.j, 11.+0.j],
-                   [ 1.-2.j,  3.-4.j,  5.-6.j],
-                   [-1.+0.j, -1.+0.j, -1.+0.j]], dtype=complex64) * meter * second
+        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> X = sufft.rfft(x)
     """
     return _fun_change_unit_unary(
         jnpfft.rfft,
@@ -243,59 +194,42 @@ def ifft(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Compute a one-dimensional inverse discrete Fourier transform.
 
-    saiunit implementation of :func:`numpy.fft.ifft`.
+    Unit-aware implementation of :func:`numpy.fft.ifft`.  The output
+    unit is ``input_unit / second``.
 
-    Args:
-        a: input quantity or array.
-        n: int. Specifies the dimension of the result along ``axis``. If not specified,
-            it will default to the dimension of ``a`` along ``axis``.
-        axis: int, default=-1. Specifies the axis along which the transform is computed.
-            If not specified, the transform is computed along axis -1.
-        norm: string. The normalization mode. "backward", "ortho" and "forward" are
-            supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input spectrum.
+    n : int, optional
+        Length of the transformed axis in the output.  Defaults to the
+        length of ``a`` along *axis*.
+    axis : int, default=-1
+        Axis along which the inverse FFT is computed.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the one-dimensional discrete Fourier transform of ``a``.
+    Returns
+    -------
+    Quantity or array_like
+        The one-dimensional inverse DFT of ``a``.  When ``a`` carries a
+        unit, the result has unit ``a.unit / second``.
 
-    See also:
-        - :func:`saiunit.fft.fft`: Computes a one-dimensional discrete Fourier
-            transform.
-        - :func:`saiunit.fft.fftn`: Computes a multidimensional discrete Fourier
-            transform.
-        - :func:`saiunit.fft.ifftn`: Computes a multidimensional inverse of discrete
-            Fourier transform.
+    See Also
+    --------
+    saiunit.fft.fft : One-dimensional DFT (forward).
+    saiunit.fft.ifftn : N-dimensional inverse DFT.
 
-    Examples:
-        ``saiunit.fft.ifft`` computes the transform along ``axis -1`` by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[3, 1, 4, 6],
-        ...                [2, 5, 7, 1]]) * u.meter
-        >>> u.fft.ifft(x)
-        ArrayImpl([[ 3.5 +0.j  , -0.25-1.25j,  0.  +0.j  , -0.25+1.25j],
-                   [ 3.75+0.j  , -1.25+1.j  ,  0.75+0.j  , -1.25-1.j  ]],
-                  dtype=complex64) * meter / second
-
-        When ``n=5``, dimension of the transform along axis -1 will be ``5`` and
-        dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifft(x, n=5))
-        ArrayImpl([[ 2.8 +0.j  , -0.96-0.04j,  1.06+0.5j ,  1.06-0.5j ,
-                    -0.96+0.04j],
-                   [ 3.  +0.j  , -0.59+1.66j,  0.09-0.55j,  0.09+0.55j,
-                    -0.59-1.66j]], dtype=complex64) * meter / second
-
-        When ``n=3`` and ``axis=0``, dimension of the transform along ``axis 0`` will
-        be ``3`` and dimension along other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifft(x, n=3, axis=0))
-        ArrayImpl([[ 1.67+0.j  ,  2.  +0.j  ,  3.67+0.j  ,  2.33+0.j  ],
-                   [ 0.67+0.58j, -0.5 +1.44j,  0.17+2.02j,  1.83+0.29j],
-                   [ 0.67-0.58j, -0.5 -1.44j,  0.17-2.02j,  1.83-0.29j]],
-                  dtype=complex64) * meter / second
+        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> X = sufft.fft(x)
+        >>> x_back = sufft.ifft(X)
     """
     return _fun_change_unit_unary(
         jnpfft.ifft,
@@ -314,61 +248,43 @@ def irfft(
     axis: int = -1,
     norm: str | None = None,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Compute a real-valued one-dimensional inverse discrete Fourier transform.
+    """Compute a real-valued one-dimensional inverse DFT.
 
-    saiunit implementation of :func:`numpy.fft.irfft`.
+    Unit-aware implementation of :func:`numpy.fft.irfft`.  The output
+    unit is ``input_unit / second``.
 
-    Args:
-        a: input quantity or array.
-        n: int. Specifies the dimension of the result along ``axis``. If not specified,
-            ``n = 2*(m-1)``, where ``m`` is the dimension of ``a`` along ``axis``.
-        axis: int, default=-1. Specifies the axis along which the transform is computed.
-            If not specified, the transform is computed along axis -1.
-        norm: string. The normalization mode. "backward", "ortho" and "forward" are
-            supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input spectrum (typically from :func:`rfft`).
+    n : int, optional
+        Length of the output along *axis*.  Defaults to ``2 * (m - 1)``
+        where *m* is the length of ``a`` along *axis*.
+    axis : int, default=-1
+        Axis along which the inverse FFT is computed.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A real-valued quantity containing the one-dimensional inverse discrete Fourier
-        transform of ``a``, with a dimension of ``n`` along ``axis``.
+    Returns
+    -------
+    Quantity or array_like
+        Real-valued inverse DFT of ``a`` with length *n* along *axis*.
 
-    See also:
-        - :func:`saiunit.fft.ifft`: Computes a one-dimensional inverse discrete
-            Fourier transform.
-        - :func:`saiunit.fft.irfft`: Computes a one-dimensional inverse discrete
-            Fourier transform for real input.
-        - :func:`saiunit.fft.rfftn`: Computes a multidimensional discrete Fourier
-            transform for real input.
-        - :func:`saiunit.fft.irfftn`: Computes a multidimensional inverse discrete
-            Fourier transform for real input.
+    See Also
+    --------
+    saiunit.fft.rfft : One-dimensional real DFT (forward).
+    saiunit.fft.irfftn : N-dimensional real inverse DFT.
 
-    Examples:
-        ``saiunit.fft.rfft`` computes the transform along ``axis -1`` by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1, 3, 5],
-        ...                [2, 4, 6]]) * u.meter
-        >>> u.fft.irfft(x)
-        ArrayImpl([[ 3., -1.,  0., -1.],
-                   [ 4., -1.,  0., -1.]], dtype=float32) * meter / second
-
-        When ``n=3``, dimension of the transform along axis -1 will be ``3`` and
-        dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.irfft(x, n=3))
-        ArrayImpl([[ 2.33, -0.67, -0.67],
-                   [ 3.33, -0.67, -0.67]], dtype=float32) * meter / second
-
-        When ``n=4`` and ``axis=0``, dimension of the transform along ``axis 0`` will
-        be ``4`` and dimension along other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.irfft(x, n=4, axis=0))
-        ArrayImpl([[ 1.25,  2.75,  4.25],
-                   [ 0.25,  0.75,  1.25],
-                   [-0.75, -1.25, -1.75],
-                   [ 0.25,  0.75,  1.25]], dtype=float32) * meter / second
+        >>> x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> X = sufft.rfft(x)
+        >>> x_back = sufft.irfft(X)
     """
     return _fun_change_unit_unary(jnpfft.irfft,
                                   lambda u: u / second,
@@ -387,79 +303,40 @@ def fft2(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a two-dimensional discrete Fourier transform along given axes.
 
-    saiunit implementation of :func:`numpy.fft.fft2`.
+    Unit-aware implementation of :func:`numpy.fft.fft2`.  The output
+    unit is ``input_unit * second ** 2``.
 
-    Args:
-        a: input quantity or array. Must have ``a.ndim >= 2``.
-        s: optional length-2 sequence of integers. Specifies the size of the output
-            along each specified axis. If not specified, it will default to the size
-            of ``a`` along the specified ``axes``.
-        axes: optional length-2 sequence of integers, default=(-2,-1). Specifies the
-            axes along which the transform is computed.
-        norm: string, default="backward". The normalization mode. "backward", "ortho"
-            and "forward" are supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input array with ``a.ndim >= 2``.
+    s : sequence of int, optional
+        Shape (length-2) of the output along each *axes* entry.
+    axes : sequence of int, default=(-2, -1)
+        Axes over which to compute the 2-D DFT.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the two-dimensional discrete Fourier transform of ``a``
-        along given ``axes``.
+    Returns
+    -------
+    Quantity or array_like
+        Two-dimensional DFT of ``a``.
 
-    See also:
-        - :func:`saiunit.fft.fft`: Computes a one-dimensional discrete Fourier
-            transform.
-        - :func:`saiunit.fft.fftn`: Computes a multidimensional discrete Fourier
-            transform.
-        - :func:`saiunit.fft.ifft2`: Computes a two-dimensional inverse discrete
-            Fourier transform.
+    See Also
+    --------
+    saiunit.fft.ifft2 : Two-dimensional inverse DFT.
+    saiunit.fft.fftn : N-dimensional DFT.
 
-    Examples:
-        ``saiunit.fft.fft2`` computes the transform along the last two axes by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[[1, 3],
-        ...                 [2, 4]],
-        ...                [[5, 7],
-        ...                 [6, 8]]]) * u.meter
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fft2(x))
-        ArrayImpl([[[10.+0.j, -4.+0.j],
-                  [-2.+0.j,  0.+0.j]],
-        <BLANKLINE>
-                 [[26.+0.j, -4.+0.j],
-                  [-2.+0.j,  0.+0.j]]], dtype=complex64) * meter * second2
-
-        When ``s=[2, 3]``, dimension of the transform along ``axes (-2, -1)`` will be
-        ``(2, 3)`` and dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fft2(x, s=[2, 3]))
-        ArrayImpl([[[10.  +0.j  , -0.5 -6.06j, -0.5 +6.06j],
-                    [-2.  +0.j  , -0.5 +0.87j, -0.5 -0.87j]],
-        <BLANKLINE>
-                   [[26.  +0.j  ,  3.5-12.99j,  3.5+12.99j],
-                    [-2.  +0.j  , -0.5 +0.87j, -0.5 -0.87j]]], dtype=complex64) * meter * second2
-
-
-        When ``s=[2, 3]`` and ``axes=(0, 1)``, shape of the transform along
-        ``axes (0, 1)`` will be ``(2, 3)`` and dimension along other axes will be
-        same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fft2(x, s=[2, 3], axes=(0, 1)))
-        ArrayImpl([[[14. +0.j  , 22. +0.j  ],
-                    [ 2. -6.93j,  4.-10.39j],
-                    [ 2. +6.93j,  4.+10.39j]],
-        <BLANKLINE>
-                   [[-8. +0.j  , -8. +0.j  ],
-                    [-2. +3.46j, -2. +3.46j],
-                    [-2. -3.46j, -2. -3.46j]]], dtype=complex64) * meter * second2
-
-        ``jnp.fft.ifft2`` can be used to reconstruct ``x`` from the result of
-        ``jnp.fft.fft2``.
-
-        >>> x_fft2 = u.fft.fft2(x)
-        >>> u.math.allclose(x, u.fft.ifft2(x_fft2))
-        Array(True, dtype=bool)
+        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> X = sufft.fft2(x)
+        >>> x_back = sufft.ifft2(X)
     """
     return _fun_change_unit_unary(jnpfft.fft2,
                                   lambda u: u * (second ** 2),
@@ -473,81 +350,42 @@ def rfft2(
     axes: Sequence[int] = (-2, -1),
     norm: str | None = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Compute a two-dimensional discrete Fourier transform of a real-valued array.
+    """Compute a two-dimensional DFT of a real-valued array.
 
-    saiunit implementation of :func:`numpy.fft.rfft2`.
+    Unit-aware implementation of :func:`numpy.fft.rfft2`.  Only the
+    positive-frequency half along the last transformed axis is returned.
+    The output unit is ``input_unit * second ** 2``.
 
-    Args:
-        a: real-valued input quantity or array. Must have ``a.ndim >= 2``.
-        s: optional length-2 sequence of integers. Specifies the effective size of the
-            output along each specified axis. If not specified, it will default to the
-            dimension of input along ``axes``.
-        axes: optional length-2 sequence of integers, default=(-2,-1). Specifies the
-            axes along which the transform is computed.
-        norm: string, default="backward". The normalization mode. "backward", "ortho"
-            and "forward" are supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Real-valued input with ``a.ndim >= 2``.
+    s : sequence of int, optional
+        Effective shape (length-2) of the input along *axes*.
+    axes : sequence of int, default=(-2, -1)
+        Axes over which to compute the 2-D real DFT.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the two-dimensional discrete Fourier transform of ``a``.
-        The size of the output along the axis ``axes[1]`` is ``(s[1]/2)+1``, if ``s[1]``
-        is even and ``(s[1]+1)/2``, if ``s[1]`` is odd. The size of the output along
-        the axis ``axes[0]`` is ``s[0]``.
+    Returns
+    -------
+    Quantity or array_like
+        Two-dimensional real DFT of ``a``.
 
-    See also:
-        - :func:`saiunit.fft.rfft`: Computes a one-dimensional discrete Fourier
-            transform of real-valued array.
-        - :func:`saiunit.fft.rfftn`: Computes a multidimensional discrete Fourier
-            transform of real-valued array.
-        - :func:`saiunit.fft.irfft2`: Computes a real-valued two-dimensional inverse
-            discrete Fourier transform.
+    See Also
+    --------
+    saiunit.fft.irfft2 : Inverse of ``rfft2``.
+    saiunit.fft.rfftn : N-dimensional real DFT.
 
-    Examples:
-        ``saiunit.fft.rfft2`` computes the transform along the last two axes by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[[1, 3, 5],
-        ...                 [2, 4, 6]],
-        ...                [[7, 9, 11],
-        ...                 [8, 10, 12]]]) * u.meter
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.rfft2(x))
-        ArrayImpl([[[21.+0.j  , -6.+3.46j],
-                    [-3.+0.j  ,  0.+0.j  ]],
-        <BLANKLINE>
-                   [[57.+0.j  , -6.+3.46j],
-                    [-3.+0.j  ,  0.+0.j  ]]], dtype=complex64) * meter * second2
-
-        When ``s=[2, 4]``, dimension of the transform along ``axis -2`` will be
-        ``2``, along ``axis -1`` will be ``(4/2)+1) = 3`` and dimension along other
-        axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.rfft2(x, s=[2, 4]))
-        ArrayImpl([[[21. +0.j, -8. -7.j,  7. +0.j],
-                    [-3. +0.j,  0. +1.j, -1. +0.j]],
-        <BLANKLINE>
-                   [[57. +0.j, -8.-19.j, 19. +0.j],
-                    [-3. +0.j,  0. +1.j, -1. +0.j]]], dtype=complex64) * meter * second2
-
-        When ``s=[3, 5]`` and ``axes=(0, 1)``, shape of the transform along ``axis 0``
-        will be ``3``, along ``axis 1`` will be ``(5+1)/2 = 3`` and dimension along
-        other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.rfft2(x, s=[3, 5], axes=(0, 1)))
-        ArrayImpl([[[ 18.   +0.j  ,  26.   +0.j  ,  34.   +0.j  ],
-                    [ 11.09 -9.51j,  16.33-13.31j,  21.56-17.12j],
-                    [ -0.09 -5.88j,   0.67 -8.23j,   1.44-10.58j]],
-        <BLANKLINE>
-                   [[ -4.5 -12.99j,  -2.5 -16.45j,  -0.5 -19.92j],
-                    [ -9.71 -6.3j , -10.05 -9.52j, -10.38-12.74j],
-                    [ -4.95 +0.72j,  -5.78 -0.2j ,  -6.61 -1.12j]],
-        <BLANKLINE>
-                   [[ -4.5 +12.99j,  -2.5 +16.45j,  -0.5 +19.92j],
-                    [  3.47+10.11j,   6.43+11.42j,   9.38+12.74j],
-                    [  3.19 +1.63j,   4.4  +1.38j,   5.61 +1.12j]]],
-                  dtype=complex64) * meter * second2
+        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * su.meter
+        >>> X = sufft.rfft2(x)
     """
     return _fun_change_unit_unary(jnpfft.rfft2,
                                   lambda u: u * (second ** 2),
@@ -561,76 +399,43 @@ def fftn(
     axes: Sequence[int] | None = None,
     norm: str | None = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    r"""Compute a multidimensional discrete Fourier transform along given axes.
+    r"""Compute a multidimensional discrete Fourier transform.
 
-    saiunit implementation of :func:`numpy.fft.fftn`.
+    Unit-aware implementation of :func:`numpy.fft.fftn`.  The output
+    unit is ``input_unit * second ** n_axes`` where *n_axes* is the
+    number of transformed axes.
 
-    Args:
-        a: input quantity or array..
-        s: sequence of integers. Specifies the shape of the result. If not specified,
-            it will default to the shape of ``a`` along the specified ``axes``.
-        axes: sequence of integers, default=None. Specifies the axes along which the
-            transform is computed.
-        norm: string. The normalization mode. "backward", "ortho" and "forward" are
-            supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input array.
+    s : sequence of int, optional
+        Shape of the result along each transformed axis.
+    axes : sequence of int or None, optional
+        Axes over which to compute the DFT.  *None* means all axes.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the multidimensional discrete Fourier transform of ``a``.
+    Returns
+    -------
+    Quantity or array_like
+        N-dimensional DFT of ``a``.
 
-    See also:
-        - :func:`saiunit.fft.fft`: Computes a one-dimensional discrete Fourier
-            transform.
-        - :func:`saiunit.fft.ifft`: Computes a one-dimensional inverse discrete
-            Fourier transform.
-        - :func:`saiunit.fft.ifftn`: Computes a multidimensional inverse discrete
-            Fourier transform.
+    See Also
+    --------
+    saiunit.fft.ifftn : N-dimensional inverse DFT.
+    saiunit.fft.fft : One-dimensional DFT.
 
-    Examples:
-        ``saiunit.fft.fftn`` computes the transform along all the axes by default when
-        ``axes`` argument is ``None``.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1, 2, 5, 6],
-        ...                [4, 1, 3, 7],
-        ...                [5, 9, 2, 1]]) * u.meter
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fftn(x))
-        ArrayImpl([[ 46.  +0.j  ,   0.  +2.j  ,  -6.  +0.j  ,   0.  -2.j  ],
-                   [ -2.  +1.73j,   6.12+6.73j,   0.  -1.73j, -18.12-3.27j],
-                   [ -2.  -1.73j, -18.12+3.27j,   0.  +1.73j,   6.12-6.73j]],
-                  dtype=complex64) * meter * second2
-
-        When ``s=[2]``, dimension of the transform along ``axis -1`` will be ``2``
-        and dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fftn(x, s=[2]))
-        ArrayImpl([[ 3.+0.j, -1.+0.j],
-                   [ 5.+0.j,  3.+0.j],
-                   [14.+0.j, -4.+0.j]], dtype=complex64) * meter * second2
-
-        When ``s=[2]`` and ``axes=[0]``, dimension of the transform along ``axis 0``
-        will be ``2`` and dimension along other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fftn(x, s=[2], axes=[0]))
-        ArrayImpl([[ 5.+0.j,  3.+0.j,  8.+0.j, 13.+0.j],
-                   [-3.+0.j,  1.+0.j,  2.+0.j, -1.+0.j]], dtype=complex64) * meter * second
-
-        When ``s=[2, 3]``, shape of the transform will be ``(2, 3)``.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.fftn(x, s=[2, 3]))
-        ArrayImpl([[16. +0.j  , -0.5+4.33j, -0.5-4.33j],
-                   [ 0. +0.j  , -4.5+0.87j, -4.5-0.87j]], dtype=complex64) * meter * second2
-
-        ``saiunit.fft.ifftn`` can be used to reconstruct ``x`` from the result of
-        ``saiunit.fft.fftn``.
-
-        >>> x_fftn = u.fft.fftn(x)
-        >>> u.math.allclose(x, u.fft.ifftn(x_fftn))
-        Array(True, dtype=bool)
+        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> X = sufft.fftn(x)
+        >>> x_back = sufft.ifftn(X)
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
@@ -649,94 +454,41 @@ def rfftn(
     axes: Sequence[int] | None = None,
     norm: str | None = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Compute a multidimensional discrete Fourier transform of a real-valued array.
+    """Compute a multidimensional DFT of a real-valued array.
 
-    saiunit implementation of :func:`numpy.fft.rfftn`.
+    Unit-aware implementation of :func:`numpy.fft.rfftn`.  The output
+    unit is ``input_unit * second ** n_axes``.
 
-    Args:
-        a: real-valued input quantity or array.
-        s: optional sequence of integers. Controls the effective size of the input
-            along each specified axis. If not specified, it will default to the
-            dimension of input along ``axes``.
-        axes: optional sequence of integers, default=None. Specifies the axes along
-            which the transform is computed. If not specified, the transform is computed
-            along the last ``len(s)`` axes. If neither ``axes`` nor ``s`` is specified,
-            the transform is computed along all the axes.
-        norm: string, default="backward". The normalization mode. "backward", "ortho"
-            and "forward" are supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Real-valued input array.
+    s : sequence of int, optional
+        Effective shape of the input along *axes*.
+    axes : sequence of int or None, optional
+        Axes over which to compute the real DFT.  *None* means all axes.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the multidimensional discrete Fourier transform of ``a``
-        having size specified in ``s`` along the axes ``axes`` except along the axis
-        ``axes[-1]``. The size of the output along the axis ``axes[-1]`` is
-        ``s[-1]//2+1``.
+    Returns
+    -------
+    Quantity or array_like
+        N-dimensional real DFT of ``a``.
 
-    See also:
-        - :func:`saiunit.fft.rfft`: Computes a one-dimensional discrete Fourier
-            transform of real-valued array.
-        - :func:`saiunit.fft.rfft2`: Computes a two-dimensional discrete Fourier
-            transform of real-valued array.
-        - :func:`saiunit.fft.irfftn`: Computes a real-valued multidimensional inverse
-            discrete Fourier transform.
+    See Also
+    --------
+    saiunit.fft.irfftn : Inverse of ``rfftn``.
+    saiunit.fft.rfft : One-dimensional real DFT.
 
-    Examples:
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[[1, 3, 5],
-        ...                 [2, 4, 6]],
-        ...                [[7, 9, 11],
-        ...                 [8, 10, 12]]]) * u.meter
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.rfftn(x))
-        ArrayImpl([[[ 78.+0.j  , -12.+6.93j],
-                    [ -6.+0.j  ,   0.+0.j  ]],
-        <BLANKLINE>
-                   [[-36.+0.j  ,   0.+0.j  ],
-                    [  0.+0.j  ,   0.+0.j  ]]], dtype=complex64) * meter * second3
-
-        When ``s=[3, 3, 4]``,  size of the transform along ``axes (-3, -2)`` will
-        be (3, 3), and along ``axis -1`` will be ``4//2+1 = 3`` and size along
-        other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.rfftn(x, s=[3, 3, 4]))
-        ArrayImpl([[[ 78.   +0.j  , -16.  -26.j  ,  26.   +0.j  ],
-                    [ 15.  -36.37j, -16.12 +1.93j,   5.  -12.12j],
-                    [ 15.  +36.37j,   8.12-11.93j,   5.  +12.12j]],
-        <BLANKLINE>
-                   [[ -7.5 -49.36j, -20.45 +9.43j,  -2.5 -16.45j],
-                    [-25.5  -7.79j,  -0.6 +11.96j,  -8.5  -2.6j ],
-                    [ 19.5 -12.99j,  -8.33 -6.5j ,   6.5  -4.33j]],
-        <BLANKLINE>
-                   [[ -7.5 +49.36j,  12.45 -4.43j,  -2.5 +16.45j],
-                    [ 19.5 +12.99j,   0.33 -6.5j ,   6.5  +4.33j],
-                    [-25.5  +7.79j,   4.6  +5.04j,  -8.5  +2.6j ]]],
-                  dtype=complex64) * meter * second3
-
-        When ``s=[3, 5]`` and ``axes=(0, 1)``, size of the transform along ``axis 0``
-        will be ``3``, along ``axis 1`` will be ``5//2+1 = 3`` and dimension along
-        other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.rfftn(x, s=[3, 5], axes=[0, 1]))
-        ArrayImpl([[[ 18.   +0.j  ,  26.   +0.j  ,  34.   +0.j  ],
-                    [ 11.09 -9.51j,  16.33-13.31j,  21.56-17.12j],
-                    [ -0.09 -5.88j,   0.67 -8.23j,   1.44-10.58j]],
-        <BLANKLINE>
-                   [[ -4.5 -12.99j,  -2.5 -16.45j,  -0.5 -19.92j],
-                    [ -9.71 -6.3j , -10.05 -9.52j, -10.38-12.74j],
-                    [ -4.95 +0.72j,  -5.78 -0.2j ,  -6.61 -1.12j]],
-        <BLANKLINE>
-                   [[ -4.5 +12.99j,  -2.5 +16.45j,  -0.5 +19.92j],
-                    [  3.47+10.11j,   6.43+11.42j,   9.38+12.74j],
-                    [  3.19 +1.63j,   4.4  +1.38j,   5.61 +1.12j]]],
-                  dtype=complex64) * meter * second2
-
-        For 1-D input:
-
-        >>> x1 = jnp.array([1, 2, 3, 4]) * u.meter
-        >>> u.fft.rfftn(x1)
-        ArrayImpl([10.+0.j, -2.+2.j, -2.+0.j], dtype=complex64) * meter * second
+        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * su.meter
+        >>> X = sufft.rfftn(x)
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
@@ -760,71 +512,40 @@ def ifft2(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a two-dimensional inverse discrete Fourier transform.
 
-    saiunit implementation of :func:`numpy.fft.ifft2`.
+    Unit-aware implementation of :func:`numpy.fft.ifft2`.  The output
+    unit is ``input_unit / second ** 2``.
 
-    Args:
-        a: input quantity or array. Must have ``a.ndim >= 2``.
-        s: optional length-2 sequence of integers. Specifies the size of the output
-          in each specified axis. If not specified, it will default to the size of
-          ``a`` along the specified ``axes``.
-        axes: optional length-2 sequence of integers, default=(-2,-1). Specifies the
-          axes along which the transform is computed.
-        norm: string, default="backward". The normalization mode. "backward", "ortho"
-          and "forward" are supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input array with ``a.ndim >= 2``.
+    s : sequence of int, optional
+        Shape (length-2) of the output along each *axes* entry.
+    axes : sequence of int, default=(-2, -1)
+        Axes over which to compute the 2-D inverse DFT.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the two-dimensional inverse discrete Fourier transform
-        of ``a`` along given ``axes``.
+    Returns
+    -------
+    Quantity or array_like
+        Two-dimensional inverse DFT of ``a``.
 
-    See also:
-        - :func:`saiunit.fft.ifft`: Computes a one-dimensional inverse discrete
-          Fourier transform.
-        - :func:`saiunit.fft.ifftn`: Computes a multidimensional inverse discrete
-          Fourier transform.
-        - :func:`saiunit.fft.fft2`: Computes a two-dimensional discrete Fourier
-          transform.
+    See Also
+    --------
+    saiunit.fft.fft2 : Two-dimensional DFT (forward).
+    saiunit.fft.ifftn : N-dimensional inverse DFT.
 
-    Examples:
-        ``saiunit.fft.ifft2`` computes the transform along the last two axes by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[[1, 3],
-        ...                 [2, 4]],
-        ...                [[5, 7],
-        ...                 [6, 8]]]) * u.meter
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifft2(x))
-        ArrayImpl([[[ 2.5+0.j, -1. +0.j],
-                    [-0.5+0.j,  0. +0.j]],
-        <BLANKLINE>
-                   [[ 6.5+0.j, -1. +0.j],
-                    [-0.5+0.j,  0. +0.j]]], dtype=complex64) * meter / second2
-
-        When ``s=[2, 3]``, dimension of the transform along ``axes (-2, -1)`` will be
-        ``(2, 3)`` and dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifft2(x, s=[2, 3]))
-        ArrayImpl([[[ 1.67+0.j  , -0.08+1.01j, -0.08-1.01j],
-                    [-0.33+0.j  , -0.08-0.14j, -0.08+0.14j]],
-        <BLANKLINE>
-                   [[ 4.33+0.j  ,  0.58+2.17j,  0.58-2.17j],
-                    [-0.33+0.j  , -0.08-0.14j, -0.08+0.14j]]], dtype=complex64) * meter / second2
-
-        When ``s=[2, 3]`` and ``axes=(0, 1)``, shape of the transform along
-        ``axes (0, 1)`` will be ``(2, 3)`` and dimension along other axes will be
-        same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifft2(x, s=[2, 3], axes=(0, 1)))
-        ArrayImpl([[[ 2.33+0.j  ,  3.67+0.j  ],
-                    [ 0.33+1.15j,  0.67+1.73j],
-                    [ 0.33-1.15j,  0.67-1.73j]],
-        <BLANKLINE>
-                   [[-1.33+0.j  , -1.33+0.j  ],
-                    [-0.33-0.58j, -0.33-0.58j],
-                    [-0.33+0.58j, -0.33+0.58j]]], dtype=complex64) * meter / second2
+        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> X = sufft.fft2(x)
+        >>> x_back = sufft.ifft2(X)
     """
     return _fun_change_unit_unary(jnpfft.ifft2,
                                   lambda u: u / (second ** 2),
@@ -838,77 +559,42 @@ def irfft2(
     axes: Sequence[int] = (-2, -1),
     norm: str | None = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Compute a real-valued two-dimensional inverse discrete Fourier transform.
+    """Compute a real-valued two-dimensional inverse DFT.
 
-    saiunit implementation of :func:`numpy.fft.irfft2`.
+    Unit-aware implementation of :func:`numpy.fft.irfft2`.  The output
+    unit is ``input_unit / second ** 2``.
 
-    Args:
-        a: input quantity or array. Must have ``a.ndim >= 2``.
-        s: optional length-2 sequence of integers. Specifies the size of the output
-            in each specified axis. If not specified, the dimension of output along
-            axis ``axes[1]`` is ``2*(m-1)``, ``m`` is the size of input along axis
-            ``axes[1]`` and the dimension along other axes will be the same as that of
-            input.
-        axes: optional length-2 sequence of integers, default=(-2,-1). Specifies the
-            axes along which the transform is computed.
-        norm: string, default="backward". The normalization mode. "backward", "ortho"
-            and "forward" are supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input array with ``a.ndim >= 2``.
+    s : sequence of int, optional
+        Shape (length-2) of the output along each *axes* entry.
+    axes : sequence of int, default=(-2, -1)
+        Axes over which to compute the 2-D real inverse DFT.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A real-valued quantity containing the two-dimensional inverse discrete Fourier
-        transform of ``a``.
+    Returns
+    -------
+    Quantity or array_like
+        Real-valued two-dimensional inverse DFT of ``a``.
 
-    See also:
-        - :func:`saiunit.fft.rfft2`: Computes a two-dimensional discrete Fourier
-            transform of a real-valued array.
-        - :func:`saiunit.fft.irfft`: Computes a real-valued one-dimensional inverse
-            discrete Fourier transform.
-        - :func:`saiunit.fft.irfftn`: Computes a real-valued multidimensional inverse
-            discrete Fourier transform.
+    See Also
+    --------
+    saiunit.fft.rfft2 : Two-dimensional real DFT (forward).
+    saiunit.fft.irfftn : N-dimensional real inverse DFT.
 
-    Examples:
-        ``saiunit.fft.irfft2`` computes the transform along the last two axes by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[[1, 3, 5],
-        ...                 [2, 4, 6]],
-        ...                [[7, 9, 11],
-        ...                 [8, 10, 12]]]) * u.meter
-        >>> print(u.fft.irfft2(x))
-        ArrayImpl([[[ 3.5, -1. ,  0. , -1. ],
-                    [-0.5,  0. ,  0. ,  0. ]],
-        <BLANKLINE>
-                   [[ 9.5, -1. ,  0. , -1. ],
-                    [-0.5,  0. ,  0. ,  0. ]]], dtype=float32) * meter / second2
-
-        When ``s=[3, 3]``, dimension of the transform along ``axes (-2, -1)`` will be
-        ``(3, 3)`` and dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.irfft2(x, s=[3, 3]))
-        ArrayImpl([[[ 1.89, -0.44, -0.44],
-                    [ 0.22, -0.78,  0.56],
-                    [ 0.22,  0.56, -0.78]],
-        <BLANKLINE>
-                   [[ 5.89, -0.44, -0.44],
-                    [ 1.22, -1.78,  1.56],
-                    [ 1.22,  1.56, -1.78]]], dtype=float32) * meter / second2
-
-        When ``s=[2, 3]`` and ``axes=(0, 1)``, shape of the transform along
-        ``axes (0, 1)`` will be ``(2, 3)`` and dimension along other axes will be
-        same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.irfft2(x, s=[2, 3], axes=(0, 1)))
-        ArrayImpl([[[ 4.67,  6.67,  8.67],
-                    [-0.33, -0.33, -0.33],
-                    [-0.33, -0.33, -0.33]],
-        <BLANKLINE>
-                   [[-3.  , -3.  , -3.  ],
-                    [ 0.  ,  0.  ,  0.  ],
-                    [ 0.  ,  0.  ,  0.  ]]], dtype=float32) * meter / second2
-
+        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * su.meter
+        >>> X = sufft.rfft2(x)
+        >>> x_back = sufft.irfft2(X)
     """
     return _fun_change_unit_unary(jnpfft.irfft2,
                                   lambda u: u / (second ** 2),
@@ -924,68 +610,41 @@ def ifftn(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Compute a multidimensional inverse discrete Fourier transform.
 
-    saiunit implementation of :func:`numpy.fft.ifftn`.
+    Unit-aware implementation of :func:`numpy.fft.ifftn`.  The output
+    unit is ``input_unit / second ** n_axes``.
 
-    Args:
-        a: input quantity or array.
-        s: sequence of integers. Specifies the shape of the result. If not specified,
-            it will default to the shape of ``a`` along the specified ``axes``.
-        axes: sequence of integers, default=None. Specifies the axes along which the
-            transform is computed. If None, computes the transform along all the axes.
-        norm: string. The normalization mode. "backward", "ortho" and "forward" are
-            supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input array.
+    s : sequence of int, optional
+        Shape of the result along each transformed axis.
+    axes : sequence of int or None, optional
+        Axes over which to compute the inverse DFT.  *None* means all
+        axes.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A quantity containing the multidimensional inverse discrete Fourier transform
-        of ``a``.
+    Returns
+    -------
+    Quantity or array_like
+        N-dimensional inverse DFT of ``a``.
 
-    See also:
-        - :func:`saiunit.fft.fftn`: Computes a multidimensional discrete Fourier
-          transform.
-        - :func:`saiunit.fft.fft`: Computes a one-dimensional discrete Fourier
-          transform.
-        - :func:`saiunit.fft.ifft`: Computes a one-dimensional inverse discrete
-          Fourier transform.
+    See Also
+    --------
+    saiunit.fft.fftn : N-dimensional DFT (forward).
+    saiunit.fft.ifft : One-dimensional inverse DFT.
 
-    Examples:
-        ``saiunit.fft.ifftn`` computes the transform along all the axes by default when
-        ``axes`` argument is ``None``.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1, 2, 5, 3],
-        ...                [4, 1, 2, 6],
-        ...                [5, 3, 2, 1]]) * u.meter
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifftn(x))
-        ArrayImpl([[ 2.92+0.j  ,  0.08-0.33j,  0.25+0.j  ,  0.08+0.33j],
-                   [-0.08+0.14j, -0.04-0.03j,  0.  -0.29j, -1.05-0.11j],
-                   [-0.08-0.14j, -1.05+0.11j,  0.  +0.29j, -0.04+0.03j]],
-                   dtype=complex64) * meter / second2
-
-        When ``s=[3]``, dimension of the transform along ``axis -1`` will be ``3``
-        and dimension along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifftn(x, s=[3]))
-        ArrayImpl([[ 2.67+0.j  , -0.83-0.87j, -0.83+0.87j],
-                   [ 2.33+0.j  ,  0.83-0.29j,  0.83+0.29j],
-                   [ 3.33+0.j  ,  0.83+0.29j,  0.83-0.29j]], dtype=complex64) * meter / second2
-
-        When ``s=[2]`` and ``axes=[0]``, dimension of the transform along ``axis 0``
-        will be ``2`` and dimension along other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifftn(x, s=[2], axes=[0]))
-        ArrayImpl([[ 2.5+0.j,  1.5+0.j,  3.5+0.j,  4.5+0.j],
-                   [-1.5+0.j,  0.5+0.j,  1.5+0.j, -1.5+0.j]], dtype=complex64) * meter / second
-
-        When ``s=[2, 3]``, shape of the transform will be ``(2, 3)``.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.ifftn(x, s=[2, 3]))
-        ArrayImpl([[ 2.5 +0.j  ,  0.  -0.58j,  0.  +0.58j],
-                   [ 0.17+0.j  , -0.83-0.29j, -0.83+0.29j]], dtype=complex64) * meter / second2
+        >>> x = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> X = sufft.fftn(x)
+        >>> x_back = sufft.ifftn(X)
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
@@ -1004,78 +663,43 @@ def irfftn(
     axes: Sequence[int] | None = None,
     norm: str | None = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Compute a real-valued multidimensional inverse discrete Fourier transform.
+    """Compute a real-valued multidimensional inverse DFT.
 
-    saiunit implementation of :func:`numpy.fft.irfftn`.
+    Unit-aware implementation of :func:`numpy.fft.irfftn`.  The output
+    unit is ``input_unit / second ** n_axes``.
 
-    Args:
-        a: input quantity or array.
-        s: optional sequence of integers. Specifies the size of the output in each
-            specified axis. If not specified, the dimension of output along axis
-            ``axes[-1]`` is ``2*(m-1)``, ``m`` is the size of input along axis ``axes[-1]``
-            and the dimension along other axes will be the same as that of input.
-        axes: optional sequence of integers, default=None. Specifies the axes along
-            which the transform is computed. If not specified, the transform is computed
-            along the last ``len(s)`` axes. If neither ``axes`` nor ``s`` is specified,
-            the transform is computed along all the axes.
-        norm: string, default="backward". The normalization mode. "backward", "ortho"
-            and "forward" are supported.
+    Parameters
+    ----------
+    a : Quantity or array_like
+        Input array.
+    s : sequence of int, optional
+        Shape of the output along each transformed axis.
+    axes : sequence of int or None, optional
+        Axes over which to compute the real inverse DFT.  *None* means
+        all axes.
+    norm : {None, "backward", "ortho", "forward"}, optional
+        Normalization mode.
 
-    Returns:
-        A real-valued quantity containing the multidimensional inverse discrete Fourier
-        transform of ``a`` with size ``s`` along specified ``axes``, and the same as
-        the input along other axes.
+    Returns
+    -------
+    Quantity or array_like
+        Real-valued N-dimensional inverse DFT of ``a``.
 
-    See also:
-        - :func:`saiunit.fft.rfftn`: Computes a multidimensional discrete Fourier
-            transform of a real-valued array.
-        - :func:`saiunit.fft.irfft`: Computes a real-valued one-dimensional inverse
-            discrete Fourier transform.
-        - :func:`saiunit.fft.irfft2`: Computes a real-valued two-dimensional inverse
-            discrete Fourier transform.
+    See Also
+    --------
+    saiunit.fft.rfftn : N-dimensional real DFT (forward).
+    saiunit.fft.irfft : One-dimensional real inverse DFT.
 
-    Examples:
-        ``saiunit.fft.irfftn`` computes the transform along all the axes by default.
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[[1, 3, 5],
-        ...                 [2, 4, 6]],
-        ...                [[7, 9, 11],
-        ...                 [8, 10, 12]]]) * u.meter
-        >>> u.fft.irfftn(x)
-        ArrayImpl([[[ 6.5, -1. ,  0. , -1. ],
-                    [-0.5,  0. ,  0. ,  0. ]],
-        <BLANKLINE>
-                   [[-3. ,  0. ,  0. ,  0. ],
-                    [ 0. ,  0. ,  0. ,  0. ]]], dtype=float32) * meter / second3
-
-        When ``s=[3, 4]``, size of the transform along ``axes (-2, -1)`` will be
-        ``(3, 4)`` and size along other axes will be the same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.irfftn(x, s=[3, 4]))
-        ArrayImpl([[[ 2.33, -0.67,  0.  , -0.67],
-                    [ 0.33, -0.74,  0.  ,  0.41],
-                    [ 0.33,  0.41,  0.  , -0.74]],
-        <BLANKLINE>
-                   [[ 6.33, -0.67,  0.  , -0.67],
-                    [ 1.33, -1.61,  0.  ,  1.28],
-                    [ 1.33,  1.28,  0.  , -1.61]]], dtype=float32) * meter / second3
-
-        When ``s=[3]`` and ``axes=[0]``, size of the transform along ``axes 0`` will
-        be ``3`` and dimension along other axes will be same as that of input.
-
-        >>> with jnp.printoptions(precision=2, suppress=True):
-        ...   print(u.fft.irfftn(x, s=[3], axes=[0]))
-        ArrayImpl([[[ 5.,  7.,  9.],
-                    [ 6.,  8., 10.]],
-        <BLANKLINE>
-                   [[-2., -2., -2.],
-                    [-2., -2., -2.]],
-        <BLANKLINE>
-                   [[-2., -2., -2.],
-                    [-2., -2., -2.]]], dtype=float32) * meter / second
+        >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * su.meter
+        >>> X = sufft.rfftn(x)
+        >>> x_back = sufft.irfftn(X)
     """
     input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
@@ -1149,30 +773,39 @@ def fftfreq(
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Return sample frequencies for the discrete Fourier transform.
 
-    saiunit implementation of :func:`numpy.fft.fftfreq`. Returns frequencies appropriate
-    for use with the outputs of :func:`~saiunit.fft.fft` and :func:`~saiunit.fft.ifft`.
+    Unit-aware implementation of :func:`numpy.fft.fftfreq`.  When *d*
+    carries a time unit, the returned frequencies carry the
+    corresponding reciprocal (frequency) unit.
 
-    Args:
-        n: length of the FFT window
-        d: optional scalar sample spacing (default: 1.0)
-        dtype: optional dtype of returned frequencies. If not specified, JAX's default
-            floating point dtype will be used.
-        device: optional :class:`~jax.Device` or :class:`~jax.sharding.Sharding`
-            to which the created array will be committed.
+    Parameters
+    ----------
+    n : int
+        Window length (number of samples in the FFT).
+    d : Quantity or float, default=1.0
+        Sample spacing.  If a :class:`~saiunit.Quantity` with a time
+        unit is given, the output will carry the matching frequency
+        unit (e.g. ``second`` -> ``hertz``).
+    dtype : dtype, optional
+        Desired data-type for the output.
+    device : Device or Sharding, optional
+        Device on which to place the output.
 
-    Returns:
-        Quantity of sample frequencies, length ``n``.
+    Returns
+    -------
+    Quantity or array_like
+        Array of length *n* containing sample frequencies.
 
-    See also:
-    - :func:`saiunit.fft.rfftfreq`: frequencies for use with
-      :func:`~saiunit.fft.rfft` and :func:`~saiunit.fft.irfft`.
+    See Also
+    --------
+    saiunit.fft.rfftfreq : Frequencies for :func:`rfft` / :func:`irfft`.
 
-    Example:
-        >>> import saiunit as u
-        >>> import jax.numpy as jnp
-        >>> x = 1 * u.second
-        >>> u.fft.fftfreq(4, x)
-        ArrayImpl([ 0.  ,  0.25, -0.5 , -0.25], dtype=float32) * hertz
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
+        >>> freqs = sufft.fftfreq(4, 1.0 * su.second)
     """
     if isinstance(d, Quantity):
         _validate_time_spacing(d)
@@ -1198,33 +831,40 @@ def rfftfreq(
     dtype: jax.typing.DTypeLike | None = None,
     device: xla_client.Device | jax.sharding.Sharding | None = None,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Return sample frequencies for the discrete Fourier transform.
+    """Return sample frequencies for the real discrete Fourier transform.
 
-    saiunit implementation of :func:`numpy.fft.rfftfreq`. Returns frequencies appropriate
-    for use with the outputs of :func:`~saiunit.fft.rfft` and
-    :func:`~saiunit.fft.irfft`.
+    Unit-aware implementation of :func:`numpy.fft.rfftfreq`.  Only the
+    non-negative frequencies are returned (length ``n // 2 + 1``).
 
-    Args:
-        n: length of the FFT window
-        d: optional scalar sample spacing (default: 1.0)
-        dtype: optional dtype of returned frequencies. If not specified, JAX's default
-            floating point dtype will be used.
-        device: optional :class:`~jax.Device` or :class:`~jax.sharding.Sharding`
-            to which the created array will be committed.
+    Parameters
+    ----------
+    n : int
+        Window length (number of samples in the FFT).
+    d : Quantity or float, default=1.0
+        Sample spacing.  If a :class:`~saiunit.Quantity` with a time
+        unit is given, the output will carry the matching frequency
+        unit.
+    dtype : dtype, optional
+        Desired data-type for the output.
+    device : Device or Sharding, optional
+        Device on which to place the output.
 
-    Returns:
-        Quantity of sample frequencies, length ``n // 2 + 1``.
+    Returns
+    -------
+    Quantity or array_like
+        Array of length ``n // 2 + 1`` containing sample frequencies.
 
-    See also:
-    - :func:`saiunit.fft.fftfreq`: frequencies for use with
-      :func:`~saiunit.fft.fft` and :func:`~saiunit.fft.ifft`.
+    See Also
+    --------
+    saiunit.fft.fftfreq : Full-spectrum sample frequencies.
 
-    Example:
-        >>> import saiunit as u
-        >>> import jax.numpy as jnp
-        >>> d = 1 * u.second
-        >>> u.fft.rfftfreq(4, d)
-        ArrayImpl([0.  , 0.25, 0.5 ], dtype=float32) * hertz
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.fft as sufft
+        >>> freqs = sufft.rfftfreq(4, 1.0 * su.second)
     """
     if isinstance(d, Quantity):
         _validate_time_spacing(d)

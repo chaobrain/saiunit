@@ -243,5 +243,30 @@ def test_array_custom_array_compatibility_with_vector_grad():
     assert u.math.allclose(result_array.data, direct_result)
 
 
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+def test_docstring_example_vector_grad():
+    """Verify the vector_grad docstring example produces correct results."""
+    def f(x):
+        return x ** 2
+
+    vg_fn = u.autograd.vector_grad(f)
+    result = vg_fn(jnp.array([3.0, 4.0]) * u.ms)
+    assert u.math.allclose(result, jnp.array([6.0, 8.0]) * u.ms)
+
+
+def test_docstring_example_vector_grad_return_value():
+    """Verify the vector_grad return_value docstring example."""
+    def f(x):
+        return x ** 2
+
+    vg_fn = u.autograd.vector_grad(f, return_value=True)
+    grad, value = vg_fn(jnp.array([3.0, 4.0]) * u.ms)
+    assert u.math.allclose(grad, jnp.array([6.0, 8.0]) * u.ms)
+    assert u.math.allclose(value, jnp.array([9.0, 16.0]) * u.ms ** 2)
+
+
 if __name__ == "__main__":
     pytest.main()

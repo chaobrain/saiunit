@@ -32,86 +32,152 @@ __all__ = [
 
 class CustomArray:
     """
-    A custom array wrapper providing comprehensive array operations and cross-framework compatibility.
+    A custom array wrapper providing comprehensive array operations and
+    cross-framework compatibility.
 
-    CustomArray is a versatile array wrapper that provides a unified interface for array
-    operations while maintaining compatibility with NumPy, JAX, and PyTorch ecosystems.
-    It serves as a drop-in replacement for standard array types with enhanced functionality
-    and cross-framework interoperability.
+    ``CustomArray`` is a mix-in class that delegates every operation to its
+    ``data`` attribute.  Subclasses must provide a ``data`` property (or
+    attribute) that returns the underlying array.  The class exposes
+    NumPy-style methods, PyTorch-style convenience methods, and full
+    interoperability with JAX transformations (``jit``, ``grad``, ``vmap``).
 
     Attributes
     ----------
-    data : Any
-        The underlying array data. Can be a NumPy array, JAX array, or any array-like
-        object that supports the required operations.
+    data : array-like
+        The underlying array storage.  Subclasses are responsible for
+        providing this attribute (e.g. via a property backed by some
+        internal state).
+
+    Properties
+    ----------
+    dtype : numpy.dtype
+        Data type of the underlying array elements.
+    shape : tuple of int
+        Shape of the underlying array.
+    ndim : int
+        Number of dimensions.
+    size : int
+        Total number of elements.
+    T : array-like
+        Transpose of the array.
+    mT : array-like
+        Transpose of the last two dimensions (batched matrix transpose).
+    real : array-like
+        Real part of each element.
+    imag : array-like
+        Imaginary part of each element.
+    nbytes : int
+        Total bytes consumed by the array elements.
+    itemsize : int
+        Length of one array element in bytes.
+
+    Methods
+    -------
+    NumPy-style methods
+        ``all``, ``any``, ``argmax``, ``argmin``, ``argsort``,
+        ``astype``, ``clip``, ``copy``, ``cumsum``, ``cumprod``,
+        ``diagonal``, ``dot``, ``flatten``, ``max``, ``mean``, ``min``,
+        ``nonzero``, ``prod``, ``ravel``, ``repeat``, ``reshape``,
+        ``round``, ``squeeze``, ``std``, ``sum``, ``swapaxes``,
+        ``take``, ``tolist``, ``trace``, ``transpose``, ``var``
+    PyTorch-style methods
+        ``unsqueeze``, ``expand``, ``expand_as``, ``clamp``, ``clone``,
+        ``zero_``, ``bool``, ``int``, ``long``, ``half``, ``float``,
+        ``double``
+    Conversion methods
+        ``to_numpy``, ``to_jax``, ``numpy``
+    Trigonometric methods
+        ``sin``, ``cos``, ``tan``, ``sinh``, ``cosh``, ``tanh``,
+        ``arcsin``, ``arccos``, ``arctan`` (and in-place ``_`` variants)
 
     Examples
     --------
-    Basic usage with NumPy arrays:
+    ``CustomArray`` is designed to be used as a mix-in.  A minimal
+    standalone subclass needs only a ``data`` attribute and JAX pytree
+    registration:
 
-    >>> import numpy as np
-    >>> from saiunit import CustomArray
-    >>> import brainstate
-    >>>
-    >>> class Array(brainstate.State, u.CustomArray):
-    >>>>   pass
-    >>> arr = Array()
-    >>> arr.data = np.array([1, 2, 3, 4, 5])
-    >>> print(arr.shape)
-    (5,)
-    >>> print(arr.mean())
-    3.0
+    .. code-block:: python
 
-    Arithmetic operations:
+        import jax
+        import numpy as np
+        from saiunit import CustomArray
 
-    >>> result = arr * 2 + 10
-    >>> print(result)
-    [12 14 16 18 20]
+        @jax.tree_util.register_pytree_node_class
+        class SimpleArray(CustomArray):
+            def __init__(self, value):
+                self.data = value
 
-    JAX compatibility:
+            def tree_flatten(self):
+                return (self.data,), None
 
-    >>> import jax.numpy as jnp
-    >>> jax_arr = Array()
-    >>> jax_arr.data = jnp.array([1.0, 2.0, 3.0])
-    >>> squared = jax_arr ** 2
-    >>> print(squared)
-    [1. 4. 9.]
+            @classmethod
+            def tree_unflatten(cls, aux_data, flat_contents):
+                return cls(*flat_contents)
 
-    Array manipulation:
+    Basic properties and arithmetic:
 
-    >>> matrix = Array()
-    >>> matrix.data = np.array([[1, 2], [3, 4]])
-    >>> transposed = matrix.T
-    >>> reshaped = matrix.reshape(4)
-    >>> print(reshaped)
-    [1 2 3 4]
+    .. code-block:: python
+
+        arr = SimpleArray(np.array([1.0, 2.0, 3.0]))
+        arr.shape   # (3,)
+        arr.ndim    # 1
+        arr + 10    # array([11., 12., 13.])
+        arr ** 2    # array([1., 4., 9.])
 
     Statistical operations:
 
-    >>> data = Array()
-    >>> data.data = np.array([1, 2, 3, 4, 5])
-    >>> print(f"Mean: {data.mean()}, Std: {data.std()}")
-    Mean: 3.0, Std: 1.4142135623730951
+    .. code-block:: python
+
+        arr = SimpleArray(np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
+        arr.mean()  # 3.0
+        arr.std()   # ~1.414
+        arr.sum()   # 15.0
+
+    Array manipulation:
+
+    .. code-block:: python
+
+        matrix = SimpleArray(np.array([[1, 2, 3], [4, 5, 6]]))
+        matrix.T           # transposed (3, 2) array
+        matrix.reshape(6)  # array([1, 2, 3, 4, 5, 6])
+        matrix.flatten()   # array([1, 2, 3, 4, 5, 6])
+
+    JAX compatibility (``jit``, ``grad``):
+
+    .. code-block:: python
+
+        import jax
+        import jax.numpy as jnp
+
+        arr = SimpleArray(jnp.array([1.0, 2.0, 3.0]))
+
+        @jax.jit
+        def square(x):
+            return x * x
+
+        square(arr)  # Array([1., 4., 9.], ...)
 
     Notes
     -----
-    - This class uses duck typing and delegates operations to the underlying array
-    - In-place operations modify the internal `data` attribute directly
-    - Some methods return the underlying array type rather than CustomArray instances
-    - Thread safety depends on the underlying array implementation
-    - JAX transformations (jit, grad, vmap) work seamlessly with CustomArray instances
+    - This class uses duck typing and delegates operations to the
+      underlying ``data`` attribute.
+    - In-place operations (``+=``, ``-=``, etc.) modify ``data`` directly
+      and return ``self``.
+    - Most methods return the raw underlying array type, **not** a new
+      ``CustomArray`` instance.
+    - Thread safety depends on the underlying array implementation.
+    - JAX transformations (``jit``, ``grad``, ``vmap``) work seamlessly
+      when the subclass is registered as a JAX pytree.
 
     See Also
     --------
-    numpy.ndarray : NumPy's N-dimensional array
-    jax.numpy.ndarray : JAX's array implementation
-    torch.Tensor : PyTorch's tensor class
+    numpy.ndarray : NumPy's N-dimensional array.
+    jax.Array : JAX's array implementation.
 
     References
     ----------
     .. [1] NumPy documentation: https://numpy.org/doc/
     .. [2] JAX documentation: https://jax.readthedocs.io/
-    .. [3] PyTorch documentation: https://pytorch.org/docs/
     """
     data: Any
 

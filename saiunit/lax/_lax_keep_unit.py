@@ -318,6 +318,37 @@ def index_take(
     idxs: jax.typing.ArrayLike,
     axes: Sequence[int]
 ) -> Union[Quantity, jax.Array]:
+    """Take elements from an array at the given indices along the given axes.
+
+    Parameters
+    ----------
+    src : array_like or Quantity
+        The source array from which to take elements.
+    idxs : array_like
+        The indices of elements to extract.
+    axes : sequence of int
+        The axes along which to index.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The gathered elements. If ``src`` is a ``Quantity``, the result
+        preserves the same unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> x = jnp.array([[1., 2., 3.], [4., 5., 6.]]) * su.meter
+        >>> idx = jnp.array([0, 2])
+        >>> result = sulax.index_take(x, (idx,), axes=(1,))
+        >>> result.mantissa
+        Array([[1., 3.],
+               [4., 6.]], dtype=float32)
+    """
     return _fun_keep_unit_unary(lax.index_take, src, idxs, axes)
 
 
@@ -696,7 +727,42 @@ def sort_key_val(
     dimension: int = -1,
     is_stable: bool = True
 ) -> tuple[Union[Quantity, jax.Array], Union[Quantity, jax.Array]]:
-    """Sorts ``keys`` along ``dimension`` and applies the same permutation to ``values``."""
+    """Sort ``keys`` along ``dimension`` and apply the same permutation to ``values``.
+
+    Parameters
+    ----------
+    keys : array_like or Quantity
+        The array of keys to sort.
+    values : array_like or Quantity
+        The array of values to permute according to the sorted order of ``keys``.
+    dimension : int, optional
+        The dimension along which to sort. Default is -1.
+    is_stable : bool, optional
+        Whether to use a stable sort. Default is ``True``.
+
+    Returns
+    -------
+    sorted_keys : jax.Array or Quantity
+        The sorted keys. Preserves the unit of ``keys``.
+    sorted_values : jax.Array or Quantity
+        The values permuted to match the sorted order of ``keys``.
+        Preserves the unit of ``values``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> keys = jnp.array([3.0, 1.0, 2.0]) * su.meter
+        >>> vals = jnp.array([30, 10, 20])
+        >>> sorted_keys, sorted_vals = sulax.sort_key_val(keys, vals)
+        >>> sorted_keys.mantissa
+        Array([1., 2., 3.], dtype=float32)
+        >>> sorted_vals
+        Array([10, 20, 30], dtype=int32)
+    """
     keys = maybe_custom_array(keys)
     values = maybe_custom_array(values)
     if isinstance(keys, Quantity) and isinstance(values, Quantity):
@@ -716,7 +782,33 @@ def sort_key_val(
 def neg(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[Quantity, jax.Array]:
-    r"""Elementwise negation: :math:`-x`."""
+    r"""Elementwise negation: :math:`-x`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The negated array. If ``x`` is a ``Quantity``, the result
+        preserves the same unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([1.0, -2.0, 3.0]) * su.meter
+        >>> result = sulax.neg(q)
+        >>> result.mantissa
+        Array([-1.,  2., -3.], dtype=float32)
+        >>> result.unit
+        meter
+    """
     return _fun_keep_unit_unary(lax.neg, x)
 
 
@@ -726,7 +818,36 @@ def cummax(
     axis: int = 0,
     reverse: bool = False
 ) -> Union[Quantity, jax.Array]:
-    """Computes a cumulative maximum along `axis`."""
+    """Compute a cumulative maximum along ``axis``.
+
+    Parameters
+    ----------
+    operand : array_like or Quantity
+        Input array.
+    axis : int, optional
+        The axis along which to compute the cumulative maximum.
+        Default is 0.
+    reverse : bool, optional
+        If ``True``, compute the cumulative maximum in reverse.
+        Default is ``False``.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The cumulative maximum array. Preserves the unit of ``operand``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([3.0, 1.0, 4.0, 1.0]) * su.second
+        >>> result = sulax.cummax(q)
+        >>> result.mantissa
+        Array([3., 3., 4., 4.], dtype=float32)
+    """
     return _fun_keep_unit_unary(lax.cummax, operand, axis, reverse)
 
 
@@ -736,7 +857,36 @@ def cummin(
     axis: int = 0,
     reverse: bool = False
 ) -> Union[Quantity, jax.Array]:
-    """Computes a cumulative minimum along `axis`."""
+    """Compute a cumulative minimum along ``axis``.
+
+    Parameters
+    ----------
+    operand : array_like or Quantity
+        Input array.
+    axis : int, optional
+        The axis along which to compute the cumulative minimum.
+        Default is 0.
+    reverse : bool, optional
+        If ``True``, compute the cumulative minimum in reverse.
+        Default is ``False``.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The cumulative minimum array. Preserves the unit of ``operand``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([3.0, 1.0, 4.0, 1.0]) * su.second
+        >>> result = sulax.cummin(q)
+        >>> result.mantissa
+        Array([3., 1., 1., 1.], dtype=float32)
+    """
     return _fun_keep_unit_unary(lax.cummin, operand, axis, reverse)
 
 
@@ -746,7 +896,36 @@ def cumsum(
     axis: int = 0,
     reverse: bool = False
 ) -> Union[Quantity, jax.Array]:
-    """Computes a cumulative sum along `axis`."""
+    """Compute a cumulative sum along ``axis``.
+
+    Parameters
+    ----------
+    operand : array_like or Quantity
+        Input array.
+    axis : int, optional
+        The axis along which to compute the cumulative sum.
+        Default is 0.
+    reverse : bool, optional
+        If ``True``, compute the cumulative sum in reverse.
+        Default is ``False``.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The cumulative sum array. Preserves the unit of ``operand``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> result = sulax.cumsum(q)
+        >>> result.mantissa
+        Array([ 1.,  3.,  6., 10.], dtype=float32)
+    """
     return _fun_keep_unit_unary(lax.cumsum, operand, axis, reverse)
 
 
@@ -1184,7 +1363,33 @@ def complex(
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise make complex number: :math:`x + jy`.
 
-    Builds a complex number from real and imaginary parts.
+    Build a complex number from real and imaginary parts.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        The real part.
+    y : array_like or Quantity
+        The imaginary part. Must have the same unit as ``x``.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The complex array. If inputs are ``Quantity``, the result
+        preserves the same unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> real = jnp.array([1.0, 2.0]) * su.volt
+        >>> imag = jnp.array([3.0, 4.0]) * su.volt
+        >>> result = sulax.complex(real, imag)
+        >>> result.mantissa
+        Array([1.+3.j, 2.+4.j], dtype=complex64)
     """
     return _fun_keep_unit_binary(lax.complex, x, y)
 
@@ -1221,7 +1426,33 @@ def sub(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[Quantity, jax.Array]:
-    r"""Elementwise subtraction: :math:`x - y`."""
+    r"""Elementwise subtraction: :math:`x - y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        The minuend.
+    y : array_like or Quantity
+        The subtrahend. Must have the same unit as ``x``.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The difference. Preserves the unit of the inputs.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([5.0, 8.0]) * su.meter
+        >>> b = jnp.array([1.0, 3.0]) * su.meter
+        >>> result = sulax.sub(a, b)
+        >>> result.mantissa
+        Array([4., 5.], dtype=float32)
+    """
     return _fun_keep_unit_binary(lax.sub, x, y)
 
 
@@ -1475,15 +1706,33 @@ def broadcast(
     operand: Union[Quantity, jax.typing.ArrayLike],
     sizes: Sequence[int]
 ) -> Union[Quantity, jax.Array]:
-    """Broadcasts an array, adding new leading dimensions
+    """Broadcast an array by adding new leading dimensions.
 
-    Args:
-        operand: an array
-        sizes: a sequence of integers, giving the sizes of new leading dimensions
-            to add to the front of the array.
+    Parameters
+    ----------
+    operand : array_like or Quantity
+        The input array.
+    sizes : sequence of int
+        Sizes of new leading dimensions to prepend to the array shape.
 
-    Returns:
-        An array containing the result.
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The broadcasted array. Preserves the unit of ``operand``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([1.0, 2.0]) * su.second
+        >>> result = sulax.broadcast(q, sizes=(3,))
+        >>> result.mantissa.shape
+        (3, 2)
+        >>> result.unit
+        second
     """
     return _fun_keep_unit_unary(lax.broadcast, operand, sizes)
 
@@ -1493,19 +1742,35 @@ def broadcast_in_dim(
     shape: Shape,
     broadcast_dimensions: Sequence[int]
 ) -> Union[Quantity, jax.Array]:
-    """Wraps XLA's `BroadcastInDim
-    <https://www.tensorflow.org/xla/operation_semantics#broadcastindim>`_
-    operator.
+    """Broadcast an array into a target shape (XLA BroadcastInDim).
 
-    Args:
-        operand: an array
-        shape: the shape of the target array
-        broadcast_dimensions: to which dimension in the target shape each dimension
-              of the operand shape corresponds to.  That is, dimension i of the operand
-              becomes dimension broadcast_dimensions[i] of the result.
+    Parameters
+    ----------
+    operand : array_like or Quantity
+        The input array.
+    shape : Shape
+        The target shape for the broadcast.
+    broadcast_dimensions : sequence of int
+        Mapping from operand dimensions to target dimensions: dimension *i*
+        of the operand becomes dimension ``broadcast_dimensions[i]``
+        of the result.
 
-    Returns:
-        An array containing the result.
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The broadcasted array. Preserves the unit of ``operand``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([1.0, 2.0]) * su.meter
+        >>> result = sulax.broadcast_in_dim(q, shape=(3, 2), broadcast_dimensions=(1,))
+        >>> result.mantissa.shape
+        (3, 2)
     """
     return _fun_keep_unit_unary(lax.broadcast_in_dim, operand, shape, broadcast_dimensions)
 
@@ -1514,5 +1779,30 @@ def broadcast_to_rank(
     x: Union[Quantity, jax.typing.ArrayLike],
     rank: int
 ) -> Union[Quantity, jax.Array]:
-    """Adds leading dimensions of ``1`` to give ``x`` rank ``rank``."""
+    """Add leading dimensions of size 1 to give ``x`` rank ``rank``.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        The input array.
+    rank : int
+        The desired rank of the output.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The array with added leading dimensions. Preserves the unit of ``x``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([1.0, 2.0]) * su.meter
+        >>> result = sulax.broadcast_to_rank(q, rank=3)
+        >>> result.mantissa.shape
+        (1, 1, 2)
+    """
     return _fun_keep_unit_unary(lax.broadcast_to_rank, x, rank)

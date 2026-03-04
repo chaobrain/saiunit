@@ -653,6 +653,47 @@ class TestExprelJIT:
         assert jnp.allclose(result2, result3)
 
 
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+class TestExprelDocstringExamples:
+    """Tests that verify the examples shown in upgraded docstrings."""
+
+    def test_exprel_basic_example(self):
+        """Verify exprel docstring example."""
+        result = exprel(jnp.array([0.0, 1.0, -1.0]))
+        np.testing.assert_allclose(
+            result,
+            jnp.array([1.0, 1.7182819, 0.63212055]),
+            rtol=1e-5,
+        )
+
+    def test_exprel_at_zero_returns_one(self):
+        """Verify exprel(0) = 1 as stated in the docstring."""
+        result = exprel(jnp.array([0.0]))
+        np.testing.assert_allclose(result, jnp.array([1.0]), atol=1e-7)
+
+    def test_set_exprel_order_example(self):
+        """Verify set_exprel_order / get_exprel_order docstring example."""
+        original = get_exprel_order()
+        try:
+            set_exprel_order(10)
+            assert get_exprel_order() == 10
+        finally:
+            set_exprel_order(original)
+
+    def test_exprel_order_parameter(self):
+        """Verify exprel with different order values."""
+        x = jnp.array([0.0, 1e-6, 1.0])
+        r2 = exprel(x, order=2)
+        r5 = exprel(x, order=5)
+        # Both should be close to each other and finite
+        assert not jnp.any(jnp.isnan(r2))
+        assert not jnp.any(jnp.isnan(r5))
+        np.testing.assert_allclose(r2, r5, rtol=1e-4)
+
+
 # Run all tests if executed directly
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

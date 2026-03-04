@@ -51,70 +51,73 @@ def norm(
 ) -> Union[jax.Array, Quantity]:
     """Compute the norm of a matrix or vector.
 
-    Args:
-        x: N-dimensional quantity for which the norm will be computed.
-        ord: specify the kind of norm to take. Default is Frobenius norm for matrices,
-            and the 2-norm for vectors. For other options, see Notes below.
-        axis: integer or sequence of integers specifying the axes over which the norm
-            will be computed. Defaults to all axes of ``x``.
-        keepdims: if True, the output array will have the same number of dimensions as
-            the input, with the size of reduced axes replaced by ``1`` (default: False).
+    Computes a variety of vector and matrix norms, preserving the physical
+    unit of the input.
 
-    Returns:
-        quantity containing the specified norm of x.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        N-dimensional input for which the norm will be computed.
+    ord : {int, float, inf, -inf, 'fro', 'nuc'}, optional
+        Order of the norm.  Default is Frobenius norm for matrices and
+        the 2-norm for vectors.  See *Notes* for details.
+    axis : None or int or tuple of int, optional
+        Axes over which the norm is computed.  Defaults to all axes.
+    keepdims : bool, optional
+        If ``True``, reduced axes are kept as size-1 dimensions
+        (default: ``False``).
 
-    Notes:
-    The flavor of norm computed depends on the value of ``ord`` and the number of
-    axes being reduced.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Norm of *x*.  Carries the same unit as *x*.
 
-    For **vector norms** (i.e. a single axis reduction):
+    Notes
+    -----
+    The flavor of norm computed depends on the value of *ord* and the
+    number of axes being reduced.
 
-    - ``ord=None`` (default) computes the 2-norm
-    - ``ord=inf`` computes ``max(abs(x))``
-    - ``ord=-inf`` computes min(abs(x))``
-    - ``ord=0`` computes ``sum(x!=0)``
-    - for other numerical values, computes ``sum(abs(x) ** ord)**(1/ord)``
+    For **vector norms** (single-axis reduction):
 
-    For **matrix norms** (i.e. two axes reductions):
+    * ``ord=None`` (default) -- 2-norm
+    * ``ord=inf`` -- ``max(abs(x))``
+    * ``ord=-inf`` -- ``min(abs(x))``
+    * ``ord=0`` -- ``sum(x != 0)``
+    * other numeric -- ``sum(abs(x)**ord)**(1/ord)``
 
-    - ``ord='fro'`` or ``ord=None`` (default) computes the Frobenius norm
-    - ``ord='nuc'`` computes the nuclear norm, or the sum of the singular values
-    - ``ord=1`` computes ``max(abs(x).sum(0))``
-    - ``ord=-1`` computes ``min(abs(x).sum(0))``
-    - ``ord=2`` computes the 2-norm, i.e. the largest singular value
-    - ``ord=-2`` computes the smallest singular value
+    For **matrix norms** (two-axis reduction):
 
-    Examples:
-        >>> import saiunit as u
+    * ``ord='fro'`` or ``None`` (default) -- Frobenius norm
+    * ``ord='nuc'`` -- nuclear norm (sum of singular values)
+    * ``ord=1`` -- ``max(abs(x).sum(axis=0))``
+    * ``ord=-1`` -- ``min(abs(x).sum(axis=0))``
+    * ``ord=2`` -- largest singular value
+    * ``ord=-2`` -- smallest singular value
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
 
-        Vector norms:
+        Vector 2-norm:
 
-        >>> x = jnp.array([3., 4., 12.]) * u.meter
-        >>> u.linalg.norm(x)
+        >>> x = jnp.array([3., 4., 12.]) * su.meter
+        >>> su.linalg.norm(x)
         13. * meter
-        >>> u.linalg.norm(x, ord=1)
+
+        L1 vector norm:
+
+        >>> su.linalg.norm(x, ord=1)
         19. * meter
-        >>> u.linalg.norm(x, ord=0)
-        3. * meter
 
-        Matrix norms:
+        Frobenius matrix norm:
 
-        >>> import saiunit as u
-        >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 7.]]) * u.meter
-        >>> u.linalg.norm(x)  # Frobenius norm
+        >>> m = jnp.array([[1., 2., 3.],
+        ...                [4., 5., 7.]]) * su.meter
+        >>> su.linalg.norm(m)
         10.198039 * meter
-        >>> u.linalg.norm(x, ord='nuc')  # nuclear norm
-        10.762534 * meter
-        >>> u.linalg.norm(x, ord=1)  # 1-norm
-        10. * meter
-
-        Batched vector norm:
-
-        >>> u.linalg.norm(x, axis=1)
-        ArrayImpl([3.7416575, 9.48683262], dtype=float32) * meter
     """
     return _fun_keep_unit_unary(jnp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims)
 
@@ -128,26 +131,35 @@ def matrix_norm(
 ) -> Union[jax.Array, Quantity]:
     """Compute the norm of a matrix or stack of matrices.
 
-    SaiUnit implementation of :func:`numpy.linalg.matrix_norm`
+    SaiUnit implementation of :func:`numpy.linalg.matrix_norm`.
 
-    Args:
-        x: quantity of shape ``(..., M, N)`` for which to take the norm.
-        keepdims: if True, keep the reduced dimensions in the output.
-        ord: A string or int specifying the type of norm; default is the Frobenius norm.
-            See :func:`numpy.linalg.norm` for details on available options.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input of shape ``(..., M, N)``.
+    keepdims : bool, optional
+        If ``True``, reduced axes are kept as size-1 dimensions
+        (default: ``False``).
+    ord : {int, float, inf, -inf, 'fro', 'nuc'}, optional
+        Type of matrix norm (default: ``'fro'``).  See
+        :func:`numpy.linalg.norm` for available options.
 
-    Returns:
-        quantity containing the norm of ``x``. Has shape ``x.shape[:-2]`` if ``keepdims`` is
-        False, or shape ``(..., 1, 1)`` if ``keepdims`` is True.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Matrix norm with shape ``x.shape[:-2]`` (or ``(..., 1, 1)`` when
+        *keepdims* is ``True``).  Carries the same unit as *x*.
 
-    Examples:
+    Examples
+    --------
+    .. code-block:: python
 
-        >>> import saiunit as u
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[1, 2, 3],
         ...                [4, 5, 6],
-        ...                [7, 8, 9]]) * u.second
-        >>> u.linalg.matrix_norm(x)
+        ...                [7, 8, 9]]) * su.second
+        >>> su.linalg.matrix_norm(x)
         16.881943 * second
     """
     return _fun_keep_unit_unary(jnp.linalg.matrix_norm,
@@ -167,32 +179,43 @@ def vector_norm(
 
     SaiUnit implementation of :func:`numpy.linalg.vector_norm`.
 
-    Args:
-        x: N-dimensional quantity for which to take the norm.
-        axis: optional axis along which to compute the vector norm. If None (default)
-            then ``x`` is flattened and the norm is taken over all values.
-        keepdims: if True, keep the reduced dimensions in the output.
-        ord: A string or int specifying the type of norm; default is the 2-norm.
-            See :func:`numpy.linalg.norm` for details on available options.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        N-dimensional input.
+    axis : int or tuple of int, optional
+        Axis (or axes) along which to compute the norm.  If ``None``
+        (default), *x* is flattened first.
+    keepdims : bool, optional
+        If ``True``, reduced axes are kept as size-1 dimensions
+        (default: ``False``).
+    ord : int or str, optional
+        Type of norm (default: 2).  See :func:`numpy.linalg.norm` for
+        available options.
 
-    Returns:
-        quantity containing the norm of ``x``.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Vector norm of *x*.  Carries the same unit as *x*.
 
-    Examples:
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
 
         Norm of a single vector:
 
-        >>> x = jnp.array([1., 2., 3.]) * u.meter
-        >>> u.linalg.vector_norm(x)
+        >>> x = jnp.array([1., 2., 3.]) * su.meter
+        >>> su.linalg.vector_norm(x)
         3.7416575 * meter
 
-        Norm of a batch of vectors:
+        Batch of vectors along axis 1:
 
         >>> x = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 7.]]) * u.meter
-        >>> u.linalg.vector_norm(x, axis=1)
+        ...                [4., 5., 7.]]) * su.meter
+        >>> su.linalg.vector_norm(x, axis=1)
         ArrayImpl([3.7416575, 9.48683262], dtype=float32) * meter
     """
     return _fun_keep_unit_unary(jnp.linalg.vector_norm,
@@ -207,69 +230,54 @@ def qr(
     a: Union[Quantity, jax.typing.ArrayLike],
     mode: str = "reduced"
 ) -> Array | Quantity:
-    """Compute the QR decomposition of a quantity
+    """Compute the QR decomposition of a matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.qr`.
 
-    The QR decomposition of a matrix `A` is given by
+    The QR decomposition of a matrix *A* is:
 
     .. math::
 
         A = QR
 
-    Where `Q` is a unitary matrix (i.e. :math:`Q^HQ=I`) and `R` is an upper-triangular
-    matrix.
+    where *Q* is a unitary matrix (:math:`Q^HQ=I`) and *R* is
+    upper-triangular.  The unit of *A* is carried by *R*; *Q* is
+    always dimensionless.
 
-    Args:
-        a: quantity of shape (..., M, N)
-        mode: Computational mode. Supported values are:
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Input of shape ``(..., M, N)``.
+    mode : {'reduced', 'complete', 'raw', 'r'}, optional
+        Computational mode (default: ``"reduced"``).
 
-        - ``"reduced"`` (default): return `Q` of shape ``(..., M, K)`` and `R` of shape
-          ``(..., K, N)``, where ``K = min(M, N)``.
-        - ``"complete"``: return `Q` of shape ``(..., M, M)`` and `R` of shape ``(..., M, N)``.
-        - ``"raw"``: return lapack-internal representations of shape ``(..., M, N)`` and ``(..., K)``.
-        - ``"r"``: return `R` only.
+        * ``"reduced"`` -- *Q* has shape ``(..., M, K)``, *R* has shape
+          ``(..., K, N)`` with ``K = min(M, N)``.
+        * ``"complete"`` -- *Q* has shape ``(..., M, M)``, *R* has shape
+          ``(..., M, N)``.
+        * ``"r"`` -- only *R* is returned.
 
-    Returns:
-        A tuple ``(Q, R)`` (if ``mode`` is not ``"r"``) otherwise an quantity ``R``,
-        where:
+    Returns
+    -------
+    Q : ndarray
+        Orthogonal factor (omitted when ``mode="r"``).
+    R : ndarray or Quantity
+        Upper-triangular factor carrying the unit of *a*.
 
-        - ``Q`` is an orthogonal matrix of shape ``(..., M, K)`` (if ``mode`` is ``"reduced"``)
-          or ``(..., M, M)`` (if ``mode`` is ``"complete"``).
-        - ``R`` is an upper-triangular matrix of shape ``(..., M, N)`` (if ``mode`` is
-          ``"r"`` or ``"complete"``) or ``(..., K, N)`` (if ``mode`` is ``"reduced"``)
+    Examples
+    --------
+    .. code-block:: python
 
-        with ``K = min(M, N)``.
-
-    Examples:
-        >>> import saiunit as u
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-
-        Compute the QR decomposition of a matrix:
-
         >>> a = jnp.array([[1., 2., 3., 4.],
         ...                [5., 4., 2., 1.],
-        ...                [6., 3., 1., 5.]]) * u.meter
-        >>> Q, R = u.linalg.qr(a)
-        >>> Q  # doctest: +SKIP
-        Array([[-0.12700021, -0.7581426 , -0.6396022 ],
-               [-0.63500065, -0.43322435,  0.63960224],
-               [-0.7620008 ,  0.48737738, -0.42640156]], dtype=float32)
-        >>> R  # doctest: +SKIP
-        ArrayImpl([[-7.8740077, -5.08000517, -2.41300249, -4.95300531],
-                   [ 0.       , -1.78704989, -2.65349889, -1.02890778],
-                   [ 0.       ,  0.       , -1.06600308, -4.05081367]],
-                  dtype=float32) * meter
-
-        Check that ``Q`` is orthonormal:
-
-        >>> u.math.allclose(Q.T @ Q, jnp.eye(3), atol=1E-5)
-        Array(True, dtype=bool)
-
-        Reconstruct the input:
-
-        >>> u.math.allclose(Q @ R, a)
-        Array(True, dtype=bool)
+        ...                [6., 3., 1., 5.]]) * su.meter
+        >>> Q, R = su.linalg.qr(a)
+        >>> Q.shape
+        (3, 3)
+        >>> R.unit
+        meter
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -299,8 +307,51 @@ def svd(
 ) -> Union[Quantity, jax.typing.ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
     """Singular value decomposition.
 
-    Wrapper around :func:`jax.numpy.linalg.svd` and :func:`jax.lax.linalg.svd` with
-    unit-preserving singular values.
+    SaiUnit implementation of :func:`numpy.linalg.svd`.
+
+    Decomposes a matrix *A* into ``U @ diag(S) @ Vh``.  The singular
+    values *S* carry the unit of *A*; *U* and *Vh* are dimensionless.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input of shape ``(..., M, N)``.
+    full_matrices : bool, optional
+        If ``True`` (default), *U* and *Vh* have shapes ``(..., M, M)``
+        and ``(..., N, N)``.  If ``False``, the shapes are
+        ``(..., M, K)`` and ``(..., K, N)`` with ``K = min(M, N)``.
+    compute_uv : bool, optional
+        If ``True`` (default), return ``(U, S, Vh)``.  If ``False``,
+        return only *S*.
+    hermitian : bool, optional
+        If ``True``, *x* is assumed to be Hermitian, enabling a more
+        efficient algorithm.
+    subset_by_index : tuple of int, optional
+        Two-element tuple ``(start, end)`` selecting a subset of
+        singular values.
+    algorithm : SvdAlgorithm, optional
+        SVD backend algorithm.
+
+    Returns
+    -------
+    U : ndarray
+        Left singular vectors (omitted when ``compute_uv=False``).
+    S : ndarray or Quantity
+        Singular values carrying the unit of *x*.
+    Vh : ndarray
+        Right singular vectors (omitted when ``compute_uv=False``).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> x = jnp.array([[1., 2., 3.],
+        ...                [4., 5., 6.]]) * su.meter
+        >>> U, S, Vh = su.linalg.svd(x, full_matrices=False)
+        >>> S
+        ArrayImpl([9.50803089, 0.77286941], dtype=float32) * meter
     """
     x = maybe_custom_array(x)
 
@@ -351,19 +402,26 @@ def svdvals(
 
     SaiUnit implementation of :func:`numpy.linalg.svdvals`.
 
-    Args:
-        x: quantity of shape ``(..., M, N)`` for which singular values will be computed.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input of shape ``(..., M, N)``.
 
-    Returns:
-        quantity of singular values of shape ``(..., K)`` with ``K = min(M, N)``.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Singular values of shape ``(..., K)`` with ``K = min(M, N)``.
+        Carries the same unit as *x*.
 
-    Examples:
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-
         >>> x = jnp.array([[1., 2., 3.],
-        ...                [4., 5., 6.]]) * u.meter
-        >>> u.linalg.svdvals(x)
+        ...                [4., 5., 6.]]) * su.meter
+        >>> su.linalg.svdvals(x)
         ArrayImpl([9.50803089, 0.77286941], dtype=float32) * meter
     """
     return svd(x, compute_uv=False)
@@ -373,34 +431,37 @@ def svdvals(
 def eig(
     a: Union[Quantity, jax.typing.ArrayLike],
 ) -> tuple[Union[jax.Array, Quantity], Union[jax.Array, Quantity]]:
-    """
-    Compute the eigenvalues and eigenvectors of a square quantity.
+    """Compute the eigenvalues and eigenvectors of a square matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.eig`.
 
-    Args:
-        a: quantity of shape ``(..., M, M)`` for which to compute the eigenvalues and vectors.
+    The eigenvalues carry the same unit as *a*; the eigenvectors are
+    dimensionless.
 
-    Returns:
-        A tuple ``(eigenvalues, eigenvectors)`` with
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Square input of shape ``(..., M, M)``.
 
-        - ``eigenvalues``: a quantity of shape ``(..., M)`` containing the eigenvalues.
-        - ``eigenvectors``: an quantity of shape ``(..., M, M)``, where column ``v[:, i]`` is the
-          eigenvector corresponding to the eigenvalue ``w[i]``.
+    Returns
+    -------
+    eigenvalues : ndarray or Quantity
+        Shape ``(..., M)``.  Carries the same unit as *a*.
+    eigenvectors : ndarray
+        Shape ``(..., M, M)``.  Column ``v[:, i]`` corresponds to
+        ``eigenvalues[i]``.
 
-    Examples:
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-
         >>> a = jnp.array([[1., 2.],
-        ...                [2., 1.]]) * u.meter
-        >>> w, v = u.linalg.eig(a)
-        >>> with jax.numpy.printoptions(precision=4):
-        ...   print(w)
+        ...                [2., 1.]]) * su.meter
+        >>> w, v = su.linalg.eig(a)
+        >>> w  # eigenvalues carry the unit
         ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
-        >>> v
-        Array([[ 0.70710677+0.j, -0.70710677+0.j],
-               [ 0.70710677+0.j,  0.70710677+0.j]], dtype=complex64)
     """
     a = maybe_custom_array(a)
     return lax_linalg.eig(a, compute_left_eigenvectors=False)
@@ -412,40 +473,42 @@ def eigh(
     UPLO: str | None = None,
     symmetrize_input: bool = True
 ) -> tuple[Union[jax.Array, Quantity], Union[jax.Array, Quantity]]:
-    """
-    Compute the eigenvalues and eigenvectors of a Hermitian matrix.
+    """Compute eigenvalues and eigenvectors of a Hermitian matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.eigh`.
 
-    Args:
-        a: quantity of shape ``(..., M, M)``, containing the Hermitian (if complex)
-            or symmetric (if real) matrix.
-        UPLO: specifies whether the calculation is done with the lower triangular
-            part of ``a`` (``'L'``, default) or the upper triangular part (``'U'``).
-        symmetrize_input: if True (default) then input is symmetrized, which leads
-            to better behavior under automatic differentiation.
+    Eigenvalues carry the same unit as *a*; eigenvectors are
+    dimensionless.
 
-    Returns:
-        A namedtuple ``(eigenvalues, eigenvectors)`` where
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Hermitian (or symmetric) input of shape ``(..., M, M)``.
+    UPLO : {'L', 'U'}, optional
+        Use the lower (``'L'``, default) or upper (``'U'``) triangle.
+    symmetrize_input : bool, optional
+        If ``True`` (default), symmetrise the input for better autodiff
+        behaviour.
 
-        - ``eigenvalues``: a quantity of shape ``(..., M)`` containing the eigenvalues,
-            sorted in ascending order.
-        - ``eigenvectors``: a quantity of shape ``(..., M, M)``, where column ``v[:, i]`` is the
-            normalized eigenvector corresponding to the eigenvalue ``w[i]``.
+    Returns
+    -------
+    eigenvalues : ndarray or Quantity
+        Shape ``(..., M)``, sorted ascending.  Same unit as *a*.
+    eigenvectors : ndarray
+        Shape ``(..., M, M)``.  Column ``v[:, i]`` is the eigenvector
+        for ``eigenvalues[i]``.
 
-    Examples:
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-
         >>> a = jnp.array([[1, -2j],
-        ...                [2j, 1]]) * u.meter
-        >>> w, v = u.linalg.eigh(a)
+        ...                [2j, 1]]) * su.meter
+        >>> w, v = su.linalg.eigh(a)
         >>> w
         Array([-1.,  3.], dtype=float32)
-        >>> with jnp.printoptions(precision=3):
-        ...   print(v)
-        ArrayImpl([[-0.707-0.j   , -0.707+0.j   ],
-                   [ 0.   +0.707j,  0.   -0.707j]], dtype=complex64)
     """
     a = maybe_custom_array(a)
     if UPLO is None or UPLO == "L":
@@ -463,26 +526,30 @@ def eigh(
 def eigvals(
     a: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[jax.Array, Quantity]:
-    """
-    Compute the eigenvalues of a general matrix.
+    """Compute the eigenvalues of a general matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.eigvals`.
 
-    Args:
-        a: quantity of shape ``(..., M, M)`` for which to compute the eigenvalues.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Square input of shape ``(..., M, M)``.
 
-    Returns:
-        An quantity of shape ``(..., M)`` containing the eigenvalues.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Eigenvalues of shape ``(..., M)``.  Same unit as *a*.
 
-    Examples:
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-
         >>> a = jnp.array([[1., 2.],
-        ...                [2., 1.]]) * u.meter
-        >>> w = u.linalg.eigvals(a)
-        >>> with jnp.printoptions(precision=2):
-        ...  print(w)
+        ...                [2., 1.]]) * su.meter
+        >>> w = su.linalg.eigvals(a)
+        >>> w  # eigenvalues carry the unit
         ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
     """
     return eig(a)[0]
@@ -495,30 +562,35 @@ def eigvalsh(
     *,
     symmetrize_input: bool = True,
 ) -> Union[jax.Array, Quantity]:
-    """
-    Compute the eigenvalues of a Hermitian matrix.
+    """Compute the eigenvalues of a Hermitian matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.eigvalsh`.
 
-    Args:
-        a: quantity of shape ``(..., M, M)``, containing the Hermitian (if complex)
-            or symmetric (if real) matrix.
-        UPLO: specifies whether the calculation is done with the lower triangular
-            part of ``a`` (``'L'``, default) or the upper triangular part (``'U'``).
-        symmetrize_input: if True (default), symmetrize the input before
-            eigendecomposition for improved autodiff behavior.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Hermitian (or symmetric) input of shape ``(..., M, M)``.
+    UPLO : {'L', 'U'}, optional
+        Use the lower (``'L'``, default) or upper (``'U'``) triangle.
+    symmetrize_input : bool, optional
+        If ``True`` (default), symmetrise the input for better autodiff
+        behaviour.
 
-    Returns:
-        A quantity of shape ``(..., M)`` containing the eigenvalues, sorted in
-        ascending order.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Eigenvalues of shape ``(..., M)``, sorted ascending.  Same unit
+        as *a*.
 
-    Examples:
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-
         >>> a = jnp.array([[1, -2j],
-        ...                [2j, 1]]) * u.meter
-        >>> w = u.linalg.eigvalsh(a)
+        ...                [2j, 1]]) * su.meter
+        >>> w = su.linalg.eigvalsh(a)
         >>> w
         Array([-1.,  3.], dtype=float32)
     """
@@ -533,45 +605,28 @@ def matrix_transpose(
 
     SaiUnit implementation of :func:`numpy.linalg.matrix_transpose`.
 
-    Args:
-        x: quantity of shape ``(..., M, N)``
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input of shape ``(..., M, N)``.
 
-    Returns:
-        quantity of shape ``(..., N, M)`` containing the matrix transpose of ``x``.
+    Returns
+    -------
+    out : ndarray or Quantity
+        Transposed array of shape ``(..., N, M)``.  Carries the same
+        unit as *x*.
 
-    Examples:
-        Transpose of a single matrix:
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-
         >>> x = jnp.array([[1, 2, 3],
-        ...                [4, 5, 6]]) * u.meter
-        >>> u.linalg.matrix_transpose(x)
+        ...                [4, 5, 6]]) * su.meter
+        >>> su.linalg.matrix_transpose(x)
         ArrayImpl([[1, 4],
                    [2, 5],
                    [3, 6]], dtype=int32) * meter
-
-        Transpose of a stack of matrices:
-
-        >>> x = jnp.array([[[1, 2],
-        ...                 [3, 4]],
-        ...                [[5, 6],
-        ...                 [7, 8]]]) * u.meter
-        >>> u.linalg.matrix_transpose(x)
-        ArrayImpl([[[1, 3],
-                    [2, 4]],
-        <BLANKLINE>
-                   [[5, 7],
-                    [6, 8]]], dtype=int32) * meter
-
-        For convenience, the same computation can be done via the
-        :attr:`~jax.Array.mT` property of SaiUnit quantity objects:
-
-        >>> x.mT
-        Array([[[1, 3],
-                [2, 4]],
-        <BLANKLINE>
-               [[5, 7],
-                [6, 8]]], dtype=int32)
     """
     return _fun_keep_unit_unary(jnp.linalg.matrix_transpose, x)

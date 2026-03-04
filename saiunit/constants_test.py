@@ -85,3 +85,53 @@ class TestConstant(unittest.TestCase):
             assert u.math.isclose(
                 q_c.to_decimal(q_c.unit), (1. * u_c).to_decimal(q_c.unit)
             ), f"Mismatch between {c} in quantity_constants and unit_constants"
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_constants_module():
+    """Verify representative constants exist and carry the expected units."""
+    import saiunit.constants as constants
+
+    # -- Fundamental constants carry correct dimensions --
+    assert constants.avogadro.dim == (1 / mole).dim
+    assert constants.boltzmann.dim == (joule / kelvin).dim
+    assert constants.electron_mass.dim == kilogram.dim
+    assert constants.elementary_charge.dim == coulomb.dim
+
+    # -- Mass constants have kilogram dimension --
+    assert constants.pound.dim == kilogram.dim
+    assert constants.atomic_mass.dim == kilogram.dim
+    assert constants.carat.dim == kilogram.dim
+
+    # -- Time constants have second dimension --
+    assert constants.minute.dim == second.dim
+    assert constants.hour.dim == second.dim
+    assert constants.day.dim == second.dim
+
+    # -- Length constants have meter dimension --
+    assert constants.mile.dim == meter.dim
+    assert constants.light_year.dim == meter.dim
+    assert constants.angstrom.dim == meter.dim
+
+    # -- Pressure constants have correct dimension (N / m^2) --
+    expected_pressure_dim = (newton / meter2).dim
+    assert constants.atm.dim == expected_pressure_dim
+    assert constants.bar.dim == expected_pressure_dim
+    assert constants.psi.dim == expected_pressure_dim
+
+    # -- Energy constants have joule dimension --
+    assert constants.eV.dim == joule.dim
+    assert constants.calorie.dim == joule.dim
+    assert constants.erg.dim == joule.dim
+
+    # -- Force constants have newton dimension --
+    assert constants.dyne.dim == newton.dim
+    assert constants.pound_force.dim == newton.dim
+
+    # -- Verify a computed relationship: 1 hour == 3600 seconds --
+    assert u.math.allclose(
+        constants.hour.mantissa,
+        (3600.0 * second).mantissa,
+    )

@@ -193,3 +193,25 @@ class TestFftKeepUnit(parameterized.TestCase):
             result = ufft_fun(q, axes=axes)
             expected = ufft_fun(jnp.array(value), axes=axes)
             assert_quantity(result, expected, unit=unit)
+
+
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+def test_docstring_example_fftshift():
+    """Verify examples from fftshift docstring."""
+    import saiunit as su
+    import saiunit.fft as sufft
+
+    freq = sufft.fftfreq(4, 1.0 * su.second)
+    assert isinstance(freq, su.Quantity)
+    assert freq.shape == (4,)
+
+    shifted = sufft.fftshift(freq)
+    assert isinstance(shifted, su.Quantity)
+    assert shifted.unit == freq.unit
+
+    recovered = sufft.ifftshift(shifted)
+    assert isinstance(recovered, su.Quantity)
+    assert jnp.allclose(recovered.mantissa, freq.mantissa)

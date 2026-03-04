@@ -608,3 +608,98 @@ class Test_allclose(unittest.TestCase):
         with pytest.raises(bu.UnitMismatchError):
             assert bu.math.allclose(a, b, rtol=1e-8 * bu.ms)
         assert bu.math.allclose(a, b, rtol=1e-8 * bu.mV)
+
+
+# =========================================================================
+# Docstring example tests
+# =========================================================================
+
+
+class TestDocstringExamples(unittest.TestCase):
+    """Tests verifying the examples shown in function docstrings."""
+
+    # --- equal ---
+
+    def test_equal_plain_arrays(self):
+        result = bm.equal(jnp.array([1, 2, 3]), jnp.array([1, 0, 3]))
+        expected = jnp.array([True, False, True])
+        assert jnp.array_equal(result, expected)
+
+    def test_equal_quantity_arrays(self):
+        a = jnp.array([1.0, 2.0]) * bu.meter
+        b = jnp.array([1.0, 2.0]) * bu.meter
+        result = bm.equal(a, b)
+        expected = jnp.array([True, True])
+        assert jnp.array_equal(result, expected)
+
+    def test_equal_quantity_mismatch_raises(self):
+        a = jnp.array([1.0]) * bu.meter
+        b = jnp.array([1.0])
+        with pytest.raises(TypeError):
+            bm.equal(a, b)
+
+    # --- greater ---
+
+    def test_greater_plain_arrays(self):
+        result = bm.greater(jnp.array([3, 2, 1]), jnp.array([1, 2, 3]))
+        expected = jnp.array([True, False, False])
+        assert jnp.array_equal(result, expected)
+
+    def test_greater_quantity_arrays(self):
+        a = jnp.array([2.0, 1.0]) * bu.meter
+        b = jnp.array([1.0, 2.0]) * bu.meter
+        result = bm.greater(a, b)
+        expected = jnp.array([True, False])
+        assert jnp.array_equal(result, expected)
+
+    # --- all ---
+
+    def test_all_true(self):
+        result = bm.all(jnp.array([True, True, True]))
+        assert result == True
+
+    def test_all_false(self):
+        result = bm.all(jnp.array([True, False, True]))
+        assert result == False
+
+    def test_all_axis(self):
+        result = bm.all(jnp.array([[True, False], [True, True]]), axis=1)
+        expected = jnp.array([False, True])
+        assert jnp.array_equal(result, expected)
+
+    # --- argmax ---
+
+    def test_argmax_plain(self):
+        result = bm.argmax(jnp.array([1.0, 3.0, 2.0]))
+        assert result == 1
+
+    def test_argmax_quantity(self):
+        q = jnp.array([1.0, 3.0, 2.0]) * bu.meter
+        result = bm.argmax(q)
+        assert result == 1
+
+    # --- argsort ---
+
+    def test_argsort_plain(self):
+        result = bm.argsort(jnp.array([3.0, 1.0, 2.0]))
+        expected = jnp.array([1, 2, 0])
+        assert jnp.array_equal(result, expected)
+
+    def test_argsort_quantity(self):
+        q = jnp.array([3.0, 1.0, 2.0]) * bu.meter
+        result = bm.argsort(q)
+        expected = jnp.array([1, 2, 0])
+        assert jnp.array_equal(result, expected)
+
+    # --- sign ---
+
+    def test_sign_plain(self):
+        result = bm.sign(jnp.array([-5.0, 0.0, 3.0]))
+        expected = jnp.array([-1.0, 0.0, 1.0])
+        assert jnp.array_equal(result, expected)
+
+    def test_sign_quantity(self):
+        q = jnp.array([-2.0, 0.0, 4.0]) * bu.second
+        result = bm.sign(q)
+        expected = jnp.array([-1.0, 0.0, 1.0])
+        assert jnp.array_equal(result, expected)

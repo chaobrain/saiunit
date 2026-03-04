@@ -1,4 +1,4 @@
-# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
+# Copyright 2026 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -97,23 +97,45 @@ def _is_tracer(x):
 
 class Dimension:
     """
-    Stores the indices of the 7 basic SI unit dimension (length, mass, etc.).
+    Store the exponents of the 7 basic SI unit dimensions.
 
-    Provides a subset of arithmetic operations appropriate to dimensions:
-    multiplication, division and powers, and equality testing.
+    Represents a physical dimension as a combination of the 7 SI base
+    dimensions: length, mass, time, electric current, temperature,
+    amount of substance, and luminous intensity.
+
+    Provides arithmetic operations appropriate to dimensions:
+    multiplication, division, powers, and equality testing.
 
     Parameters
     ----------
-    dims : sequence of `float`
-        The dimension indices of the 7 basic SI unit dimensions.
+    dims : sequence of float
+        The exponents of the 7 basic SI unit dimensions, in order:
+        [length, mass, time, current, temperature, substance, luminosity].
+
+    See Also
+    --------
+    get_or_create_dimension : Factory function (preferred over direct construction).
+    DIMENSIONLESS : Singleton for dimensionless quantities.
 
     Notes
     -----
-    Users shouldn't use this class directly, it is used internally in Array
-    and Unit. Even internally, never use ``Dimension(...)`` to create a new
-    instance, use `get_or_create_dimension` instead. This function makes
-    sure that only one Dimension instance exists for every combination of
-    indices, allowing for a very fast dimensionality check with ``is``.
+    Users should not use this class directly. Use `get_or_create_dimension`
+    instead, which ensures only one ``Dimension`` instance exists for every
+    combination of exponents, allowing fast dimensionality checks with ``is``.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> length_dim = su.meter.dim
+        >>> length_dim.get_dimension('m')
+        1.0
+        >>> length_dim.is_dimensionless
+        False
+        >>> su.DIMENSIONLESS.is_dimensionless
+        True
     """
 
     __module__ = "saiunit"
@@ -191,12 +213,31 @@ class Dimension:
     @property
     def is_dimensionless(self):
         """
-        Whether this Dimension is dimensionless.
+        Check whether this Dimension is dimensionless.
+
+        Returns
+        -------
+        bool
+            True if all dimensional exponents are zero.
+
+        See Also
+        --------
+        DIMENSIONLESS : Singleton dimensionless Dimension.
 
         Notes
         -----
-        Normally, instead one should check dimension for being identical to
-        `DIMENSIONLESS`.
+        For performance, prefer checking ``dim is DIMENSIONLESS`` instead.
+
+        Examples
+        --------
+
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.DIMENSIONLESS.is_dimensionless
+            True
+            >>> su.meter.dim.is_dimensionless
+            False
         """
         return np.allclose(self._dims, 0)
         # return all([x == 0 for x in self._dims])
@@ -204,10 +245,26 @@ class Dimension:
     @property
     def dim(self):
         """
-        Returns the `Dimension` object itself. This can be useful, because it
-        allows to check for the dimension of an object by checking its ``dim``
-        attribute -- this will return a `Dimension` object for `Array`,
-        `Unit` and `Dimension`.
+        Return the Dimension object itself.
+
+        This property allows uniform access to the dimension of an object
+        via the ``dim`` attribute, which works for `Quantity`, `Unit`,
+        and `Dimension` objects alike.
+
+        Returns
+        -------
+        Dimension
+            This Dimension instance.
+
+        Examples
+        --------
+
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> d = su.meter.dim
+            >>> d.dim is d
+            True
         """
         return self
 
@@ -625,44 +682,57 @@ _dimension_cache: dict[tuple, 'Dimension'] = {}
 def get_or_create_dimension(*args, **kwds) -> Dimension:
     """
     Create a new Dimension object or get a reference to an existing one.
-    This function takes care of only creating new objects if they were not
-    created before and otherwise returning a reference to an existing object.
-    This allows to compare dimensions very efficiently using ``is``.
+
+    This function maintains a singleton cache so that only one ``Dimension``
+    instance exists for each unique combination of exponents. This allows
+    very efficient dimensionality checks using ``is``.
 
     Parameters
     ----------
-    args : sequence of `float`
-        A sequence with the indices of the 7 elements of an SI dimension.
+    args : sequence of float
+        A sequence of 7 floats specifying the exponents of the SI base
+        dimensions.
     kwds : keyword arguments
-        a sequence of ``keyword=mantissa`` pairs where the keywords are the names of
-        the SI dimensions, or the standard unit.
+        Keyword-value pairs where keywords are SI dimension names (e.g.,
+        ``length``, ``mass``, ``time``) or SI unit names (e.g., ``m``,
+        ``kg``, ``s``).
 
-    Examples
-    --------
-    The following are all definitions of the dimensions of force
+    Returns
+    -------
+    Dimension
+        The (possibly cached) Dimension object.
 
-    >>> from saiunit import *
-    >>> get_or_create_dimension(length=1, mass=1, time=-2)
-    metre * kilogram * second ** -2
-    >>> get_or_create_dimension(m=1, kg=1, s=-2)
-    metre * kilogram * second ** -2
-    >>> get_or_create_dimension([1, 1, -2, 0, 0, 0, 0])
-    metre * kilogram * second ** -2
+    Raises
+    ------
+    TypeError
+        If the positional argument is not a sequence of exactly 7 items,
+        or if more than one positional argument is given.
 
     Notes
     -----
-    The 7 units are (in order):
+    The 7 SI base dimensions, in order, are:
 
-    - Length
-    - Mass
-    - Time
-    - Electric Current
-    - Temperature
-    - Quantity of Substance
-    - Luminosity
+    1. Length (m, metre)
+    2. Mass (kg, kilogram)
+    3. Time (s, second)
+    4. Electric Current (A, ampere)
+    5. Temperature (K, kelvin)
+    6. Amount of Substance (mol, mole)
+    7. Luminous Intensity (cd, candle)
 
-    and can be referred to either by these names or their SI unit names,
-    e.g. length, metre, and m all refer to the same thing here.
+    Examples
+    --------
+    The following are all equivalent definitions of the dimension of force:
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su.get_or_create_dimension(length=1, mass=1, time=-2)
+        metre * kilogram * second ** -2
+        >>> su.get_or_create_dimension(m=1, kg=1, s=-2)
+        metre * kilogram * second ** -2
+        >>> su.get_or_create_dimension([1, 1, -2, 0, 0, 0, 0])
+        metre * kilogram * second ** -2
     """
     if len(args):
         if len(args) != 1:
@@ -691,24 +761,54 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
     return new_dim
 
 
-'''The dimensionless unit, used for quantities without a unit.'''
 DIMENSIONLESS = Dimension(np.asarray([0, 0, 0, 0, 0, 0, 0]))
+"""
+Singleton Dimension instance representing dimensionless quantities.
+
+All exponents are zero. Use ``dim is DIMENSIONLESS`` for fast checks.
+
+Examples
+--------
+
+.. code-block:: python
+
+    >>> import saiunit as su
+    >>> su.DIMENSIONLESS.is_dimensionless
+    True
+    >>> str(su.DIMENSIONLESS)
+    '1'
+"""
 
 
 def get_dim_for_display(d):
     """
-    Return a string representation of an appropriate unscaled unit or ``'1'``
-    for a dimensionless array.
+    Return a string representation of a dimension for display purposes.
 
     Parameters
     ----------
     d : Dimension or int
-        The dimension to find a unit for.
+        The dimension to display. An integer value of ``1`` is treated
+        as dimensionless.
 
     Returns
     -------
     s : str
-        A string representation of the respective unit or the string ``'1'``.
+        A string such as ``'m kg s^-2'`` or ``'1'`` for dimensionless.
+
+    See Also
+    --------
+    Dimension : The Dimension class.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su.get_dim_for_display(su.DIMENSIONLESS)
+        '1'
+        >>> su.get_dim_for_display(su.meter.dim)
+        'm'
     """
     if (isinstance(d, int) and d == 1) or d is DIMENSIONLESS:
         return "1"
@@ -719,21 +819,30 @@ def get_dim_for_display(d):
 
 class DimensionMismatchError(Exception):
     """
-    Exception class for attempted operations with inconsistent dimensions.
+    Exception for operations with incompatible physical dimensions.
 
-    For example, ``3*mvolt + 2*amp`` raises this exception. The purpose of this
-    class is to help catch errors based on incorrect units. The exception will
-    print a representation of the dimensions of the two inconsistent objects
-    that were operated on.
+    Raised when an operation requires matching dimensions but receives
+    mismatched ones, e.g., adding meters to amperes.
 
     Parameters
     ----------
-    description : ``str``
-        A description of the type of operation being performed, e.g. Addition,
-        Multiplication, etc.
-    dims : Dimension
-        The physical dimensions of the objects involved in the operation, any
-        number of them is possible
+    description : str
+        A description of the type of operation being performed, e.g.,
+        ``"Addition"``, ``"Subtraction"``.
+    *dims : Dimension
+        The physical dimensions of the objects involved in the operation.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> e = su.DimensionMismatchError("Addition", su.meter.dim, su.second.dim)
+        >>> 'Addition' in str(e)
+        True
+        >>> 'm' in str(e)
+        True
     """
     __module__ = "saiunit"
 
@@ -767,21 +876,33 @@ class DimensionMismatchError(Exception):
 
 class UnitMismatchError(Exception):
     """
-    Exception class for attempted operations with inconsistent units.
+    Exception for operations with incompatible physical units.
 
-    For example, ``3*mvolt + 2*amp`` raises this exception. The purpose of this
-    class is to help catch errors based on incorrect units. The exception will
-    print a representation of the dimensions of the two inconsistent objects
-    that were operated on.
+    Raised when an operation requires matching units but receives
+    mismatched ones. Similar to `DimensionMismatchError` but checks
+    at the unit level (e.g., ``mV`` vs ``V``).
 
     Parameters
     ----------
-    description : ``str``
-        A description of the type of operation being performed, e.g. Addition,
-        Multiplication, etc.
-    units : Unit
-        The physical dimensions of the objects involved in the operation, any
-        number of them is possible
+    description : str
+        A description of the type of operation being performed, e.g.,
+        ``"Addition"``, ``"Subtraction"``.
+    *units : Unit
+        The physical units of the objects involved in the operation.
+
+    See Also
+    --------
+    DimensionMismatchError : Exception for dimension-level mismatches.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> e = su.UnitMismatchError("Addition", su.mvolt, su.volt)
+        >>> 'Addition' in str(e)
+        True
     """
     __module__ = "saiunit"
 

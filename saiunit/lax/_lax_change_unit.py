@@ -55,7 +55,31 @@ def unit_change(
 def rsqrt(
     x: Union[jax.typing.ArrayLike, Quantity],
 ) -> Union[Quantity, jax.Array]:
-    r"""Elementwise reciprocal square root:  :math:`1 \over \sqrt{x}`."""
+    r"""Elementwise reciprocal square root: :math:`1 \over \sqrt{x}`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input array.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The reciprocal square root. If ``x`` has unit ``u``, the result has
+        unit ``u ** -0.5``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([4.0, 9.0, 16.0]) * (su.meter ** 2)
+        >>> result = sulax.rsqrt(q)
+        >>> result.mantissa
+        Array([0.5       , 0.33333334, 0.25      ], dtype=float32)
+    """
     return _fun_change_unit_unary(lax.rsqrt,
                                   lambda u: u ** -0.5,
                                   x)
@@ -156,9 +180,33 @@ def div(
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise division: :math:`x \over y`.
 
-    Integer division overflow
-    (division by zero or signed division of INT_SMIN with -1)
-    produces an implementation defined value.
+    Integer division overflow (division by zero or signed division of
+    INT_SMIN with -1) produces an implementation-defined value.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        The dividend.
+    y : array_like or Quantity
+        The divisor.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The quotient. The resulting unit is ``unit(x) / unit(y)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> dist = jnp.array([10.0, 20.0]) * su.meter
+        >>> time = jnp.array([2.0, 4.0]) * su.second
+        >>> speed = sulax.div(dist, time)
+        >>> speed.mantissa
+        Array([5., 5.], dtype=float32)
     """
     return _fun_change_unit_binary(lax.div,
                                    lambda x, y: x / y,
@@ -236,7 +284,38 @@ def pow(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[Quantity, jax.Array]:
-    r"""Elementwise power: :math:`x^y`."""
+    r"""Elementwise power: :math:`x^y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        The base.
+    y : array_like or Quantity
+        The exponent. Must be unitless if ``x`` has a unit.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The result of ``x ** y``. If ``x`` has unit ``u``, the result
+        has unit ``u ** y``.
+
+    Raises
+    ------
+    TypeError
+        If ``y`` has a non-trivial unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([2.0, 3.0]) * su.meter
+        >>> result = sulax.pow(q, jnp.float32(2.0))
+        >>> result.mantissa
+        Array([4., 9.], dtype=float32)
+    """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
     if isinstance(x, Quantity):
@@ -259,7 +338,38 @@ def integer_pow(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[Quantity, jax.Array]:
-    r"""Elementwise power: :math:`x^y`, where :math:`y` is a fixed integer."""
+    r"""Elementwise integer power: :math:`x^y`, where :math:`y` is a fixed integer.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        The base.
+    y : int or array_like or Quantity
+        The integer exponent. Must be unitless if ``x`` has a unit.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The result of ``x ** y``. If ``x`` has unit ``u``, the result
+        has unit ``u ** y``.
+
+    Raises
+    ------
+    TypeError
+        If ``y`` has a non-trivial unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> q = jnp.array([2.0, 3.0]) * su.meter
+        >>> result = sulax.integer_pow(q, 3)
+        >>> result.mantissa
+        Array([ 8., 27.], dtype=float32)
+    """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
     if isinstance(x, Quantity):
@@ -282,7 +392,33 @@ def mul(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike]
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    r"""Elementwise multiplication: :math:`x \times y`."""
+    r"""Elementwise multiplication: :math:`x \times y`.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        First operand.
+    y : array_like or Quantity
+        Second operand.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The product. The resulting unit is ``unit(x) * unit(y)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> a = jnp.array([2.0, 3.0]) * su.meter
+        >>> b = jnp.array([4.0, 5.0]) * su.second
+        >>> result = sulax.mul(a, b)
+        >>> result.mantissa
+        Array([ 8., 15.], dtype=float32)
+    """
     return _fun_change_unit_binary(lax.mul,
                                    lambda x, y: x * y,
                                    x, y)
@@ -321,7 +457,36 @@ def batch_matmul(
     y: Union[Quantity, jax.typing.ArrayLike],
     precision: jax.lax.PrecisionLike = None
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Batch matrix multiplication."""
+    """Batch matrix multiplication.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Left input array of shape ``[..., m, k]``.
+    y : array_like or Quantity
+        Right input array of shape ``[..., k, n]``.
+    precision : PrecisionLike, optional
+        Numerical precision of the computation.
+
+    Returns
+    -------
+    result : jax.Array or Quantity
+        The batch matrix product of shape ``[..., m, n]``.
+        The resulting unit is ``unit(x) * unit(y)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> import jax.numpy as jnp
+        >>> x = jnp.ones((2, 3, 4)) * su.meter
+        >>> y = jnp.ones((2, 4, 5)) * su.second
+        >>> result = sulax.batch_matmul(x, y)
+        >>> result.mantissa.shape
+        (2, 3, 5)
+    """
     return _fun_change_unit_binary(lax.batch_matmul,
                                    lambda x, y: x * y,
                                    x, y, precision)

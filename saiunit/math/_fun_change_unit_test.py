@@ -415,3 +415,75 @@ class TestFunChangeUnit(parameterized.TestCase):
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
             assert_quantity(result[0], expected[0], unit=unit1 / unit2)
             assert_quantity(result[1], expected[1], unit=unit1)
+
+
+# ---------------------------------------------------------------------------
+# Docstring example tests
+# ---------------------------------------------------------------------------
+
+
+class TestDocstringExamples(parameterized.TestCase):
+    """Tests that mirror the docstring examples for key functions."""
+
+    def test_multiply_example(self):
+        """Verify the multiply docstring example."""
+        a = um.array([1.0, 2.0, 3.0]) * u.meter
+        b = um.array([4.0, 5.0, 6.0]) * u.second
+        result = um.multiply(a, b)
+        expected = jnp.array([4.0, 10.0, 18.0])
+        assert_quantity(result, expected, unit=u.meter * u.second)
+
+    def test_divide_example(self):
+        """Verify the divide docstring example."""
+        distance = um.array([10.0, 20.0]) * u.meter
+        time = um.array([2.0, 4.0]) * u.second
+        result = um.divide(distance, time)
+        expected = jnp.array([5.0, 5.0])
+        assert_quantity(result, expected, unit=u.meter / u.second)
+
+    def test_square_example(self):
+        """Verify the square docstring example."""
+        q = um.array([2.0, 3.0, 4.0]) * u.meter
+        result = um.square(q)
+        expected = jnp.array([4.0, 9.0, 16.0])
+        assert_quantity(result, expected, unit=u.meter ** 2)
+
+    def test_sqrt_example(self):
+        """Verify the sqrt docstring example."""
+        q = um.array([4.0, 9.0, 16.0]) * (u.meter ** 2)
+        result = um.sqrt(q)
+        expected = jnp.array([2.0, 3.0, 4.0])
+        assert_quantity(result, expected, unit=u.meter)
+
+    def test_dot_example(self):
+        """Verify the dot docstring example."""
+        a = um.array([1.0, 2.0, 3.0]) * u.meter
+        b = um.array([4.0, 5.0, 6.0]) * u.second
+        result = um.dot(a, b)
+        expected = jnp.array(32.0)
+        assert_quantity(result, expected, unit=u.meter * u.second)
+
+    def test_matmul_example(self):
+        """Verify the matmul docstring example."""
+        a = um.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
+        b = um.array([[5.0, 6.0], [7.0, 8.0]]) * u.second
+        result = um.matmul(a, b)
+        expected = jnp.matmul(jnp.array([[1.0, 2.0], [3.0, 4.0]]),
+                              jnp.array([[5.0, 6.0], [7.0, 8.0]]))
+        assert_quantity(result, expected, unit=u.meter * u.second)
+
+    def test_outer_example(self):
+        """Verify the outer docstring example."""
+        a = um.array([1.0, 2.0]) * u.meter
+        b = um.array([3.0, 4.0, 5.0]) * u.second
+        result = um.outer(a, b)
+        expected = jnp.outer(jnp.array([1.0, 2.0]), jnp.array([3.0, 4.0, 5.0]))
+        assert result.shape == (2, 3)
+        assert_quantity(result, expected, unit=u.meter * u.second)
+
+    def test_prod_example(self):
+        """Verify the prod docstring example."""
+        q = um.array([2.0, 3.0]) * u.meter
+        result = um.prod(q)
+        expected = jnp.prod(jnp.array([2.0, 3.0]))
+        assert_quantity(result, expected, unit=u.meter ** 2)

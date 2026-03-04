@@ -582,3 +582,126 @@ class TestFunArrayCreation(parameterized.TestCase):
     def test_fun_array_creation_other(self):
         # TODO
         ...
+
+
+# ---------------------------------------------------------------------------
+# Docstring example tests for key array-creation functions.
+# These verify the concrete examples shown in each function's docstring.
+# ---------------------------------------------------------------------------
+
+
+class TestDocstringExamplesArray:
+    """Tests that mirror the docstring examples for ``saiunit.math.array``."""
+
+    def test_array_plain_list(self):
+        result = um.array([1, 2, 3])
+        expected = jnp.array([1, 2, 3])
+        assert_quantity(result, expected)
+
+    def test_array_with_unit(self):
+        result = um.array([1, 2, 3] * meter)
+        expected = jnp.array([1, 2, 3])
+        assert_quantity(result, expected, unit=meter)
+
+    def test_asarray_list_of_quantities(self):
+        result = um.asarray([1 * meter, 2 * meter])
+        expected = jnp.array([1, 2])
+        assert_quantity(result, expected, unit=meter)
+
+
+class TestDocstringExamplesOnes:
+    """Tests that mirror the docstring examples for ``saiunit.math.ones``."""
+
+    def test_ones_plain(self):
+        result = um.ones((3,))
+        expected = jnp.ones((3,))
+        assert_quantity(result, expected)
+
+    def test_ones_with_unit(self):
+        result = um.ones((2, 2), unit=meter)
+        expected = jnp.ones((2, 2))
+        assert_quantity(result, expected, unit=meter)
+
+
+class TestDocstringExamplesZeros:
+    """Tests that mirror the docstring examples for ``saiunit.math.zeros``."""
+
+    def test_zeros_plain(self):
+        result = um.zeros((3,))
+        expected = jnp.zeros((3,))
+        assert_quantity(result, expected)
+
+    def test_zeros_with_unit(self):
+        result = um.zeros((2,), unit=second)
+        expected = jnp.zeros((2,))
+        assert_quantity(result, expected, unit=second)
+
+
+class TestDocstringExamplesEye:
+    """Tests that mirror the docstring examples for ``saiunit.math.eye``."""
+
+    def test_eye_plain(self):
+        result = um.eye(2)
+        expected = jnp.eye(2)
+        assert_quantity(result, expected)
+
+    def test_eye_with_unit(self):
+        result = um.eye(2, unit=meter)
+        expected = jnp.eye(2)
+        assert_quantity(result, expected, unit=meter)
+
+
+class TestDocstringExamplesArange:
+    """Tests that mirror the docstring examples for ``saiunit.math.arange``."""
+
+    def test_arange_plain(self):
+        result = um.arange(5)
+        expected = jnp.arange(5)
+        assert_quantity(result, expected)
+
+    def test_arange_with_unit(self):
+        result = um.arange(0 * meter, 3 * meter, 1 * meter)
+        expected = jnp.arange(0, 3, 1)
+        assert_quantity(result, expected, unit=meter)
+
+
+class TestDocstringExamplesLinspace:
+    """Tests that mirror the docstring examples for ``saiunit.math.linspace``."""
+
+    def test_linspace_plain(self):
+        result = um.linspace(0, 10, 5)
+        expected = jnp.linspace(0, 10, 5)
+        assert_quantity(result, expected)
+
+    def test_linspace_with_unit(self):
+        result = um.linspace(0 * meter, 10 * meter, 5)
+        expected = jnp.linspace(0, 10, 5)
+        assert_quantity(result, expected, unit=meter)
+
+
+class TestDocstringExamplesFull:
+    """Tests that mirror the docstring examples for ``saiunit.math.full``."""
+
+    def test_full_plain(self):
+        result = um.full((2, 3), 7.0)
+        expected = jnp.full((2, 3), 7.0)
+        assert_quantity(result, expected)
+
+    def test_full_with_unit(self):
+        result = um.full((3,), 5.0 * meter)
+        expected = jnp.full((3,), 5.0)
+        assert_quantity(result, expected, unit=meter)
+
+
+class TestDocstringExamplesDiag:
+    """Tests that mirror the docstring examples for ``saiunit.math.diag``."""
+
+    def test_diag_plain(self):
+        result = um.diag(jnp.array([1.0, 2.0, 3.0]))
+        expected = jnp.diag(jnp.array([1.0, 2.0, 3.0]))
+        assert_quantity(result, expected)
+
+    def test_diag_with_unit(self):
+        result = um.diag(jnp.array([1.0, 2.0]), unit=meter)
+        expected = jnp.diag(jnp.array([1.0, 2.0]))
+        assert_quantity(result, expected, unit=meter)

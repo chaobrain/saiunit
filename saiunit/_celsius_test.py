@@ -18,6 +18,8 @@ import unittest
 import jax.numpy as jnp
 import numpy as np
 
+import pytest
+
 import saiunit as u
 
 
@@ -225,4 +227,41 @@ class TestArrayCelsius(unittest.TestCase):
         temp_matrix_2 = Array(np.array([[1, 0], [0, 1]]))  # Identity matrix
         result = temp_matrix_1 @ temp_matrix_2
         np.testing.assert_array_equal(result, temp_matrix_1.data)
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_celsius2kelvin():
+    import saiunit as su
+
+    result_0 = su.celsius2kelvin(0.0)
+    assert result_0 == 273.15 * su.kelvin
+
+    result_25 = su.celsius2kelvin(25.0)
+    assert result_25 == 298.15 * su.kelvin
+
+    result_neg40 = su.celsius2kelvin(-40.0)
+    assert u.math.allclose(result_neg40, 233.15 * su.kelvin, atol=1e-10 * su.kelvin)
+
+    # Verify TypeError when passing a Quantity
+    with pytest.raises(TypeError):
+        su.celsius2kelvin(100.0 * su.kelvin)
+
+
+def test_docstring_example_kelvin2celsius():
+    import saiunit as su
+
+    result_0 = su.kelvin2celsius(273.15 * su.kelvin)
+    assert np.isclose(float(result_0), 0.0)
+
+    result_25 = su.kelvin2celsius(298.15 * su.kelvin)
+    assert np.isclose(float(result_25), 25.0)
+
+    result_100 = su.kelvin2celsius(373.15 * su.kelvin)
+    assert np.isclose(float(result_100), 100.0)
+
+    # Verify TypeError when passing a plain number
+    with pytest.raises(TypeError):
+        su.kelvin2celsius(300.0)
 

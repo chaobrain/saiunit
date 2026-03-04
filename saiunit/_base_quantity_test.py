@@ -1564,3 +1564,197 @@ def test_pickle_with_units():
     with open(filename, "rb") as f:
         b = pickle.load(f)
     assert u.math.allclose(a, b)
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_quantity_construction():
+    """Test Quantity construction patterns from the class docstring."""
+    import saiunit as su
+
+    # Scalar with unit
+    q = su.Quantity(3.0, unit=su.mV)
+    assert jnp.allclose(q.mantissa, 3.0)
+    assert q.unit == su.mV
+
+    # Array with unit via multiplication shorthand
+    arr = jnp.array([1.0, 2.0, 3.0]) * su.mV
+    assert arr.shape == (3,)
+
+    # From a Unit object directly
+    q_unit = su.Quantity(su.metre)
+    assert jnp.allclose(q_unit.mantissa, 1.0)
+    assert q_unit.unit == su.metre
+
+
+def test_docstring_example_to():
+    """Test Quantity.to() from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+    converted = q.to(su.volt)
+    assert converted.unit == su.volt
+    assert jnp.allclose(converted.mantissa, jnp.array([0.001, 0.002, 0.003]))
+
+
+def test_docstring_example_to_decimal():
+    """Test Quantity.to_decimal() from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+    result = q.to_decimal(su.volt)
+    assert jnp.allclose(result, jnp.array([0.001, 0.002, 0.003]))
+    # result should be a plain array, not a Quantity
+    assert not isinstance(result, su.Quantity)
+
+
+def test_docstring_example_repr_in_unit():
+    """Test Quantity.repr_in_unit() from the docstring."""
+    import saiunit as su
+
+    x = su.Quantity(25.123456, unit=su.mV)
+    s = x.repr_in_unit()
+    # Float32 may truncate the last digit; check the significant prefix
+    assert s.startswith("25.12345")
+    assert "mV" in s
+
+    # With precision after unit conversion
+    s2 = x.to(su.volt).repr_in_unit(3)
+    assert "0.025" in s2
+    assert "V" in s2
+
+
+def test_docstring_example_has_same_unit():
+    """Test Quantity.has_same_unit() from the docstring."""
+    import saiunit as su
+
+    a = su.Quantity(1.0, unit=su.mV)
+    b = su.Quantity(2.0, unit=su.volt)
+    assert a.has_same_unit(b) is True
+
+    c = su.Quantity(1.0, unit=su.second)
+    assert a.has_same_unit(c) is False
+
+
+def test_docstring_example_with_unit():
+    """Test Quantity.with_unit() static method from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity.with_unit(2.0, unit=su.metre)
+    assert jnp.allclose(q.mantissa, 2.0)
+    assert q.unit == su.metre
+
+
+def test_docstring_example_compatible_with_equinox():
+    """Test compatible_with_equinox() function from the docstring."""
+    import saiunit as su
+    import saiunit._base_quantity as bq
+
+    su.compatible_with_equinox(True)
+    assert bq.compat_with_equinox is True
+
+    su.compatible_with_equinox(False)
+    assert bq.compat_with_equinox is False
+
+
+def test_docstring_example_mantissa():
+    """Test Quantity.mantissa property from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(3.0, unit=su.mV)
+    assert q.mantissa == 3.0
+
+
+def test_docstring_example_is_unitless():
+    """Test Quantity.is_unitless property from the docstring."""
+    import saiunit as su
+
+    assert su.Quantity(5.0).is_unitless is True
+    assert su.Quantity(5.0, unit=su.mV).is_unitless is False
+
+
+def test_docstring_example_dim():
+    """Test Quantity.dim property from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(5.0, unit=su.metre)
+    assert q.dim is not None
+
+
+def test_docstring_example_shape_ndim_size():
+    """Test Quantity.shape, .ndim, .size from the docstrings."""
+    import saiunit as su
+
+    q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+    assert q.shape == (2, 2)
+    assert q.ndim == 2
+    assert q.size == 4
+
+
+def test_docstring_example_dtype():
+    """Test Quantity.dtype property from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(jnp.array([1.0, 2.0]), unit=su.mV)
+    assert q.dtype == jnp.float32
+
+
+def test_docstring_example_real_imag():
+    """Test Quantity.real and .imag from the docstrings."""
+    import saiunit as su
+
+    q = su.Quantity(1.0 + 2.0j, unit=su.mV)
+    assert jnp.allclose(q.real.mantissa, 1.0)
+    assert jnp.allclose(q.imag.mantissa, 2.0)
+    assert q.real.unit == su.mV
+    assert q.imag.unit == su.mV
+
+
+def test_docstring_example_mT():
+    """Test Quantity.mT from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+    result = q.mT
+    assert result.shape == (2, 2)
+    assert result.unit == su.mV
+
+
+def test_docstring_example_scatter_add():
+    """Test Quantity.scatter_add() from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+    result = q.scatter_add(0, su.Quantity(10.0, unit=su.mV))
+    assert jnp.allclose(result.mantissa, jnp.array([11.0, 2.0, 3.0]))
+    assert result.unit == su.mV
+
+
+def test_docstring_example_dot():
+    """Test Quantity.dot() from the docstring."""
+    import saiunit as su
+
+    a = su.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=su.mV)
+    b = su.Quantity(jnp.array([1.0, 1.0, 1.0]), unit=su.mV)
+    result = a.dot(b)
+    assert jnp.allclose(result.mantissa, 6.0)
+
+
+def test_docstring_example_flatten():
+    """Test Quantity.flatten() from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(jnp.array([[1.0, 2.0], [3.0, 4.0]]), unit=su.mV)
+    flat = q.flatten()
+    assert flat.shape == (4,)
+    assert jnp.allclose(flat.mantissa, jnp.array([1.0, 2.0, 3.0, 4.0]))
+
+
+def test_docstring_example_pow():
+    """Test Quantity.pow() from the docstring."""
+    import saiunit as su
+
+    q = su.Quantity(2.0, unit=su.mV)
+    result = q.pow(2)
+    assert jnp.allclose(result.mantissa, 4.0)

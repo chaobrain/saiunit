@@ -1,4 +1,4 @@
-# Copyright 2024 BrainX Ecosystem Limited. All Rights Reserved.
+# Copyright 2026 BrainX Ecosystem Limited. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -188,6 +188,36 @@ def _select_preferred_standard_unit(units: 'list[Unit]') -> 'Unit':
 
 
 def add_standard_unit(u: 'Unit'):
+    """
+    Register a unit as a standard unit for display purposes.
+
+    Once registered, this unit will be used when formatting quantities
+    whose dimensions, scale, base, and factor match.  If multiple units
+    are registered for the same key, the preferred alias is selected
+    automatically.  Keys with two or more distinct display names are
+    flagged as *ambiguous* and will not be auto-substituted during unit
+    composition.
+
+    Parameters
+    ----------
+    u : Unit
+        The unit to register.  Its ``base``, ``scale``, and ``factor``
+        must all be plain Python ``int`` or ``float`` values (not JAX
+        tracers) for registration to take effect.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> my_unit = su.Unit(
+        ...     dim=su.joule.dim,
+        ...     name='my_energy',
+        ...     dispname='myE',
+        ...     is_fullname=True,
+        ... )
+        >>> su.add_standard_unit(my_unit)
+    """
     if (
         isinstance(u.base, (int, float)) and
         isinstance(u.scale, (int, float)) and
@@ -308,102 +338,157 @@ def _format_display_parts(parts) -> str:
 
 class Unit:
     r"""
-     A physical unit.
+    A physical unit.
 
-     Basically, a unit is just a number with given dimensions, e.g.
-     mvolt = 0.001 with the dimensions of voltage. The units module
-     defines a large number of standard units, and you can also define
-     your own (see below).
+    Basically, a unit is just a number with given dimensions, e.g.
+    mvolt = 0.001 with the dimensions of voltage. The units module
+    defines a large number of standard units, and you can also define
+    your own (see below).
 
-     Mathematically, a unit represents:
+    Mathematically, a unit represents:
 
-        .. math::
+    .. math::
 
-            \text{{factor}} \times \text{{base}}^{\text{{scale}}} \times \text{{dimension}}
+        \text{{factor}} \times \text{{base}}^{\text{{scale}}} \times \text{{dimension}}
 
-     where the ``factor`` is the conversion factor of the unit (e.g. ``1 calorie = 4.18400 Joule``,
-     so the factor is 4.18400), the ``base`` is the base of the exponent (e.g. 10 for the kilo prefix),
-     the ``scale`` is the exponent of the base (e.g. 3 for the kilo prefix), and the ``dimension`` is
-     the physical dimensions of the unit (e.g. ``joule`` for energy).
+    where the ``factor`` is the conversion factor of the unit (e.g.
+    ``1 calorie = 4.18400 Joule``, so the factor is 4.18400), the ``base``
+    is the base of the exponent (e.g. 10 for the kilo prefix), the ``scale``
+    is the exponent of the base (e.g. 3 for the kilo prefix), and the
+    ``dimension`` is the physical dimensions of the unit (e.g. ``joule`` for
+    energy).
 
-     The unit class also keeps track of various things that were used
-     to define it so as to generate a nice string representation of it.
-     See below.
+    The unit class also keeps track of various things that were used
+    to define it so as to generate a nice string representation of it.
+    See below.
 
-     When creating scaled units, you can use the following prefixes:
+    Parameters
+    ----------
+    dim : Dimension, optional
+        The physical dimensions of the unit. Defaults to ``DIMENSIONLESS``.
+    scale : array_like, optional
+        The scale exponent, e.g. 3 for a "k" (kilo) prefix. Defaults to 0.
+    base : array_like, optional
+        The base of the exponent, e.g. 10 for SI prefixes. Defaults to 10.
+    factor : array_like, optional
+        The conversion factor of the unit. Defaults to 1.
+    name : str, optional
+        The full name of the unit, e.g. ``'volt'``.
+    dispname : str, optional
+        The display name, e.g. ``'V'``.
+    is_fullname : bool, optional
+        Whether ``name`` is the canonical full name. Defaults to ``True``.
+    display_parts : list of tuple, optional
+        Canonical display components for compound units.
 
-      ======     ======  ==============
-      Factor     Name    Prefix
-      ======     ======  ==============
-      10^24      yotta   Y
-      10^21      zetta   Z
-      10^18      exa     E
-      10^15      peta    P
-      10^12      tera    T
-      10^9       giga    G
-      10^6       mega    M
-      10^3       kilo    k
-      10^2       hecto   h
-      10^1       deka    da
-      1
-      10^-1      deci    d
-      10^-2      centi   c
-      10^-3      milli   m
-      10^-6      micro   u (\mu in SI)
-      10^-9      nano    n
-      10^-12     pico    p
-      10^-15     femto   f
-      10^-18     atto    a
-      10^-21     zepto   z
-      10^-24     yocto   y
-      ======     ======  ==============
+    Notes
+    -----
+    When creating scaled units, you can use the following prefixes:
+
+    ======     ======  ==============
+    Factor     Name    Prefix
+    ======     ======  ==============
+    10^24      yotta   Y
+    10^21      zetta   Z
+    10^18      exa     E
+    10^15      peta    P
+    10^12      tera    T
+    10^9       giga    G
+    10^6       mega    M
+    10^3       kilo    k
+    10^2       hecto   h
+    10^1       deka    da
+    1
+    10^-1      deci    d
+    10^-2      centi   c
+    10^-3      milli   m
+    10^-6      micro   u (\mu in SI)
+    10^-9      nano    n
+    10^-12     pico    p
+    10^-15     femto   f
+    10^-18     atto    a
+    10^-21     zepto   z
+    10^-24     yocto   y
+    ======     ======  ==============
 
     **Defining your own**
 
-     It can be useful to define your own units for printing
-     purposes. So for example, to define the newton metre, you
-     write
+    It can be useful to define your own units for printing
+    purposes. So for example, to define the newton metre, you
+    write:
 
-     >>> import saiunit as U
-     >>> Nm = U.newton * U.metre
+    .. code-block:: python
 
-     You can then do
+        >>> import saiunit as su
+        >>> Nm = su.newton * su.metre
 
-     >>> (1*Nm).in_unit(Nm)
-     '1. N m'
+    You can then do:
 
-     New "compound units", i.e. units that are composed of other units will be
-     automatically registered and from then on used for display. For example,
-     imagine you define total conductance for a membrane, and the total area of
-     that membrane:
+    .. code-block:: python
 
-     >>> conductance = 10.*U.nS
-     >>> area = 20000 * U.um**2
+        >>> (1 * Nm).in_unit(Nm)
+        '1. N m'
 
-     If you now ask for the conductance density, you will get an "ugly" display
-     in basic SI dimensions, as  does not know of a corresponding unit:
+    New "compound units", i.e. units that are composed of other units will be
+    automatically registered and from then on used for display. For example,
+    imagine you define total conductance for a membrane, and the total area of
+    that membrane:
 
-     >>> conductance/area
-     0.5 * metre ** -4 * kilogram ** -1 * second ** 3 * amp ** 2
+    .. code-block:: python
 
-     By using an appropriate unit once, it will be registered and from then on
-     used for display when appropriate:
+        >>> import saiunit as su
+        >>> conductance = 10. * su.nS
+        >>> area = 20000 * su.um ** 2
 
-     >>> U.usiemens/U.cm**2
-     usiemens / (cmetre ** 2)
-     >>> conductance/area  # same as before, but now knows about uS/cm^2
-     50. * usiemens / (cmetre ** 2)
+    If you now ask for the conductance density, you will get an "ugly" display
+    in basic SI dimensions, as saiunit does not know of a corresponding unit:
 
-     Note that user-defined units cannot override the standard units (`volt`,
-     `second`, etc.) that are predefined. For example, the unit
-     ``Nm`` has the dimensions "length²·mass/time²", and therefore the same
-     dimensions as the standard unit `joule`. The latter will be used for display
-     purposes:
+    .. code-block:: python
 
-     >>> 3*U.joule
-     3. * joule
-     >>> 3*Nm
-     3. * joule
+        >>> conductance / area
+        0.5 * metre ** -4 * kilogram ** -1 * second ** 3 * amp ** 2
+
+    By using an appropriate unit once, it will be registered and from then on
+    used for display when appropriate:
+
+    .. code-block:: python
+
+        >>> su.usiemens / su.cm ** 2
+        usiemens / (cmetre ** 2)
+        >>> conductance / area  # same as before, but now knows about uS/cm^2
+        50. * usiemens / (cmetre ** 2)
+
+    Note that user-defined units cannot override the standard units (``volt``,
+    ``second``, etc.) that are predefined. For example, the unit ``Nm`` has the
+    dimensions "length^2 * mass / time^2", and therefore the same dimensions as
+    the standard unit ``joule``. The latter will be used for display purposes:
+
+    .. code-block:: python
+
+        >>> 3 * su.joule
+        3. * joule
+        >>> 3 * Nm
+        3. * joule
+
+    Examples
+    --------
+    Create a simple unit:
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su.volt
+        Unit("V")
+        >>> su.mvolt
+        Unit("mV")
+
+    Combine units:
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> su.volt / su.amp
+        Unit("V / A")
 
     """
 
@@ -467,6 +552,26 @@ class Unit:
 
     @property
     def factor(self) -> float:
+        """
+        Return the conversion factor of the unit.
+
+        The factor represents a multiplicative constant that converts a
+        quantity expressed in this unit to its base-unit equivalent.  For
+        example, 1 calorie = 4.184 joule, so ``calorie.factor == 4.184``.
+
+        Returns
+        -------
+        float
+            The conversion factor.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.volt.factor
+            1.0
+        """
         return self._factor
 
     @factor.setter
@@ -478,6 +583,26 @@ class Unit:
 
     @property
     def base(self) -> float:
+        """
+        Return the base of the unit's scale exponent.
+
+        The base is the number that is raised to the ``scale`` power to
+        produce the unit's magnitude.  For SI-prefixed units this is 10
+        (e.g. ``kilo`` means ``10 ** 3``).
+
+        Returns
+        -------
+        float
+            The base of the exponent.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.kvolt.base
+            10.0
+        """
         return self._base
 
     @base.setter
@@ -489,6 +614,26 @@ class Unit:
 
     @property
     def scale(self) -> float | int:
+        """
+        Return the scale exponent of the unit.
+
+        The scale is the integer exponent applied to :attr:`base` to
+        produce the unit's magnitude relative to the base unit.  For
+        example, ``mvolt`` has ``scale == -3`` (i.e. ``10 ** -3``).
+
+        Returns
+        -------
+        float or int
+            The scale exponent.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.mvolt.scale
+            -3
+        """
         return self._scale
 
     @scale.setter
@@ -500,6 +645,28 @@ class Unit:
 
     @property
     def magnitude(self) -> float:
+        """
+        Return the absolute magnitude of the unit.
+
+        The magnitude is computed as ``factor * base ** scale`` and
+        represents the overall multiplicative factor that converts a
+        value in this unit to the corresponding base-unit value.
+
+        Returns
+        -------
+        float
+            The absolute magnitude of the unit.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.mvolt.magnitude
+            0.001
+            >>> su.kvolt.magnitude
+            1000.0
+        """
         # magnitude = factor * base ** scale
         return self.factor * self.base ** self.scale
 
@@ -512,7 +679,21 @@ class Unit:
     @property
     def dim(self) -> Dimension:
         """
-        The physical unit dimensions of this Array
+        Return the physical unit dimensions of this unit.
+
+        Returns
+        -------
+        Dimension
+            The :class:`~saiunit.Dimension` instance describing the
+            physical dimensions (e.g. length, mass, time, ...).
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.volt.dim
+            metre ** 2 * kilogram * second ** -3 * amp ** -1
         """
         return self._dim
 
@@ -527,19 +708,51 @@ class Unit:
     @property
     def is_unitless(self) -> bool:
         """
-        Whether the array does not have unit.
+        Whether the unit is dimensionless with no scaling.
 
-        Returns:
-          bool: True if the array does not have unit.
+        A unit is considered unitless when its dimension is dimensionless,
+        its scale exponent is 0, and its factor is 1.0.
+
+        Returns
+        -------
+        bool
+            ``True`` if the unit is unitless, ``False`` otherwise.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.UNITLESS.is_unitless
+            True
+            >>> su.volt.is_unitless
+            False
         """
         return self.dim.is_dimensionless and self.scale == 0 and self.factor == 1.0
 
     @property
     def should_display_unit(self) -> bool:
-        """Whether the unit should be shown in formatted output.
+        """
+        Whether the unit should be shown in formatted output.
 
-        Returns True for all non-unitless units, and also for dimensionless
-        units that carry a meaningful registered name (e.g. radian, steradian).
+        Returns ``True`` for all non-unitless units, and also for
+        dimensionless units that carry a meaningful registered name
+        (e.g. radian, steradian).
+
+        Returns
+        -------
+        bool
+            ``True`` if the unit should be displayed, ``False`` otherwise.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.volt.should_display_unit
+            True
+            >>> su.UNITLESS.should_display_unit
+            False
         """
         if not self.is_unitless:
             return True
@@ -549,7 +762,23 @@ class Unit:
     @property
     def name(self):
         """
-        The name of the unit.
+        Return the full name of the unit.
+
+        Returns
+        -------
+        str or None
+            The full name of the unit (e.g. ``'volt'``, ``'mvolt'``),
+            or ``None`` if no name was assigned.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.volt.name
+            'volt'
+            >>> su.mvolt.name
+            'mvolt'
         """
         return self._name
 
@@ -563,7 +792,26 @@ class Unit:
     @property
     def dispname(self):
         """
-        The display name of the unit.
+        Return the display name of the unit.
+
+        The display name is the short symbol used when rendering the
+        unit in string output (e.g. ``'V'`` for volt, ``'mV'`` for
+        millivolt).
+
+        Returns
+        -------
+        str or None
+            The display name of the unit.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.volt.dispname
+            'V'
+            >>> su.mvolt.dispname
+            'mV'
         """
         return self._dispname
 
@@ -582,6 +830,17 @@ class Unit:
         -------
         Unit
             A new Unit object with the factor set to 1.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> u = su.Unit.create(su.Dimension(kg=1), 'pound', 'lb', factor=0.453592)
+            >>> u.factor
+            0.453592
+            >>> u.factorless().factor
+            1.0
         """
         # using standard units
         key = (self.dim, self.scale, self.base, 1.)
@@ -603,6 +862,22 @@ class Unit:
     def copy(self):
         """
         Return a copy of this Unit.
+
+        Returns
+        -------
+        Unit
+            A new Unit object with the same attributes.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> u = su.volt.copy()
+            >>> u == su.volt
+            True
+            >>> u is su.volt
+            False
         """
         return Unit(
             dim=self.dim,
@@ -641,7 +916,10 @@ class Unit:
 
     def has_same_magnitude(self, other: 'Unit') -> bool:
         """
-        Whether this Unit has the same ``scale`` as another Unit.
+        Whether this Unit has the same magnitude as another Unit.
+
+        Two units have the same magnitude when they share the same
+        ``scale``, ``base``, and ``factor``.
 
         Parameters
         ----------
@@ -651,7 +929,17 @@ class Unit:
         Returns
         -------
         bool
-            Whether the two Units have the same scale.
+            Whether the two Units have the same magnitude.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.mvolt.has_same_magnitude(su.mamp)
+            True
+            >>> su.mvolt.has_same_magnitude(su.volt)
+            False
         """
         return self.scale == other.scale and self.base == other.base and self.factor == other.factor
 
@@ -668,6 +956,16 @@ class Unit:
         -------
         bool
             Whether the two Units have the same base.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.volt.has_same_base(su.amp)
+            True
+            >>> su.volt.has_same_base(su.mvolt)
+            True
         """
         return self.base == other.base
 
@@ -684,6 +982,16 @@ class Unit:
         -------
         bool
             Whether the two Units have the same unit dimensions.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.volt.has_same_dim(su.mvolt)
+            True
+            >>> su.volt.has_same_dim(su.amp)
+            False
         """
         from ._base_getters import get_dim
         other_dim = get_dim(other)
@@ -722,8 +1030,19 @@ class Unit:
 
         Returns
         -------
-        u : `Unit`
+        u : Unit
             The new unit.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> from saiunit import Dimension
+            >>> energy_dim = su.joule.dim
+            >>> cal = su.Unit.create(energy_dim, 'calorie', 'cal', factor=4.184)
+            >>> cal
+            Unit("cal")
         """
         u = Unit(
             dim=dim,
@@ -752,8 +1071,19 @@ class Unit:
 
         Returns
         -------
-        u : `Unit`
+        u : Unit
             The new unit.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> uvolt = su.Unit.create_scaled_unit(su.volt, 'u')
+            >>> uvolt.name
+            'uvolt'
+            >>> uvolt.scale
+            -6
         """
         if scalefactor not in _siprefixes:
             raise ValueError(
@@ -814,7 +1144,7 @@ class Unit:
     def __str__(self) -> str:
         return self._canonical_str()
 
-    def __mul__(self, other) -> 'Unit':
+    def __mul__(self, other) -> 'Unit | Quantity':
         # self * other
         if isinstance(other, Unit):
             _assert_same_base(self, other)
@@ -856,13 +1186,10 @@ class Unit:
         else:
             from ._base_quantity import Quantity
             if isinstance(other, Quantity):
-                return Quantity(
-                    other.mantissa,
-                    unit=(self * other.unit)
-                )
+                return Quantity(other.mantissa, unit=(self * other.unit))
             return Quantity(other, unit=self)
 
-    def __rmul__(self, other) -> 'Unit':
+    def __rmul__(self, other) -> 'Unit | Quantity':
         # other * self
         if isinstance(other, Unit):
             return other.__mul__(self)
@@ -914,7 +1241,7 @@ class Unit:
         else:
             raise TypeError(f"unit {self} cannot divide by a non-unit {other}")
 
-    def __rdiv__(self, other) -> 'Unit':
+    def __rdiv__(self, other) -> 'Unit | Quantity':
         # other / self
         if isinstance(other, Unit):
             return other.__div__(self)
@@ -925,6 +1252,27 @@ class Unit:
         return Quantity(other, unit=self.reverse())
 
     def reverse(self):
+        """
+        Return the multiplicative inverse of this unit.
+
+        Computes ``1 / self``, producing a new unit with negated scale,
+        inverted factor, and reciprocal dimensions.
+
+        Returns
+        -------
+        Unit
+            A new Unit representing the reciprocal of this unit.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as su
+            >>> su.second.reverse()
+            Unit("Hz")
+            >>> su.metre.reverse()
+            Unit("1 / m")
+        """
         dim = self.dim ** -1
         scale = -self.scale
         factor = 1. / self.factor
@@ -1116,3 +1464,19 @@ def _to_unit(*args):
 _to_unit.__module__ = 'saiunit._base_unit'
 
 UNITLESS = Unit()
+"""
+The canonical unitless (dimensionless) unit.
+
+``UNITLESS`` is a singleton-like :class:`Unit` with no physical dimensions,
+a scale of 0, a base of 10, and a factor of 1.  It is returned by default
+when a :class:`Unit` is constructed with no arguments, and is used
+internally as the neutral element of unit arithmetic.
+
+.. code-block:: python
+
+    >>> import saiunit as su
+    >>> su.UNITLESS.is_unitless
+    True
+    >>> su.UNITLESS.dim.is_dimensionless
+    True
+"""

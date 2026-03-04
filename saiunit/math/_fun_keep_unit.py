@@ -125,6 +125,15 @@ def concatenate(
     res : ndarray, Quantity
       The concatenated array. The type of the array is the same as that of the
       first array passed in.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2] * su.second
+      >>> b = [3, 4] * su.second
+      >>> su.math.concatenate([a, b])
     """
     return _fun_keep_unit_sequence(jnp.concatenate, arrays, axis=axis, dtype=dtype)
 
@@ -152,6 +161,15 @@ def stack(
     -------
     res : ndarray, Quantity
       The stacked array has one more dimension than the input arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> b = [4, 5, 6] * su.second
+      >>> su.math.stack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.stack, arrays, axis=axis, dtype=dtype)
 
@@ -176,6 +194,15 @@ def vstack(
     -------
     res : ndarray, Quantity
       The array formed by stacking the given arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> b = [4, 5, 6] * su.meter
+      >>> su.math.vstack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.vstack, tup, dtype=dtype)
 
@@ -203,6 +230,15 @@ def hstack(
     -------
     res : ndarray, Quantity
       The array formed by stacking the given arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> b = [4, 5, 6] * su.meter
+      >>> su.math.hstack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.hstack, arrays, dtype=dtype)
 
@@ -227,6 +263,15 @@ def dstack(
     -------
     res : ndarray, Quantity
       The array formed by stacking the given arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1], [2], [3]] * su.meter
+      >>> b = [[4], [5], [6]] * su.meter
+      >>> su.math.dstack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.dstack, arrays, dtype=dtype)
 
@@ -250,6 +295,15 @@ def column_stack(
     -------
     res : ndarray, Quantity
       The array formed by stacking the given arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> b = [4, 5, 6] * su.second
+      >>> su.math.column_stack([a, b])
     """
     return _fun_keep_unit_sequence(jnp.column_stack, tup)
 
@@ -271,6 +325,14 @@ def block(
     -------
     res : ndarray, Quantity
       The array constructed from the given blocks.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.second
+      >>> su.math.block(a)
     """
     return _fun_keep_unit_sequence(jnp.block, arrays)
 
@@ -299,6 +361,14 @@ def append(
     res : ndarray, Quantity
       A copy of `arr` with `values` appended to `axis`. Note that `append` does not occur in-place:
       a new array is allocated and filled.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> su.math.append(a, 4 * su.second)
     """
     return _fun_keep_unit_sequence(jnp.append, arr, values, axis=axis)
 
@@ -346,6 +416,15 @@ def split(
     -------
     res : list of ndarrays, Quantity
       A list of sub-arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.arange(9.0) * su.second
+      >>> su.math.split(a, 3)
     """
     return _fun_keep_unit_return_sequence(jnp.split, a, indices_or_sections=indices_or_sections, axis=axis)
 
@@ -374,6 +453,15 @@ def array_split(
     -------
     sub-arrays : list of Quantity or list of array
       A list of sub-arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.arange(9.0) * su.second
+      >>> su.math.array_split(a, 3)
     """
     return _fun_keep_unit_return_sequence(jnp.split, ary, indices_or_sections=indices_or_sections, axis=axis)
 
@@ -400,6 +488,15 @@ def dsplit(
     -------
     res : list of ndarrays, Quantity
       A list of sub-arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.arange(16.0).reshape(2, 2, 4) * su.meter
+      >>> su.math.dsplit(a, 2)
     """
     return _fun_keep_unit_return_sequence(jnp.dsplit, a, indices_or_sections)
 
@@ -426,6 +523,15 @@ def hsplit(
     -------
     res : list of ndarrays, Quantity
       A list of sub-arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.arange(16.0).reshape(4, 4) * su.meter
+      >>> su.math.hsplit(a, 2)
     """
     return _fun_keep_unit_return_sequence(jnp.hsplit, a, indices_or_sections)
 
@@ -452,6 +558,15 @@ def vsplit(
     -------
     res : list of ndarrays, Quantity
       A list of sub-arrays.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.arange(16.0).reshape(4, 4) * su.meter
+      >>> su.math.vsplit(a, 2)
     """
     return _fun_keep_unit_return_sequence(jnp.vsplit, a, indices_or_sections)
 
@@ -493,6 +608,15 @@ def broadcast_arrays(
         to write to the arrays, make copies first. While you can set the
         ``writable`` flag True, writing to a single output value may end up
         changing more than one location in the output array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> b = [[4], [5]] * su.second
+      >>> su.math.broadcast_arrays(a, b)
     """
     return _broadcast_fun(jnp.broadcast_arrays, *args)
 
@@ -514,6 +638,15 @@ def promote_dtypes(
     promoted : list of arrays
         These arrays have the same shape as the input arrays, with the
         data type of the most precise input.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> b = [4.0, 5.0, 6.0] * su.second
+      >>> su.math.promote_dtypes(a, b)
     """
     return _broadcast_fun(_promote_dtypes, *args)
 
@@ -547,6 +680,13 @@ def broadcast_to(
         If the array is not compatible with the new shape according to NumPy's
         broadcasting rules.
 
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> su.math.broadcast_to(a, (2, 3))
     """
     return _fun_keep_unit_unary(jnp.broadcast_to, array, shape=shape)
 
@@ -567,6 +707,13 @@ def atleast_1d(
     -------
     res : ndarray, Quantity
       An array or a quantity, or a tuple of arrays or quantities, each with `a.ndim >= 1`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> su.math.atleast_1d(0 * su.second)
     """
     return _broadcast_fun(jnp.atleast_1d, *arys)
 
@@ -587,6 +734,14 @@ def atleast_2d(
     -------
     res : ndarray, Quantity
       An array or a quantity, or a tuple of arrays or quantities, each with `a.ndim >= 2`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> su.math.atleast_2d(a)
     """
     return _broadcast_fun(jnp.atleast_2d, *arys)
 
@@ -607,6 +762,14 @@ def atleast_3d(
     -------
     res : ndarray, Quantity
       An array or a quantity, or a tuple of arrays or quantities, each with `a.ndim >= 3`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.meter
+      >>> su.math.atleast_3d(a)
     """
     return _broadcast_fun(jnp.atleast_3d, *arys)
 
@@ -653,6 +816,14 @@ def reshape(
       This will be a new view object if possible; otherwise, it will
       be a copy.  Note there is no guarantee of the *memory layout* (C- or
       Fortran- contiguous) of the returned array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4] * su.second
+      >>> su.math.reshape(a, (2, 2))
     """
     return _fun_keep_unit_unary(jnp.reshape, a, shape=shape, order=order)
 
@@ -681,6 +852,16 @@ def moveaxis(
     -------
     result : ndarray, Quantity
       Array with moved axes. This array is a view of the input array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.zeros((3, 4, 5)) * su.meter
+      >>> su.math.moveaxis(a, 0, -1).shape
+      (4, 5, 3)
     """
     return _fun_keep_unit_unary(jnp.moveaxis, a, source=source, destination=destination)
 
@@ -706,6 +887,16 @@ def transpose(
     p : ndarray, Quantity
       `a` with its axes permuted.  A view is returned whenever
       possible.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.ones((2, 3)) * su.second
+      >>> su.math.transpose(a).shape
+      (3, 2)
     """
     return _fun_keep_unit_unary(jnp.transpose, a, axes=axes)
 
@@ -732,6 +923,16 @@ def swapaxes(
     -------
     a_swapped : ndarray, Quantity
       a new array where the axes are swapped.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.zeros((3, 4, 5)) * su.meter
+      >>> su.math.swapaxes(a, 0, 2).shape
+      (5, 4, 3)
     """
     return _fun_keep_unit_unary(jnp.swapaxes, a, axis1=axis1, axis2=axis2)
 
@@ -755,6 +956,14 @@ def tile(
     -------
     res : ndarray, Quantity
       The tiled output array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> su.math.tile(a, 2)
     """
     return _fun_keep_unit_unary(jnp.tile, A, reps=reps)
 
@@ -785,6 +994,14 @@ def repeat(
     -------
     res : ndarray, Quantity
       Output array which has the same shape as `a`, except along the given axis.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> su.math.repeat(a, 2)
     """
     return _fun_keep_unit_unary(jnp.repeat, a, repeats=repeats, axis=axis, total_repeat_length=total_repeat_length)
 
@@ -808,6 +1025,14 @@ def flip(
     -------
     res : ndarray, Quantity
       A view of `m` with the entries of axis reversed. Since a view is returned, this operation is done in constant time.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> su.math.flip(a)
     """
     return _fun_keep_unit_unary(jnp.flip, m, axis=axis)
 
@@ -828,6 +1053,14 @@ def fliplr(
     -------
     res : ndarray, Quantity
       A view of `m` with the columns reversed. Since a view is returned, this operation is done in constant time.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.meter
+      >>> su.math.fliplr(a)
     """
     return _fun_keep_unit_unary(jnp.fliplr, m)
 
@@ -848,6 +1081,14 @@ def flipud(
     -------
     res : ndarray, Quantity
       A view of `m` with the rows reversed.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.meter
+      >>> su.math.flipud(a)
     """
     return _fun_keep_unit_unary(jnp.flipud, m)
 
@@ -877,6 +1118,14 @@ def roll(
     -------
     res : ndarray, Quantity
       Output array, with the same shape as `a`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> su.math.roll(a, 1)
     """
     return _fun_keep_unit_unary(jnp.roll, a, shift=shift, axis=axis)
 
@@ -900,6 +1149,15 @@ def expand_dims(
     -------
     res : ndarray, Quantity
       View of `a` with the number of dimensions increased by one.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> su.math.expand_dims(a, axis=0).shape
+      (1, 3)
     """
     return _fun_keep_unit_unary(jnp.expand_dims, a, axis=axis)
 
@@ -924,6 +1182,15 @@ def squeeze(
     -------
     res : ndarray, Quantity
       An array with the same data as `a`, but with a lower dimension.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[[1], [2], [3]]] * su.second
+      >>> su.math.squeeze(a).shape
+      (3,)
     """
     return _fun_keep_unit_unary(jnp.squeeze, a, axis=axis)
 
@@ -962,6 +1229,14 @@ def sort(
     -------
     res : ndarray, Quantity
       Sorted copy of the input array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [3, 1, 2] * su.meter
+      >>> su.math.sort(a)
     """
     return _fun_keep_unit_unary(jnp.sort, a, axis=axis, kind=kind, order=order, stable=stable, descending=descending)
 
@@ -998,6 +1273,14 @@ def max(
     res : ndarray, Quantity
       Maximum of `a`. If `axis` is None, the result is a scalar value. If `axis` is given, the result is an array of
       dimension `a.ndim - 1`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> su.math.max(a)
     """
     return _fun_keep_unit_unary(jnp.max, a, axis=axis, keepdims=keepdims, initial=initial, where=where)
 
@@ -1034,6 +1317,14 @@ def min(
     res : ndarray, Quantity
       Minimum of `a`. If `axis` is None, the result is a scalar value. If `axis` is given, the result is an array of
       dimension `a.ndim - 1`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> su.math.min(a)
     """
     return _fun_keep_unit_unary(jnp.min, a, axis=axis, keepdims=keepdims, initial=initial, where=where)
 
@@ -1070,6 +1361,14 @@ def diagonal(
     res : ndarray
       The extracted diagonals. The shape of the output is determined by considering the shape of the input array with
       the specified axis removed.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.second
+      >>> su.math.diagonal(a)
     """
     return _fun_keep_unit_unary(jnp.diagonal, a, offset=offset, axis1=axis1, axis2=axis2)
 
@@ -1098,6 +1397,14 @@ def ravel(
     -------
     res : ndarray, Quantity
       The flattened quantity or array. The shape of the output is the same as `a`, but the array is 1-D.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.meter
+      >>> su.math.ravel(a)
     """
     return _fun_keep_unit_unary(jnp.ravel, a, order=order)
 
@@ -1128,6 +1435,14 @@ def flatten(
     Returns
     -------
     out: Array, Quantity
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.second
+      >>> su.math.flatten(a)
     """
     shape = x.shape
     ndim = x.ndim
@@ -1170,6 +1485,14 @@ def unflatten(
       A tensor with the same data as ``input``, but with ``dim`` split into multiple dimensions.
       The returned tensor has one more dimension than the input tensor.
       The returned tensor shares the same underlying data with this tensor.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4, 5, 6] * su.meter
+      >>> su.math.unflatten(a, 0, (2, 3))
     """
     if x.ndim <= axis:
         raise ValueError(
@@ -1194,6 +1517,14 @@ def remove_diag(x: jax.typing.ArrayLike | Quantity) -> jax.Array | Quantity:
     -------
     arr: Array, Quantity
       The matrix without diagonal which has the shape of `(M, N-1)`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] * su.second
+      >>> su.math.remove_diag(a)
     """
     x = maybe_custom_array(x)
     unit = UNITLESS
@@ -1239,6 +1570,15 @@ def choose(
     -------
     res : ndarray, Quantity
       The constructed array. The shape is identical to the shape of `a`, and the data type is the data type of `choices`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> choices = [jnp.array([1, 2, 3]), jnp.array([4, 5, 6])]
+      >>> su.math.choose(jnp.array([0, 1, 0]), choices)
     """
     return _fun_keep_unit_unary(jnp.choose, a, choices=choices, mode=mode)
 
@@ -1262,6 +1602,14 @@ def diagflat(
     -------
     res : ndarray, Quantity
       The 2-D output array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> su.math.diagflat(a)
     """
     return _fun_keep_unit_unary(jnp.diagflat, v, k=k)
 
@@ -1297,6 +1645,15 @@ def astype(
     -------
     out : ndarray, Quantity
         A copy of the array, cast to a specified type.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1, 2, 3] * su.second
+      >>> su.math.astype(a, jnp.float32)
     """
     return _fun_keep_unit_unary(jnp.astype, x, dtype)
 
@@ -1315,6 +1672,14 @@ def real(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1 + 2j, 3 + 4j] * su.second
+      >>> su.math.real(a)
     """
     return _fun_keep_unit_unary(jnp.real, x)
 
@@ -1333,6 +1698,14 @@ def imag(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1 + 2j, 3 + 4j] * su.second
+      >>> su.math.imag(a)
     """
     return _fun_keep_unit_unary(jnp.imag, x)
 
@@ -1351,6 +1724,14 @@ def conj(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1 + 2j, 3 + 4j] * su.second
+      >>> su.math.conj(a)
     """
     return _fun_keep_unit_unary(jnp.conj, x)
 
@@ -1369,6 +1750,14 @@ def conjugate(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.A
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1 + 2j, 3 + 4j] * su.second
+      >>> su.math.conjugate(a)
     """
     return _fun_keep_unit_unary(jnp.conjugate, x)
 
@@ -1387,6 +1776,14 @@ def negative(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, -2, 3] * su.meter
+      >>> su.math.negative(a)
     """
     return _fun_keep_unit_unary(jnp.negative, x)
 
@@ -1405,6 +1802,14 @@ def positive(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, -2, 3] * su.meter
+      >>> su.math.positive(a)
     """
     return _fun_keep_unit_unary(jnp.positive, x)
 
@@ -1423,6 +1828,14 @@ def abs(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [-1, -2, 3] * su.meter
+      >>> su.math.abs(a)
     """
     return _fun_keep_unit_unary(jnp.abs, x)
 
@@ -1480,6 +1893,14 @@ def sum(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.0, 2.0, 3.0] * su.second
+      >>> su.math.sum(a)
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
@@ -1520,6 +1941,15 @@ def nancumsum(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0] * su.meter
+      >>> su.math.nancumsum(a)
     """
     return _fun_keep_unit_unary(jnp.nancumsum, x, axis=axis, dtype=dtype)
 
@@ -1568,6 +1998,15 @@ def nansum(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0] * su.meter
+      >>> su.math.nansum(a)
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
@@ -1607,6 +2046,14 @@ def cumsum(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.second
+      >>> su.math.cumsum(a)
     """
     return _fun_keep_unit_unary(jnp.cumsum, x, axis=axis, dtype=dtype)
 
@@ -1633,6 +2080,14 @@ def ediff1d(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 4, 7] * su.meter
+      >>> su.math.ediff1d(a)
     """
     x_unit = get_unit(x)
     if to_end is not None:
@@ -1656,6 +2111,14 @@ def absolute(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [-1.0, -2.0, 3.0] * su.meter
+      >>> su.math.absolute(a)
     """
     return _fun_keep_unit_unary(jnp.absolute, x)
 
@@ -1674,6 +2137,14 @@ def fabs(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [-1.0, -2.0, 3.0] * su.meter
+      >>> su.math.fabs(a)
     """
     return _fun_keep_unit_unary(jnp.fabs, x)
 
@@ -1713,6 +2184,14 @@ def median(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4, 5] * su.second
+      >>> su.math.median(a)
     """
     return _fun_keep_unit_unary(jnp.median, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims)
 
@@ -1755,6 +2234,15 @@ def nanmin(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0] * su.meter
+      >>> su.math.nanmin(a)
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
@@ -1799,6 +2287,15 @@ def nanmax(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0] * su.meter
+      >>> su.math.nanmax(a)
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
@@ -1840,6 +2337,14 @@ def ptp(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4, 5] * su.meter
+      >>> su.math.ptp(a)
     """
     return _fun_keep_unit_unary(jnp.ptp, x, axis=axis, keepdims=keepdims)
 
@@ -1894,6 +2399,14 @@ def average(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.0, 2.0, 3.0] * su.second
+      >>> su.math.average(a)
     """
     return _fun_keep_unit_unary(jnp.average, x, axis=axis, weights=weights, returned=returned, keepdims=keepdims)
 
@@ -1940,6 +2453,14 @@ def mean(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.0, 2.0, 3.0] * su.second
+      >>> su.math.mean(a)
     """
     return _fun_keep_unit_unary(jnp.mean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where)
 
@@ -1992,6 +2513,14 @@ def std(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.0, 2.0, 3.0] * su.meter
+      >>> su.math.std(a)
     """
     return _fun_keep_unit_unary(jnp.std, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims, where=where)
 
@@ -2037,6 +2566,15 @@ def nanmedian(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0] * su.second
+      >>> su.math.nanmedian(a)
     """
     return _fun_keep_unit_unary(jnp.nanmedian, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims)
 
@@ -2083,6 +2621,15 @@ def nanmean(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0] * su.meter
+      >>> su.math.nanmean(a)
     """
     return _fun_keep_unit_unary(jnp.nanmean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where)
 
@@ -2135,6 +2682,15 @@ def nanstd(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0] * su.meter
+      >>> su.math.nanstd(a)
     """
     return _fun_keep_unit_unary(jnp.nanstd, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims,
                                 where=where)
@@ -2172,6 +2728,14 @@ def diff(
     -------
     out : jax.Array, Quantity
       Quantity if `x` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 4, 7] * su.meter
+      >>> su.math.diff(a)
     """
     x_unit = get_unit(x)
     if prepend is not None:
@@ -2209,6 +2773,14 @@ def rot90(
       A rotated view of `m`.
 
       This is a quantity if `m` is a quantity.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.second
+      >>> su.math.rot90(a)
     """
     return _fun_keep_unit_unary(jnp.rot90, m, k=k, axes=axes)
 
@@ -2249,6 +2821,15 @@ def intersect1d(
     comm2 : ndarray
       The indices of the first occurrences of the common values in `ar2`.
       Only provided if `return_indices` is True.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4, 5] * su.second
+      >>> b = [3, 4, 5, 6, 7] * su.second
+      >>> su.math.intersect1d(a, b)
     """
     ar1 = maybe_custom_array(ar1)
     ar2 = maybe_custom_array(ar2)
@@ -2316,6 +2897,15 @@ def nan_to_num(
     out : ndarray, Quantity
       `x`, with the non-finite values replaced. If `copy` is False, this may
       be `x` itself.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, jnp.inf] * su.meter
+      >>> su.math.nan_to_num(a)
     """
     x_unit = get_unit(x)
     if isinstance(x, Quantity):
@@ -2378,6 +2968,14 @@ def trace(
       larger dimensions, then an array of sums along diagonals is returned.
 
       This is a Quantity if `a` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [[1, 2], [3, 4]] * su.second
+      >>> su.math.trace(a)
     """
     return _fun_keep_unit_unary(jnp.trace, a, offset=offset, axis1=axis1, axis2=axis2, dtype=dtype)
 
@@ -2431,6 +3029,14 @@ def percentile(
     -------
     out : jax.Array
       Output array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4, 5] * su.meter
+      >>> su.math.percentile(a, 50)
     """
     if isinstance(q, Quantity):
         if not q.is_unitless:
@@ -2493,6 +3099,15 @@ def nanpercentile(
     -------
     out : jax.Array
       Output array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0, 4.0, 5.0] * su.meter
+      >>> su.math.nanpercentile(a, 50)
     """
     if isinstance(q, Quantity):
         if not q.is_unitless:
@@ -2555,6 +3170,14 @@ def quantile(
     -------
     out : jax.Array
       Output array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4, 5] * su.meter
+      >>> su.math.quantile(a, 0.5)
     """
     if isinstance(q, Quantity):
         if not q.is_unitless:
@@ -2617,6 +3240,15 @@ def nanquantile(
     -------
     out : jax.Array
       Output array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 3.0, 4.0, 5.0] * su.meter
+      >>> su.math.nanquantile(a, 0.5)
     """
     if isinstance(q, Quantity):
         if not q.is_unitless:
@@ -2676,6 +3308,15 @@ def fmod(x1: Union[Quantity, jax.typing.ArrayLike],
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [5, 6, 7] * su.second
+      >>> b = [2, 3, 4] * su.second
+      >>> su.math.fmod(a, b)
     """
     return _fun_keep_unit_binary(jnp.fmod, x1, x2)
 
@@ -2696,6 +3337,15 @@ def mod(x1: Union[Quantity, jax.typing.ArrayLike], x2: Union[Quantity, jax.Array
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [5, 6, 7] * su.meter
+      >>> b = [2, 3, 4] * su.meter
+      >>> su.math.mod(a, b)
     """
     return _fun_keep_unit_binary(jnp.mod, x1, x2)
 
@@ -2719,6 +3369,15 @@ def copysign(
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [-1.0, 2.0] * su.meter
+      >>> b = [1.0, -3.0] * su.meter
+      >>> su.math.copysign(a, b)
     """
     x2 = x2.mantissa if isinstance(x2, Quantity) else x2
     return _fun_keep_unit_unary(jnp.copysign, x1, x2)
@@ -2743,6 +3402,15 @@ def maximum(
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 3, 5] * su.second
+      >>> b = [2, 2, 4] * su.second
+      >>> su.math.maximum(a, b)
     """
     return _fun_keep_unit_binary(jnp.maximum, x1, x2)
 
@@ -2766,6 +3434,15 @@ def minimum(
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 3, 5] * su.second
+      >>> b = [2, 2, 4] * su.second
+      >>> su.math.minimum(a, b)
     """
     return _fun_keep_unit_binary(jnp.minimum, x1, x2)
 
@@ -2789,6 +3466,16 @@ def fmax(
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 5.0] * su.meter
+      >>> b = [2.0, 2.0, 4.0] * su.meter
+      >>> su.math.fmax(a, b)
     """
     return _fun_keep_unit_binary(jnp.fmax, x1, x2)
 
@@ -2812,6 +3499,16 @@ def fmin(
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1.0, jnp.nan, 5.0] * su.meter
+      >>> b = [2.0, 2.0, 4.0] * su.meter
+      >>> su.math.fmin(a, b)
     """
     return _fun_keep_unit_binary(jnp.fmin, x1, x2)
 
@@ -2835,6 +3532,16 @@ def lcm(
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.array([4, 6]) * su.second
+      >>> b = jnp.array([6, 8]) * su.second
+      >>> su.math.lcm(a.astype(jnp.int64), b.astype(jnp.int64))
     """
     return _fun_keep_unit_binary(jnp.lcm, x1, x2)
 
@@ -2856,6 +3563,16 @@ def gcd(x1: Union[Quantity, jax.typing.ArrayLike],
     -------
     out : jax.Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.array([4, 6]) * su.second
+      >>> b = jnp.array([6, 8]) * su.second
+      >>> su.math.gcd(a.astype(jnp.int64), b.astype(jnp.int64))
     """
     return _fun_keep_unit_binary(jnp.gcd, x1, x2)
 
@@ -2880,6 +3597,15 @@ def add(
     add : ndarray or scalar
       The sum of `x` and `y`, element-wise.
       This is a scalar if both `x` and `y` are scalars.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3] * su.meter
+      >>> b = [4, 5, 6] * su.meter
+      >>> su.math.add(a, b)
     """
     return _fun_keep_unit_binary(jnp.add, x, y)
 
@@ -2907,6 +3633,15 @@ def subtract(
     subtract : ndarray
       The difference of `x` and `y`, element-wise.
       This is a scalar if both `x` and `y` are scalars.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [4, 5, 6] * su.meter
+      >>> b = [1, 2, 3] * su.meter
+      >>> su.math.subtract(a, b)
     """
     return _fun_keep_unit_binary(jnp.subtract, x, y)
 
@@ -2940,6 +3675,15 @@ def remainder(
       This is a scalar if both `x1` and `x2` are scalars.
 
       This is a Quantity if division of `x1` by `x2` is not dimensionless.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [5, 6, 7] * su.second
+      >>> b = [2, 3, 4] * su.second
+      >>> su.math.remainder(a, b)
     """
     return _fun_keep_unit_binary(jnp.remainder, x, y)
 
@@ -2969,6 +3713,15 @@ def nextafter(
     out : ndarray or scalar
       The next representable values of `x` in the direction of `y`.
       This is a scalar if both `x` and `y` are scalars.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.0, 2.0] * su.meter
+      >>> b = [2.0, 1.0] * su.meter
+      >>> su.math.nextafter(a, b)
     """
     return _fun_keep_unit_binary(jnp.nextafter, x, y)
 
@@ -2987,16 +3740,35 @@ def interp(
     """
     One-dimensional linear interpolation.
 
-    Args:
-      x: array_like, Quantity
-      xp: array_like, Quantity
-      fp: array_like, Quantity
-      left: array_like, Quantity, optional
-      right: array_like, Quantity, optional
-      period: array_like, Quantity, optional
+    Parameters
+    ----------
+    x : array_like, Quantity
+      The x-coordinates at which to evaluate the interpolated values.
+    xp : array_like, Quantity
+      The x-coordinates of the data points, must be increasing.
+    fp : array_like, Quantity
+      The y-coordinates of the data points.
+    left : array_like, Quantity, optional
+      Value to return for ``x < xp[0]``.
+    right : array_like, Quantity, optional
+      Value to return for ``x > xp[-1]``.
+    period : array_like, Quantity, optional
+      A period for the x-coordinates.
 
-    Returns:
-      Union[jax.Array, Quantity]: Quantity if `x`, `xp`, and `fp` are Quantities that have the same unit, else an array.
+    Returns
+    -------
+    out : jax.Array, Quantity
+      Quantity if `fp` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> x = [1, 2, 3] * su.second
+      >>> xp = [0, 1, 2, 3, 4] * su.second
+      >>> fp = [0, 1, 2, 3, 4] * su.meter
+      >>> su.math.interp(x, xp, fp)
     """
     x_unit = get_unit(x)
     fp, y_unit = split_mantissa_unit(fp)
@@ -3021,13 +3793,27 @@ def clip(
     """
     Clip (limit) the values in an array.
 
-    Args:
-      a: array_like, Quantity
-      a_min: array_like, Quantity
-      a_max: array_like, Quantity
+    Parameters
+    ----------
+    a : array_like, Quantity
+      Array containing elements to clip.
+    a_min : array_like, Quantity
+      Minimum value. If None, clipping is not performed on the lower interval edge.
+    a_max : array_like, Quantity
+      Maximum value. If None, clipping is not performed on the upper interval edge.
 
-    Returns:
-      Union[jax.Array, Quantity]: Quantity if `a`, `a_min`, and `a_max` are Quantities that have the same unit, else an array.
+    Returns
+    -------
+    out : jax.Array, Quantity
+      Quantity if `a` is a Quantity, else an array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4, 5] * su.meter
+      >>> su.math.clip(a, 2 * su.meter, 4 * su.meter)
     """
     a_unit = get_unit(a)
     if a_min is not None:
@@ -3089,6 +3875,14 @@ def histogram(
       description of the possible semantics.
     bin_edges : array of dtype float
       Return the bin edges ``(length(hist)+1)``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 1, 3, 2] * su.second
+      >>> hist, bin_edges = su.math.histogram(a)
     """
     unit = UNITLESS
     if isinstance(x, Quantity):
@@ -3137,6 +3931,15 @@ def compress(
     -------
     res : ndarray, Quantity
       A new array that has the same number of dimensions as `a`, and the same shape as `a` with axis `axis` removed.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [1, 2, 3, 4] * su.meter
+      >>> su.math.compress(jnp.array([0, 1, 1, 0]), a)
     """
     if isinstance(condition, Quantity):
         if not condition.is_unitless:
@@ -3182,6 +3985,15 @@ def extract(
     -------
     res : ndarray
       The extracted elements. The shape of `res` is the same as that of `condition`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.array([1, 2, 3]) * su.meter
+      >>> su.math.extract(a.mantissa > 1, a)
     """
     if isinstance(condition, Quantity):
         if not condition.is_unitless:
@@ -3260,6 +4072,15 @@ def take(
     -------
     out : ndarray (Ni..., Nj..., Nk...)
       The returned array has the same type as `a`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = [4, 3, 5, 7, 6, 8] * su.second
+      >>> su.math.take(a, jnp.array([0, 1, 4]))
     """
     if isinstance(a, Quantity):
         return a.take(indices, axis=axis, mode=mode, unique_indices=unique_indices,
@@ -3296,6 +4117,16 @@ def select(
       The output at position m is the m-th element of the array in
       `choicelist` where the m-th element of the corresponding array in
       `condlist` is True.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> conds = [jnp.array([True, False, True]), jnp.array([False, True, False])]
+      >>> choices = [[1, 2, 3] * su.second, [4, 5, 6] * su.second]
+      >>> su.math.select(conds, choices, default=0)
     """
     for cond in condlist:
         if isinstance(cond, Quantity):
@@ -3341,6 +4172,14 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None):
     --------
     choose
     nonzero : The function that is called when x and y are omitted
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1, 2, 3, 4, 5] * su.meter
+      >>> su.math.where(a > 3 * su.meter, a, 0 * su.meter)
     """
     if isinstance(condition, Quantity):
         raise TypeError(
@@ -3422,6 +4261,14 @@ def unique(
     -------
     res : ndarray, Quantity
       The sorted unique values.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [0, 1, 2, 1, 0] * su.second
+      >>> su.math.unique(a)
     """
     a_unit = get_unit(a)
     if fill_value is not None:
@@ -3471,7 +4318,16 @@ def round(
 
     Returns
     -------
-    out : jax.Array
+    out : jax.Array, Quantity
+      Rounded values. Quantity if `x` is a Quantity.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.2, 2.7, 3.1] * su.meter
+      >>> su.math.round(a)
     """
     return _fun_keep_unit_unary(jnp.round, x, decimals=decimals)
 
@@ -3493,7 +4349,16 @@ def around(
 
     Returns
     -------
-    out : jax.Array
+    out : jax.Array, Quantity
+      Rounded values. Quantity if `x` is a Quantity.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.2, 2.7, 3.1] * su.second
+      >>> su.math.around(a)
     """
     return _fun_keep_unit_unary(jnp.around, x, decimals=decimals)
 
@@ -3512,7 +4377,16 @@ def rint(
 
     Returns
     -------
-    out : jax.Array
+    out : jax.Array, Quantity
+      Rounded values. Quantity if `x` is a Quantity.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.2, 2.7, 3.1] * su.meter
+      >>> su.math.rint(a)
     """
     return _fun_keep_unit_unary(jnp.rint, x)
 
@@ -3531,7 +4405,16 @@ def floor(
 
     Returns
     -------
-    out : jax.Array
+    out : jax.Array, Quantity
+      Floor values. Quantity if `x` is a Quantity.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.2, 2.7, 3.1] * su.meter
+      >>> su.math.floor(a)
     """
     return _fun_keep_unit_unary(jnp.floor, x)
 
@@ -3550,7 +4433,16 @@ def ceil(
 
     Returns
     -------
-    out : jax.Array
+    out : jax.Array, Quantity
+      Ceiling values. Quantity if `x` is a Quantity.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.2, 2.7, 3.1] * su.meter
+      >>> su.math.ceil(a)
     """
     return _fun_keep_unit_unary(jnp.ceil, x)
 
@@ -3569,7 +4461,16 @@ def trunc(
 
     Returns
     -------
-    out : jax.Array
+    out : jax.Array, Quantity
+      Truncated values. Quantity if `x` is a Quantity.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.7, -2.3, 3.9] * su.meter
+      >>> su.math.trunc(a)
     """
     return _fun_keep_unit_unary(jnp.trunc, x)
 
@@ -3588,7 +4489,16 @@ def fix(
 
     Returns
     -------
-    out : jax.Array
+    out : jax.Array, Quantity
+      Values rounded towards zero. Quantity if `x` is a Quantity.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.7, -2.3, 3.9] * su.meter
+      >>> su.math.fix(a)
     """
     return _fun_keep_unit_unary(jnp.trunc, x)
 
@@ -3608,6 +4518,14 @@ def modf(
     Returns
     -------
     The fractional and integral parts of the input, both with the same dimension.
+
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> a = [1.5, 2.7] * su.second
+      >>> frac, intg = su.math.modf(a)
     """
     if isinstance(x, Quantity):
         return jax.tree.map(lambda y: Quantity(y, unit=x.unit), jnp.modf(x.mantissa))
@@ -3617,24 +4535,33 @@ def modf(
 @set_module_as('saiunit.math')
 def gather(input: jax.Array | Quantity, dim: int, index: jax.Array):
     """
-    JAX implementation of torch.gather.
+    Gather values along an axis specified by dim, according to index.
 
-    Gathers values along an axis specified by dim, according to index.
+    JAX implementation of ``torch.gather``.
 
-    Args:
-        input: The source tensor
-        dim: The axis along which to index
-        index: The indices of elements to gather
+    Parameters
+    ----------
+    input : jax.Array, Quantity
+      The source array or Quantity.
+    dim : int
+      The axis along which to index.
+    index : jax.Array
+      The indices of elements to gather.
 
-    Returns:
-        JAX array with the gathered elements
+    Returns
+    -------
+    out : jax.Array, Quantity
+      Array with the gathered elements. Quantity if `input` is a Quantity.
 
-    Example:
-        >>> input = jnp.array([[1, 2], [3, 4]])
-        >>> index = jnp.array([[0, 0], [1, 0]])
-        >>> gather(input, 1, index)
-        Array([[1, 1],
-               [4, 3]], dtype=int32)
+    Examples
+    --------
+    .. code-block:: python
+
+      >>> import saiunit as su
+      >>> import jax.numpy as jnp
+      >>> a = jnp.array([[1, 2], [3, 4]]) * su.mV
+      >>> index = jnp.array([[0, 0], [1, 0]])
+      >>> su.math.gather(a, 1, index)
     """
     input = maybe_custom_array(input)
     # Normalize dim to be positive

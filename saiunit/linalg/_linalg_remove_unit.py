@@ -39,36 +39,60 @@ def cond(
 
     SaiUnit implementation of :func:`numpy.linalg.cond`.
 
-    The condition number is defined as ``norm(x, p) * norm(inv(x), p)``. For ``p = 2``
-    (the default), the condition number is the ratio of the largest to the smallest
-    singular value.
+    The condition number is defined as ``norm(x, p) * norm(inv(x), p)``.
+    For ``p = 2`` (the default), the condition number is the ratio of the
+    largest to the smallest singular value.  The unit is stripped before
+    computation and the result is a dimensionless JAX array.
 
-    Args:
-        x: quantity of shape ``(..., M, N)`` for which to compute the condition number.
-        p: the order of the norm to use. One of ``{None, 1, -1, 2, -2, inf, -inf, 'fro'}``;
-            see :func:`jax.numpy.linalg.norm` for the meaning of these. The default is ``p = None``,
-            which is equivalent to ``p = 2``. If not in ``{None, 2, -2}`` then ``x`` must be square,
-            i.e. ``M = N``.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input of shape ``(..., M, N)`` for which to compute the condition
+        number.  If *x* carries a unit, the unit is removed before the
+        computation.
+    p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
+        Order of the norm used in the condition number computation; see
+        :func:`jax.numpy.linalg.norm`.  The default ``p = None`` is
+        equivalent to ``p = 2``.  If *p* is not in ``{None, 2, -2}``,
+        then *x* must be square (``M = N``).
 
-    Returns:
-        array of shape ``x.shape[:-2]`` containing the condition number.
+    Returns
+    -------
+    out : jax.Array
+        Condition number(s) of shape ``x.shape[:-2]``.  Always
+        dimensionless.
 
-    Examples:
+    See Also
+    --------
+    saiunit.linalg.matrix_rank : Rank of a matrix via SVD.
+    saiunit.linalg.slogdet : Sign and log-determinant of a matrix.
 
-        Well-conditioned matrix:
+    Notes
+    -----
+    The condition number is a scalar measure of how sensitive a matrix
+    inversion is to numerical errors.  A large condition number indicates
+    an ill-conditioned (nearly singular) matrix.
 
-        >>> import saiunit as u
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1, 2],
-        ...                [2, 1]]) * u.meter
-        >>> u.linalg.cond(x)
+        >>> x = jnp.array([[1., 2.],
+        ...                [2., 1.]]) * su.meter
+        >>> su.linalg.cond(x)
         Array(3., dtype=float32)
 
-        Ill-conditioned matrix:
+    Ill-conditioned (rank-deficient) matrix:
 
-        >>> x = jnp.array([[1, 2],
-        ...                [0, 0]]) * u.meter
-        >>> u.linalg.cond(x)
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> x = jnp.array([[1., 2.],
+        ...                [0., 0.]]) * su.meter
+        >>> su.linalg.cond(x)
         Array(inf, dtype=float32)
     """
     return _fun_remove_unit_unary(jnp.linalg.cond, x, p=p)
@@ -85,37 +109,65 @@ def matrix_rank(
 
     SaiUnit implementation of :func:`numpy.linalg.matrix_rank`.
 
-    The rank is calculated via the Singular Value Decomposition (SVD), and determined
-    by the number of singular values greater than the specified tolerance.
+    The rank is calculated via the Singular Value Decomposition (SVD)
+    and determined by the number of singular values greater than the
+    specified tolerance.  The unit is stripped before computation and
+    the result is always a dimensionless integer array.
 
-    Args:
-        M: quantity of shape ``(..., N, K)`` whose rank is to be computed.
-        rtol: optional array of shape ``(...)`` specifying the tolerance. Singular values
-            smaller than `rtol * largest_singular_value` are considered to be zero. If
-            ``rtol`` is None (the default), a reasonable default is chosen based the
-            floating point precision of the input.
-        tol: deprecated alias of the ``rtol`` argument. Will result in a
-            :class:`DeprecationWarning` if used.
+    Parameters
+    ----------
+    M : array_like or Quantity
+        Input of shape ``(..., N, K)`` whose rank is to be computed.
+        If *M* carries a unit, the unit is removed before computation.
+    rtol : float or array_like, optional
+        Relative tolerance.  Singular values smaller than
+        ``rtol * largest_singular_value`` are considered to be zero.
+        If ``None`` (the default), a reasonable default is chosen based
+        on the floating-point precision of the input.
+    tol : float or None, optional
+        Deprecated alias for *rtol*.  Will result in a
+        :class:`DeprecationWarning` if used.
 
-    Returns:
-        array of shape ``a.shape[-2]`` giving the matrix rank.
+    Returns
+    -------
+    out : jax.Array
+        Matrix rank of shape ``M.shape[:-2]``, as a dimensionless
+        integer array.
 
-    Notes:
-    The rank calculation may be inaccurate for matrices with very small singular
-    values or those that are numerically ill-conditioned. Consider adjusting the
-    ``rtol`` parameter or using a more specialized rank computation method in such cases.
+    See Also
+    --------
+    saiunit.linalg.cond : Condition number of a matrix.
+    saiunit.linalg.slogdet : Sign and log-determinant of a matrix.
 
-    Examples:
-        >>> import saiunit as u
+    Notes
+    -----
+    The rank calculation may be inaccurate for matrices with very small
+    singular values or those that are numerically ill-conditioned.
+    Consider adjusting the *rtol* parameter or using a more specialised
+    rank-computation method in such cases.
+
+    Examples
+    --------
+    Full-rank matrix:
+
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([[1, 2],
-        ...                [3, 4]]) * u.meter
-        >>> u.linalg.matrix_rank(a)
+        >>> a = jnp.array([[1., 2.],
+        ...                [3., 4.]]) * su.meter
+        >>> su.linalg.matrix_rank(a)
         Array(2, dtype=int32)
 
-        >>> b = jnp.array([[1, 0],  # Rank-deficient matrix
-        ...                [0, 0]]) * u.meter
-        >>> u.linalg.matrix_rank(b)
+    Rank-deficient matrix:
+
+    .. code-block:: python
+
+        >>> import saiunit as su
+        >>> import jax.numpy as jnp
+        >>> b = jnp.array([[1., 0.],
+        ...                [0., 0.]]) * su.meter
+        >>> su.linalg.matrix_rank(b)
         Array(1, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.linalg.matrix_rank, M, rtol=rtol, tol=tol)
@@ -127,33 +179,60 @@ def slogdet(
     *,
     method: str | None = None
 ) -> tuple[jax.Array, jax.Array]:
-    """
-    Compute the sign and (natural) logarithm of the determinant of an array.
+    """Compute the sign and (natural) logarithm of the absolute determinant.
 
     SaiUnit implementation of :func:`numpy.linalg.slogdet`.
 
-    Args:
-        a: quantity of shape ``(..., M, M)`` for which to compute the sign and log determinant.
-        method: the method to use for determinant computation. Options are
+    The unit is stripped before computation.  Both returned arrays are
+    always dimensionless.  This function is more numerically stable
+    than computing ``log(det(a))`` directly because it avoids overflow
+    and underflow for matrices with very large or very small
+    determinants.
 
-        - ``'lu'`` (default): use the LU decomposition.
-        - ``'qr'``: use the QR decomposition.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        Square input of shape ``(..., M, M)`` for which to compute the
+        sign and log-determinant.  If *a* carries a unit, the unit is
+        removed before computation.
+    method : {'lu', 'qr'} or None, optional
+        Decomposition method used internally.
 
-    Returns:
-        A tuple of arrays ``(sign, logabsdet)``, each of shape ``a.shape[:-2]``
+        - ``'lu'`` (default) -- use the LU decomposition.
+        - ``'qr'`` -- use the QR decomposition.
 
-        - ``sign`` is the sign of the determinant.
-        - ``logabsdet`` is the natural log of the determinant's absolute value.
+    Returns
+    -------
+    sign : jax.Array
+        Sign of the determinant (``+1.``, ``-1.``, or ``0.``), of shape
+        ``a.shape[:-2]``.
+    logabsdet : jax.Array
+        Natural logarithm of the absolute value of the determinant, of
+        shape ``a.shape[:-2]``.
 
-    Examples:
-        >>> import saiunit as u
+    See Also
+    --------
+    saiunit.linalg.cond : Condition number of a matrix.
+    saiunit.linalg.matrix_rank : Rank of a matrix via SVD.
+
+    Notes
+    -----
+    The determinant can be reconstructed as ``sign * exp(logabsdet)``.
+    Using :func:`slogdet` instead of :func:`det` avoids numerical
+    issues when the determinant is extremely large or small.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as su
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([[1, 2],
-        ...                [3, 4]]) * u.meter
-        >>> sign, logabsdet = u.linalg.slogdet(a)
-        >>> sign  # -1 indicates negative determinant
+        >>> a = jnp.array([[1., 2.],
+        ...                [3., 4.]]) * su.meter
+        >>> sign, logabsdet = su.linalg.slogdet(a)
+        >>> sign
         Array(-1., dtype=float32)
-        >>> jnp.exp(logabsdet)  # Absolute value of determinant
+        >>> jnp.exp(logabsdet)
         Array(2., dtype=float32)
     """
     a = maybe_custom_array(a)

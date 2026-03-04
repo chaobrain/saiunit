@@ -53,7 +53,55 @@ def _const_like(x: jax.Array, value: int) -> jax.Array:
 @tree_util.register_pytree_node_class
 class CSR(SparseMatrix):
     """
-    Unit-aware CSR matrix.
+    Unit-aware Compressed Sparse Row (CSR) matrix.
+
+    Stores a 2-D sparse matrix in CSR format with optional physical-unit
+    support via :class:`~saiunit.Quantity`.
+
+    Parameters
+    ----------
+    args : tuple of (data, indices, indptr)
+        ``data`` contains the non-zero values (``jax.Array`` or ``Quantity``),
+        ``indices`` contains the column indices, and ``indptr`` contains the
+        row pointer array.
+    shape : tuple of int
+        The ``(nrows, ncols)`` shape of the matrix.
+
+    Attributes
+    ----------
+    data : jax.Array or Quantity
+        Non-zero values of shape ``(nse,)``.
+    indices : jax.Array
+        Column indices of shape ``(nse,)``.
+    indptr : jax.Array
+        Row pointer array of shape ``(nrows + 1,)``.
+    shape : tuple of int
+        Shape of the matrix ``(nrows, ncols)``.
+    nse : int
+        Number of stored elements.
+    dtype : dtype
+        Data type of the stored values.
+
+    See Also
+    --------
+    CSC : Unit-aware Compressed Sparse Column matrix.
+    csr_fromdense : Create a CSR matrix from a dense array.
+    csr_todense : Convert a CSR matrix to a dense array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
+        >>> csr = susparse.CSR.fromdense(dense)
+        >>> csr.shape
+        (2, 3)
+        >>> csr.todense()
+        Array([[1., 0., 2.],
+               [0., 0., 3.]], dtype=float32)
     """
     data: jax.Array | Quantity
     indices: jax.Array
@@ -108,12 +156,62 @@ class CSR(SparseMatrix):
         return cls((data, indices, indptr), shape=(N, M))
 
     def with_data(self, data: jax.Array | Quantity) -> CSR:
+        """
+        Create a new CSR matrix with the same sparsity structure but different data.
+
+        Parameters
+        ----------
+        data : jax.Array or Quantity
+            New non-zero values. Must have the same shape, dtype, and unit as
+            the current ``self.data``.
+
+        Returns
+        -------
+        CSR
+            A new CSR matrix sharing the same ``indices`` and ``indptr`` but
+            holding the provided ``data``.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import jax.numpy as jnp
+            >>> import saiunit as su
+            >>> import saiunit.sparse as susparse
+            >>> dense = jnp.array([[1., 0.], [0., 2.]])
+            >>> csr = susparse.CSR.fromdense(dense)
+            >>> new_csr = csr.with_data(csr.data * 5)
+            >>> new_csr.todense()
+            Array([[ 5., 0.],
+                   [ 0., 10.]], dtype=float32)
+        """
         assert data.shape == self.data.shape
         assert data.dtype == self.data.dtype
         assert get_unit(data) == get_unit(self.data)
         return self.__class__((data, self.indices, self.indptr), shape=self.shape)
 
     def todense(self):
+        """
+        Convert this CSR matrix to a dense array.
+
+        Returns
+        -------
+        jax.Array or Quantity
+            Dense 2-D array equivalent to this sparse matrix.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import jax.numpy as jnp
+            >>> import saiunit as su
+            >>> import saiunit.sparse as susparse
+            >>> dense = jnp.array([[0., 3.], [4., 0.]])
+            >>> csr = susparse.CSR.fromdense(dense)
+            >>> csr.todense()
+            Array([[0., 3.],
+                   [4., 0.]], dtype=float32)
+        """
         return csr_todense(self)
 
     def transpose(self, axes=None):
@@ -296,7 +394,55 @@ class CSR(SparseMatrix):
 @tree_util.register_pytree_node_class
 class CSC(SparseMatrix):
     """
-    Unit-aware CSC matrix.
+    Unit-aware Compressed Sparse Column (CSC) matrix.
+
+    Stores a 2-D sparse matrix in CSC format with optional physical-unit
+    support via :class:`~saiunit.Quantity`.
+
+    Parameters
+    ----------
+    args : tuple of (data, indices, indptr)
+        ``data`` contains the non-zero values (``jax.Array`` or ``Quantity``),
+        ``indices`` contains the row indices, and ``indptr`` contains the
+        column pointer array.
+    shape : tuple of int
+        The ``(nrows, ncols)`` shape of the matrix.
+
+    Attributes
+    ----------
+    data : jax.Array or Quantity
+        Non-zero values of shape ``(nse,)``.
+    indices : jax.Array
+        Row indices of shape ``(nse,)``.
+    indptr : jax.Array
+        Column pointer array of shape ``(ncols + 1,)``.
+    shape : tuple of int
+        Shape of the matrix ``(nrows, ncols)``.
+    nse : int
+        Number of stored elements.
+    dtype : dtype
+        Data type of the stored values.
+
+    See Also
+    --------
+    CSR : Unit-aware Compressed Sparse Row matrix.
+    csc_fromdense : Create a CSC matrix from a dense array.
+    csc_todense : Convert a CSC matrix to a dense array.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
+        >>> csc = susparse.CSC.fromdense(dense)
+        >>> csc.shape
+        (2, 3)
+        >>> csc.todense()
+        Array([[1., 0., 2.],
+               [0., 0., 3.]], dtype=float32)
     """
     data: jax.Array
     indices: jax.Array
@@ -331,15 +477,83 @@ class CSC(SparseMatrix):
         return CSR._eye(M, N, -k, dtype=dtype, index_dtype=index_dtype).T
 
     def with_data(self, data: jax.Array | Quantity) -> CSC:
+        """
+        Create a new CSC matrix with the same sparsity structure but different data.
+
+        Parameters
+        ----------
+        data : jax.Array or Quantity
+            New non-zero values. Must have the same shape, dtype, and unit as
+            the current ``self.data``.
+
+        Returns
+        -------
+        CSC
+            A new CSC matrix sharing the same ``indices`` and ``indptr`` but
+            holding the provided ``data``.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import jax.numpy as jnp
+            >>> import saiunit as su
+            >>> import saiunit.sparse as susparse
+            >>> dense = jnp.array([[1., 0.], [0., 2.]])
+            >>> csc = susparse.CSC.fromdense(dense)
+            >>> new_csc = csc.with_data(csc.data * 5)
+            >>> new_csc.todense()
+            Array([[ 5., 0.],
+                   [ 0., 10.]], dtype=float32)
+        """
         assert data.shape == self.data.shape
         assert data.dtype == self.data.dtype
         assert get_unit(data) == get_unit(self.data)
         return CSC((data, self.indices, self.indptr), shape=self.shape)
 
     def todense(self):
+        """
+        Convert this CSC matrix to a dense array.
+
+        Returns
+        -------
+        jax.Array or Quantity
+            Dense 2-D array equivalent to this sparse matrix.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import jax.numpy as jnp
+            >>> import saiunit as su
+            >>> import saiunit.sparse as susparse
+            >>> dense = jnp.array([[0., 3.], [4., 0.]])
+            >>> csc = susparse.CSC.fromdense(dense)
+            >>> csc.todense()
+            Array([[0., 3.],
+                   [4., 0.]], dtype=float32)
+        """
         return csr_todense(self.T).T
 
     def transpose(self, axes=None):
+        """
+        Return the transpose of this CSC matrix as a CSR matrix.
+
+        Parameters
+        ----------
+        axes : None, optional
+            Not supported. Must be ``None``.
+
+        Returns
+        -------
+        CSR
+            The transposed matrix in CSR format.
+
+        Raises
+        ------
+        NotImplementedError
+            If ``axes`` is not ``None``.
+        """
         if axes is not None:
             raise NotImplementedError("axes argument to transpose()")
         return CSR((self.data, self.indices, self.indptr), shape=self.shape[::-1])
@@ -529,16 +743,38 @@ def csr_fromdense(
     *, nse: int | None = None,
     index_dtype: jax.typing.DTypeLike = np.int32
 ) -> CSR:
-    """Create a CSR-format sparse matrix from a dense matrix.
+    """
+    Create a CSR-format sparse matrix from a dense matrix.
 
-    Args:
-      mat : array to be converted to CSR.
-      nse : number of specified entries in ``mat``. If not specified,
-        it will be computed from the input matrix.
-      index_dtype : dtype of sparse indices
+    Parameters
+    ----------
+    mat : jax.Array or Quantity
+        Dense 2-D array to be converted to CSR format.
+    nse : int or None, optional
+        Number of specified (non-zero) entries in ``mat``. If ``None``
+        (default), it is computed automatically from the input matrix.
+    index_dtype : dtype, optional
+        Data type for the sparse index arrays. Default is ``numpy.int32``.
 
-    Returns:
-      mat_coo : CSR representation of the matrix.
+    Returns
+    -------
+    CSR
+        The CSR representation of the input matrix.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
+        >>> csr = susparse.csr_fromdense(dense)
+        >>> csr.shape
+        (2, 3)
+        >>> csr.todense()
+        Array([[1., 0., 0.],
+               [0., 2., 3.]], dtype=float32)
     """
     if nse is None:
         nse = int((get_mantissa(mat) != 0).sum())
@@ -547,12 +783,36 @@ def csr_fromdense(
 
 
 def csr_todense(mat: CSR) -> jax.Array | Quantity:
-    """Convert a CSR-format sparse matrix to a dense matrix.
+    """
+    Convert a CSR-format sparse matrix to a dense matrix.
 
-    Args:
-      mat : CSR matrix
-    Returns:
-      mat_dense: dense version of ``mat``
+    Parameters
+    ----------
+    mat : CSR
+        The CSR sparse matrix to convert.
+
+    Returns
+    -------
+    jax.Array or Quantity
+        Dense 2-D array equivalent to ``mat``.
+
+    Raises
+    ------
+    TypeError
+        If ``mat`` is not an instance of :class:`CSR`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[5., 0.], [0., 6.]])
+        >>> csr = susparse.csr_fromdense(dense)
+        >>> susparse.csr_todense(csr)
+        Array([[5., 0.],
+               [0., 6.]], dtype=float32)
     """
     if not isinstance(mat, CSR):
         raise TypeError(f"Expected CSR, got {type(mat)}")
@@ -560,12 +820,36 @@ def csr_todense(mat: CSR) -> jax.Array | Quantity:
 
 
 def csc_todense(mat: CSC) -> jax.Array | Quantity:
-    """Convert a CSR-format sparse matrix to a dense matrix.
+    """
+    Convert a CSC-format sparse matrix to a dense matrix.
 
-    Args:
-      mat : CSR matrix
-    Returns:
-      mat_dense: dense version of ``mat``
+    Parameters
+    ----------
+    mat : CSC
+        The CSC sparse matrix to convert.
+
+    Returns
+    -------
+    jax.Array or Quantity
+        Dense 2-D array equivalent to ``mat``.
+
+    Raises
+    ------
+    TypeError
+        If ``mat`` is not an instance of :class:`CSC`.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[5., 0.], [0., 6.]])
+        >>> csc = susparse.csc_fromdense(dense)
+        >>> susparse.csc_todense(csc)
+        Array([[5., 0.],
+               [0., 6.]], dtype=float32)
     """
     if not isinstance(mat, CSC):
         raise TypeError(f"Expected CSC, got {type(mat)}")
@@ -578,6 +862,39 @@ def csc_fromdense(
     nse: int | None = None,
     index_dtype: jax.typing.DTypeLike = np.int32
 ) -> CSC:
+    """
+    Create a CSC-format sparse matrix from a dense matrix.
+
+    Parameters
+    ----------
+    mat : jax.Array or Quantity
+        Dense 2-D array to be converted to CSC format.
+    nse : int or None, optional
+        Number of specified (non-zero) entries in ``mat``. If ``None``
+        (default), it is computed automatically from the input matrix.
+    index_dtype : dtype, optional
+        Data type for the sparse index arrays. Default is ``numpy.int32``.
+
+    Returns
+    -------
+    CSC
+        The CSC representation of the input matrix.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.sparse as susparse
+        >>> dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
+        >>> csc = susparse.csc_fromdense(dense)
+        >>> csc.shape
+        (2, 3)
+        >>> csc.todense()
+        Array([[1., 0., 0.],
+               [0., 2., 3.]], dtype=float32)
+    """
     if nse is not None:
         nse = concrete_or_error(operator.index, nse, "csc_fromdense nse argument")
     return CSC.fromdense(mat, nse=nse, index_dtype=index_dtype)

@@ -46,29 +46,44 @@ def cholesky(
     x: Union[Quantity, jax.typing.ArrayLike],
     symmetrize_input: bool = True,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
-    """Cholesky decomposition.
+    r"""Cholesky decomposition.
 
-    Computes the Cholesky decomposition
+    Compute the Cholesky decomposition :math:`A = L \cdot L^H` of square
+    positive-definite matrices such that :math:`L` is lower triangular.
+    The matrices must be Hermitian (if complex) or symmetric (if real).
 
-    .. math::
-        A = L . L^H
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A batch of square positive-definite matrices with shape
+        ``[..., n, n]``.
+    symmetrize_input : bool, optional
+        If ``True``, the matrix is symmetrized before decomposition by
+        computing :math:`\frac{1}{2}(x + x^H)`.  If ``False``, only the
+        lower triangle of ``x`` is used. Default is ``True``.
 
-    of square matrices, :math:`A`, such that :math:`L`
-    is lower triangular. The matrices of :math:`A` must be positive-definite and
-    either Hermitian, if complex, or symmetric, if real.
+    Returns
+    -------
+    L : jax.Array or Quantity
+        The lower-triangular Cholesky factor with shape ``[..., n, n]``.
+        If ``x`` carries a unit ``u``, the result has unit ``u ** 0.5``.
+        If decomposition fails, the result is filled with NaNs.
 
-    Args:
-        x: A batch of square Hermitian (symmetric if real) positive-definite
-            matrices with shape ``[..., n, n]``.
-        symmetrize_input: If ``True``, the matrix is symmetrized before Cholesky
-              decomposition by computing :math:`\\frac{1}{2}(x + x^H)`. If ``False``,
-              only the lower triangle of ``x`` is used; the upper triangle is ignored
-              and not accessed.
+    See Also
+    --------
+    saiunit.linalg.cholesky : Higher-level Cholesky wrapper.
 
-    Returns:
-        The Cholesky decomposition as a matrix with the same dtype as ``x`` and
-        shape ``[..., n, n]``. If Cholesky decomposition fails, returns a matrix
-        full of NaNs. The behavior on failure may change in the future.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[4.0, 2.0], [2.0, 3.0]]) * (su.meter ** 2)
+        >>> L = sulax.cholesky(A)
+        >>> su.get_unit(L) == su.meter
+        True
     """
     return _fun_change_unit_unary(lax.linalg.cholesky,
                                   lambda u: u ** 0.5,
@@ -84,22 +99,46 @@ def eig(
 ) -> tuple[Array | Quantity, Array, Array] | list[Array] | tuple[Array | Quantity, Array] | tuple[Array | Quantity]:
     """Eigendecomposition of a general matrix.
 
-    Nonsymmetric eigendecomposition is at present only implemented on CPU.
+    Compute the eigenvalues and (optionally) left/right eigenvectors of a
+    general square matrix.  Non-symmetric eigendecomposition is currently
+    only implemented on CPU.
 
-    Args:
-        x: A batch of square matrices with shape ``[..., n, n]``.
-        compute_left_eigenvectors: If true, the left eigenvectors will be computed.
-        compute_right_eigenvectors: If true, the right eigenvectors will be
-            computed.
-    Returns:
-        The eigendecomposition of ``x``, which is a tuple of the form
-        ``(w, vl, vr)`` where ``w`` are the eigenvalues, ``vl`` are the left
-        eigenvectors, and ``vr`` are the right eigenvectors. ``vl`` and ``vr`` are
-        optional and will only be included if ``compute_left_eigenvectors`` or
-        ``compute_right_eigenvectors`` respectively are ``True``.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A batch of square matrices with shape ``[..., n, n]``.
+    compute_left_eigenvectors : bool, optional
+        If ``True``, compute the left eigenvectors. Default is ``True``.
+    compute_right_eigenvectors : bool, optional
+        If ``True``, compute the right eigenvectors. Default is ``True``.
 
-    If the eigendecomposition fails, then arrays full of NaNs will be returned
-    for that batch element.
+    Returns
+    -------
+    w : jax.Array or Quantity
+        The eigenvalues.  If ``x`` has a unit, ``w`` preserves that unit.
+    vl : jax.Array, optional
+        The left eigenvectors (unitless).  Only returned when
+        ``compute_left_eigenvectors`` is ``True``.
+    vr : jax.Array, optional
+        The right eigenvectors (unitless).  Only returned when
+        ``compute_right_eigenvectors`` is ``True``.
+
+    Notes
+    -----
+    If the eigendecomposition fails, arrays full of NaNs are returned for
+    that batch element.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> w, vl, vr = sulax.eig(A)
+        >>> su.get_unit(w) == su.second
+        True
     """
     x = maybe_custom_array_tree(x)
     if compute_left_eigenvectors and compute_right_eigenvectors:
@@ -147,37 +186,47 @@ def eigh(
 ) -> tuple[Quantity | jax.Array, jax.Array]:
     r"""Eigendecomposition of a Hermitian matrix.
 
-    Computes the eigenvectors and eigenvalues of a complex Hermitian or real
-    symmetric square matrix.
+    Compute the eigenvectors and eigenvalues of a complex Hermitian or
+    real symmetric square matrix.
 
-    Args:
-        x: A batch of square complex Hermitian or real symmetric matrices with shape
-            ``[..., n, n]``.
-        lower: If ``symmetrize_input`` is ``False``, describes which triangle of the
-              input matrix to use. If ``symmetrize_input`` is ``False``, only the
-              triangle given by ``lower`` is accessed; the other triangle is ignored and
-              not accessed.
-        symmetrize_input: If ``True``, the matrix is symmetrized before the
-            eigendecomposition by computing :math:`\frac{1}{2}(x + x^H)`.
-        sort_eigenvalues: If ``True``, the eigenvalues will be sorted in ascending
-              order. If ``False`` the eigenvalues are returned in an
-              implementation-defined order.
-        subset_by_index: Optional 2-tuple [start, end] indicating the range of
-               indices of eigenvalues to compute. For example, is ``range_select`` =
-               [n-2,n], then ``eigh`` computes the two largest eigenvalues and their
-               eigenvectors.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A batch of square Hermitian (or real symmetric) matrices with shape
+        ``[..., n, n]``.
+    lower : bool, optional
+        When ``symmetrize_input`` is ``False``, selects which triangle of the
+        input to use.  Default is ``True``.
+    symmetrize_input : bool, optional
+        If ``True``, the matrix is symmetrized before the eigendecomposition
+        by computing :math:`\frac{1}{2}(x + x^H)`.  Default is ``True``.
+    sort_eigenvalues : bool, optional
+        If ``True``, eigenvalues are sorted in ascending order.
+        Default is ``True``.
+    subset_by_index : tuple of int or None, optional
+        A ``(start, end)`` pair selecting a range of eigenvalue indices to
+        compute.  ``None`` means all eigenvalues.  Default is ``None``.
 
-    Returns:
-        A tuple ``(v, w)``.
+    Returns
+    -------
+    v : jax.Array
+        Eigenvectors (unitless).  ``v[..., :, i]`` is the normalised
+        eigenvector for eigenvalue ``w[..., i]``.
+    w : jax.Array or Quantity
+        Eigenvalues in ascending order.  If ``x`` has a unit, ``w``
+        preserves that unit.
 
-        ``v`` is an array with the same dtype as ``x`` such that ``v[..., :, i]`` is
-        the normalized eigenvector corresponding to eigenvalue ``w[..., i]``.
+    Examples
+    --------
+    .. code-block:: python
 
-        ``w`` is an array with the same dtype as ``x`` (or its real counterpart if
-        complex) with shape ``[..., d]`` containing the eigenvalues of ``x`` in
-        ascending order(each repeated according to its multiplicity).
-        If ``subset_by_index`` is ``None`` then ``d`` is equal to ``n``. Otherwise
-        ``d`` is equal to ``subset_by_index[1] - subset_by_index[0]``.
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * su.second
+        >>> v, w = sulax.eigh(A)
+        >>> su.get_unit(w) == su.second
+        True
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -193,19 +242,41 @@ def eigh(
 def hessenberg(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> tuple[Quantity | jax.Array, jax.Array]:
-    """Reduces a square matrix to upper Hessenberg form.
+    """Reduce a square matrix to upper Hessenberg form.
 
     Currently implemented on CPU only.
 
-    Args:
-        a: A floating point or complex square matrix or batch of matrices.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A floating-point or complex square matrix (or batch of matrices)
+        with shape ``[..., n, n]``.
 
-    Returns:
-        A ``(a, taus)`` pair, where the upper triangle and first subdiagonal of ``a``
-        contain the upper Hessenberg matrix, and the elements below the first
-        subdiagonal contain the Householder reflectors. For each Householder
-        reflector ``taus`` contains the scalar factors of the elementary Householder
-        reflectors.
+    Returns
+    -------
+    h : jax.Array or Quantity
+        The upper Hessenberg form.  The upper triangle and first
+        sub-diagonal contain the Hessenberg matrix; elements below the
+        first sub-diagonal hold the Householder reflectors.  If ``x``
+        has a unit, ``h`` preserves that unit.
+    taus : jax.Array
+        Scalar factors of the elementary Householder reflectors (unitless).
+
+    See Also
+    --------
+    saiunit.lax.householder_product : Reconstruct Q from reflectors.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> h, taus = sulax.hessenberg(A)
+        >>> su.get_unit(h) == su.second
+        True
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -219,34 +290,41 @@ def hessenberg(
 def lu(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> tuple[Quantity | jax.Array, jax.Array, jax.Array]:
-    """LU decomposition with partial pivoting.
+    r"""LU decomposition with partial pivoting.
 
-    Computes the matrix decomposition:
+    Compute the matrix decomposition :math:`P \cdot A = L \cdot U` where
+    :math:`P` is a permutation matrix, :math:`L` is lower-triangular with
+    unit diagonal, and :math:`U` is upper-triangular.
 
-    .. math::
-        P.A = L.U
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A batch of matrices with shape ``[..., m, n]``.
 
-    where :math:`P` is a permutation of the rows of :math:`A`, :math:`L` is a
-    lower-triangular matrix with unit-diagonal elements, and :math:`U` is an
-    upper-triangular matrix.
+    Returns
+    -------
+    lu : jax.Array or Quantity
+        A matrix containing :math:`L` in its lower triangle and :math:`U`
+        in its upper triangle (the unit diagonal of :math:`L` is implicit).
+        If ``x`` has a unit, ``lu`` preserves that unit.
+    pivots : jax.Array
+        An ``int32`` array with shape ``[..., min(m, n)]`` encoding row
+        swaps.
+    permutation : jax.Array
+        An ``int32`` array with shape ``[..., m]`` representing the row
+        permutation.
 
-    Args:
-        x: A batch of matrices with shape ``[..., m, n]``.
+    Examples
+    --------
+    .. code-block:: python
 
-    Returns:
-        A tuple ``(lu, pivots, permutation)``.
-
-        ``lu`` is a batch of matrices with the same shape and dtype as ``x``
-        containing the :math:`L` matrix in its lower triangle and the :math:`U`
-        matrix in its upper triangle. The (unit) diagonal elements of :math:`L` are
-        not represented explicitly.
-
-        ``pivots`` is an int32 array with shape ``[..., min(m, n)]`` representing a
-        sequence of row swaps that should be performed on :math:`A`.
-
-        ``permutation`` is an alternative representation of the sequence of row
-        swaps as a permutation, represented as an int32 array with shape
-        ``[..., m]``.
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> lu_mat, pivots, perm = sulax.lu(A)
+        >>> su.get_unit(lu_mat) == su.second
+        True
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -263,15 +341,41 @@ def householder_product(
 ) -> jax.Array:
     """Product of elementary Householder reflectors.
 
-    Args:
-        a: A matrix with shape ``[..., m, n]``, whose lower triangle contains
-            elementary Householder reflectors.
-        taus: A vector with shape ``[..., k]``, where ``k < min(m, n)``, containing
-            the scalar factors of the elementary Householder reflectors.
+    Reconstruct the orthogonal (unitary) matrix :math:`Q` from a set of
+    elementary Householder reflectors and their scalar factors.
 
-    Returns:
-        A batch of orthogonal (unitary) matrices with the same shape as ``a``,
-        containing the products of the elementary Householder reflectors.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        A matrix with shape ``[..., m, n]`` whose lower triangle contains
+        the elementary Householder reflectors.  Units, if present, are
+        stripped before computation.
+    taus : array_like or Quantity
+        A vector with shape ``[..., k]`` (``k < min(m, n)``) containing
+        the scalar factors.  Units, if present, are stripped.
+
+    Returns
+    -------
+    Q : jax.Array
+        The orthogonal (unitary) matrix with the same shape as ``a``
+        (always unitless).
+
+    See Also
+    --------
+    saiunit.lax.hessenberg : Produces reflectors consumed by this function.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> a = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+        >>> taus = jnp.array([1.0])
+        >>> Q = sulax.householder_product(a, taus)
+        >>> Q.shape
+        (2, 2)
     """
     # TODO: more proper handling of Quantity?
     a = maybe_custom_array(a)
@@ -290,24 +394,40 @@ def householder_product(
 def qdwh(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> tuple[jax.Array, Quantity | jax.Array, int, bool]:
-    """QR-based dynamically weighted Halley iteration for polar decomposition.
+    r"""Polar decomposition via QR-based dynamically weighted Halley iteration.
 
-    Args:
-        x: A full-rank matrix, with shape `M x N`. The matrix may be padded up to
-            that size from a smaller true shape (``dynamic_shape``).
-        is_hermitian: True if `x` is Hermitian. Default to `False`. This parameter
-            is currently unused, but exists for backward compatibility.
-        eps: The final result will satisfy ``|x_k - x_k-1| < |x_k| *
-            (4*eps)**(1/3)`` where `x_k` is the iterate.
-        max_iterations: Iterations will terminate after this many steps even if the
-            above is unsatisfied.
-        dynamic_shape: the unpadded shape as an ``(m, n)`` tuple; optional.
+    Compute the polar decomposition :math:`x = U \cdot H` where :math:`U`
+    is unitary and :math:`H` is Hermitian positive semi-definite.
 
-    Returns:
-        A four-tuple of (u, h, num_iters, is_converged) containing the
-        polar decomposition of `x = u * h`, the number of iterations to compute `u`,
-        and `is_converged`, whose value is `True` when the convergence is achieved
-        within the maximum number of iterations.
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A full-rank matrix with shape ``(M, N)``.
+
+    Returns
+    -------
+    u : jax.Array
+        The unitary factor (unitless).
+    h : jax.Array or Quantity
+        The Hermitian positive semi-definite factor.  If ``x`` has a unit,
+        ``h`` preserves that unit.
+    num_iters : int
+        Number of iterations performed.
+    is_converged : bool
+        ``True`` if the algorithm converged within the maximum number of
+        iterations.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> u, h, num_iters, is_converged = sulax.qdwh(A)
+        >>> su.get_unit(h) == su.second
+        True
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -321,31 +441,35 @@ def qdwh(
 def qr(
     x: Union[Quantity, jax.typing.ArrayLike],
 ) -> tuple[jax.Array, Quantity | jax.Array]:
-    """QR decomposition.
+    r"""QR decomposition.
 
-    Computes the QR decomposition
+    Compute the QR decomposition :math:`A = Q \cdot R` where :math:`Q` is
+    a unitary (orthogonal) matrix and :math:`R` is upper-triangular.
 
-    .. math::
-        A = Q . R
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A batch of matrices with shape ``[..., m, n]``.
 
-    of matrices :math:`A`, such that :math:`Q` is a unitary (orthogonal) matrix,
-    and :math:`R` is an upper-triangular matrix.
+    Returns
+    -------
+    q : jax.Array
+        The unitary factor (unitless) with shape ``[..., m, min(m, n)]``.
+    r : jax.Array or Quantity
+        The upper-triangular factor with shape ``[..., min(m, n), n]``.
+        If ``x`` has a unit, ``r`` preserves that unit.
 
-    Args:
-        x: A batch of matrices with shape ``[..., m, n]``.
-        full_matrices: Determines if full or reduced matrices are returned; see
-            below.
+    Examples
+    --------
+    .. code-block:: python
 
-    Returns:
-        A pair of arrays ``(q, r)``.
-
-        Array ``q`` is a unitary (orthogonal) matrix,
-        with shape ``[..., m, m]`` if ``full_matrices=True``, or
-        ``[..., m, min(m, n)]`` if ``full_matrices=False``.
-
-        Array ``r`` is an upper-triangular matrix with shape ``[..., m, n]`` if
-        ``full_matrices=True``, or ``[..., min(m, n), n]`` if
-        ``full_matrices=False``.
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> q, r = sulax.qr(A)
+        >>> su.get_unit(r) == su.meter
+        True
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -362,6 +486,43 @@ def schur(
     sort_eig_vals: bool = False,
     select_callable: Callable[..., Any] | None = None
 ) -> tuple[jax.Array, Quantity | jax.Array]:
+    r"""Schur decomposition.
+
+    Compute the Schur decomposition :math:`A = Q \cdot T \cdot Q^H` where
+    :math:`T` is upper-triangular (quasi-triangular for real matrices) and
+    :math:`Q` is unitary.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A batch of square matrices with shape ``[..., n, n]``.
+    compute_schur_vectors : bool, optional
+        If ``True``, compute the Schur vectors ``Q``. Default is ``True``.
+    sort_eig_vals : bool, optional
+        If ``True``, sort eigenvalues. Default is ``False``.
+    select_callable : callable or None, optional
+        A function used to select eigenvalues for reordering.
+        Default is ``None``.
+
+    Returns
+    -------
+    t : jax.Array
+        The Schur form (unitless).
+    q : jax.Array or Quantity
+        The Schur vectors.  If ``x`` has a unit, ``q`` preserves that unit.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.second
+        >>> t, q = sulax.schur(A)
+        >>> su.get_unit(q) == su.second
+        True
+    """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         t, q = lax.linalg.schur(x.mantissa, compute_schur_vectors=compute_schur_vectors,
@@ -383,9 +544,47 @@ def svd(
 ) -> Union[Quantity, jax.typing.ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
     """Singular value decomposition.
 
-    Returns the singular values if compute_uv is False, otherwise returns a triple
-    containing the left singular vectors, the singular values and the adjoint of
-    the right singular vectors.
+    Compute the SVD of a matrix.  When ``compute_uv`` is ``True``, return
+    ``(u, s, vh)``; otherwise return only the singular values ``s``.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        A batch of matrices with shape ``[..., m, n]``.
+    full_matrices : bool, optional
+        If ``True``, compute full-size ``U`` and ``Vh``.
+        Default is ``True``.
+    compute_uv : bool, optional
+        If ``True``, compute ``U`` and ``Vh`` in addition to ``S``.
+        Default is ``True``.
+    subset_by_index : tuple of int or None, optional
+        Optional ``(start, end)`` range of singular-value indices.
+        Default is ``None``.
+    algorithm : SvdAlgorithm or None, optional
+        The SVD algorithm to use. Default is ``None``.
+
+    Returns
+    -------
+    u : jax.Array
+        Left singular vectors (unitless).  Only returned when
+        ``compute_uv=True``.
+    s : jax.Array or Quantity
+        Singular values.  If ``x`` has a unit, ``s`` preserves that unit.
+    vh : jax.Array
+        Right singular vectors (unitless).  Only returned when
+        ``compute_uv=True``.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * su.meter
+        >>> u, s, vh = sulax.svd(A)
+        >>> su.get_unit(s) == su.meter
+        True
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
@@ -412,37 +611,48 @@ def triangular_solve(
 ) -> Quantity | jax.Array:
     r"""Triangular solve.
 
-    Solves either the matrix equation
+    Solve the matrix equation :math:`\mathit{op}(A) \cdot X = B` (when
+    ``left_side=True``) or :math:`X \cdot \mathit{op}(A) = B` (when
+    ``left_side=False``), where :math:`A` is triangular.
 
-    .. math::
-        \mathit{op}(A) . X = B
+    Parameters
+    ----------
+    a : array_like or Quantity
+        A batch of triangular matrices with shape ``[..., m, m]``.
+    b : array_like or Quantity
+        A batch of right-hand-side matrices with shape ``[..., m, n]``
+        (if ``left_side=True``) or ``[..., n, m]`` otherwise.
+    left_side : bool, optional
+        Selects which equation to solve. Default is ``False``.
+    lower : bool, optional
+        If ``True``, use the lower triangle of ``a``. Default is ``False``.
+    transpose_a : bool, optional
+        If ``True``, transpose ``a`` before solving. Default is ``False``.
+    conjugate_a : bool, optional
+        If ``True``, use the complex conjugate of ``a``.
+        Default is ``False``.
+    unit_diagonal : bool, optional
+        If ``True``, the diagonal of ``a`` is assumed to be all ones.
+        Default is ``False``.
 
-    if ``left_side`` is ``True`` or
+    Returns
+    -------
+    X : jax.Array or Quantity
+        The solution with the same shape and dtype as ``b``.  If ``b``
+        carries a unit, ``X`` preserves that unit.
 
-    .. math::
-        X . \mathit{op}(A) = B
+    Examples
+    --------
+    .. code-block:: python
 
-    if ``left_side`` is ``False``.
-
-    ``A`` must be a lower or upper triangular square matrix, and where
-    :math:`\mathit{op}(A)` may either transpose :math:`A` if ``transpose_a``
-    is ``True`` and/or take its complex conjugate if ``conjugate_a`` is ``True``.
-
-    Args:
-        a: A batch of matrices with shape ``[..., m, m]``.
-        b: A batch of matrices with shape ``[..., m, n]`` if ``left_side`` is
-            ``True`` or shape ``[..., n, m]`` otherwise.
-        left_side: describes which of the two matrix equations to solve; see above.
-        lower: describes which triangle of ``a`` should be used. The other triangle
-            is ignored.
-        transpose_a: if ``True``, the value of ``a`` is transposed.
-        conjugate_a: if ``True``, the complex conjugate of ``a`` is used in the
-            solve. Has no effect if ``a`` is real.
-        unit_diagonal: if ``True``, the diagonal of ``a`` is assumed to be unit
-            (all 1s) and not accessed.
-
-    Returns:
-    A batch of matrices the same shape and dtype as ``b``.
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[2.0, 0.0], [1.0, 3.0]])
+        >>> b = jnp.array([[4.0], [7.0]]) * su.meter
+        >>> X = sulax.triangular_solve(A, b, left_side=True, lower=True)
+        >>> su.get_unit(X) == su.meter
+        True
     """
     a = maybe_custom_array(a)
     b = maybe_custom_array(b)
@@ -471,26 +681,45 @@ def tridiagonal(
     a: Union[Quantity, jax.typing.ArrayLike],
     lower: bool = True,
 ) -> tuple[Quantity | jax.Array, Quantity | jax.Array, Quantity | jax.Array, jax.Array]:
-    """Reduces a symmetric/Hermitian matrix to tridiagonal form.
+    """Reduce a symmetric/Hermitian matrix to tridiagonal form.
 
     Currently implemented on CPU and GPU only.
 
-    Args:
-        a: A floating point or complex matrix or batch of matrices.
-        lower: Describes which triangle of the input matrices to use.
-            The other triangle is ignored and not accessed.
+    Parameters
+    ----------
+    a : array_like or Quantity
+        A floating-point or complex symmetric/Hermitian matrix (or batch of
+        matrices) with shape ``[..., n, n]``.
+    lower : bool, optional
+        Selects which triangle of the input to use. Default is ``True``.
 
-    Returns:
-    A ``(a, d, e, taus)`` pair. If ``lower=True``, the diagonal and first subdiagonal of
-    matrix (or batch of matrices) ``a`` contain the tridiagonal representation,
-    and elements below the first subdiagonal contain the elementary Householder
-    reflectors, where additionally ``d`` contains the diagonal of the matrix and ``e`` contains
-    the first subdiagonal.If ``lower=False`` the diagonal and first superdiagonal of the
-    matrix contains the tridiagonal representation, and elements above the first
-    superdiagonal contain the elementary Householder reflectors, where
-    additionally ``d`` contains the diagonal of the matrix and ``e`` contains the
-    first superdiagonal. ``taus`` contains the scalar factors of the elementary
-    Householder reflectors.
+    Returns
+    -------
+    a_out : jax.Array or Quantity
+        The matrix with the tridiagonal representation stored in its
+        diagonal and first sub/super-diagonal; remaining elements hold the
+        Householder reflectors.  If ``a`` has a unit, ``a_out`` preserves
+        that unit.
+    d : jax.Array or Quantity
+        The diagonal of the tridiagonal matrix.  Preserves the unit of ``a``
+        if present.
+    e : jax.Array or Quantity
+        The first sub-diagonal (``lower=True``) or super-diagonal
+        (``lower=False``).  Preserves the unit of ``a`` if present.
+    taus : jax.Array
+        Scalar factors of the elementary Householder reflectors (unitless).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> A = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * su.second
+        >>> a_out, d, e, taus = sulax.tridiagonal(A)
+        >>> su.get_unit(d) == su.second
+        True
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
@@ -508,27 +737,53 @@ def tridiagonal_solve(
     du: Union[Quantity, jax.typing.ArrayLike],
     b: Union[Quantity, jax.typing.ArrayLike],
 ) -> Quantity | jax.Array:
-    r"""Computes the solution of a tridiagonal linear system.
+    r"""Solve a tridiagonal linear system.
 
-    This function computes the solution of a tridiagonal linear system:
+    Compute the solution :math:`X` of the tridiagonal system
+    :math:`A \cdot X = B`, where the tridiagonal matrix :math:`A` is
+    specified by its three diagonals.
 
-    .. math::
-        A . X = B
+    Parameters
+    ----------
+    dl : array_like or Quantity
+        Lower diagonal with shape ``[..., m]``.
+        ``dl[i] = A[i, i-1]``; ``dl[0]`` is unused.  Must have the same
+        unit as ``d`` and ``du``.
+    d : array_like or Quantity
+        Main diagonal with shape ``[..., m]``.
+        ``d[i] = A[i, i]``.
+    du : array_like or Quantity
+        Upper diagonal with shape ``[..., m]``.
+        ``du[i] = A[i, i+1]``; ``du[m-1]`` is unused.  Must have the same
+        unit as ``dl`` and ``d``.
+    b : array_like or Quantity
+        Right-hand-side matrix.
 
-    Args:
+    Returns
+    -------
+    X : jax.Array or Quantity
+        The solution of the tridiagonal system.  If ``b`` has a unit, ``X``
+        preserves that unit.
 
-        dl: A batch of vectors with shape ``[..., m]``.
-              The lower diagonal of A: ``dl[i] := A[i, i-1]`` for i in ``[0,m)``.
-              Note that ``dl[0] = 0``.
-        d: A batch of vectors with shape ``[..., m]``.
-            The middle diagonal of A: ``d[i]  := A[i, i]`` for i in ``[0,m)``.
-        du: A batch of vectors with shape ``[..., m]``.
-              The upper diagonal of A: ``du[i] := A[i, i+1]`` for i in ``[0,m)``.
-              Note that ``dl[m - 1] = 0``.
-        b: Right hand side matrix.
+    Raises
+    ------
+    saiunit.DimensionMismatchError
+        If ``dl``, ``d``, and ``du`` do not share the same unit.
 
-    Returns:
-        Solution ``X`` of tridiagonal system.
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import jax.numpy as jnp
+        >>> import saiunit as su
+        >>> import saiunit.lax as sulax
+        >>> dl = jnp.array([0.0, 1.0, 1.0])
+        >>> d  = jnp.array([2.0, 2.0, 2.0])
+        >>> du = jnp.array([1.0, 1.0, 0.0])
+        >>> b  = jnp.array([[1.0], [2.0], [3.0]]) * su.meter
+        >>> X = sulax.tridiagonal_solve(dl, d, du, b)
+        >>> su.get_unit(X) == su.meter
+        True
     """
     dl = maybe_custom_array(dl)
     d = maybe_custom_array(d)

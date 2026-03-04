@@ -253,3 +253,102 @@ class TestLaxLinalg(parameterized.TestCase):
         b = b * u.second
         result_q = ulax.tridiagonal_solve(dl, d, du, b)
         assert_quantity(result_q, expected, u.second)
+
+
+# --- Docstring example tests ---
+
+
+def test_docstring_example_cholesky():
+    """Verify cholesky docstring: unit u -> result has unit u ** 0.5."""
+    A = jnp.array([[4.0, 2.0], [2.0, 3.0]]) * (u.meter ** 2)
+    L = ulax.cholesky(A)
+    assert u.get_unit(L) == u.meter
+
+
+def test_docstring_example_eig():
+    """Verify eig docstring: eigenvalues preserve the input unit."""
+    A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
+    w, vl, vr = ulax.eig(A)
+    assert u.get_unit(w) == u.second
+
+
+def test_docstring_example_eigh():
+    """Verify eigh docstring: eigenvalues preserve the input unit."""
+    A = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * u.second
+    v, w = ulax.eigh(A)
+    assert u.get_unit(w) == u.second
+
+
+def test_docstring_example_hessenberg():
+    """Verify hessenberg docstring: Hessenberg form preserves unit."""
+    A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
+    h, taus = ulax.hessenberg(A)
+    assert u.get_unit(h) == u.second
+
+
+def test_docstring_example_lu():
+    """Verify lu docstring: LU matrix preserves input unit."""
+    A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
+    lu_mat, pivots, perm = ulax.lu(A)
+    assert u.get_unit(lu_mat) == u.second
+
+
+def test_docstring_example_householder_product():
+    """Verify householder_product docstring: result shape is correct."""
+    a = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+    taus = jnp.array([1.0])
+    Q = ulax.householder_product(a, taus)
+    assert Q.shape == (2, 2)
+
+
+def test_docstring_example_qdwh():
+    """Verify qdwh docstring: h preserves unit."""
+    A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
+    u_mat, h, num_iters, is_converged = ulax.qdwh(A)
+    assert u.get_unit(h) == u.second
+
+
+def test_docstring_example_qr():
+    """Verify qr docstring: R factor preserves unit."""
+    A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
+    q, r = ulax.qr(A)
+    assert u.get_unit(r) == u.meter
+
+
+def test_docstring_example_schur():
+    """Verify schur docstring: Schur vectors preserve unit."""
+    A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
+    t, q = ulax.schur(A)
+    assert u.get_unit(q) == u.second
+
+
+def test_docstring_example_svd():
+    """Verify svd docstring: singular values preserve unit."""
+    A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.meter
+    u_mat, s, vh = ulax.svd(A)
+    assert u.get_unit(s) == u.meter
+
+
+def test_docstring_example_triangular_solve():
+    """Verify triangular_solve docstring: solution preserves b's unit."""
+    A = jnp.array([[2.0, 0.0], [1.0, 3.0]])
+    b = jnp.array([[4.0], [7.0]]) * u.meter
+    X = ulax.triangular_solve(A, b, left_side=True, lower=True)
+    assert u.get_unit(X) == u.meter
+
+
+def test_docstring_example_tridiagonal():
+    """Verify tridiagonal docstring: diagonal preserves unit."""
+    A = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * u.second
+    a_out, d, e, taus = ulax.tridiagonal(A)
+    assert u.get_unit(d) == u.second
+
+
+def test_docstring_example_tridiagonal_solve():
+    """Verify tridiagonal_solve docstring: solution preserves b's unit."""
+    dl = jnp.array([0.0, 1.0, 1.0])
+    d = jnp.array([2.0, 2.0, 2.0])
+    du = jnp.array([1.0, 1.0, 0.0])
+    b = jnp.array([[1.0], [2.0], [3.0]]) * u.meter
+    X = ulax.tridiagonal_solve(dl, d, du, b)
+    assert u.get_unit(X) == u.meter

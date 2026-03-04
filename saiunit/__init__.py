@@ -13,6 +13,45 @@
 # limitations under the License.
 # ==============================================================================
 
+"""
+saiunit -- Physical units for JAX arrays.
+
+``saiunit`` provides a :class:`Quantity` type that pairs a JAX array with a
+physical :class:`Unit`, ensuring dimensional correctness at every arithmetic
+operation.  It also supplies the standard SI base and derived units (e.g.
+``meter``, ``second``, ``volt``), physical constants, and unit-aware wrappers
+for NumPy/JAX math functions.
+
+Subpackages
+-----------
+math
+    Unit-aware wrappers for NumPy-style math functions.
+lax
+    Unit-aware wrappers for ``jax.lax`` primitives.
+linalg
+    Unit-aware linear-algebra routines.
+fft
+    Unit-aware FFT functions.
+autograd
+    Unit-aware automatic differentiation (grad, jacobian, hessian).
+constants
+    Physical constants as :class:`Quantity` objects.
+sparse
+    Unit-aware sparse matrix types (CSR, CSC, COO).
+
+Examples
+--------
+
+.. code-block:: python
+
+    >>> import saiunit as su
+    >>> distance = 100.0 * su.meter
+    >>> time = 9.58 * su.second
+    >>> speed = distance / time
+    >>> speed.dim == (su.meter / su.second).dim
+    True
+"""
+
 __version__ = "0.1.5"
 __version_info__ = tuple(map(int, __version__.split(".")))
 
