@@ -22,6 +22,13 @@ from ._base_unit import UNITLESS, Unit
 from ._misc import set_module_as
 
 
+__all__ = [
+    'check_units',
+    'check_dims',
+    'assign_units',
+]
+
+
 def _is_quantity(x):
     from ._base_quantity import Quantity
     return isinstance(x, Quantity)
