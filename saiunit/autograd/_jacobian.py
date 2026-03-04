@@ -28,77 +28,114 @@ from saiunit._compatible_import import safe_map
 from saiunit._misc import maybe_custom_array_tree
 from ._misc import _ensure_index, _check_callable, _argnums_partial
 
-
-# ---------------------------------------------------------------------------
-# Dtype-validation helpers (inlined from jax._src.api to avoid private API)
-# ---------------------------------------------------------------------------
-
-def _get_leaf_dtype(x):
-    try:
-        return x.dtype
-    except AttributeError:
-        return np.result_type(x)
-
-
-def _check_input_dtype_jacrev(holomorphic: bool, allow_int: bool, x) -> None:
-    dtype = _get_leaf_dtype(x)
-    if holomorphic:
-        if not np.issubdtype(dtype, np.complexfloating):
-            raise TypeError(
-                "jacrev with holomorphic=True requires inputs with complex dtype, "
-                f"got {dtype}."
-            )
-    elif not allow_int and not np.issubdtype(dtype, np.floating):
-        raise TypeError(
-            f"jacrev requires real-valued inputs (not {dtype}); "
-            "use allow_int=True to differentiate through integer values."
-        )
-
-
-def _check_output_dtype_jacrev(holomorphic: bool, x) -> None:
-    dtype = _get_leaf_dtype(x)
-    if holomorphic:
-        if not np.issubdtype(dtype, np.complexfloating):
-            raise TypeError(
-                "jacrev with holomorphic=True requires outputs with complex dtype, "
-                f"got {dtype}."
-            )
-    elif not np.issubdtype(dtype, np.floating):
-        raise TypeError(f"jacrev requires real-valued outputs (not {dtype}).")
-
-
-def _check_input_dtype_jacfwd(holomorphic: bool, x) -> None:
-    dtype = _get_leaf_dtype(x)
-    if holomorphic:
-        if not np.issubdtype(dtype, np.complexfloating):
-            raise TypeError(
-                "jacfwd with holomorphic=True requires inputs with complex dtype, "
-                f"got {dtype}."
-            )
-    elif not np.issubdtype(dtype, np.inexact):
-        raise TypeError(
-            f"jacfwd requires real- or complex-valued inputs (not {dtype})."
-        )
-
-
-def _check_output_dtype_jacfwd(holomorphic: bool, x) -> None:
-    dtype = _get_leaf_dtype(x)
-    if holomorphic:
-        if not np.issubdtype(dtype, np.complexfloating):
-            raise TypeError(
-                "jacfwd with holomorphic=True requires outputs with complex dtype, "
-                f"got {dtype}."
-            )
-    elif not np.issubdtype(dtype, np.floating):
-        raise TypeError(f"jacfwd requires real-valued outputs (not {dtype}).")
-
-
 __all__ = [
     'jacrev',
     'jacfwd',
     'jacobian',
 ]
 
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _is_quantity(x):
+    return isinstance(x, Quantity)
+
+
+def _check_dtype(x, *, holomorphic: bool, allowed_dtype=np.floating, name: str = ""):
+    """Validate leaf dtype for Jacobian computation."""
+    try:
+        dtype = x.dtype
+    except AttributeError:
+        dtype = np.result_type(x)
+    if holomorphic:
+        if not np.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                f"{name} with holomorphic=True requires complex dtype, got {dtype}."
+            )
+    elif allowed_dtype is not None and not np.issubdtype(dtype, allowed_dtype):
+        raise TypeError(
+            f"{name} requires {allowed_dtype.__name__} inputs, got {dtype}."
+        )
+
+
+def _split(x, indices, axis):
+    if isinstance(x, np.ndarray):
+        return np.split(x, indices, axis)
+    elif isinstance(x, Quantity):
+        return x.split(indices, axis)
+    else:
+        return jnp.split(x, indices, axis)
+
+
+def _unravel_array_into_pytree(pytree, axis, arr, is_leaf=None, divide_units=False):
+    """Unravel an array into a PyTree with a given structure.
+
+    Args:
+        pytree: The pytree that provides the structure.
+        axis: The parameter axis is either -1, 0, or 1.
+        arr: The array to be unraveled.
+        is_leaf: Optional leaf predicate for tree flattening.
+        divide_units: If True, divide each part's unit by the corresponding leaf's unit.
+    """
+    leaves, treedef = jax.tree.flatten(pytree, is_leaf=is_leaf)
+    axis = axis % arr.ndim
+    shapes = [arr.shape[:axis] + np.shape(l) + arr.shape[axis + 1:] for l in leaves]
+    parts = _split(arr, np.cumsum(safe_map(np.size, leaves[:-1])), axis)
+    reshaped_parts = [x.reshape(shape) for x, shape in zip(parts, shapes)]
+    if divide_units:
+        reshaped_parts = [
+            maybe_decimal(
+                Quantity(get_magnitude(part), unit=get_unit(part) / get_unit(leaf))
+            )
+            for part, leaf in zip(reshaped_parts, leaves)
+        ]
+    return jax.tree.unflatten(treedef, reshaped_parts)
+
+
+def _std_basis(pytree):
+    leaves, _ = jax.tree.flatten(pytree)
+    ndim = sum(safe_map(np.size, leaves))
+    dtype = jax.dtypes.result_type(*leaves)
+    flat_basis = jnp.eye(ndim, dtype=dtype)
+    return _unravel_array_into_pytree(pytree, 1, flat_basis)
+
+
+def _tree_transpose(outer, inner, pytree_to_transpose):
+    outer_leaves, outer_treedef = jax.tree.flatten(outer, is_leaf=_is_quantity)
+    inner_leaves, inner_treedef = jax.tree.flatten(inner, is_leaf=_is_quantity)
+    outer_leaf_units = [get_unit(leaf) for leaf in outer_leaves]
+    inner_leaf_units = [get_unit(leaf) for leaf in inner_leaves]
+
+    flat, treedef = jax.tree.flatten(pytree_to_transpose, is_leaf=_is_quantity)
+    inner_size = inner_treedef.num_leaves
+    outer_size = outer_treedef.num_leaves
+    if treedef.num_leaves != (inner_size * outer_size):
+        expected_treedef = outer_treedef.compose(inner_treedef)
+        raise TypeError(f"Mismatch\n{treedef}\n != \n{expected_treedef}")
+    iter_flat = iter(flat)
+
+    lol = [
+        [
+            maybe_decimal(
+                Quantity(
+                    get_magnitude(next(iter_flat)),
+                    unit=inner_leaf_units[j] / outer_leaf_units[i]
+                )
+            )
+            for j in range(inner_size)
+        ]
+        for i in range(outer_size)
+    ]
+    transposed_lol = zip(*lol)
+    subtrees = map(partial(jax.tree.unflatten, outer_treedef), transposed_lol)
+    return jax.tree.unflatten(inner_treedef, subtrees)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
 def jacrev(
     fun: Callable,
@@ -198,22 +235,25 @@ def jacrev(
     """
     _check_callable(fun)
     argnums = _ensure_index(argnums)
+    input_dtype = None if allow_int else np.floating
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
         argnums_, f_partial, dyn_args = _argnums_partial(fun, argnums, args, kwargs)
-        jax.tree.map(partial(_check_input_dtype_jacrev, holomorphic, allow_int), dyn_args)
+        jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, allowed_dtype=input_dtype, name="jacrev"), dyn_args)
         if not has_aux:
             y, pullback = jax.vjp(f_partial, *dyn_args)
         else:
             y, pullback, aux = jax.vjp(f_partial, *dyn_args, has_aux=True)
-        jax.tree.map(partial(_check_output_dtype_jacrev, holomorphic), y)
+        jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, name="jacrev"), y)
         jac = jax.vmap(pullback)(_std_basis(y))
         jac = jac[0] if isinstance(argnums_, int) else jac
-        jac_tree = jax.tree.map(partial(_jacrev_unravel, y, is_leaf=_is_quantity),
-                                jac,
-                                is_leaf=_is_quantity)
+        jac_tree = jax.tree.map(
+            lambda arr: _unravel_array_into_pytree(y, 0, arr, is_leaf=_is_quantity),
+            jac,
+            is_leaf=_is_quantity,
+        )
         example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
         jac_tree = _tree_transpose(outer=example_args, inner=y, pytree_to_transpose=jac_tree)
         if not has_aux:
@@ -222,43 +262,6 @@ def jacrev(
             return jac_tree, aux
 
     return jacfun
-
-
-def _tree_transpose(
-    outer: Any,
-    inner: Any,
-    pytree_to_transpose: Any
-) -> Any:
-    outer_leaves, outer_treedef = jax.tree.flatten(outer, is_leaf=_is_quantity)
-    inner_leaves, inner_treedef = jax.tree.flatten(inner, is_leaf=_is_quantity)
-    outer_leaf_units = [get_unit(leaf) for leaf in outer_leaves]
-    inner_leaf_units = [get_unit(leaf) for leaf in inner_leaves]
-
-    # tree transpose
-    flat, treedef = jax.tree.flatten(pytree_to_transpose, is_leaf=_is_quantity)
-    inner_size = inner_treedef.num_leaves
-    outer_size = outer_treedef.num_leaves
-    if treedef.num_leaves != (inner_size * outer_size):
-        expected_treedef = outer_treedef.compose(inner_treedef)
-        raise TypeError(f"Mismatch\n{treedef}\n != \n{expected_treedef}")
-    iter_flat = iter(flat)
-
-    # unit-aware tree transpose
-    lol = [
-        [
-            maybe_decimal(
-                Quantity(
-                    get_magnitude(next(iter_flat)),
-                    unit=inner_leaf_units[j] / outer_leaf_units[i]
-                )
-            )
-            for j in range(inner_size)
-        ]
-        for i in range(outer_size)
-    ]
-    transposed_lol = zip(*lol)
-    subtrees = map(partial(jax.tree.unflatten, outer_treedef), transposed_lol)
-    return jax.tree.unflatten(inner_treedef, subtrees)
 
 
 def jacobian(
@@ -394,90 +397,23 @@ def jacfwd(
     def jacfun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
         argnums_, f_partial, dyn_args = _argnums_partial(fun, argnums, args, kwargs)
-        jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic), dyn_args)
+        jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, allowed_dtype=np.inexact, name="jacfwd"), dyn_args)
         if not has_aux:
             pushfwd: Callable = partial(jax.jvp, f_partial, dyn_args)
             y, jac = jax.vmap(pushfwd, out_axes=(None, -1))(_std_basis(dyn_args))
         else:
             pushfwd: Callable = partial(jax.jvp, f_partial, dyn_args, has_aux=True)
             y, jac, aux = jax.vmap(pushfwd, out_axes=(None, -1, None))(_std_basis(dyn_args))
-        jax.tree.map(partial(_check_output_dtype_jacfwd, holomorphic), y)
+        jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, name="jacfwd"), y)
         example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
-        jac_tree = jax.tree.map(partial(_jacfwd_unravel, example_args, is_leaf=_is_quantity),
-                                jac,
-                                is_leaf=_is_quantity)
+        jac_tree = jax.tree.map(
+            lambda arr: _unravel_array_into_pytree(example_args, -1, arr, is_leaf=_is_quantity, divide_units=True),
+            jac,
+            is_leaf=_is_quantity,
+        )
         if not has_aux:
             return jac_tree
         else:
             return jac_tree, aux
 
     return jacfun
-
-
-def _std_basis(pytree):
-    leaves, _ = jax.tree.flatten(pytree)
-    ndim = sum(safe_map(np.size, leaves))
-    dtype = jax.dtypes.result_type(*leaves)
-    flat_basis = jax.numpy.eye(ndim, dtype=dtype)
-    return _unravel_array_into_pytree(pytree, 1, flat_basis)
-
-
-def _jacfwd_unravel(input_pytree, arr, is_leaf=None):
-    """
-    Unravel an array into a PyTree with a given structure.
-
-    Args:
-        input_pytree: The pytree that provides the structure.
-        arr: The array to be unraveled.
-    """
-    axis = -1
-    leaves, treedef = jax.tree.flatten(input_pytree, is_leaf=is_leaf)
-    axis = axis % arr.ndim
-    shapes = [arr.shape[:axis] + np.shape(l) + arr.shape[axis + 1:] for l in leaves]
-    parts = _split(arr, np.cumsum(safe_map(np.size, leaves[:-1])), axis)
-    reshaped_parts = [x.reshape(shape) for x, shape in zip(parts, shapes)]
-    unit_reshaped_parts = [
-        maybe_decimal(
-            Quantity(
-                get_magnitude(part),
-                unit=get_unit(part) / get_unit(leaf)
-            )
-        )
-        for part, leaf in zip(reshaped_parts, leaves)
-    ]
-    return jax.tree.unflatten(treedef, unit_reshaped_parts)
-
-
-def _jacrev_unravel(output_pytree, arr, is_leaf=None):
-    return _unravel_array_into_pytree(output_pytree, 0, arr, is_leaf=is_leaf)
-
-
-def _unravel_array_into_pytree(pytree, axis, arr, is_leaf=None):
-    """
-    Unravel an array into a PyTree with a given structure.
-
-    Args:
-        pytree: The pytree that provides the structure.
-        axis: The parameter axis is either -1, 0, or 1.  It controls the
-          resulting shapes.
-        arr: The array to be unraveled.
-    """
-    leaves, treedef = jax.tree.flatten(pytree, is_leaf=is_leaf)
-    axis = axis % arr.ndim
-    shapes = [arr.shape[:axis] + np.shape(l) + arr.shape[axis + 1:] for l in leaves]
-    parts = _split(arr, np.cumsum(safe_map(np.size, leaves[:-1])), axis)
-    reshaped_parts = [x.reshape(shape) for x, shape in zip(parts, shapes)]
-    return jax.tree.unflatten(treedef, reshaped_parts)
-
-
-def _split(x, indices, axis):
-    if isinstance(x, np.ndarray):
-        return np.split(x, indices, axis)
-    elif isinstance(x, Quantity):
-        return x.split(indices, axis)
-    else:
-        return jnp.split(x, indices, axis)
-
-
-def _is_quantity(x):
-    return isinstance(x, Quantity)
