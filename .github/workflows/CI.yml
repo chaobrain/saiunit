@@ -46,6 +46,10 @@ jobs:
           python -m pip install --upgrade pip setuptools  --no-cache-dir
           python -m pip install -r requirements-dev.txt  --no-cache-dir
           pip install . --no-cache-dir
+      - name: Build and install BrainUnit
+        run: |
+          python make_brainunit_setup.py
+          pip install ./brainunit --no-cache-dir
       - name: Test with pytest
         run: |
           pytest saiunit/
@@ -75,7 +79,11 @@ jobs:
           python -m pip cache purge
           python -m pip install --upgrade pip setuptools --no-cache-dir
           python -m pip install -r requirements-dev.txt  --no-cache-dir
-          pip install .
+          pip install . --no-cache-dir
+      - name: Build and install BrainUnit
+        run: |
+          python make_brainunit_setup.py
+          pip install ./brainunit --no-cache-dir
       - name: Test with pytest
         run: |
           pytest saiunit/
@@ -106,6 +114,10 @@ jobs:
           python -m pip install --upgrade pip setuptools --no-cache-dir
           python -m pip install -r requirements-dev.txt  --no-cache-dir
           pip install .  --no-cache-dir
+      - name: Build and install BrainUnit
+        run: |
+          python make_brainunit_setup.py
+          pip install ./brainunit --no-cache-dir
       - name: Test with pytest
         run: |
           pytest saiunit/ -p no:faulthandler
