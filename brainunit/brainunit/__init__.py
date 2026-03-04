@@ -14,10 +14,7 @@
 # ==============================================================================
 
 
-import saiunit
-
-__version__ = saiunit.__version__
-__version_info__ = tuple(map(int, __version__.split(".")))
+from saiunit._version import __version__, __version_info__
 
 from . import autograd
 from . import constants
@@ -147,5 +144,4 @@ __all__ = [
               'magnetic_constant',
               'molar_mass_constant',
           ] + _common_all + _std_units_all + _constants_all
-del _common_all, _std_units_all, _constants_all, saiunit
-
+del _common_all, _std_units_all, _constants_all

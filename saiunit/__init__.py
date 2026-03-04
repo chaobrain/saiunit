@@ -52,9 +52,6 @@ Examples
     True
 """
 
-__version__ = "0.1.5"
-__version_info__ = tuple(map(int, __version__.split(".")))
-
 from . import _matplotlib_compat
 from . import autograd
 from . import constants
@@ -101,6 +98,7 @@ from ._unit_constants import *
 from ._unit_constants import __all__ as _constants_all
 from ._unit_shortcuts import *
 from ._unit_shortcuts import __all__ as _std_units_all
+from ._version import __version__, __version_info__
 from .custom_array import CustomArray
 
 # old version compatibility
@@ -115,6 +113,10 @@ magnetic_constant = constants.magnetic
 molar_mass_constant = constants.molar_mass
 
 __all__ = [
+              # version control
+              '__version__',
+              '__version_info__',
+
               # submodules
               'math',
               'linalg',
