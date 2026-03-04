@@ -23,6 +23,7 @@ import saiunit as u
 from saiunit.typing import (
     PhysicalType,
     is_physical_type,
+    quantity_type,
     validate_units,
 )
 
@@ -174,6 +175,15 @@ class TestQuantityClassGetitem:
         x = 5.0 * u.meter
         assert isinstance(x, (u.Quantity["length"], u.Quantity["mass"]))
         assert not isinstance(x, (u.Quantity["mass"], u.Quantity["time"]))
+
+    def test_quantity_type_helper(self):
+        x = 5.0 * u.meter
+        assert isinstance(x, quantity_type("length"))
+        assert not isinstance(x, quantity_type("time"))
+
+    def test_quantity_type_equivalent_to_subscript(self):
+        assert quantity_type("length") is u.Quantity["length"]
+        assert quantity_type(u.meter) is u.Quantity[u.meter]
 
     def test_used_in_function_annotation(self):
         """Annotations are valid in function signatures."""

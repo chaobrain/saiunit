@@ -51,9 +51,10 @@ isinstance support
 .. code-block:: python
 
     x = 2.0 * u.km
-    isinstance(x, u.Quantity[u.meter])    # True  (same dimension)
-    isinstance(x, u.Quantity["length"])   # True
-    isinstance(x, u.Quantity["mass"])     # False
+    from saiunit.typing import quantity_type
+    isinstance(x, quantity_type(u.meter))    # True  (same dimension)
+    isinstance(x, quantity_type("length"))   # True
+    isinstance(x, quantity_type("mass"))     # False
 
     from saiunit.typing import PhysicalType
     isinstance(x, PhysicalType("length"))  # True
@@ -137,6 +138,9 @@ __all__ = [
     'VOLUME',
     'DENSITY',
     'DIMENSIONLESS_TYPE',
+
+    # IDE-safe runtime helper
+    'quantity_type',
 
     # Runtime validation decorator
     'validate_units',
@@ -434,6 +438,20 @@ ACCELERATION = Quantity['acceleration']
 AREA = Quantity['area']
 VOLUME = Quantity['volume']
 DENSITY = Quantity['density']
+
+
+# ---------------------------------------------------------------------------
+# IDE-safe runtime helper
+# ---------------------------------------------------------------------------
+
+def quantity_type(item: Unit | str) -> type[Quantity]:
+    """Return a runtime-checkable Quantity type for ``isinstance``.
+
+    Some static analyzers flag ``isinstance(x, Quantity["length"])`` as a
+    parameterized-generic class check. ``quantity_type(...)`` provides the same
+    runtime behavior without that warning pattern.
+    """
+    return _make_annotated_quantity_type(item)
 
 
 # ---------------------------------------------------------------------------
