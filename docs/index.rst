@@ -242,6 +242,7 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
 
    apis/changelog.md
    apis/saiunit.rst
+   apis/saiunit.typing.rst
    apis/saiunit.autograd.rst
    apis/saiunit.math.rst
    apis/saiunit.linalg.rst
@@ -249,6 +250,5 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    apis/saiunit.fft.rst
    apis/saiunit.sparse.rst
    apis/saiunit.constants.rst
-
 
 
