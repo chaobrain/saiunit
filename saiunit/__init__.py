@@ -44,11 +44,11 @@ Examples
 
 .. code-block:: python
 
-    >>> import saiunit as su
-    >>> distance = 100.0 * su.meter
-    >>> time = 9.58 * su.second
+    >>> import saiunit as u
+    >>> distance = 100.0 * u.meter
+    >>> time = 9.58 * u.second
     >>> speed = distance / time
-    >>> speed.dim == (su.meter / su.second).dim
+    >>> speed.dim == (u.meter / u.second).dim
     True
 """
 

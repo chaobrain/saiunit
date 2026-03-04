@@ -140,7 +140,7 @@ class TestLaxMisc(parameterized.TestCase):
 
 def test_docstring_example_reduce():
     """Verify the docstring examples for ``reduce``."""
-    import saiunit as su
+    import saiunit as u
     import saiunit.lax as sulax
 
     # Example 1: plain array with lax.add
@@ -149,14 +149,14 @@ def test_docstring_example_reduce():
     assert float(result) == 6.0
 
     # Example 2: Quantity input (unit is stripped, mantissa reduced)
-    q = jnp.array([1.0, 2.0, 3.0]) * su.meter
-    result_q = sulax.reduce(q, jnp.float32(0) * su.meter, lax.add, [0])
+    q = jnp.array([1.0, 2.0, 3.0]) * u.meter
+    result_q = sulax.reduce(q, jnp.float32(0) * u.meter, lax.add, [0])
     assert float(result_q) == 6.0
 
 
 def test_docstring_example_reduce_precision():
     """Verify the docstring examples for ``reduce_precision``."""
-    import saiunit as su
+    import saiunit as u
     import saiunit.lax as sulax
 
     # Example 1: plain array
@@ -166,7 +166,7 @@ def test_docstring_example_reduce_precision():
     assert jnp.allclose(result, expected)
 
     # Example 2: Quantity input (mantissa extracted, unit stripped)
-    q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * su.meter
+    q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * u.meter
     result_q = sulax.reduce_precision(q, exponent_bits=5, mantissa_bits=10)
     assert jnp.allclose(result_q, expected)
 

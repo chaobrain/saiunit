@@ -62,10 +62,10 @@ def zeros_like_array(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([3.0, 5.0]) * su.meter
+        >>> q = jnp.array([3.0, 5.0]) * u.meter
         >>> result = sulax.zeros_like_array(q)
         >>> result.mantissa
         Array([0., 0.], dtype=float32)
@@ -117,9 +117,9 @@ def iota(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> result = sulax.iota(float, 5, unit=su.second)
+        >>> result = sulax.iota(float, 5, unit=u.second)
         >>> result.mantissa
         Array([0., 1., 2., 3., 4.], dtype=float32)
         >>> result.unit
@@ -167,9 +167,9 @@ def broadcasted_iota(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
-        >>> result = sulax.broadcasted_iota(float, (2, 3), 1, unit=su.meter)
+        >>> result = sulax.broadcasted_iota(float, (2, 3), 1, unit=u.meter)
         >>> result.mantissa
         Array([[0., 1., 2.],
                [0., 1., 2.]], dtype=float32)

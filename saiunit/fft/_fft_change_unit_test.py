@@ -488,44 +488,44 @@ class TestFftChangeUnit(parameterized.TestCase):
 
 def test_docstring_example_fft():
     """Verify examples from fft docstring."""
-    import saiunit as su
+    import saiunit as u
     import saiunit.fft as sufft
     import jax.numpy as jnp
 
-    x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+    x = jnp.array([1.0, 2.0, 3.0, 4.0]) * u.meter
     X = sufft.fft(x)
-    assert isinstance(X, su.Quantity)
+    assert isinstance(X, u.Quantity)
     assert X.shape == (4,)
     # unit should be meter * second
-    assert X.unit == su.meter * su.second
+    assert X.unit == u.meter * u.second
 
     x_roundtrip = sufft.ifft(X)
-    assert isinstance(x_roundtrip, su.Quantity)
+    assert isinstance(x_roundtrip, u.Quantity)
     assert jnp.allclose(x_roundtrip.mantissa.real, x.mantissa, atol=1e-5)
 
 
 def test_docstring_example_ifft():
     """Verify examples from ifft docstring."""
-    import saiunit as su
+    import saiunit as u
     import saiunit.fft as sufft
     import jax.numpy as jnp
 
-    x = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+    x = jnp.array([1.0, 2.0, 3.0, 4.0]) * u.meter
     X = sufft.fft(x)
     x_back = sufft.ifft(X)
-    assert isinstance(x_back, su.Quantity)
+    assert isinstance(x_back, u.Quantity)
     # round-trip should recover original values
     assert jnp.allclose(x_back.mantissa.real, x.mantissa, atol=1e-5)
     # unit should come back to meter
-    assert x_back.unit == su.meter
+    assert x_back.unit == u.meter
 
 
 def test_docstring_example_fftfreq():
     """Verify examples from fftfreq docstring."""
-    import saiunit as su
+    import saiunit as u
     import saiunit.fft as sufft
 
-    freqs = sufft.fftfreq(4, 1.0 * su.second)
-    assert isinstance(freqs, su.Quantity)
+    freqs = sufft.fftfreq(4, 1.0 * u.second)
+    assert isinstance(freqs, u.Quantity)
     assert freqs.shape == (4,)
-    assert freqs.unit == su.hertz
+    assert freqs.unit == u.hertz

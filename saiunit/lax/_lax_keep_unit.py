@@ -339,10 +339,10 @@ def index_take(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> x = jnp.array([[1., 2., 3.], [4., 5., 6.]]) * su.meter
+        >>> x = jnp.array([[1., 2., 3.], [4., 5., 6.]]) * u.meter
         >>> idx = jnp.array([0, 2])
         >>> result = sulax.index_take(x, (idx,), axes=(1,))
         >>> result.mantissa
@@ -752,10 +752,10 @@ def sort_key_val(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> keys = jnp.array([3.0, 1.0, 2.0]) * su.meter
+        >>> keys = jnp.array([3.0, 1.0, 2.0]) * u.meter
         >>> vals = jnp.array([30, 10, 20])
         >>> sorted_keys, sorted_vals = sulax.sort_key_val(keys, vals)
         >>> sorted_keys.mantissa
@@ -799,10 +799,10 @@ def neg(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([1.0, -2.0, 3.0]) * su.meter
+        >>> q = jnp.array([1.0, -2.0, 3.0]) * u.meter
         >>> result = sulax.neg(q)
         >>> result.mantissa
         Array([-1.,  2., -3.], dtype=float32)
@@ -840,10 +840,10 @@ def cummax(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([3.0, 1.0, 4.0, 1.0]) * su.second
+        >>> q = jnp.array([3.0, 1.0, 4.0, 1.0]) * u.second
         >>> result = sulax.cummax(q)
         >>> result.mantissa
         Array([3., 3., 4., 4.], dtype=float32)
@@ -879,10 +879,10 @@ def cummin(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([3.0, 1.0, 4.0, 1.0]) * su.second
+        >>> q = jnp.array([3.0, 1.0, 4.0, 1.0]) * u.second
         >>> result = sulax.cummin(q)
         >>> result.mantissa
         Array([3., 1., 1., 1.], dtype=float32)
@@ -918,10 +918,10 @@ def cumsum(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([1.0, 2.0, 3.0, 4.0]) * su.meter
+        >>> q = jnp.array([1.0, 2.0, 3.0, 4.0]) * u.meter
         >>> result = sulax.cumsum(q)
         >>> result.mantissa
         Array([ 1.,  3.,  6., 10.], dtype=float32)
@@ -1382,11 +1382,11 @@ def complex(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> real = jnp.array([1.0, 2.0]) * su.volt
-        >>> imag = jnp.array([3.0, 4.0]) * su.volt
+        >>> real = jnp.array([1.0, 2.0]) * u.volt
+        >>> imag = jnp.array([3.0, 4.0]) * u.volt
         >>> result = sulax.complex(real, imag)
         >>> result.mantissa
         Array([1.+3.j, 2.+4.j], dtype=complex64)
@@ -1444,11 +1444,11 @@ def sub(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> a = jnp.array([5.0, 8.0]) * su.meter
-        >>> b = jnp.array([1.0, 3.0]) * su.meter
+        >>> a = jnp.array([5.0, 8.0]) * u.meter
+        >>> b = jnp.array([1.0, 3.0]) * u.meter
         >>> result = sulax.sub(a, b)
         >>> result.mantissa
         Array([4., 5.], dtype=float32)
@@ -1724,10 +1724,10 @@ def broadcast(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([1.0, 2.0]) * su.second
+        >>> q = jnp.array([1.0, 2.0]) * u.second
         >>> result = sulax.broadcast(q, sizes=(3,))
         >>> result.mantissa.shape
         (3, 2)
@@ -1764,10 +1764,10 @@ def broadcast_in_dim(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([1.0, 2.0]) * su.meter
+        >>> q = jnp.array([1.0, 2.0]) * u.meter
         >>> result = sulax.broadcast_in_dim(q, shape=(3, 2), broadcast_dimensions=(1,))
         >>> result.mantissa.shape
         (3, 2)
@@ -1797,10 +1797,10 @@ def broadcast_to_rank(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
-        >>> q = jnp.array([1.0, 2.0]) * su.meter
+        >>> q = jnp.array([1.0, 2.0]) * u.meter
         >>> result = sulax.broadcast_to_rank(q, rank=3)
         >>> result.mantissa.shape
         (1, 1, 2)

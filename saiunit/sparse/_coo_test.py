@@ -337,7 +337,7 @@ class TestCOODocstringExamples(unittest.TestCase):
     def test_coo_fromdense_basic(self):
         """Verify COO.fromdense round-trips through todense."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
@@ -348,7 +348,7 @@ class TestCOODocstringExamples(unittest.TestCase):
     def test_coo_fromdense_function(self):
         """Verify coo_fromdense function round-trips through todense."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
@@ -359,7 +359,7 @@ class TestCOODocstringExamples(unittest.TestCase):
     def test_coo_with_data(self):
         """Verify COO.with_data replaces values but preserves structure."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0.], [0., 2.]])
@@ -371,7 +371,7 @@ class TestCOODocstringExamples(unittest.TestCase):
     def test_coo_todense_function(self):
         """Verify the coo_todense standalone function."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[5., 0.], [0., 6.]])
@@ -382,7 +382,7 @@ class TestCOODocstringExamples(unittest.TestCase):
     def test_coo_isinstance_sparse_matrix(self):
         """Verify COO is a SparseMatrix instance."""
         import jax.numpy as jnp
-        import saiunit as su
+        import saiunit as u
         import saiunit.sparse as susparse
 
         dense = jnp.array([[1., 0.], [0., 2.]])

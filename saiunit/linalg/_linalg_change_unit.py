@@ -102,14 +102,14 @@ def cholesky(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> x = jnp.array([[2., 1.],
-        ...                [1., 2.]]) * su.meter2
-        >>> L = su.linalg.cholesky(x)
+        ...                [1., 2.]]) * u.meter2
+        >>> L = u.linalg.cholesky(x)
         >>> L.unit
         Unit("m")
-        >>> su.math.allclose(x, L @ L.T)
+        >>> u.math.allclose(x, L @ L.T)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_unary(jnp.linalg.cholesky,
@@ -164,16 +164,16 @@ def solve(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> A = jnp.array([[1., 2., 3.],
         ...                [2., 4., 2.],
-        ...                [3., 2., 1.]]) * su.meter
-        >>> b = jnp.array([14., 16., 10.]) * su.second
-        >>> x = su.linalg.solve(A, b)
+        ...                [3., 2., 1.]]) * u.meter
+        >>> b = jnp.array([14., 16., 10.]) * u.second
+        >>> x = u.linalg.solve(A, b)
         >>> x.unit
         Unit("s / m")
-        >>> su.math.allclose(A @ x, b)
+        >>> u.math.allclose(A @ x, b)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_binary(jnp.linalg.solve,
@@ -223,16 +223,16 @@ def tensorsolve(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax
         >>> key1, key2 = jax.random.split(jax.random.key(8675309))
-        >>> a = jax.random.normal(key1, shape=(2, 2, 4)) * su.meter
-        >>> b = jax.random.normal(key2, shape=(2, 2)) * su.second
-        >>> x = su.linalg.tensorsolve(a, b)
+        >>> a = jax.random.normal(key1, shape=(2, 2, 4)) * u.meter
+        >>> b = jax.random.normal(key2, shape=(2, 2)) * u.second
+        >>> x = u.linalg.tensorsolve(a, b)
         >>> x.shape
         (4,)
-        >>> b_reconstructed = su.linalg.tensordot(a, x, axes=x.ndim)
-        >>> su.math.allclose(b, b_reconstructed)
+        >>> b_reconstructed = u.linalg.tensordot(a, x, axes=x.ndim)
+        >>> u.math.allclose(b, b_reconstructed)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_binary(jnp.linalg.tensorsolve,
@@ -296,12 +296,12 @@ def lstsq(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1, 2],
-        ...                [3, 4]]) * su.second
-        >>> b = jnp.array([5, 6]) * su.meter
-        >>> x, residuals, rank, s = su.linalg.lstsq(a, b)
+        ...                [3, 4]]) * u.second
+        >>> b = jnp.array([5, 6]) * u.meter
+        >>> x, residuals, rank, s = u.linalg.lstsq(a, b)
         >>> x.unit
         Unit("m / s")
     """
@@ -360,13 +360,13 @@ def inv(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1., 2., 3.],
         ...                [2., 4., 2.],
-        ...                [3., 2., 1.]]) * su.second
-        >>> a_inv = su.linalg.inv(a)
-        >>> su.math.allclose(a @ a_inv, jnp.eye(3), atol=1e-5)
+        ...                [3., 2., 1.]]) * u.second
+        >>> a_inv = u.linalg.inv(a)
+        >>> u.math.allclose(a @ a_inv, jnp.eye(3), atol=1e-5)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_unary(jnp.linalg.inv,
@@ -421,15 +421,15 @@ def pinv(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([[1, 2],
         ...                [3, 4],
-        ...                [5, 6]]) * su.second
-        >>> a_pinv = su.linalg.pinv(a)
+        ...                [5, 6]]) * u.second
+        >>> a_pinv = u.linalg.pinv(a)
         >>> a_pinv.shape
         (2, 3)
-        >>> su.math.allclose(a_pinv @ a, jnp.eye(2), atol=1e-4)
+        >>> u.math.allclose(a_pinv @ a, jnp.eye(2), atol=1e-4)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_unary(jnp.linalg.pinv,
@@ -480,16 +480,16 @@ def tensorinv(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax
         >>> import jax.numpy as jnp
         >>> key = jax.random.key(1337)
-        >>> x = jax.random.normal(key, shape=(2, 2, 4)) * su.second
-        >>> xinv = su.linalg.tensorinv(x, 2)
+        >>> x = jax.random.normal(key, shape=(2, 2, 4)) * u.second
+        >>> xinv = u.linalg.tensorinv(x, 2)
         >>> xinv.shape
         (4, 2, 2)
-        >>> xinv_x = su.linalg.tensordot(xinv, x, axes=2)
-        >>> su.math.allclose(xinv_x, jnp.eye(4), atol=1e-4)
+        >>> xinv_x = u.linalg.tensordot(xinv, x, axes=2)
+        >>> u.math.allclose(xinv_x, jnp.eye(4), atol=1e-4)
         Array(True, dtype=bool)
     """
     return _fun_change_unit_unary(jnp.linalg.tensorinv,

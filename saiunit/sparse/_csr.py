@@ -93,7 +93,7 @@ class CSR(SparseMatrix):
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
         >>> csr = susparse.CSR.fromdense(dense)
@@ -176,7 +176,7 @@ class CSR(SparseMatrix):
         .. code-block:: python
 
             >>> import jax.numpy as jnp
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import saiunit.sparse as susparse
             >>> dense = jnp.array([[1., 0.], [0., 2.]])
             >>> csr = susparse.CSR.fromdense(dense)
@@ -204,7 +204,7 @@ class CSR(SparseMatrix):
         .. code-block:: python
 
             >>> import jax.numpy as jnp
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import saiunit.sparse as susparse
             >>> dense = jnp.array([[0., 3.], [4., 0.]])
             >>> csr = susparse.CSR.fromdense(dense)
@@ -434,7 +434,7 @@ class CSC(SparseMatrix):
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[1., 0., 2.], [0., 0., 3.]])
         >>> csc = susparse.CSC.fromdense(dense)
@@ -497,7 +497,7 @@ class CSC(SparseMatrix):
         .. code-block:: python
 
             >>> import jax.numpy as jnp
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import saiunit.sparse as susparse
             >>> dense = jnp.array([[1., 0.], [0., 2.]])
             >>> csc = susparse.CSC.fromdense(dense)
@@ -525,7 +525,7 @@ class CSC(SparseMatrix):
         .. code-block:: python
 
             >>> import jax.numpy as jnp
-            >>> import saiunit as su
+            >>> import saiunit as u
             >>> import saiunit.sparse as susparse
             >>> dense = jnp.array([[0., 3.], [4., 0.]])
             >>> csc = susparse.CSC.fromdense(dense)
@@ -766,7 +766,7 @@ def csr_fromdense(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
         >>> csr = susparse.csr_fromdense(dense)
@@ -806,7 +806,7 @@ def csr_todense(mat: CSR) -> jax.Array | Quantity:
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[5., 0.], [0., 6.]])
         >>> csr = susparse.csr_fromdense(dense)
@@ -843,7 +843,7 @@ def csc_todense(mat: CSC) -> jax.Array | Quantity:
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[5., 0.], [0., 6.]])
         >>> csc = susparse.csc_fromdense(dense)
@@ -885,7 +885,7 @@ def csc_fromdense(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.sparse as susparse
         >>> dense = jnp.array([[1., 0., 0.], [0., 2., 3.]])
         >>> csc = susparse.csc_fromdense(dense)

@@ -66,9 +66,9 @@ def get_promote_dtypes(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.get_promote_dtypes(jnp.float32, jnp.int32)
+        >>> u.math.get_promote_dtypes(jnp.float32, jnp.int32)
         dtype('float32')
     """
     args = maybe_custom_array_tree(args)
@@ -108,11 +108,11 @@ def iscomplexobj(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.iscomplexobj(jnp.array([1.0, 2.0]))
+        >>> u.math.iscomplexobj(jnp.array([1.0, 2.0]))
         False
-        >>> su.math.iscomplexobj(jnp.array([1.0 + 2.0j]))
+        >>> u.math.iscomplexobj(jnp.array([1.0 + 2.0j]))
         True
     """
     return _fun_remove_unit_unary(jnp.iscomplexobj, x)
@@ -147,9 +147,9 @@ def heaviside(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.heaviside(jnp.array([-1.0, 0.0, 1.0]),
+        >>> u.math.heaviside(jnp.array([-1.0, 0.0, 1.0]),
         ...                   jnp.array([0.5, 0.5, 0.5]))
         Array([0. , 0.5, 1. ], dtype=float32)
     """
@@ -187,12 +187,12 @@ def signbit(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.signbit(jnp.array([-2.0, 0.0, 3.0]))
+        >>> u.math.signbit(jnp.array([-2.0, 0.0, 3.0]))
         Array([ True, False, False], dtype=bool)
-        >>> q = jnp.array([-1.0, 1.0]) * su.meter
-        >>> su.math.signbit(q)
+        >>> q = jnp.array([-1.0, 1.0]) * u.meter
+        >>> u.math.signbit(q)
         Array([ True, False], dtype=bool)
     """
     return _fun_remove_unit_unary(jnp.signbit, x)
@@ -220,12 +220,12 @@ def sign(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.sign(jnp.array([-5.0, 0.0, 3.0]))
+        >>> u.math.sign(jnp.array([-5.0, 0.0, 3.0]))
         Array([-1.,  0.,  1.], dtype=float32)
-        >>> q = jnp.array([-2.0, 0.0, 4.0]) * su.second
-        >>> su.math.sign(q)
+        >>> q = jnp.array([-2.0, 0.0, 4.0]) * u.second
+        >>> u.math.sign(q)
         Array([-1.,  0.,  1.], dtype=float32)
     """
     return _fun_remove_unit_unary(jnp.sign, x)
@@ -270,9 +270,9 @@ def bincount(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.bincount(jnp.array([0, 1, 1, 2, 2, 2]))
+        >>> u.math.bincount(jnp.array([0, 1, 1, 2, 2, 2]))
         Array([1, 2, 3], dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.bincount, x, weights=weights, minlength=minlength, length=length)
@@ -322,11 +322,11 @@ def digitize(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> x = jnp.array([0.5, 1.5, 2.5])
         >>> bins = jnp.array([0.0, 1.0, 2.0, 3.0])
-        >>> su.math.digitize(x, bins)
+        >>> u.math.digitize(x, bins)
         Array([1, 2, 3], dtype=int32)
     """
     x = maybe_custom_array(x)
@@ -398,13 +398,13 @@ def all(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.all(jnp.array([True, True, True]))
+        >>> u.math.all(jnp.array([True, True, True]))
         Array(True, dtype=bool)
-        >>> su.math.all(jnp.array([True, False, True]))
+        >>> u.math.all(jnp.array([True, False, True]))
         Array(False, dtype=bool)
-        >>> su.math.all(jnp.array([[True, False], [True, True]]), axis=1)
+        >>> u.math.all(jnp.array([[True, False], [True, True]]), axis=1)
         Array([False,  True], dtype=bool)
     """
     return _fun_logic_unary(jnp.all, x, axis=axis, keepdims=keepdims, where=where)
@@ -444,11 +444,11 @@ def any(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.any(jnp.array([False, False, True]))
+        >>> u.math.any(jnp.array([False, False, True]))
         Array(True, dtype=bool)
-        >>> su.math.any(jnp.array([False, False, False]))
+        >>> u.math.any(jnp.array([False, False, False]))
         Array(False, dtype=bool)
     """
     return _fun_logic_unary(jnp.any, x, axis=axis, keepdims=keepdims, where=where)
@@ -478,9 +478,9 @@ def logical_not(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.logical_not(jnp.array([True, False, True]))
+        >>> u.math.logical_not(jnp.array([True, False, True]))
         Array([False,  True, False], dtype=bool)
     """
     return _fun_logic_unary(jnp.logical_not, x)
@@ -554,13 +554,13 @@ def equal(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.equal(jnp.array([1, 2, 3]), jnp.array([1, 0, 3]))
+        >>> u.math.equal(jnp.array([1, 2, 3]), jnp.array([1, 0, 3]))
         Array([ True, False,  True], dtype=bool)
-        >>> a = jnp.array([1.0, 2.0]) * su.meter
-        >>> b = jnp.array([1.0, 2.0]) * su.meter
-        >>> su.math.equal(a, b)
+        >>> a = jnp.array([1.0, 2.0]) * u.meter
+        >>> b = jnp.array([1.0, 2.0]) * u.meter
+        >>> u.math.equal(a, b)
         Array([ True,  True], dtype=bool)
     """
     return _fun_logic_binary(jnp.equal, x, y, *args, **kwargs)
@@ -595,9 +595,9 @@ def not_equal(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.not_equal(jnp.array([1, 2, 3]), jnp.array([1, 0, 3]))
+        >>> u.math.not_equal(jnp.array([1, 2, 3]), jnp.array([1, 0, 3]))
         Array([False,  True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.not_equal, x, y, *args, **kwargs)
@@ -632,13 +632,13 @@ def greater(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.greater(jnp.array([3, 2, 1]), jnp.array([1, 2, 3]))
+        >>> u.math.greater(jnp.array([3, 2, 1]), jnp.array([1, 2, 3]))
         Array([ True, False, False], dtype=bool)
-        >>> a = jnp.array([2.0, 1.0]) * su.meter
-        >>> b = jnp.array([1.0, 2.0]) * su.meter
-        >>> su.math.greater(a, b)
+        >>> a = jnp.array([2.0, 1.0]) * u.meter
+        >>> b = jnp.array([1.0, 2.0]) * u.meter
+        >>> u.math.greater(a, b)
         Array([ True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.greater, x, y, *args, **kwargs)
@@ -674,9 +674,9 @@ def greater_equal(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.greater_equal(jnp.array([3, 2, 1]), jnp.array([1, 2, 3]))
+        >>> u.math.greater_equal(jnp.array([3, 2, 1]), jnp.array([1, 2, 3]))
         Array([ True,  True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.greater_equal, x, y, *args, **kwargs)
@@ -711,9 +711,9 @@ def less(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.less(jnp.array([1, 2, 3]), jnp.array([3, 2, 1]))
+        >>> u.math.less(jnp.array([1, 2, 3]), jnp.array([3, 2, 1]))
         Array([ True, False, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.less, x, y, *args, **kwargs)
@@ -749,9 +749,9 @@ def less_equal(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.less_equal(jnp.array([1, 2, 3]), jnp.array([3, 2, 1]))
+        >>> u.math.less_equal(jnp.array([1, 2, 3]), jnp.array([3, 2, 1]))
         Array([ True,  True, False], dtype=bool)
     """
     return _fun_logic_binary(jnp.less_equal, x, y, *args, **kwargs)
@@ -787,11 +787,11 @@ def array_equal(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.array_equal(jnp.array([1, 2]), jnp.array([1, 2]))
+        >>> u.math.array_equal(jnp.array([1, 2]), jnp.array([1, 2]))
         Array(True, dtype=bool)
-        >>> su.math.array_equal(jnp.array([1, 2]), jnp.array([1, 3]))
+        >>> u.math.array_equal(jnp.array([1, 2]), jnp.array([1, 3]))
         Array(False, dtype=bool)
     """
     return _fun_logic_binary(jnp.array_equal, x, y, *args, **kwargs)
@@ -835,9 +835,9 @@ def isclose(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.isclose(jnp.array([1.0, 2.0]), jnp.array([1.0, 2.0001]))
+        >>> u.math.isclose(jnp.array([1.0, 2.0]), jnp.array([1.0, 2.0001]))
         Array([ True,  True], dtype=bool)
     """
     x = maybe_custom_array(x)
@@ -914,9 +914,9 @@ def allclose(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.allclose(jnp.array([1.0, 2.0]),
+        >>> u.math.allclose(jnp.array([1.0, 2.0]),
         ...                  jnp.array([1.0, 2.0]))
         Array(True, dtype=bool)
     """
@@ -988,9 +988,9 @@ def logical_and(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.logical_and(jnp.array([True, False]),
+        >>> u.math.logical_and(jnp.array([True, False]),
         ...                     jnp.array([True, True]))
         Array([ True, False], dtype=bool)
     """
@@ -1026,9 +1026,9 @@ def logical_or(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.logical_or(jnp.array([True, False]),
+        >>> u.math.logical_or(jnp.array([True, False]),
         ...                    jnp.array([False, False]))
         Array([ True, False], dtype=bool)
     """
@@ -1064,9 +1064,9 @@ def logical_xor(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.logical_xor(jnp.array([True, False]),
+        >>> u.math.logical_xor(jnp.array([True, False]),
         ...                     jnp.array([True, True]))
         Array([False,  True], dtype=bool)
     """
@@ -1118,12 +1118,12 @@ def argsort(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.argsort(jnp.array([3.0, 1.0, 2.0]))
+        >>> u.math.argsort(jnp.array([3.0, 1.0, 2.0]))
         Array([1, 2, 0], dtype=int32)
-        >>> q = jnp.array([3.0, 1.0, 2.0]) * su.meter
-        >>> su.math.argsort(q)
+        >>> q = jnp.array([3.0, 1.0, 2.0]) * u.meter
+        >>> u.math.argsort(q)
         Array([1, 2, 0], dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.argsort,
@@ -1162,12 +1162,12 @@ def argmax(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.argmax(jnp.array([1.0, 3.0, 2.0]))
+        >>> u.math.argmax(jnp.array([1.0, 3.0, 2.0]))
         Array(1, dtype=int32)
-        >>> q = jnp.array([1.0, 3.0, 2.0]) * su.meter
-        >>> su.math.argmax(q)
+        >>> q = jnp.array([1.0, 3.0, 2.0]) * u.meter
+        >>> u.math.argmax(q)
         Array(1, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.argmax, a, axis=axis)
@@ -1203,9 +1203,9 @@ def argmin(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.argmin(jnp.array([3.0, 1.0, 2.0]))
+        >>> u.math.argmin(jnp.array([3.0, 1.0, 2.0]))
         Array(1, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.argmin, a, axis=axis, keepdims=keepdims)
@@ -1241,9 +1241,9 @@ def nanargmax(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.nanargmax(jnp.array([1.0, jnp.nan, 3.0]))
+        >>> u.math.nanargmax(jnp.array([1.0, jnp.nan, 3.0]))
         Array(2, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.nanargmax,
@@ -1282,9 +1282,9 @@ def nanargmin(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.nanargmin(jnp.array([3.0, jnp.nan, 1.0]))
+        >>> u.math.nanargmin(jnp.array([3.0, jnp.nan, 1.0]))
         Array(2, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.nanargmin,
@@ -1324,9 +1324,9 @@ def argwhere(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.argwhere(jnp.array([0, 1, 0, 2]), size=2)
+        >>> u.math.argwhere(jnp.array([0, 1, 0, 2]), size=2)
         Array([[1],
                [3]], dtype=int32)
     """
@@ -1364,9 +1364,9 @@ def nonzero(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.nonzero(jnp.array([0, 1, 0, 2]), size=2)
+        >>> u.math.nonzero(jnp.array([0, 1, 0, 2]), size=2)
         (Array([1, 3], dtype=int32),)
     """
     return _fun_remove_unit_unary(jnp.nonzero, a, size=size, fill_value=fill_value)
@@ -1402,9 +1402,9 @@ def flatnonzero(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.flatnonzero(jnp.array([0, 1, 0, 2]), size=2)
+        >>> u.math.flatnonzero(jnp.array([0, 1, 0, 2]), size=2)
         Array([1, 3], dtype=int32)
     """
     a = maybe_custom_array(a)
@@ -1444,9 +1444,9 @@ def count_nonzero(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
-        >>> su.math.count_nonzero(jnp.array([0, 1, 0, 2, 3]))
+        >>> u.math.count_nonzero(jnp.array([0, 1, 0, 2, 3]))
         Array(3, dtype=int32)
     """
     return _fun_remove_unit_unary(jnp.count_nonzero, a, axis=axis, keepdims=keepdims)
@@ -1490,10 +1490,10 @@ def searchsorted(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> a = jnp.array([1.0, 2.0, 3.0, 4.0])
-        >>> su.math.searchsorted(a, jnp.array([2.5]))
+        >>> u.math.searchsorted(a, jnp.array([2.5]))
         Array([2], dtype=int32)
     """
     a = maybe_custom_array(a)
@@ -1527,10 +1527,10 @@ def diag_indices_from(
     --------
     .. code-block:: python
 
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import jax.numpy as jnp
         >>> arr = jnp.array([[1, 2], [3, 4]])
-        >>> su.math.diag_indices_from(arr)
+        >>> u.math.diag_indices_from(arr)
         (Array([0, 1], dtype=int32), Array([0, 1], dtype=int32))
     """
     return _fun_remove_unit_unary(jnp.diag_indices_from, arr)

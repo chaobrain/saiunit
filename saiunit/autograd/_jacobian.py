@@ -193,12 +193,12 @@ def jacrev(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f(x):
         ...     return x ** 2
         >>> jac_fn = suauto.jacrev(f)
-        >>> jac_fn(jnp.array(3.0) * su.ms)
+        >>> jac_fn(jnp.array(3.0) * u.ms)
         6.0 * ms
 
     Jacobian with multiple arguments:
@@ -206,13 +206,13 @@ def jacrev(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def g(x, y):
         ...     return x * y
         >>> jac_fn = suauto.jacrev(g, argnums=(0, 1))
-        >>> x = jnp.array([3.0, 4.0]) * su.ohm
-        >>> y = jnp.array([5.0, 6.0]) * su.mA
+        >>> x = jnp.array([3.0, 4.0]) * u.ohm
+        >>> y = jnp.array([5.0, 6.0]) * u.mA
         >>> jac_x, jac_y = jac_fn(x, y)
     """
     _check_callable(fun)
@@ -291,12 +291,12 @@ def jacobian(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f(x):
         ...     return x ** 2
         >>> jac_fn = suauto.jacobian(f)
-        >>> jac_fn(jnp.array(3.0) * su.ms)
+        >>> jac_fn(jnp.array(3.0) * u.ms)
         6.0 * ms
     """
     return jacrev(
@@ -370,12 +370,12 @@ def jacfwd(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def f(x):
         ...     return x ** 2
         >>> jac_fn = suauto.jacfwd(f)
-        >>> jac_fn(jnp.array(3.0) * su.ms)
+        >>> jac_fn(jnp.array(3.0) * u.ms)
         6.0 * ms
 
     Jacobian with multiple arguments:
@@ -383,13 +383,13 @@ def jacfwd(
     .. code-block:: python
 
         >>> import jax.numpy as jnp
-        >>> import saiunit as su
+        >>> import saiunit as u
         >>> import saiunit.autograd as suauto
         >>> def g(x, y):
         ...     return x * y
         >>> jac_fn = suauto.jacfwd(g, argnums=(0, 1))
-        >>> x = jnp.array([3.0, 4.0]) * su.ohm
-        >>> y = jnp.array([5.0, 6.0]) * su.mA
+        >>> x = jnp.array([3.0, 4.0]) * u.ohm
+        >>> y = jnp.array([5.0, 6.0]) * u.mA
         >>> jac_x, jac_y = jac_fn(x, y)
     """
     _check_callable(fun)
