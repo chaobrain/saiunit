@@ -13,10 +13,10 @@ on:
 
   # OPTIONAL: Add other triggers if you want tests to run more often
   # For example, run on pushes and pull requests to the main branch:
-  # push:
-  #   branches: [ main ]
-  pull_request:
+  push:
      branches: [ main ]
+#  pull_request:
+#     branches: [ main ]
 
   # OPTIONAL: Allow manual triggering from the Actions tab
   workflow_dispatch:
