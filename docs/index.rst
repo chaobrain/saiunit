@@ -178,22 +178,22 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Unit-aware Math Functions
+   :caption: Unit-aware Operations
 
-   mathematical_functions/array_creation.ipynb
-   mathematical_functions/numpy_functions.ipynb
-   mathematical_functions/einstein_operations.ipynb
-   mathematical_functions/linalg_functions.ipynb
-   mathematical_functions/fft_functions.ipynb
-   mathematical_functions/lax_functions.ipynb
-   mathematical_functions/activation_functions.ipynb
-   mathematical_functions/check_units.ipynb
-   mathematical_functions/assign_units.ipynb
-   mathematical_functions/jax_transforms.ipynb
-   mathematical_functions/autograd.ipynb
-   mathematical_functions/sparse_matrices.ipynb
-   mathematical_functions/matplotlib_integration.ipynb
-   mathematical_functions/type_annotations.ipynb
+   unit_operations/array_creation.ipynb
+   unit_operations/numpy_functions.ipynb
+   unit_operations/einstein_operations.ipynb
+   unit_operations/linalg_functions.ipynb
+   unit_operations/fft_functions.ipynb
+   unit_operations/lax_functions.ipynb
+   unit_operations/activation_functions.ipynb
+   unit_operations/check_units.ipynb
+   unit_operations/assign_units.ipynb
+   unit_operations/jax_transforms.ipynb
+   unit_operations/autograd.ipynb
+   unit_operations/sparse_matrices.ipynb
+   unit_operations/matplotlib_integration.ipynb
+   unit_operations/type_annotations.ipynb
 
 
 .. toctree::
