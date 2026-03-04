@@ -15,8 +15,8 @@ on:
   # For example, run on pushes and pull requests to the main branch:
   # push:
   #   branches: [ main ]
-  # pull_request:
-  #   branches: [ main ]
+  pull_request:
+     branches: [ main ]
 
   # OPTIONAL: Allow manual triggering from the Actions tab
   workflow_dispatch:
