@@ -77,6 +77,10 @@ magnetic_constant = constants.magnetic
 molar_mass_constant = constants.molar_mass
 
 __all__ = [
+              # version control
+              '__version__',
+              '__version_info__',
+
               # submodules
               'math',
               'linalg',
