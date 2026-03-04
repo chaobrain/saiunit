@@ -15,6 +15,5 @@
 
 # -*- coding: utf-8 -*-
 
-from saiunit._base import *
-from saiunit._base import __all__
-
+from saiunit._base_dimension import *
+from saiunit._base_dimension import __all__

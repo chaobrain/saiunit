@@ -18,6 +18,11 @@ import jax
 
 CustomArray = None
 
+__all__ = [
+    'maybe_custom_array',
+    'maybe_custom_array_tree',
+]
+
 
 def set_module_as(module: str):
     """
