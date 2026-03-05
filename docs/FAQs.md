@@ -3,7 +3,7 @@
 
 
 
-### How ``saiunit`` is different from other physical unit libraries, such as [Quantities](https://github.com/python-quantities/python-quantities) and [Pint](https://github.com/hgrecco/pint)?
+## How ``saiunit`` is different from other physical unit libraries, such as [Quantities](https://github.com/python-quantities/python-quantities) and [Pint](https://github.com/hgrecco/pint)?
 
 
 In scientific computing, we already have excellent physical unit libraries, such as `Pint` and `Quantities` in Python, `Unitful.jl` in Julia, `Boost.Units` in C++, and `uom` in Rust. These libraries enable seamless operations, conversions, and calculations among physical units, greatly simplifying the processing and analysis of physical quantities for researchers.
@@ -20,7 +20,7 @@ Thirdly, these unit libraries typically lack support for flexible scaling, a cru
 
 
 
-### ``SAIUnit`` is previously known as [BrainUnit](https://github.com/chaobrain/brainunit), for brain science. How is it different from units system in previous brain simulators, such as [NEURON](https://nrn.readthedocs.io/en/8.2.6/tutorials/scripting-neuron-basics.html)?
+## ``SAIUnit`` is previously known as [BrainUnit](https://github.com/chaobrain/brainunit), for brain science. How is it different from units system in previous brain simulators, such as [NEURON](https://nrn.readthedocs.io/en/8.2.6/tutorials/scripting-neuron-basics.html)?
 
 NEURON units are virtual physical units. The implementation details are as follows (copied from https://github.com/neuronsimulator/nrn/blob/master/share/lib/python/neuron/units.py):
 
@@ -69,7 +69,7 @@ However, compared to `saiunit`, which provides a fully functional unit system wi
 In summary, while NEURON's virtual unit system simplifies basic unit conversions and enhances code readability, it lacks the robust capabilities found in true unit libraries like `saiunit`, which provide dimensional analysis and unit derivation functionality. This virtual unit system may even create confusion and ambiguity, as demonstrated in their examples where variables with units can be directly used with dimensionless abstract values (https://nrn.readthedocs.io/en/8.2.6/tutorials/scripting-neuron-basics.html#Step-5:-Insert-a-stimulus). Therefore, for applications requiring precise unit management, automatic dimensional checking, complex unit derivation, and extensibility, `saiunit` is undoubtedly more powerful and flexible, effectively preventing errors and improving code maintainability. 
 
 
-### What are the system requirements for `saiunit`?
+## What are the system requirements for `saiunit`?
 
 `saiunit` can be installed on Windows, macOS, and Linux operating systems. The following software and hardware requirements are recommended for optimal performance:
 
@@ -79,7 +79,7 @@ In summary, while NEURON's virtual unit system simplifies basic unit conversions
 
 
 
-### How do I set up ``saiunit`` for GPU or TPU usage?
+## How do I set up ``saiunit`` for GPU or TPU usage?
 
 The hardware acceleration of `saiunit` is primarily supported by the `JAX` library, which provides GPU and TPU support for high-performance computing. To enable GPU or TPU usage in `saiunit`, you need to install the appropriate version of `JAX` that supports your hardware configuration. 
 Please refer to the [JAX installation guide](https://jax.readthedocs.io/en/latest/installation.html). 
@@ -89,7 +89,7 @@ Please refer to the [JAX installation guide](https://jax.readthedocs.io/en/lates
 
 
 
-### How do I create a Quantity in ``saiunit``?
+## How do I create a Quantity in ``saiunit``?
 
 
 Please refer to the documentation on [https://saiunit.readthedocs.io/physical_units/quantity.html](https://saiunit.readthedocs.io/physical_units/quantity.html).

@@ -95,24 +95,28 @@ def conv(
     precision: lax.PrecisionLike = None,
     preferred_element_type: jax.typing.DTypeLike | None = None
 ) -> Union[Quantity, jax.Array]:
-    """Convenience wrapper around `conv_general_dilated`.
+    """Convenience wrapper around ``conv_general_dilated``.
 
-    Args:
-    lhs: a rank `n+2` dimensional input array.
-    rhs: a rank `n+2` dimensional array of kernel weights.
-    window_strides: a sequence of `n` integers, representing the inter-window
-      strides.
-    padding: either the string `'SAME'`, the string `'VALID'`.
-    precision: Optional. Either ``None``, which means the default precision for
-      the backend, a :class:`~jax.lax.Precision` enum value (``Precision.DEFAULT``,
-      ``Precision.HIGH`` or ``Precision.HIGHEST``) or a tuple of two
-      :class:`~jax.lax.Precision` enums indicating precision of ``lhs``` and ``rhs``.
-    preferred_element_type: Optional. Either ``None``, which means the default
-      accumulation type for the input types, or a datatype, indicating to
-      accumulate results to and return a result with that datatype.
+    Parameters
+    ----------
+    x : array_like, Quantity
+        A rank ``n+2`` dimensional input array (lhs).
+    y : array_like, Quantity
+        A rank ``n+2`` dimensional array of kernel weights (rhs).
+    window_strides : sequence of int
+        A sequence of ``n`` integers representing the inter-window strides.
+    padding : str
+        Either ``'SAME'`` or ``'VALID'``.
+    precision : PrecisionLike, optional
+        Either ``None`` (default precision), a :class:`~jax.lax.Precision` enum
+        value, or a tuple of two such values for ``lhs`` and ``rhs``.
+    preferred_element_type : dtype, optional
+        The accumulation and result dtype. ``None`` means use the default.
 
-    Returns:
-    An array containing the convolution result.
+    Returns
+    -------
+    out : Quantity or jax.Array
+        An array containing the convolution result.
     """
     return _fun_change_unit_binary(lax.conv,
                                    lambda x, y: x * y,

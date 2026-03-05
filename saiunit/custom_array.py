@@ -48,29 +48,6 @@ class CustomArray:
         providing this attribute (e.g. via a property backed by some
         internal state).
 
-    Properties
-    ----------
-    dtype : numpy.dtype
-        Data type of the underlying array elements.
-    shape : tuple of int
-        Shape of the underlying array.
-    ndim : int
-        Number of dimensions.
-    size : int
-        Total number of elements.
-    T : array-like
-        Transpose of the array.
-    mT : array-like
-        Transpose of the last two dimensions (batched matrix transpose).
-    real : array-like
-        Real part of each element.
-    imag : array-like
-        Imaginary part of each element.
-    nbytes : int
-        Total bytes consumed by the array elements.
-    itemsize : int
-        Length of one array element in bytes.
-
     Methods
     -------
     NumPy-style methods
@@ -176,8 +153,8 @@ class CustomArray:
 
     References
     ----------
-    .. [1] NumPy documentation: https://numpy.org/doc/
-    .. [2] JAX documentation: https://jax.readthedocs.io/
+    - NumPy documentation: https://numpy.org/doc/
+    - JAX documentation: https://jax.readthedocs.io/
     """
     data: Any
 
@@ -484,10 +461,10 @@ class CustomArray:
     def astype(self, dtype):
         """Copy of the array, cast to a specified type.
 
-        Parameters::
-
-        dtype: str, dtype
-          Typecode or data-type to which the array is cast.
+        Parameters
+        ----------
+        dtype : str or dtype
+            Typecode or data-type to which the array is cast.
         """
         if dtype is None:
             return self.data
@@ -587,12 +564,12 @@ class CustomArray:
     def put(self, indices, datas):
         """Replaces specified elements of an array with given datas.
 
-        Parameters::
-
-        indices: array_like
-          Target indices, interpreted as integers.
-        datas: array_like
-          Values to place in the array at target indices.
+        Parameters
+        ----------
+        indices : array_like
+            Target indices, interpreted as integers.
+        datas : array_like
+            Values to place in the array at target indices.
         """
         self.__setitem__(indices, datas)
 
@@ -622,19 +599,16 @@ class CustomArray:
     def sort(self, axis=-1, stable=True, order=None):
         """Sort an array in-place.
 
-        Parameters::
-
+        Parameters
+        ----------
         axis : int, optional
             Axis along which to sort. Default is -1, which means sort along the
             last axis.
         stable : bool, optional
             Whether to use a stable sorting algorithm. The default is True.
         order : str or list of str, optional
-            When `a` is an array with fields defined, this argument specifies
-            which fields to compare first, second, etc.  A single field can
-            be specified as a string, and not all fields need be specified,
-            but unspecified fields will still be used, in the order in which
-            they come up in the dtype, to break ties.
+            When ``a`` is an array with fields defined, this argument specifies
+            which fields to compare first, second, etc.
         """
         self.data = self.data.sort(axis=axis, stable=stable, order=order)
 
@@ -904,14 +878,14 @@ class CustomArray:
         """
         Expand an array to a new shape.
 
-        Parameters::
-
+        Parameters
+        ----------
         sizes : tuple or int
             The shape of the desired array. A single integer ``i`` is interpreted
             as ``(i,)``.
 
-        Returns::
-
+        Returns
+        -------
         expanded : Array
             A readonly view on the original array with the given shape. It is
             typically not contiguous. Furthermore, more than one element of a

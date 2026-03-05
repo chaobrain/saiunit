@@ -3003,7 +3003,7 @@ def percentile(
       This parameter specifies the method to use for estimating the
       percentile.  There are many different methods, some unique to NumPy.
       See the notes for explanation.  The options sorted by their R type
-      as summarized in the H&F paper [1]_ are:
+      as summarized in the H&F paper (Hyndman & Fan, 1996) are:
 
       1. 'inverted_cdf'
       2. 'averaged_inverted_cdf'
@@ -3073,7 +3073,7 @@ def nanpercentile(
       This parameter specifies the method to use for estimating the
       percentile.  There are many different methods, some unique to NumPy.
       See the notes for explanation.  The options sorted by their R type
-      as summarized in the H&F paper [1]_ are:
+      as summarized in the H&F paper (Hyndman & Fan, 1996) are:
 
       1. 'inverted_cdf'
       2. 'averaged_inverted_cdf'
@@ -3144,7 +3144,7 @@ def quantile(
       This parameter specifies the method to use for estimating the
       percentile.  There are many different methods, some unique to NumPy.
       See the notes for explanation.  The options sorted by their R type
-      as summarized in the H&F paper [1]_ are:
+      as summarized in the H&F paper (Hyndman & Fan, 1996) are:
 
       1. 'inverted_cdf'
       2. 'averaged_inverted_cdf'
@@ -3214,7 +3214,7 @@ def nanquantile(
       This parameter specifies the method to use for estimating the
       percentile.  There are many different methods, some unique to NumPy.
       See the notes for explanation.  The options sorted by their R type
-      as summarized in the H&F paper [1]_ are:
+      as summarized in the H&F paper (Hyndman & Fan, 1996) are:
 
       1. 'inverted_cdf'
       2. 'averaged_inverted_cdf'
@@ -3616,9 +3616,6 @@ def subtract(
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[Quantity, jax.Array]:
     """
-    subtract(x1, x2, /, out=None, *, where=True, casting='same_kind',
-    order='K', dtype=None, subok=True[, signature, extobj])
-
     Subtract arguments, element-wise.
 
     Parameters
@@ -3694,10 +3691,7 @@ def nextafter(
     y: Union[Quantity, jax.typing.ArrayLike],
 ) -> Union[Quantity, jax.Array]:
     """
-    nextafter(x, y, /, out=None, *, where=True, casting='same_kind',
-    order='K', dtype=None, subok=True[, signature, extobj])
-
-    Return the next floating-point value after x1 towards x2, element-wise.
+    Return the next floating-point value after x towards y, element-wise.
 
     Parameters
     ----------

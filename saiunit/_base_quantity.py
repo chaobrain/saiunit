@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import functools
 import numbers
 import operator
 import re
@@ -101,13 +102,12 @@ def _wrap_function_keep_unit(func):
     ``sum`` to work as expected with additional ``axis`` etc. arguments.
     """
 
+    @functools.wraps(func)
     def f(x: 'Quantity', *args, **kwds):  # pylint: disable=C0111
         return Quantity(func(x.mantissa, *args, **kwds), unit=x.unit)
 
     f._arg_units = [None]
     f._return_unit = lambda u: u
-    f.__name__ = func.__name__
-    f.__doc__ = func.__doc__
     f._do_not_run_doctests = True
     return f
 
@@ -125,6 +125,7 @@ def _wrap_function_change_unit(func, unit_fun):
     other arguments are ignored/untouched.
     """
 
+    @functools.wraps(func)
     def f(x, *args, **kwds):  # pylint: disable=C0111
         assert isinstance(x, Quantity), "Only Quantity objects can be passed to this function"
         x = x.factorless()
@@ -132,8 +133,6 @@ def _wrap_function_change_unit(func, unit_fun):
 
     f._arg_units = [None]
     f._return_unit = unit_fun
-    f.__name__ = func.__name__
-    f.__doc__ = func.__doc__
     f._do_not_run_doctests = True
     return f
 
@@ -149,14 +148,13 @@ def _wrap_function_remove_unit(func):
     other arguments are ignored/untouched.
     """
 
+    @functools.wraps(func)
     def f(x, *args, **kwds):  # pylint: disable=C0111
         assert isinstance(x, Quantity), "Only Quantity objects can be passed to this function"
         return func(x.mantissa, *args, **kwds)
 
     f._arg_units = [None]
     f._return_unit = 1
-    f.__name__ = func.__name__
-    f.__doc__ = func.__doc__
     f._do_not_run_doctests = True
     return f
 

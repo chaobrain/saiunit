@@ -1010,177 +1010,177 @@ def einsum(
         Result of the Einstein summation. When operands carry physical
         units, the output unit is derived from the contraction.
 
-    Examples:
-      The mechanics of ``einsum`` are perhaps best demonstrated by example. Here we
-      show how to use ``einsum`` to compute a number of quantities from one or more
-      arrays. For more discussion and examples of ``einsum``, see the documentation
-      of :func:`numpy.einsum`.
+    Examples
+    --------
+    The mechanics of ``einsum`` are perhaps best demonstrated by example. Here we
+    show how to use ``einsum`` to compute a number of quantities from one or more
+    arrays. For more discussion and examples of ``einsum``, see the documentation
+    of :func:`numpy.einsum`.
 
+    >>> import saiunit as bu
+    >>> M = bu.math.arange(16).reshape(4, 4) * bu.ohm
+    >>> x = bu.math.arange(4) * bu.mA
+    >>> y = bu.math.array([5, 4, 3, 2]) * bu.mV
 
-      >>> import saiunit as bu
-      >>> M = bu.math.arange(16).reshape(4, 4) * bu.ohm
-      >>> x = bu.math.arange(4) * bu.mA
-      >>> y = bu.math.array([5, 4, 3, 2]) * bu.mV
+    **Vector product**
 
-      **Vector product**
+    >>> bu.math.einsum('i,i', x, y)
+    16.0 uW
+    >>> bu.math.vecdot(x, y)
+    16.0 uW
 
-      >>> bu.math.einsum('i,i', x, y)
-      16.0 uW
-      >>> bu.math.vecdot(x, y)
-      16.0 uW
+    Here are some alternative ``einsum`` calling conventions to compute the same
+    result:
 
-      Here are some alternative ``einsum`` calling conventions to compute the same
-      result:
+    >>> bu.math.einsum('i,i->', x, y)  # explicit form
+    16.0 uW
+    >>> bu.math.einsum(x, (0,), y, (0,))  # implicit form via indices
+    16.0 uW
+    >>> bu.math.einsum(x, (0,), y, (0,), ())  # explicit form via indices
+    16.0 uW
 
-      >>> bu.math.einsum('i,i->', x, y)  # explicit form
-      16.0 uW
-      >>> bu.math.einsum(x, (0,), y, (0,))  # implicit form via indices
-      16.0 uW
-      >>> bu.math.einsum(x, (0,), y, (0,), ())  # explicit form via indices
-      16.0 uW
+    **Matrix product**
 
-      **Matrix product**
+    >>> bu.math.einsum('ij,j->i', M, x)  # explicit form
+    ArrayImpl([14., 38., 62., 86.], dtype=float32) * mvolt
+    >>> bu.math.matmul(M, x)
+    Array([14, 38, 62, 86], dtype=float32) * mvolt
 
-      >>> bu.math.einsum('ij,j->i', M, x)  # explicit form
-      ArrayImpl([14., 38., 62., 86.], dtype=float32) * mvolt
-      >>> bu.math.matmul(M, x)
-      Array([14, 38, 62, 86], dtype=float32) * mvolt
+    Here are some alternative ``einsum`` calling conventions to compute the same
+    result:
 
-      Here are some alternative ``einsum`` calling conventions to compute the same
-      result:
+    >>> bu.math.einsum('ij,j', M, x) # implicit form
+    Array([14, 38, 62, 86], dtype=float32) * mvolt
+    >>> bu.math.einsum(M, (0, 1), x, (1,), (0,)) # explicit form via indices
+    Array([14, 38, 62, 86], dtype=float32)
+    >>> bu.math.einsum(M, (0, 1), x, (1,))  # implicit form via indices
+    Array([14, 38, 62, 86], dtype=float32) * mvolt
 
-      >>> bu.math.einsum('ij,j', M, x) # implicit form
-      Array([14, 38, 62, 86], dtype=float32) * mvolt
-      >>> bu.math.einsum(M, (0, 1), x, (1,), (0,)) # explicit form via indices
-      Array([14, 38, 62, 86], dtype=float32)
-      >>> bu.math.einsum(M, (0, 1), x, (1,))  # implicit form via indices
-      Array([14, 38, 62, 86], dtype=float32) * mvolt
+    **Outer product**
 
-      **Outer product**
-
-      >>> bu.math.einsum("i,j->ij", x, y)
-      Array([[ 0,  0,  0,  0],
+    >>> bu.math.einsum("i,j->ij", x, y)
+    Array([[ 0,  0,  0,  0],
              [ 5,  4,  3,  2],
              [10,  8,  6,  4],
              [15, 12,  9,  6]], dtype=float32) * uwatt
-      >>> bu.math.outer(x, y)
-      Array([[ 0,  0,  0,  0],
-             [ 5,  4,  3,  2],
-             [10,  8,  6,  4],
-             [15, 12,  9,  6]], dtype=float32) * uwatt
-
-      Some other ways of computing outer products:
-
-      >>> bu.math.einsum("i,j", x, y)  # implicit form
-      Array([[ 0,  0,  0,  0],
-             [ 5,  4,  3,  2],
-             [10,  8,  6,  4],
-             [15, 12,  9,  6]], dtype=float32) * uwatt
-      >>> bu.math.einsum(x, (0,), y, (1,), (0, 1))  # explicit form via indices
-      Array([[ 0,  0,  0,  0],
-             [ 5,  4,  3,  2],
-             [10,  8,  6,  4],
-             [15, 12,  9,  6]], dtype=float32) * uwatt
-      >>> bu.math.einsum(x, (0,), y, (1,))  # implicit form via indices
-      Array([[ 0,  0,  0,  0],
+    >>> bu.math.outer(x, y)
+    Array([[ 0,  0,  0,  0],
              [ 5,  4,  3,  2],
              [10,  8,  6,  4],
              [15, 12,  9,  6]], dtype=float32) * uwatt
 
-      **1D array sum**
+    Some other ways of computing outer products:
 
-      >>> bu.math.einsum("i->", x)  # requires explicit form
-      Array(6, dtype=float32) * mA
-      >>> bu.math.einsum(x, (0,), ())  # explicit form via indices
-      Array(6, dtype=float32) * mA
-      >>> bu.math.sum(x)
-      Array(6, dtype=float32) * mA
+    >>> bu.math.einsum("i,j", x, y)  # implicit form
+    Array([[ 0,  0,  0,  0],
+             [ 5,  4,  3,  2],
+             [10,  8,  6,  4],
+             [15, 12,  9,  6]], dtype=float32) * uwatt
+    >>> bu.math.einsum(x, (0,), y, (1,), (0, 1))  # explicit form via indices
+    Array([[ 0,  0,  0,  0],
+             [ 5,  4,  3,  2],
+             [10,  8,  6,  4],
+             [15, 12,  9,  6]], dtype=float32) * uwatt
+    >>> bu.math.einsum(x, (0,), y, (1,))  # implicit form via indices
+    Array([[ 0,  0,  0,  0],
+             [ 5,  4,  3,  2],
+             [10,  8,  6,  4],
+             [15, 12,  9,  6]], dtype=float32) * uwatt
 
-      **Sum along an axis**
+    **1D array sum**
 
-      >>> bu.math.einsum("...j->...", M)  # requires explicit form
-      Array([ 6, 22, 38, 54], dtype=float32) * ohm
-      >>> bu.math.einsum(M, (..., 0), (...,))  # explicit form via indices
-      Array([ 6, 22, 38, 54], dtype=float32) * ohm
-      >>> M.sum(-1)
-      Array([ 6, 22, 38, 54], dtype=float32) * ohm
+    >>> bu.math.einsum("i->", x)  # requires explicit form
+    Array(6, dtype=float32) * mA
+    >>> bu.math.einsum(x, (0,), ())  # explicit form via indices
+    Array(6, dtype=float32) * mA
+    >>> bu.math.sum(x)
+    Array(6, dtype=float32) * mA
 
-      **Matrix transpose**
+    **Sum along an axis**
 
-      >>> y = bu.math.array([[1, 2, 3],
-      ...                    [4, 5, 6]]) * bu.mV
-      >>> bu.math.einsum("ij->ji", y)  # explicit form
-      Array([[1, 4],
+    >>> bu.math.einsum("...j->...", M)  # requires explicit form
+    Array([ 6, 22, 38, 54], dtype=float32) * ohm
+    >>> bu.math.einsum(M, (..., 0), (...,))  # explicit form via indices
+    Array([ 6, 22, 38, 54], dtype=float32) * ohm
+    >>> M.sum(-1)
+    Array([ 6, 22, 38, 54], dtype=float32) * ohm
+
+    **Matrix transpose**
+
+    >>> y = bu.math.array([[1, 2, 3],
+    ...                    [4, 5, 6]]) * bu.mV
+    >>> bu.math.einsum("ij->ji", y)  # explicit form
+    Array([[1, 4],
              [2, 5],
              [3, 6]], dtype=float32) * mV
-      >>> bu.math.einsum("ji", y)  # implicit form
-      Array([[1, 4],
+    >>> bu.math.einsum("ji", y)  # implicit form
+    Array([[1, 4],
              [2, 5],
              [3, 6]], dtype=float32) * mV
-      >>> bu.math.einsum(y, (1, 0))  # implicit form via indices
-      Array([[1, 4],
+    >>> bu.math.einsum(y, (1, 0))  # implicit form via indices
+    Array([[1, 4],
              [2, 5],
              [3, 6]], dtype=float32) * mV
-      >>> bu.math.einsum(y, (0, 1), (1, 0))  # explicit form via indices
-      Array([[1, 4],
+    >>> bu.math.einsum(y, (0, 1), (1, 0))  # explicit form via indices
+    Array([[1, 4],
              [2, 5],
              [3, 6]], dtype=float32) * mV
-      >>> bu.math.transpose(y)
-      Array([[1, 4],
+    >>> bu.math.transpose(y)
+    Array([[1, 4],
              [2, 5],
              [3, 6]], dtype=float32) * mV
 
-      **Matrix diagonal**
+    **Matrix diagonal**
 
-      >>> bu.math.einsum("ii->i", M)
-      Array([ 0,  5, 10, 15], dtype=float32) * ohm
-      >>> bu.math.diagonal(M)
-      Array([ 0,  5, 10, 15], dtype=float32) * ohm
+    >>> bu.math.einsum("ii->i", M)
+    Array([ 0,  5, 10, 15], dtype=float32) * ohm
+    >>> bu.math.diagonal(M)
+    Array([ 0,  5, 10, 15], dtype=float32) * ohm
 
-      **Matrix trace**
+    **Matrix trace**
 
-      >>> bu.math.einsum("ii", M)
-      Array(30, dtype=float32) * ohm
-      >>> bu.math.trace(M)
-      Array(30, dtype=float32) * ohm
+    >>> bu.math.einsum("ii", M)
+    Array(30, dtype=float32) * ohm
+    >>> bu.math.trace(M)
+    Array(30, dtype=float32) * ohm
 
-      **Tensor products**
+    **Tensor products**
 
-      >>> x = bu.math.arange(30).reshape(2, 3, 5) * bu.mA
-      >>> y = bu.math.arange(60).reshape(3, 4, 5) * bu.ohm
-      >>> bu.math.einsum('ijk,jlk->il', x, y)  # explicit form
-      Array([[ 3340,  3865,  4390,  4915],
+    >>> x = bu.math.arange(30).reshape(2, 3, 5) * bu.mA
+    >>> y = bu.math.arange(60).reshape(3, 4, 5) * bu.ohm
+    >>> bu.math.einsum('ijk,jlk->il', x, y)  # explicit form
+    Array([[ 3340,  3865,  4390,  4915],
              [ 8290,  9940, 11590, 13240]], dtype=float32) * volt
-      >>> bu.math.tensordot(x, y, axes=((1, 2), (0, 2)))
-      Array([[ 3340,  3865,  4390,  4915],
+    >>> bu.math.tensordot(x, y, axes=((1, 2), (0, 2)))
+    Array([[ 3340,  3865,  4390,  4915],
              [ 8290,  9940, 11590, 13240]], dtype=float32) * volt
-      >>> bu.math.einsum('ijk,jlk', x, y)  # implicit form
-      Array([[ 3340,  3865,  4390,  4915],
+    >>> bu.math.einsum('ijk,jlk', x, y)  # implicit form
+    Array([[ 3340,  3865,  4390,  4915],
              [ 8290,  9940, 11590, 13240]], dtype=float32) * volt
-      >>> bu.math.einsum(x, (0, 1, 2), y, (1, 3, 2), (0, 3))  # explicit form via indices
-      Array([[ 3340,  3865,  4390,  4915],
+    >>> bu.math.einsum(x, (0, 1, 2), y, (1, 3, 2), (0, 3))  # explicit form via indices
+    Array([[ 3340,  3865,  4390,  4915],
              [ 8290,  9940, 11590, 13240]], dtype=float32) * volt
-      >>> bu.math.einsum(x, (0, 1, 2), y, (1, 3, 2))  # implicit form via indices
-      Array([[ 3340,  3865,  4390,  4915],
+    >>> bu.math.einsum(x, (0, 1, 2), y, (1, 3, 2))  # implicit form via indices
+    Array([[ 3340,  3865,  4390,  4915],
              [ 8290,  9940, 11590, 13240]], dtype=float32) * volt
 
-      **Chained dot products**
+    **Chained dot products**
 
-      >>> w = bu.math.arange(5, 9).reshape(2, 2) * bu.mA
-      >>> x = bu.math.arange(6).reshape(2, 3) * bu.ohm
-      >>> y = bu.math.arange(-2, 4).reshape(3, 2) * bu.mV
-      >>> z = bu.math.array([[2, 4, 6], [3, 5, 7]]) * bu.mA
-      >>> bu.math.einsum('ij,jk,kl,lm->im', w, x, y, z)
-      Array([[ 481,  831, 1181],
+    >>> w = bu.math.arange(5, 9).reshape(2, 2) * bu.mA
+    >>> x = bu.math.arange(6).reshape(2, 3) * bu.ohm
+    >>> y = bu.math.arange(-2, 4).reshape(3, 2) * bu.mV
+    >>> z = bu.math.array([[2, 4, 6], [3, 5, 7]]) * bu.mA
+    >>> bu.math.einsum('ij,jk,kl,lm->im', w, x, y, z)
+    Array([[ 481,  831, 1181],
              [ 651, 1125, 1599]], dtype=float32) * metre ** 4 * kilogram ** 2 * second ** -6 * amp ** -1
-      >>> bu.math.einsum(w, (0, 1), x, (1, 2), y, (2, 3), z, (3, 4))  # implicit, via indices
-      Array([[ 481,  831, 1181],
+    >>> bu.math.einsum(w, (0, 1), x, (1, 2), y, (2, 3), z, (3, 4))  # implicit, via indices
+    Array([[ 481,  831, 1181],
              [ 651, 1125, 1599]], dtype=float32) * metre ** 4 * kilogram ** 2 * second ** -6 * amp ** -1
-      >>> w @ x @ y @ z  # direct chain of matmuls
-      Array([[ 481,  831, 1181],
+    >>> w @ x @ y @ z  # direct chain of matmuls
+    Array([[ 481,  831, 1181],
              [ 651, 1125, 1599]], dtype=float32) * metre ** 4 * kilogram ** 2 * second ** -6 * amp ** -1
-      >>> bu.math.multi_dot([w, x, y, z])
-      Array([[ 481,  831, 1181],
+    >>> bu.math.multi_dot([w, x, y, z])
+    Array([[ 481,  831, 1181],
              [ 651, 1125, 1599]], dtype=float32) * metre ** 4 * kilogram ** 2 * second ** -6 * amp ** -1
 
     .. _opt_einsum: https://github.com/dgasmith/opt_einsum

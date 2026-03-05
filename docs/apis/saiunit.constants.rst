@@ -156,11 +156,6 @@ Temperature
 ``degree_Fahrenheit``  one Fahrenheit (only differences) in Kelvins
 =====================  =======================================================
 
-.. autosummary::
-   :toctree: generated/
-
-   convert_temperature
-
 Energy
 ------
 
@@ -197,10 +192,4 @@ Force
 ``kilogram_force``    one kilogram force in newtons
 ====================  =======================================================
 
-References
-==========
 
-.. [CODATA2018] CODATA Recommended Values of the Fundamental
-   Physical Constants 2018.
-
-   https://physics.nist.gov/cuu/Constants/
