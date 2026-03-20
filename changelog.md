@@ -13,6 +13,22 @@
 
 ### Improvements
 
+- **Forward-compatible `**kwargs` across all wrapped functions**: All unit-aware
+  wrapper functions in `math`, `lax`, `linalg`, and `fft` modules now accept
+  and forward `**kwargs` to the underlying JAX functions. This ensures
+  compatibility with new keyword arguments added in future JAX releases without
+  requiring saiunit updates.
+  - `saiunit.math`: `concatenate`, `stack`, `vstack`, `hstack`, `dstack`,
+    `column_stack`, `block`, `append`, `split`, `array_split`, `dsplit`,
+    `hsplit`, `vsplit`, `tile`, `repeat`, `sort`, `argsort`, `unique`,
+    `searchsorted`, `where`, `clip`, `interp`, and many more
+  - `saiunit.lax`: `cond`, `switch`, `scan`, `while_loop`, `fori_loop`,
+    `sort`, `top_k`, `broadcasted_iota`, `concatenate`, `conv`, `pad`,
+    `slice`, `dynamic_slice`, `gather`, `scatter`, and many more
+  - `saiunit.linalg`: `svd`, `cholesky`, `eig`, `eigh`, `eigvalsh`, `qr`,
+    `lu`, `solve`, `det`, `norm`, `matrix_power`, `cross`, `tensordot`, etc.
+  - `saiunit.fft`: `fft`, `ifft`, `fft2`, `ifft2`, `fftn`, `ifftn`, `rfft`,
+    `irfft`, `rfft2`, `irfft2`, `rfftn`, `irfftn`, `fftshift`, `ifftshift`
 - **Standalone `SparseMatrix` base class**: Decoupled from
   `jax.experimental.sparse.JAXSparse` to reduce external coupling and provide a
   self-contained sparse matrix interface with properties (`size`, `ndim`, `nse`,
