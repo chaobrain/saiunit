@@ -21,9 +21,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import tree_util
-from jax.experimental.sparse import (
-    JAXSparse, csr_fromdense_p, csr_todense_p, csr_matvec_p, csr_matmat_p
-)
+from jax.experimental.sparse import csr_fromdense_p, csr_todense_p, csr_matvec_p, csr_matmat_p
 
 from saiunit._base_getters import (
     get_mantissa,
@@ -185,9 +183,12 @@ class CSR(SparseMatrix):
             Array([[ 5., 0.],
                    [ 0., 10.]], dtype=float32)
         """
-        assert data.shape == self.data.shape
-        assert data.dtype == self.data.dtype
-        assert get_unit(data) == get_unit(self.data)
+        if data.shape != self.data.shape:
+            raise ValueError(f"Shape mismatch: expected {self.data.shape}, got {data.shape}")
+        if data.dtype != self.data.dtype:
+            raise ValueError(f"Dtype mismatch: expected {self.data.dtype}, got {data.dtype}")
+        if get_unit(data) != get_unit(self.data):
+            raise ValueError(f"Unit mismatch: expected {get_unit(self.data)}, got {get_unit(data)}")
         return self.__class__((data, self.indices, self.indptr), shape=self.shape)
 
     def todense(self):
@@ -237,7 +238,7 @@ class CSR(SparseMatrix):
                      self.indptr),
                     shape=self.shape
                 )
-        if isinstance(other, JAXSparse):
+        if isinstance(other, SparseMatrix):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -267,7 +268,7 @@ class CSR(SparseMatrix):
                      self.indptr),
                     shape=self.shape
                 )
-        if isinstance(other, JAXSparse):
+        if isinstance(other, SparseMatrix):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -327,7 +328,7 @@ class CSR(SparseMatrix):
         return self._binary_rop(other, operator.mod)
 
     def __matmul__(self, other):
-        if isinstance(other, JAXSparse):
+        if isinstance(other, SparseMatrix):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -351,7 +352,7 @@ class CSR(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def __rmatmul__(self, other):
-        if isinstance(other, JAXSparse):
+        if isinstance(other, SparseMatrix):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -387,7 +388,9 @@ class CSR(SparseMatrix):
         obj.data, = children
         if aux_data.keys() != {'shape', 'indices', 'indptr'}:
             raise ValueError(f"CSR.tree_unflatten: invalid {aux_data=}")
-        obj.__dict__.update(**aux_data)
+        obj.shape = aux_data['shape']
+        obj.indices = aux_data['indices']
+        obj.indptr = aux_data['indptr']
         return obj
 
 
@@ -506,9 +509,12 @@ class CSC(SparseMatrix):
             Array([[ 5., 0.],
                    [ 0., 10.]], dtype=float32)
         """
-        assert data.shape == self.data.shape
-        assert data.dtype == self.data.dtype
-        assert get_unit(data) == get_unit(self.data)
+        if data.shape != self.data.shape:
+            raise ValueError(f"Shape mismatch: expected {self.data.shape}, got {data.shape}")
+        if data.dtype != self.data.dtype:
+            raise ValueError(f"Dtype mismatch: expected {self.data.dtype}, got {data.dtype}")
+        if get_unit(data) != get_unit(self.data):
+            raise ValueError(f"Unit mismatch: expected {get_unit(self.data)}, got {get_unit(data)}")
         return CSC((data, self.indices, self.indptr), shape=self.shape)
 
     def todense(self):
@@ -576,7 +582,7 @@ class CSC(SparseMatrix):
                      self.indptr),
                     shape=self.shape
                 )
-        if isinstance(other, JAXSparse):
+        if isinstance(other, SparseMatrix):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -608,7 +614,7 @@ class CSC(SparseMatrix):
                      self.indptr),
                     shape=self.shape
                 )
-        if isinstance(other, JAXSparse):
+        if isinstance(other, SparseMatrix):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -668,7 +674,7 @@ class CSC(SparseMatrix):
         return self._binary_rop(other, operator.mod)
 
     def __matmul__(self, other):
-        if isinstance(other, JAXSparse):
+        if isinstance(other, SparseMatrix):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -694,7 +700,7 @@ class CSC(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def __rmatmul__(self, other):
-        if isinstance(other, JAXSparse):
+        if isinstance(other, SparseMatrix):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -728,8 +734,10 @@ class CSC(SparseMatrix):
         obj = object.__new__(cls)
         obj.data, = children
         if aux_data.keys() != {'shape', 'indices', 'indptr'}:
-            raise ValueError(f"CSR.tree_unflatten: invalid {aux_data=}")
-        obj.__dict__.update(**aux_data)
+            raise ValueError(f"CSC.tree_unflatten: invalid {aux_data=}")
+        obj.shape = aux_data['shape']
+        obj.indices = aux_data['indices']
+        obj.indptr = aux_data['indptr']
         return obj
 
 
