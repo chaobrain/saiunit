@@ -15,28 +15,23 @@
 
 from __future__ import annotations
 
+import math
 import numbers
-from abc import ABC
 from typing import Sequence, Union
 
 import jax
 import numpy as np
-from jax.experimental.sparse import JAXSparse
 
 __all__ = [
     "SparseMatrix"
 ]
 
 
-class SparseMatrix(JAXSparse, ABC):
+class SparseMatrix:
     """
     Base class for sparse matrices in ``saiunit``.
 
-    This class is a subclass of ``jax.experimental.sparse.JAXSparse`` and adds methods
-    that are not implemented in the original class, such as arithmetic operations,
-    data manipulation, and specialized matrix operations.
-
-    This abstract base class defines the interface that all sparse matrix implementations
+    This base class defines the interface that all sparse matrix implementations
     in the ``saiunit`` package should follow. Concrete subclasses must implement
     the abstract methods defined here.
 
@@ -44,10 +39,6 @@ class SparseMatrix(JAXSparse, ABC):
     ----------
     data : jax.Array
         The non-zero values in the sparse matrix.
-
-    See Also
-    --------
-    jax.experimental.sparse.JAXSparse : The parent class from JAX's sparse matrix framework.
 
     Notes
     -----
@@ -70,6 +61,66 @@ class SparseMatrix(JAXSparse, ABC):
         >>> isinstance(csr, susparse.SparseMatrix)
         True
     """
+
+    data: jax.Array
+    shape: tuple[int, ...]
+    nse: property
+    dtype: property
+
+    __hash__ = None
+
+    def __init__(
+        self,
+        args: tuple[jax.Array, ...],
+        *,
+        shape: Sequence[int]
+    ):
+        self.shape = tuple(int(s) for s in shape)
+
+    def __len__(self):
+        return self.shape[0]
+
+    @property
+    def size(self) -> int:
+        return math.prod(self.shape)
+
+    @property
+    def ndim(self) -> int:
+        return len(self.shape)
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        try:
+            nse = self.nse
+            dtype = self.dtype
+            shape = list(self.shape)
+        except Exception:
+            repr_ = f"{name}(<invalid>)"
+        else:
+            repr_ = f"{name}({dtype}{shape}, {nse=})"
+        return repr_
+
+    @property
+    def T(self):
+        return self.transpose()
+
+    def block_until_ready(self):
+        for arg in self.tree_flatten()[0]:
+            arg.block_until_ready()
+        return self
+
+    def tree_flatten(self):
+        raise NotImplementedError(f"{self.__class__}.tree_flatten")
+
+    @classmethod
+    def tree_unflatten(cls, aux_data, children):
+        raise NotImplementedError(f"{cls}.tree_unflatten")
+
+    def transpose(self, axes=None):
+        raise NotImplementedError(f"{self.__class__}.transpose")
+
+    def todense(self):
+        raise NotImplementedError(f"{self.__class__}.todense")
 
     def with_data(
         self,

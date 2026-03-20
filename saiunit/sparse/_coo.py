@@ -265,9 +265,12 @@ class COO(SparseMatrix):
             Array([[ 5., 0.],
                    [ 0., 10.]], dtype=float32)
         """
-        assert data.shape == self.data.shape
-        assert data.dtype == self.data.dtype
-        assert get_unit(data) == get_unit(self.data)
+        if data.shape != self.data.shape:
+            raise ValueError(f"Shape mismatch: expected {self.data.shape}, got {data.shape}")
+        if data.dtype != self.data.dtype:
+            raise ValueError(f"Dtype mismatch: expected {self.data.dtype}, got {data.dtype}")
+        if get_unit(data) != get_unit(self.data):
+            raise ValueError(f"Unit mismatch: expected {get_unit(self.data)}, got {get_unit(data)}")
         return COO(
             (data, self.row, self.col),
             shape=self.shape,
@@ -367,7 +370,7 @@ class COO(SparseMatrix):
                     rows_sorted=self._rows_sorted,
                     cols_sorted=self._cols_sorted
                 )
-        if isinstance(other, JAXSparse):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -410,7 +413,7 @@ class COO(SparseMatrix):
                     rows_sorted=self._rows_sorted,
                     cols_sorted=self._cols_sorted
                 )
-        if isinstance(other, JAXSparse):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -479,7 +482,7 @@ class COO(SparseMatrix):
     def __matmul__(
         self, other: jax.typing.ArrayLike
     ) -> jax.Array | Quantity:
-        if isinstance(other, JAXSparse):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -502,7 +505,7 @@ class COO(SparseMatrix):
         self,
         other: jax.typing.ArrayLike
     ) -> jax.Array | Quantity:
-        if isinstance(other, JAXSparse):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
