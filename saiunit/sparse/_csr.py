@@ -21,7 +21,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import tree_util
-from jax.experimental.sparse import csr_fromdense_p, csr_todense_p, csr_matvec_p, csr_matmat_p
+from jax.experimental.sparse import JAXSparse, csr_fromdense_p, csr_todense_p, csr_matvec_p, csr_matmat_p
 
 from saiunit._base_getters import (
     get_mantissa,
@@ -238,7 +238,7 @@ class CSR(SparseMatrix):
                      self.indptr),
                     shape=self.shape
                 )
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -268,7 +268,7 @@ class CSR(SparseMatrix):
                      self.indptr),
                     shape=self.shape
                 )
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -328,7 +328,7 @@ class CSR(SparseMatrix):
         return self._binary_rop(other, operator.mod)
 
     def __matmul__(self, other):
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -352,7 +352,7 @@ class CSR(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def __rmatmul__(self, other):
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -582,7 +582,7 @@ class CSC(SparseMatrix):
                      self.indptr),
                     shape=self.shape
                 )
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -614,7 +614,7 @@ class CSC(SparseMatrix):
                      self.indptr),
                     shape=self.shape
                 )
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -674,7 +674,7 @@ class CSC(SparseMatrix):
         return self._binary_rop(other, operator.mod)
 
     def __matmul__(self, other):
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -700,7 +700,7 @@ class CSC(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def __rmatmul__(self, other):
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)

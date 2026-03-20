@@ -24,7 +24,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import lax
 from jax import tree_util
-from jax.experimental.sparse import coo_todense_p, coo_fromdense_p, coo_matmat_p, coo_matvec_p
+from jax.experimental.sparse import JAXSparse, coo_todense_p, coo_fromdense_p, coo_matmat_p, coo_matvec_p
 
 from saiunit._base_getters import (
     get_mantissa,
@@ -370,7 +370,7 @@ class COO(SparseMatrix):
                     rows_sorted=self._rows_sorted,
                     cols_sorted=self._cols_sorted
                 )
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -413,7 +413,7 @@ class COO(SparseMatrix):
                     rows_sorted=self._rows_sorted,
                     cols_sorted=self._cols_sorted
                 )
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError(f"binary operation {op} between two sparse objects.")
 
         other = asarray(other)
@@ -482,7 +482,7 @@ class COO(SparseMatrix):
     def __matmul__(
         self, other: jax.typing.ArrayLike
     ) -> jax.Array | Quantity:
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
@@ -505,7 +505,7 @@ class COO(SparseMatrix):
         self,
         other: jax.typing.ArrayLike
     ) -> jax.Array | Quantity:
-        if isinstance(other, SparseMatrix):
+        if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
         data, other = promote_dtypes(self.data, other)
