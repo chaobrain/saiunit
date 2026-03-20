@@ -54,14 +54,17 @@ dependencies = [
 
 dynamic = ['version']
 
+
 [tool.flit.module]
 name = "saiunit"
+
 
 [project.urls]
 homepage = 'https://github.com/chaobrain/saiunit'
 repository = 'https://github.com/chaobrain/saiunit'
 "Bug Tracker" = "https://github.com/chaobrain/saiunit/issues"
 "Documentation" = "https://saiunit.readthedocs.io/"
+
 
 [project.optional-dependencies]
 testing = ['pytest', 'brainstate']
