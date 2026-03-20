@@ -35,7 +35,8 @@ __all__ = [
 @set_module_as('saiunit.fft')
 def fftshift(
     x: Union[Quantity, jax.typing.ArrayLike],
-    axes: None | int | Sequence[int] = None
+    axes: None | int | Sequence[int] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Shift zero-frequency FFT component to the center of the spectrum.
 
@@ -71,13 +72,14 @@ def fftshift(
         >>> shifted = sufft.fftshift(freq)
         >>> recovered = sufft.ifftshift(shifted)
     """
-    return _fun_keep_unit_unary(jnpfft.fftshift, x, axes=axes)
+    return _fun_keep_unit_unary(jnpfft.fftshift, x, axes=axes, **kwargs)
 
 
 @set_module_as('saiunit.fft')
 def ifftshift(
     x: Union[Quantity, jax.typing.ArrayLike],
-    axes: None | int | Sequence[int] = None
+    axes: None | int | Sequence[int] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Inverse of :func:`saiunit.fft.fftshift`.
 
@@ -112,4 +114,4 @@ def ifftshift(
         >>> shifted = sufft.fftshift(freq)
         >>> recovered = sufft.ifftshift(shifted)
     """
-    return _fun_keep_unit_unary(jnpfft.ifftshift, x, axes=axes)
+    return _fun_keep_unit_unary(jnpfft.ifftshift, x, axes=axes, **kwargs)

@@ -66,7 +66,8 @@ def slice(
     operand: Union[Quantity, jax.typing.ArrayLike],
     start_indices: Sequence[int],
     limit_indices: Sequence[int],
-    strides: Sequence[int] | None = None
+    strides: Sequence[int] | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Wraps XLA's `Slice
     <https://www.tensorflow.org/xla/operation_semantics#slice>`_
@@ -110,7 +111,7 @@ def slice(
                [ 4,  6],
                [ 8, 10]], dtype=int32)
     """
-    return _fun_keep_unit_unary(lax.slice, operand, start_indices, limit_indices, strides)
+    return _fun_keep_unit_unary(lax.slice, operand, start_indices, limit_indices, strides, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -118,6 +119,7 @@ def dynamic_slice(
     operand: Union[Quantity, jax.typing.ArrayLike],
     start_indices: jax.typing.ArrayLike | Sequence[jax.typing.ArrayLike],
     slice_sizes: Shape,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Wraps XLA's `DynamicSlice
     <https://www.tensorflow.org/xla/operation_semantics#dynamicslice>`_
@@ -156,7 +158,7 @@ def dynamic_slice(
         Array([[ 4,  5,  6,  7],
                [ 8,  9, 10, 11]], dtype=int32)
     """
-    return _fun_keep_unit_unary(lax.dynamic_slice, operand, start_indices, slice_sizes)
+    return _fun_keep_unit_unary(lax.dynamic_slice, operand, start_indices, slice_sizes, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -164,6 +166,7 @@ def dynamic_update_slice(
     operand: Union[Quantity, jax.typing.ArrayLike],
     update: Union[Quantity, jax.typing.ArrayLike],
     start_indices: jax.typing.ArrayLike | Sequence[jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Wraps XLA's `DynamicUpdateSlice
     <https://www.tensorflow.org/xla/operation_semantics#dynamicupdateslice>`_
@@ -203,7 +206,7 @@ def dynamic_update_slice(
                [0., 0., 1., 1.],
                [0., 0., 0., 0.]], dtype=float32)
     """
-    return _fun_keep_unit_binary(lax.dynamic_update_slice, operand, update, start_indices)
+    return _fun_keep_unit_binary(lax.dynamic_update_slice, operand, update, start_indices, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -216,7 +219,8 @@ def gather(
     unique_indices: bool = False,
     indices_are_sorted: bool = False,
     mode: str | jax.lax.GatherScatterMode | None = None,
-    fill_value: Union[Quantity, jax.typing.ArrayLike] = None
+    fill_value: Union[Quantity, jax.typing.ArrayLike] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Gather operator.
 
@@ -294,7 +298,7 @@ def gather(
         return maybe_decimal(
             Quantity(lax.gather(operand.mantissa, start_indices, dimension_numbers, slice_sizes,
                                 unique_indices=unique_indices, indices_are_sorted=indices_are_sorted,
-                                mode=mode, fill_value=fill_value.in_unit(operand.unit).mantissa),
+                                mode=mode, fill_value=fill_value.in_unit(operand.unit).mantissa, **kwargs),
                      unit=operand.unit)
         )
     elif isinstance(operand, Quantity):
@@ -303,20 +307,21 @@ def gather(
         return maybe_decimal(
             Quantity(lax.gather(operand.mantissa, start_indices, dimension_numbers, slice_sizes,
                                 unique_indices=unique_indices, indices_are_sorted=indices_are_sorted,
-                                mode=mode), unit=operand.unit)
+                                mode=mode, **kwargs), unit=operand.unit)
         )
     elif isinstance(fill_value, Quantity):
         raise ValueError('fill_value must be None if operand is not a Quantity')
     return lax.gather(operand, start_indices, dimension_numbers, slice_sizes,
                       unique_indices=unique_indices, indices_are_sorted=indices_are_sorted,
-                      mode=mode, fill_value=fill_value)
+                      mode=mode, fill_value=fill_value, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def index_take(
     src: Union[Quantity, jax.typing.ArrayLike],
     idxs: jax.typing.ArrayLike,
-    axes: Sequence[int]
+    axes: Sequence[int],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Take elements from an array at the given indices along the given axes.
 
@@ -349,7 +354,7 @@ def index_take(
         Array([[1., 3.],
                [4., 6.]], dtype=float32)
     """
-    return _fun_keep_unit_unary(lax.index_take, src, idxs, axes)
+    return _fun_keep_unit_unary(lax.index_take, src, idxs, axes, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -358,7 +363,8 @@ def slice_in_dim(
     start_index: int | None,
     limit_index: int | None,
     stride: int = 1,
-    axis: int = 0
+    axis: int = 0,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper around :func:`lax.slice` applying to only one dimension.
 
@@ -401,7 +407,7 @@ def slice_in_dim(
                [ 7,  8],
                [10, 11]], dtype=int32)
     """
-    return _fun_keep_unit_unary(lax.slice_in_dim, operand, start_index, limit_index, stride, axis)
+    return _fun_keep_unit_unary(lax.slice_in_dim, operand, start_index, limit_index, stride, axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -409,7 +415,8 @@ def index_in_dim(
     operand: Union[Quantity, jax.typing.ArrayLike],
     index: int,
     axis: int = 0,
-    keepdims: bool = True
+    keepdims: bool = True,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper around :func:`lax.slice` to perform int indexing.
 
@@ -450,7 +457,7 @@ def index_in_dim(
         >>> lax.index_in_dim(x, 1, axis=1, keepdims=False)
         Array([1, 5, 9], dtype=int32)
     """
-    return _fun_keep_unit_unary(lax.index_in_dim, operand, index, axis, keepdims)
+    return _fun_keep_unit_unary(lax.index_in_dim, operand, index, axis, keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -458,7 +465,8 @@ def dynamic_slice_ind_dim(
     operand: Union[Quantity, jax.typing.ArrayLike],
     start_index: jax.typing.ArrayLike,
     slice_size: int,
-    axis: int = 0
+    axis: int = 0,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper around :func:`lax.dynamic_slice` applied to one dimension.
 
@@ -500,14 +508,15 @@ def dynamic_slice_ind_dim(
                [ 5,  6],
                [ 9, 10]], dtype=int32)
     """
-    return _fun_keep_unit_unary(lax.dynamic_slice_in_dim, operand, start_index, slice_size, axis)
+    return _fun_keep_unit_unary(lax.dynamic_slice_in_dim, operand, start_index, slice_size, axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def dynamic_index_in_dim(
     operand: Union[Quantity, jax.typing.ArrayLike],
     index: int | jax.typing.ArrayLike,
-    axis: int = 0, keepdims: bool = True
+    axis: int = 0, keepdims: bool = True,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper around dynamic_slice to perform int indexing.
 
@@ -545,14 +554,15 @@ def dynamic_index_in_dim(
         >>> dynamic_index_in_dim(x, 1, axis=1, keepdims=False)
         Array([1, 5, 9], dtype=int32)
     """
-    return _fun_keep_unit_unary(lax.dynamic_index_in_dim, operand, index, axis, keepdims)
+    return _fun_keep_unit_unary(lax.dynamic_index_in_dim, operand, index, axis, keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def dynamic_update_slice_in_dim(
     operand: Union[Quantity, jax.typing.ArrayLike],
     update: Union[Quantity, jax.typing.ArrayLike],
-    start_index: jax.typing.ArrayLike, axis: int
+    start_index: jax.typing.ArrayLike, axis: int,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper around :func:`dynamic_update_slice` to update
     a slice in a single ``axis``.
@@ -601,7 +611,7 @@ def dynamic_update_slice_in_dim(
                [1., 1., 1., 0.],
                [0., 0., 0., 0.]], dtype=float32)
     """
-    return _fun_keep_unit_binary(lax.dynamic_update_slice_in_dim, operand, update, start_index, axis)
+    return _fun_keep_unit_binary(lax.dynamic_update_slice_in_dim, operand, update, start_index, axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -609,7 +619,8 @@ def dynamic_update_index_in_dim(
     operand: Union[Quantity, jax.typing.ArrayLike],
     update: Union[Quantity, jax.typing.ArrayLike],
     index: jax.typing.ArrayLike,
-    axis: int
+    axis: int,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper around :func:`dynamic_update_slice` to update a slice
     of size 1 in a single ``axis``.
@@ -660,14 +671,15 @@ def dynamic_update_index_in_dim(
                [0., 0., 0., 0.],
                [0., 0., 0., 0.]], dtype=float32)
     """
-    return _fun_keep_unit_binary(lax.dynamic_update_index_in_dim, operand, update, index, axis)
+    return _fun_keep_unit_binary(lax.dynamic_update_index_in_dim, operand, update, index, axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def sort(
     operand: Union[Quantity, jax.typing.ArrayLike] | Sequence[Union[Quantity, jax.typing.ArrayLike]],
     dimension: int = -1,
-    is_stable: bool = True, num_keys: int = 1
+    is_stable: bool = True, num_keys: int = 1,
+    **kwargs,
 ) -> Union[Quantity, jax.Array] | Sequence[Union[Quantity, jax.Array]]:
     """Wraps XLA's `Sort
     <https://www.tensorflow.org/xla/operation_semantics#sort>`_ operator.
@@ -703,7 +715,7 @@ def sort(
                 units.append(None)
 
         # Sort the mantissas
-        sorted_mantissas = lax.sort(mantissas, dimension, is_stable, num_keys)
+        sorted_mantissas = lax.sort(mantissas, dimension, is_stable, num_keys, **kwargs)
 
         # Convert back to quantities where applicable
         output = []
@@ -716,8 +728,8 @@ def sort(
     else:
         if isinstance(operand, Quantity):
             return maybe_decimal(
-                Quantity(lax.sort(operand.mantissa, dimension, is_stable, num_keys), unit=operand.unit))
-        return lax.sort(operand, dimension, is_stable, num_keys)
+                Quantity(lax.sort(operand.mantissa, dimension, is_stable, num_keys, **kwargs), unit=operand.unit))
+        return lax.sort(operand, dimension, is_stable, num_keys, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -725,7 +737,8 @@ def sort_key_val(
     keys: Union[Quantity, jax.typing.ArrayLike],
     values: Union[Quantity, jax.typing.ArrayLike],
     dimension: int = -1,
-    is_stable: bool = True
+    is_stable: bool = True,
+    **kwargs,
 ) -> tuple[Union[Quantity, jax.Array], Union[Quantity, jax.Array]]:
     """Sort ``keys`` along ``dimension`` and apply the same permutation to ``values``.
 
@@ -766,21 +779,22 @@ def sort_key_val(
     keys = maybe_custom_array(keys)
     values = maybe_custom_array(values)
     if isinstance(keys, Quantity) and isinstance(values, Quantity):
-        k, v = lax.sort_key_val(keys.mantissa, values.mantissa, dimension, is_stable)
+        k, v = lax.sort_key_val(keys.mantissa, values.mantissa, dimension, is_stable, **kwargs)
         return maybe_decimal(Quantity(k, unit=keys.unit)), maybe_decimal(Quantity(v, unit=values.unit))
     elif isinstance(keys, Quantity):
-        k, v = lax.sort_key_val(keys.mantissa, values, dimension, is_stable)
+        k, v = lax.sort_key_val(keys.mantissa, values, dimension, is_stable, **kwargs)
         return maybe_decimal(Quantity(k, unit=keys.unit)), v
     elif isinstance(values, Quantity):
-        k, v = lax.sort_key_val(keys, values.mantissa, dimension, is_stable)
+        k, v = lax.sort_key_val(keys, values.mantissa, dimension, is_stable, **kwargs)
         return k, maybe_decimal(Quantity(v, unit=values.unit))
-    return lax.sort_key_val(keys, values, dimension, is_stable)
+    return lax.sort_key_val(keys, values, dimension, is_stable, **kwargs)
 
 
 # math funcs keep unit (unary)
 @set_module_as('saiunit.math')
 def neg(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise negation: :math:`-x`.
 
@@ -809,14 +823,15 @@ def neg(
         >>> result.unit
         meter
     """
-    return _fun_keep_unit_unary(lax.neg, x)
+    return _fun_keep_unit_unary(lax.neg, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def cummax(
     operand: Union[Quantity, jax.typing.ArrayLike],
     axis: int = 0,
-    reverse: bool = False
+    reverse: bool = False,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Compute a cumulative maximum along ``axis``.
 
@@ -848,14 +863,15 @@ def cummax(
         >>> result.mantissa
         Array([3., 3., 4., 4.], dtype=float32)
     """
-    return _fun_keep_unit_unary(lax.cummax, operand, axis, reverse)
+    return _fun_keep_unit_unary(lax.cummax, operand, axis, reverse, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def cummin(
     operand: Union[Quantity, jax.typing.ArrayLike],
     axis: int = 0,
-    reverse: bool = False
+    reverse: bool = False,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Compute a cumulative minimum along ``axis``.
 
@@ -887,14 +903,15 @@ def cummin(
         >>> result.mantissa
         Array([3., 1., 1., 1.], dtype=float32)
     """
-    return _fun_keep_unit_unary(lax.cummin, operand, axis, reverse)
+    return _fun_keep_unit_unary(lax.cummin, operand, axis, reverse, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def cumsum(
     operand: Union[Quantity, jax.typing.ArrayLike],
     axis: int = 0,
-    reverse: bool = False
+    reverse: bool = False,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Compute a cumulative sum along ``axis``.
 
@@ -926,7 +943,7 @@ def cumsum(
         >>> result.mantissa
         Array([ 1.,  3.,  6., 10.], dtype=float32)
     """
-    return _fun_keep_unit_unary(lax.cumsum, operand, axis, reverse)
+    return _fun_keep_unit_unary(lax.cumsum, operand, axis, reverse, **kwargs)
 
 
 def _fun_lax_scatter(
@@ -969,7 +986,8 @@ def scatter(
     *,
     indices_are_sorted: bool = False,
     unique_indices: bool = False,
-    mode: str | jax.lax.GatherScatterMode | None = None
+    mode: str | jax.lax.GatherScatterMode | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Scatter-update operator.
 
@@ -1041,7 +1059,7 @@ def scatter(
         Array([0., 2., 3., 0., 4.], dtype=float32)
     """
     return _fun_lax_scatter(lax.scatter, operand, scatter_indices, updates, dimension_numbers, indices_are_sorted,
-                            unique_indices, mode)
+                            unique_indices, mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1053,7 +1071,8 @@ def scatter_add(
     *,
     indices_are_sorted: bool = False,
     unique_indices: bool = False,
-    mode: str | jax.lax.GatherScatterMode | None = None
+    mode: str | jax.lax.GatherScatterMode | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Scatter-add operator.
 
@@ -1090,7 +1109,7 @@ def scatter_add(
         An array containing the sum of `operand` and the scattered updates.
     """
     return _fun_lax_scatter(lax.scatter_add, operand, scatter_indices, updates, dimension_numbers, indices_are_sorted,
-                            unique_indices, mode)
+                            unique_indices, mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1102,7 +1121,8 @@ def scatter_sub(
     *,
     indices_are_sorted: bool = False,
     unique_indices: bool = False,
-    mode: str | jax.lax.GatherScatterMode | None = None
+    mode: str | jax.lax.GatherScatterMode | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Scatter-sub operator.
 
@@ -1139,7 +1159,7 @@ def scatter_sub(
         An array containing the sum of `operand` and the scattered updates.
     """
     return _fun_lax_scatter(lax.scatter_sub, operand, scatter_indices, updates, dimension_numbers, indices_are_sorted,
-                            unique_indices, mode)
+                            unique_indices, mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1151,7 +1171,8 @@ def scatter_mul(
     *,
     indices_are_sorted: bool = False,
     unique_indices: bool = False,
-    mode: str | jax.lax.GatherScatterMode | None = None
+    mode: str | jax.lax.GatherScatterMode | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Scatter-multiply operator.
 
@@ -1188,7 +1209,7 @@ def scatter_mul(
         An array containing the sum of `operand` and the scattered updates.
     """
     return _fun_lax_scatter(lax.scatter_mul, operand, scatter_indices, updates, dimension_numbers, indices_are_sorted,
-                            unique_indices, mode)
+                            unique_indices, mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1200,7 +1221,8 @@ def scatter_min(
     *,
     indices_are_sorted: bool = False,
     unique_indices: bool = False,
-    mode: str | jax.lax.GatherScatterMode | None = None
+    mode: str | jax.lax.GatherScatterMode | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Scatter-min operator.
 
@@ -1237,7 +1259,7 @@ def scatter_min(
         An array containing the sum of `operand` and the scattered updates.
     """
     return _fun_lax_scatter(lax.scatter_min, operand, scatter_indices, updates, dimension_numbers, indices_are_sorted,
-                            unique_indices, mode)
+                            unique_indices, mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1249,7 +1271,8 @@ def scatter_max(
     *,
     indices_are_sorted: bool = False,
     unique_indices: bool = False,
-    mode: str | jax.lax.GatherScatterMode | None = None
+    mode: str | jax.lax.GatherScatterMode | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Scatter-max operator.
 
@@ -1286,7 +1309,7 @@ def scatter_max(
         An array containing the sum of `operand` and the scattered updates.
     """
     return _fun_lax_scatter(lax.scatter_max, operand, scatter_indices, updates, dimension_numbers, indices_are_sorted,
-                            unique_indices, mode)
+                            unique_indices, mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1299,7 +1322,8 @@ def scatter_apply(
     update_shape: Shape = (),
     indices_are_sorted: bool = False,
     unique_indices: bool = False,
-    mode: str | jax.lax.GatherScatterMode | None = None
+    mode: str | jax.lax.GatherScatterMode | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Scatter-apply operator.
 
@@ -1346,13 +1370,13 @@ def scatter_apply(
                                                         update_shape=update_shape,
                                                         indices_are_sorted=indices_are_sorted,
                                                         unique_indices=unique_indices,
-                                                        mode=mode), unit=operand.unit))
+                                                        mode=mode, **kwargs), unit=operand.unit))
     else:
         return lax.scatter_apply(operand, scatter_indices, func, dimension_numbers,
                                  update_shape=update_shape,
                                  indices_are_sorted=indices_are_sorted,
                                  unique_indices=unique_indices,
-                                 mode=mode)
+                                 mode=mode, **kwargs)
 
 
 # math funcs keep unit (binary)
@@ -1360,6 +1384,7 @@ def scatter_apply(
 def complex(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise make complex number: :math:`x + jy`.
 
@@ -1391,14 +1416,15 @@ def complex(
         >>> result.mantissa
         Array([1.+3.j, 2.+4.j], dtype=complex64)
     """
-    return _fun_keep_unit_binary(lax.complex, x, y)
+    return _fun_keep_unit_binary(lax.complex, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def pad(
     operand: Union[Quantity, jax.typing.ArrayLike],
     padding_value: Union[Quantity, jax.typing.ArrayLike],
-    padding_config: Sequence[tuple[int, int, int]]
+    padding_config: Sequence[tuple[int, int, int]],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Applies low, high, and/or interior padding to an array.
 
@@ -1418,13 +1444,14 @@ def pad(
         The ``operand`` array with padding value ``padding_value`` inserted in each
         dimension according to the ``padding_config``.
     """
-    return _fun_keep_unit_binary(lax.pad, operand, padding_value, padding_config)
+    return _fun_keep_unit_binary(lax.pad, operand, padding_value, padding_config, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def sub(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise subtraction: :math:`x - y`.
 
@@ -1453,14 +1480,15 @@ def sub(
         >>> result.mantissa
         Array([4., 5.], dtype=float32)
     """
-    return _fun_keep_unit_binary(lax.sub, x, y)
+    return _fun_keep_unit_binary(lax.sub, x, y, **kwargs)
 
 
 # type conversion
 @set_module_as('saiunit.math')
 def convert_element_type(
     operand: Union[Quantity, jax.typing.ArrayLike],
-    new_dtype: jax.typing.DTypeLike
+    new_dtype: jax.typing.DTypeLike,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Elementwise cast.
 
@@ -1476,13 +1504,14 @@ def convert_element_type(
     Returns:
         An array with the same shape as `operand`, cast elementwise to `new_dtype`.
     """
-    return _fun_keep_unit_unary(lax.convert_element_type, operand, new_dtype)
+    return _fun_keep_unit_unary(lax.convert_element_type, operand, new_dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def bitcast_convert_type(
     operand: Union[Quantity, jax.typing.ArrayLike],
-    new_dtype: jax.typing.DTypeLike
+    new_dtype: jax.typing.DTypeLike,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Elementwise bitcast.
 
@@ -1513,7 +1542,7 @@ def bitcast_convert_type(
         An array of shape ``output_shape`` (see above) and type ``new_dtype``,
         constructed from the same bits as ``operand``.
     """
-    return _fun_keep_unit_unary(lax.bitcast_convert_type, operand, new_dtype)
+    return _fun_keep_unit_unary(lax.bitcast_convert_type, operand, new_dtype, **kwargs)
 
 
 # math funcs keep unit (n-ary)
@@ -1522,6 +1551,7 @@ def clamp(
     min: Union[Quantity, jax.typing.ArrayLike],
     x: Union[Quantity, jax.typing.ArrayLike],
     max: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise clamp.
 
@@ -1536,10 +1566,10 @@ def clamp(
     max = maybe_custom_array(max)
     if all(isinstance(i, Quantity) for i in (min, x, max)):
         unit = min.unit
-        return maybe_decimal(Quantity(lax.clamp(min.mantissa, x.to_decimal(unit), max.to_decimal(unit)), unit=unit))
+        return maybe_decimal(Quantity(lax.clamp(min.mantissa, x.to_decimal(unit), max.to_decimal(unit), **kwargs), unit=unit))
     elif all(isinstance(i, (jax.Array, np.ndarray, np.bool_, np.number, bool, int, float, builtins.complex)) for i in
              (min, x, max)):
-        return lax.clamp(min, x, max)
+        return lax.clamp(min, x, max, **kwargs)
     else:
         raise TypeError('All inputs must be Quantity or jax.typing.ArrayLike')
 
@@ -1552,7 +1582,8 @@ def approx_max_k(
     reduction_dimension: int = -1,
     recall_target: float = 0.95,
     reduction_input_size_override: int = -1,
-    aggregate_to_topk: bool = True
+    aggregate_to_topk: bool = True,
+    **kwargs,
 ) -> tuple[Union[Quantity, jax.Array], jax.typing.ArrayLike]:
     """Returns max ``k`` values and their indices of the ``operand`` in an approximate manner.
 
@@ -1600,10 +1631,10 @@ def approx_max_k(
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         r = lax.approx_max_k(operand.mantissa, k, reduction_dimension, recall_target, reduction_input_size_override,
-                             aggregate_to_topk)
+                             aggregate_to_topk, **kwargs)
         return maybe_decimal(Quantity(r[0], unit=operand.unit)), r[1]
     return lax.approx_max_k(operand, k, reduction_dimension, recall_target, reduction_input_size_override,
-                            aggregate_to_topk)
+                            aggregate_to_topk, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1613,7 +1644,8 @@ def approx_min_k(
     reduction_dimension: int = -1,
     recall_target: float = 0.95,
     reduction_input_size_override: int = -1,
-    aggregate_to_topk: bool = True
+    aggregate_to_topk: bool = True,
+    **kwargs,
 ) -> tuple[Union[Quantity, jax.Array], jax.typing.ArrayLike]:
     """Returns min ``k`` values and their indices of the ``operand`` in an approximate manner.
 
@@ -1665,16 +1697,17 @@ def approx_min_k(
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         r = lax.approx_min_k(operand.mantissa, k, reduction_dimension, recall_target, reduction_input_size_override,
-                             aggregate_to_topk)
+                             aggregate_to_topk, **kwargs)
         return maybe_decimal(Quantity(r[0], unit=operand.unit)), r[1]
     return lax.approx_min_k(operand, k, reduction_dimension, recall_target, reduction_input_size_override,
-                            aggregate_to_topk)
+                            aggregate_to_topk, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def top_k(
     operand: Union[Quantity, jax.typing.ArrayLike],
-    k: int
+    k: int,
+    **kwargs,
 ) -> tuple[Union[Quantity, jax.Array], jax.typing.ArrayLike]:
     """Returns top ``k`` values and their indices along the last axis of ``operand``.
 
@@ -1700,9 +1733,9 @@ def top_k(
     """
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
-        r = lax.top_k(operand.mantissa, k)
+        r = lax.top_k(operand.mantissa, k, **kwargs)
         return maybe_decimal(Quantity(r[0], unit=operand.unit)), r[1]
-    return lax.top_k(operand, k)
+    return lax.top_k(operand, k, **kwargs)
 
 
 # broadcasting arrays

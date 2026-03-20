@@ -104,7 +104,8 @@ def _fun_keep_unit_sequence(
 def concatenate(
     arrays: Union[Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
     axis: Optional[int] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Join a sequence of quantities or arrays along an existing axis.
@@ -135,14 +136,15 @@ def concatenate(
       >>> b = [3, 4] * u.second
       >>> u.math.concatenate([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.concatenate, arrays, axis=axis, dtype=dtype)
+    return _fun_keep_unit_sequence(jnp.concatenate, arrays, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def stack(
     arrays: Union[Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
     axis: int = 0,
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Join a sequence of quantities or arrays along a new axis.
@@ -171,13 +173,14 @@ def stack(
       >>> b = [4, 5, 6] * u.second
       >>> u.math.stack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.stack, arrays, axis=axis, dtype=dtype)
+    return _fun_keep_unit_sequence(jnp.stack, arrays, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def vstack(
     tup: Union[Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Stack quantities or arrays in sequence vertically (row wise).
@@ -204,7 +207,7 @@ def vstack(
       >>> b = [4, 5, 6] * u.meter
       >>> u.math.vstack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.vstack, tup, dtype=dtype)
+    return _fun_keep_unit_sequence(jnp.vstack, tup, dtype=dtype, **kwargs)
 
 
 row_stack = vstack
@@ -213,7 +216,8 @@ row_stack = vstack
 @set_module_as('saiunit.math')
 def hstack(
     arrays: Union[Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Stack quantities arrays in sequence horizontally (column wise).
@@ -240,13 +244,14 @@ def hstack(
       >>> b = [4, 5, 6] * u.meter
       >>> u.math.hstack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.hstack, arrays, dtype=dtype)
+    return _fun_keep_unit_sequence(jnp.hstack, arrays, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def dstack(
     arrays: Union[Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Stack quantities or arrays in sequence depth wise (along third axis).
@@ -273,12 +278,13 @@ def dstack(
       >>> b = [[4], [5], [6]] * u.meter
       >>> u.math.dstack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.dstack, arrays, dtype=dtype)
+    return _fun_keep_unit_sequence(jnp.dstack, arrays, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def column_stack(
-    tup: Union[Sequence[jax.typing.ArrayLike], Sequence[Quantity]]
+    tup: Union[Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Stack 1-D arrays as columns into a 2-D array.
@@ -305,12 +311,13 @@ def column_stack(
       >>> b = [4, 5, 6] * u.second
       >>> u.math.column_stack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.column_stack, tup)
+    return _fun_keep_unit_sequence(jnp.column_stack, tup, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def block(
-    arrays: Sequence[Union[jax.Array, Quantity]]
+    arrays: Sequence[Union[jax.Array, Quantity]],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Assemble a quantity or an array from nested lists of blocks.
@@ -334,14 +341,15 @@ def block(
       >>> a = [[1, 2], [3, 4]] * u.second
       >>> u.math.block(a)
     """
-    return _fun_keep_unit_sequence(jnp.block, arrays)
+    return _fun_keep_unit_sequence(jnp.block, arrays, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def append(
     arr: Union[jax.Array, Quantity],
     values: Union[jax.Array, Quantity],
-    axis: Optional[int] = None
+    axis: Optional[int] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Append values to the end of a quantity or an array.
@@ -370,7 +378,7 @@ def append(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.append(a, 4 * u.second)
     """
-    return _fun_keep_unit_sequence(jnp.append, arr, values, axis=axis)
+    return _fun_keep_unit_sequence(jnp.append, arr, values, axis=axis, **kwargs)
 
 
 def _fun_keep_unit_return_sequence(
@@ -391,7 +399,8 @@ def _fun_keep_unit_return_sequence(
 def split(
     a: Union[jax.Array, Quantity],
     indices_or_sections: Union[int, Sequence[int]],
-    axis: int = 0
+    axis: int = 0,
+    **kwargs,
 ) -> Union[Sequence[jax.Array | Quantity]]:
     """
     Split quantity or array into a list of multiple sub-arrays.
@@ -426,14 +435,15 @@ def split(
       >>> a = jnp.arange(9.0) * u.second
       >>> u.math.split(a, 3)
     """
-    return _fun_keep_unit_return_sequence(jnp.split, a, indices_or_sections=indices_or_sections, axis=axis)
+    return _fun_keep_unit_return_sequence(jnp.split, a, indices_or_sections=indices_or_sections, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def array_split(
     ary: Union[Quantity, jax.typing.ArrayLike],
     indices_or_sections: Union[int, jax.typing.ArrayLike],
-    axis: Optional[int] = 0
+    axis: Optional[int] = 0,
+    **kwargs,
 ) -> Union[Sequence[Quantity | jax.Array]]:
     """
     Split an array into multiple sub-arrays.
@@ -463,13 +473,14 @@ def array_split(
       >>> a = jnp.arange(9.0) * u.second
       >>> u.math.array_split(a, 3)
     """
-    return _fun_keep_unit_return_sequence(jnp.split, ary, indices_or_sections=indices_or_sections, axis=axis)
+    return _fun_keep_unit_return_sequence(jnp.split, ary, indices_or_sections=indices_or_sections, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def dsplit(
     a: Union[jax.Array, Quantity],
-    indices_or_sections: Union[int, Sequence[int]]
+    indices_or_sections: Union[int, Sequence[int]],
+    **kwargs,
 ) -> Union[Sequence[jax.Array | Quantity]]:
     """
     Split a quantity or an array into multiple sub-arrays along the 3rd axis (depth).
@@ -498,13 +509,14 @@ def dsplit(
       >>> a = jnp.arange(16.0).reshape(2, 2, 4) * u.meter
       >>> u.math.dsplit(a, 2)
     """
-    return _fun_keep_unit_return_sequence(jnp.dsplit, a, indices_or_sections)
+    return _fun_keep_unit_return_sequence(jnp.dsplit, a, indices_or_sections, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def hsplit(
     a: Union[jax.Array, Quantity],
-    indices_or_sections: Union[int, Sequence[int]]
+    indices_or_sections: Union[int, Sequence[int]],
+    **kwargs,
 ) -> Union[Sequence[jax.Array | Quantity]]:
     """
     Split a quantity or an array into multiple sub-arrays horizontally (column-wise).
@@ -533,13 +545,14 @@ def hsplit(
       >>> a = jnp.arange(16.0).reshape(4, 4) * u.meter
       >>> u.math.hsplit(a, 2)
     """
-    return _fun_keep_unit_return_sequence(jnp.hsplit, a, indices_or_sections)
+    return _fun_keep_unit_return_sequence(jnp.hsplit, a, indices_or_sections, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def vsplit(
     a: Union[jax.Array, Quantity],
-    indices_or_sections: Union[int, Sequence[int]]
+    indices_or_sections: Union[int, Sequence[int]],
+    **kwargs,
 ) -> Union[Sequence[jax.Array | Quantity]]:
     """
     Split a quantity or an array into multiple sub-arrays vertically (row-wise).
@@ -568,7 +581,7 @@ def vsplit(
       >>> a = jnp.arange(16.0).reshape(4, 4) * u.meter
       >>> u.math.vsplit(a, 2)
     """
-    return _fun_keep_unit_return_sequence(jnp.vsplit, a, indices_or_sections)
+    return _fun_keep_unit_return_sequence(jnp.vsplit, a, indices_or_sections, **kwargs)
 
 
 # broadcasting arrays
@@ -589,7 +602,8 @@ def _broadcast_fun(func, *args, **kwargs):
 # ----
 @set_module_as('saiunit.math')
 def broadcast_arrays(
-    *args: Union[Quantity, jax.typing.ArrayLike]
+    *args: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
     """
     Broadcast any number of arrays against each other.
@@ -618,12 +632,13 @@ def broadcast_arrays(
       >>> b = [[4], [5]] * u.second
       >>> u.math.broadcast_arrays(a, b)
     """
-    return _broadcast_fun(jnp.broadcast_arrays, *args)
+    return _broadcast_fun(jnp.broadcast_arrays, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def promote_dtypes(
-    *args: Union[Quantity, jax.typing.ArrayLike]
+    *args: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
     """
     Promote the data types of the inputs to a common type.
@@ -648,13 +663,14 @@ def promote_dtypes(
       >>> b = [4.0, 5.0, 6.0] * u.second
       >>> u.math.promote_dtypes(a, b)
     """
-    return _broadcast_fun(_promote_dtypes, *args)
+    return _broadcast_fun(_promote_dtypes, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def broadcast_to(
     array: Union[Quantity, jax.typing.ArrayLike],
-    shape: Tuple[int, ...]
+    shape: Tuple[int, ...],
+    **kwargs,
 ) -> Quantity | jax.Array:
     """
     Broadcast an array to a new shape.
@@ -688,12 +704,13 @@ def broadcast_to(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.broadcast_to(a, (2, 3))
     """
-    return _fun_keep_unit_unary(jnp.broadcast_to, array, shape=shape)
+    return _fun_keep_unit_unary(jnp.broadcast_to, array, shape=shape, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def atleast_1d(
-    *arys: Union[jax.Array, Quantity]
+    *arys: Union[jax.Array, Quantity],
+    **kwargs,
 ) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
     """
     View inputs as quantities or arrays with at least one dimension.
@@ -715,12 +732,13 @@ def atleast_1d(
       >>> import saiunit as u
       >>> u.math.atleast_1d(0 * u.second)
     """
-    return _broadcast_fun(jnp.atleast_1d, *arys)
+    return _broadcast_fun(jnp.atleast_1d, *arys, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def atleast_2d(
-    *arys: Union[jax.Array, Quantity]
+    *arys: Union[jax.Array, Quantity],
+    **kwargs,
 ) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
     """
     View inputs as quantities or arrays with at least two dimensions.
@@ -743,12 +761,13 @@ def atleast_2d(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.atleast_2d(a)
     """
-    return _broadcast_fun(jnp.atleast_2d, *arys)
+    return _broadcast_fun(jnp.atleast_2d, *arys, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def atleast_3d(
-    *arys: Union[jax.Array, Quantity]
+    *arys: Union[jax.Array, Quantity],
+    **kwargs,
 ) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
     """
     View inputs as quantities or arrays with at least three dimensions.
@@ -771,7 +790,7 @@ def atleast_3d(
       >>> a = [[1, 2], [3, 4]] * u.meter
       >>> u.math.atleast_3d(a)
     """
-    return _broadcast_fun(jnp.atleast_3d, *arys)
+    return _broadcast_fun(jnp.atleast_3d, *arys, **kwargs)
 
 
 # array manipulation
@@ -782,7 +801,8 @@ def atleast_3d(
 def reshape(
     a: Union[jax.Array, Quantity],
     shape: Union[int, Tuple[int, ...]],
-    order: str = 'C'
+    order: str = 'C',
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Gives a new shape to a quantity or an array without changing its data.
@@ -825,14 +845,15 @@ def reshape(
       >>> a = [1, 2, 3, 4] * u.second
       >>> u.math.reshape(a, (2, 2))
     """
-    return _fun_keep_unit_unary(jnp.reshape, a, shape=shape, order=order)
+    return _fun_keep_unit_unary(jnp.reshape, a, shape=shape, order=order, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def moveaxis(
     a: Union[jax.Array, Quantity],
     source: Union[int, Tuple[int, ...]],
-    destination: Union[int, Tuple[int, ...]]
+    destination: Union[int, Tuple[int, ...]],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Moves axes of a quantity or an array to new positions.
@@ -863,13 +884,14 @@ def moveaxis(
       >>> u.math.moveaxis(a, 0, -1).shape
       (4, 5, 3)
     """
-    return _fun_keep_unit_unary(jnp.moveaxis, a, source=source, destination=destination)
+    return _fun_keep_unit_unary(jnp.moveaxis, a, source=source, destination=destination, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def transpose(
     a: Union[jax.Array, Quantity],
-    axes: Optional[Union[int, Tuple[int, ...]]] = None
+    axes: Optional[Union[int, Tuple[int, ...]]] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Permute the dimensions of a quantity or an array.
@@ -898,14 +920,15 @@ def transpose(
       >>> u.math.transpose(a).shape
       (3, 2)
     """
-    return _fun_keep_unit_unary(jnp.transpose, a, axes=axes)
+    return _fun_keep_unit_unary(jnp.transpose, a, axes=axes, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def swapaxes(
     a: Union[jax.Array, Quantity],
     axis1: int,
-    axis2: int
+    axis2: int,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Interchange two axes of a quantity or an array.
@@ -934,13 +957,14 @@ def swapaxes(
       >>> u.math.swapaxes(a, 0, 2).shape
       (5, 4, 3)
     """
-    return _fun_keep_unit_unary(jnp.swapaxes, a, axis1=axis1, axis2=axis2)
+    return _fun_keep_unit_unary(jnp.swapaxes, a, axis1=axis1, axis2=axis2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def tile(
     A: Union[jax.Array, Quantity],
-    reps: Union[int, Tuple[int, ...]]
+    reps: Union[int, Tuple[int, ...]],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Construct a quantity or an array by repeating A the number of times given by reps.
@@ -965,7 +989,7 @@ def tile(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.tile(a, 2)
     """
-    return _fun_keep_unit_unary(jnp.tile, A, reps=reps)
+    return _fun_keep_unit_unary(jnp.tile, A, reps=reps, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -973,7 +997,8 @@ def repeat(
     a: Union[jax.Array, Quantity],
     repeats: Union[int, Tuple[int, ...]],
     axis: Optional[int] = None,
-    total_repeat_length: Optional[int] = None
+    total_repeat_length: Optional[int] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Repeat elements of a quantity or an array.
@@ -1003,13 +1028,14 @@ def repeat(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.repeat(a, 2)
     """
-    return _fun_keep_unit_unary(jnp.repeat, a, repeats=repeats, axis=axis, total_repeat_length=total_repeat_length)
+    return _fun_keep_unit_unary(jnp.repeat, a, repeats=repeats, axis=axis, total_repeat_length=total_repeat_length, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def flip(
     m: Union[jax.Array, Quantity],
-    axis: Optional[Union[int, Tuple[int, ...]]] = None
+    axis: Optional[Union[int, Tuple[int, ...]]] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Reverse the order of elements in a quantity or an array along the given axis.
@@ -1034,12 +1060,13 @@ def flip(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.flip(a)
     """
-    return _fun_keep_unit_unary(jnp.flip, m, axis=axis)
+    return _fun_keep_unit_unary(jnp.flip, m, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def fliplr(
-    m: Union[jax.Array, Quantity]
+    m: Union[jax.Array, Quantity],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Flip quantity or array in the left/right direction.
@@ -1062,12 +1089,13 @@ def fliplr(
       >>> a = [[1, 2], [3, 4]] * u.meter
       >>> u.math.fliplr(a)
     """
-    return _fun_keep_unit_unary(jnp.fliplr, m)
+    return _fun_keep_unit_unary(jnp.fliplr, m, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def flipud(
-    m: Union[jax.Array, Quantity]
+    m: Union[jax.Array, Quantity],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Flip quantity or array in the up/down direction.
@@ -1090,14 +1118,15 @@ def flipud(
       >>> a = [[1, 2], [3, 4]] * u.meter
       >>> u.math.flipud(a)
     """
-    return _fun_keep_unit_unary(jnp.flipud, m)
+    return _fun_keep_unit_unary(jnp.flipud, m, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def roll(
     a: Union[jax.Array, Quantity],
     shift: Union[int, Tuple[int, ...]],
-    axis: Optional[Union[int, Tuple[int, ...]]] = None
+    axis: Optional[Union[int, Tuple[int, ...]]] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Roll quantity or array elements along a given axis.
@@ -1127,13 +1156,14 @@ def roll(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.roll(a, 1)
     """
-    return _fun_keep_unit_unary(jnp.roll, a, shift=shift, axis=axis)
+    return _fun_keep_unit_unary(jnp.roll, a, shift=shift, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def expand_dims(
     a: Union[jax.Array, Quantity],
-    axis: int
+    axis: int,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Expand the shape of a quantity or an array.
@@ -1159,13 +1189,14 @@ def expand_dims(
       >>> u.math.expand_dims(a, axis=0).shape
       (1, 3)
     """
-    return _fun_keep_unit_unary(jnp.expand_dims, a, axis=axis)
+    return _fun_keep_unit_unary(jnp.expand_dims, a, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def squeeze(
     a: Union[jax.Array, Quantity],
-    axis: Optional[Union[int, Tuple[int, ...]]] = None
+    axis: Optional[Union[int, Tuple[int, ...]]] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Remove single-dimensional entries from the shape of a quantity or an array.
@@ -1192,7 +1223,7 @@ def squeeze(
       >>> u.math.squeeze(a).shape
       (3,)
     """
-    return _fun_keep_unit_unary(jnp.squeeze, a, axis=axis)
+    return _fun_keep_unit_unary(jnp.squeeze, a, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1204,6 +1235,7 @@ def sort(
     order: None = None,
     stable: bool = True,
     descending: bool = False,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Return a sorted copy of a quantity or an array.
@@ -1238,7 +1270,7 @@ def sort(
       >>> a = [3, 1, 2] * u.meter
       >>> u.math.sort(a)
     """
-    return _fun_keep_unit_unary(jnp.sort, a, axis=axis, kind=kind, order=order, stable=stable, descending=descending)
+    return _fun_keep_unit_unary(jnp.sort, a, axis=axis, kind=kind, order=order, stable=stable, descending=descending, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1248,6 +1280,7 @@ def max(
     keepdims: bool = False,
     initial: Optional[Union[int, float, Quantity]] = None,
     where: Optional[jax.Array] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Return the maximum of a quantity or an array or maximum along an axis.
@@ -1282,7 +1315,7 @@ def max(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.max(a)
     """
-    return _fun_keep_unit_unary(jnp.max, a, axis=axis, keepdims=keepdims, initial=initial, where=where)
+    return _fun_keep_unit_unary(jnp.max, a, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1292,6 +1325,7 @@ def min(
     keepdims: bool = False,
     initial: Optional[Union[int, float, Quantity]] = None,
     where: Optional[jax.Array] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Return the minimum of a quantity or an array or minimum along an axis.
@@ -1326,7 +1360,7 @@ def min(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.min(a)
     """
-    return _fun_keep_unit_unary(jnp.min, a, axis=axis, keepdims=keepdims, initial=initial, where=where)
+    return _fun_keep_unit_unary(jnp.min, a, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
 
 
 amax = max
@@ -1338,7 +1372,8 @@ def diagonal(
     a: Union[jax.Array, Quantity],
     offset: int = 0,
     axis1: int = 0,
-    axis2: int = 1
+    axis2: int = 1,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Return specified diagonals.
@@ -1370,13 +1405,14 @@ def diagonal(
       >>> a = [[1, 2], [3, 4]] * u.second
       >>> u.math.diagonal(a)
     """
-    return _fun_keep_unit_unary(jnp.diagonal, a, offset=offset, axis1=axis1, axis2=axis2)
+    return _fun_keep_unit_unary(jnp.diagonal, a, offset=offset, axis1=axis1, axis2=axis2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def ravel(
     a: Union[jax.Array, Quantity],
-    order: str = 'C'
+    order: str = 'C',
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Return a contiguous flattened quantity or array.
@@ -1406,14 +1442,15 @@ def ravel(
       >>> a = [[1, 2], [3, 4]] * u.meter
       >>> u.math.ravel(a)
     """
-    return _fun_keep_unit_unary(jnp.ravel, a, order=order)
+    return _fun_keep_unit_unary(jnp.ravel, a, order=order, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def flatten(
     x: jax.typing.ArrayLike | Quantity,
     start_axis: Optional[int] = None,
-    end_axis: Optional[int] = None
+    end_axis: Optional[int] = None,
+    **kwargs,
 ) -> jax.Array | Quantity:
     """Flattens input by reshaping it into a one-dimensional tensor.
     If ``start_dim`` or ``end_dim`` are passed, only dimensions starting
@@ -1461,15 +1498,16 @@ def flatten(
         raise ValueError(f'start_axis {start_axis} is out of size.')
     if end_axis < 0 or end_axis > ndim:
         raise ValueError(f'end_axis {end_axis} is out of size.')
-    new_shape = shape[:start_axis] + (np.prod(shape[start_axis: end_axis], dtype=int),) + shape[end_axis:]
-    return _fun_keep_unit_unary(jnp.reshape, x, shape=new_shape)
+    new_shape = shape[:start_axis] + (np.prod(shape[start_axis: end_axis], dtype=int, **kwargs),) + shape[end_axis:]
+    return _fun_keep_unit_unary(jnp.reshape, x, shape=new_shape, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def unflatten(
     x: jax.typing.ArrayLike | Quantity,
     axis: int,
-    sizes: Sequence[int]
+    sizes: Sequence[int],
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Expands a dimension of the input tensor over multiple dimensions.
@@ -1501,11 +1539,11 @@ def unflatten(
         )
     shape = x.shape
     new_shape = shape[:axis] + tuple(sizes) + shape[axis + 1:]
-    return _fun_keep_unit_unary(jnp.reshape, x, shape=new_shape)
+    return _fun_keep_unit_unary(jnp.reshape, x, shape=new_shape, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def remove_diag(x: jax.typing.ArrayLike | Quantity) -> jax.Array | Quantity:
+def remove_diag(x: jax.typing.ArrayLike | Quantity, **kwargs) -> jax.Array | Quantity:
     """Remove the diagonal of the matrix.
 
     Parameters
@@ -1534,8 +1572,8 @@ def remove_diag(x: jax.typing.ArrayLike | Quantity) -> jax.Array | Quantity:
 
     if x.ndim != 2:
         raise ValueError(f'Only support 2D matrix, while we got a {x.ndim}D array.')
-    eyes = jnp.fill_diagonal(jnp.ones(x.shape, dtype=bool), False)
-    x = jnp.reshape(x[eyes], (x.shape[0], x.shape[1] - 1))
+    eyes = jnp.fill_diagonal(jnp.ones(x.shape, dtype=bool, **kwargs), False, **kwargs)
+    x = jnp.reshape(x[eyes], (x.shape[0], x.shape[1] - 1), **kwargs)
     if unit.is_unitless:
         return x
     return Quantity(x, unit=unit)
@@ -1549,6 +1587,7 @@ def choose(
     a: Union[jax.Array, Quantity],
     choices: Sequence[Union[jax.Array, Quantity]],
     mode: str = 'raise',
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Construct a quantity or an array from an index array and a set of arrays to choose from.
@@ -1580,13 +1619,14 @@ def choose(
       >>> choices = [jnp.array([1, 2, 3]), jnp.array([4, 5, 6])]
       >>> u.math.choose(jnp.array([0, 1, 0]), choices)
     """
-    return _fun_keep_unit_unary(jnp.choose, a, choices=choices, mode=mode)
+    return _fun_keep_unit_unary(jnp.choose, a, choices=choices, mode=mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def diagflat(
     v: Union[jax.Array, Quantity],
-    k: int = 0
+    k: int = 0,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Create a two-dimensional a quantity or array with the flattened input as a diagonal.
@@ -1611,7 +1651,7 @@ def diagflat(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.diagflat(a)
     """
-    return _fun_keep_unit_unary(jnp.diagflat, v, k=k)
+    return _fun_keep_unit_unary(jnp.diagflat, v, k=k, **kwargs)
 
 
 # math funcs keep unit (unary)
@@ -1659,7 +1699,7 @@ def astype(
 
 
 @set_module_as('saiunit.math')
-def real(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def real(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the real part of the complex argument.
 
@@ -1681,11 +1721,11 @@ def real(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
       >>> a = [1 + 2j, 3 + 4j] * u.second
       >>> u.math.real(a)
     """
-    return _fun_keep_unit_unary(jnp.real, x)
+    return _fun_keep_unit_unary(jnp.real, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def imag(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def imag(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the imaginary part of the complex argument.
 
@@ -1707,11 +1747,11 @@ def imag(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
       >>> a = [1 + 2j, 3 + 4j] * u.second
       >>> u.math.imag(a)
     """
-    return _fun_keep_unit_unary(jnp.imag, x)
+    return _fun_keep_unit_unary(jnp.imag, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def conj(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def conj(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the complex conjugate of the argument.
 
@@ -1733,11 +1773,11 @@ def conj(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
       >>> a = [1 + 2j, 3 + 4j] * u.second
       >>> u.math.conj(a)
     """
-    return _fun_keep_unit_unary(jnp.conj, x)
+    return _fun_keep_unit_unary(jnp.conj, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def conjugate(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def conjugate(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the complex conjugate of the argument.
 
@@ -1759,11 +1799,11 @@ def conjugate(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.A
       >>> a = [1 + 2j, 3 + 4j] * u.second
       >>> u.math.conjugate(a)
     """
-    return _fun_keep_unit_unary(jnp.conjugate, x)
+    return _fun_keep_unit_unary(jnp.conjugate, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def negative(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def negative(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the negative of the argument.
 
@@ -1785,11 +1825,11 @@ def negative(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
       >>> a = [1, -2, 3] * u.meter
       >>> u.math.negative(a)
     """
-    return _fun_keep_unit_unary(jnp.negative, x)
+    return _fun_keep_unit_unary(jnp.negative, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def positive(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def positive(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the positive of the argument.
 
@@ -1811,11 +1851,11 @@ def positive(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
       >>> a = [1, -2, 3] * u.meter
       >>> u.math.positive(a)
     """
-    return _fun_keep_unit_unary(jnp.positive, x)
+    return _fun_keep_unit_unary(jnp.positive, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def abs(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def abs(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the absolute value of the argument.
 
@@ -1837,7 +1877,7 @@ def abs(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
       >>> a = [-1, -2, 3] * u.meter
       >>> u.math.abs(a)
     """
-    return _fun_keep_unit_unary(jnp.abs, x)
+    return _fun_keep_unit_unary(jnp.abs, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1848,7 +1888,8 @@ def sum(
     keepdims: bool = False,
     initial: Union[jax.typing.ArrayLike, Quantity, None] = None,
     where: Union[jax.typing.ArrayLike, None] = None,
-    promote_integers: bool = True
+    promote_integers: bool = True,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the sum of the array elements.
@@ -1911,7 +1952,7 @@ def sum(
                                 keepdims=keepdims,
                                 initial=initial,
                                 where=where,
-                                promote_integers=promote_integers)
+                                promote_integers=promote_integers, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1919,6 +1960,7 @@ def nancumsum(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
     dtype: Union[jax.typing.DTypeLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the cumulative sum of the array elements, ignoring NaNs.
@@ -1951,7 +1993,7 @@ def nancumsum(
       >>> a = [1.0, jnp.nan, 3.0] * u.meter
       >>> u.math.nancumsum(a)
     """
-    return _fun_keep_unit_unary(jnp.nancumsum, x, axis=axis, dtype=dtype)
+    return _fun_keep_unit_unary(jnp.nancumsum, x, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1962,6 +2004,7 @@ def nansum(
     keepdims: bool = False,
     initial: Union[jax.typing.ArrayLike, Quantity, None] = None,
     where: Union[jax.typing.ArrayLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the sum of the array elements, ignoring NaNs.
@@ -2016,7 +2059,7 @@ def nansum(
                                 dtype=dtype,
                                 keepdims=keepdims,
                                 initial=initial,
-                                where=where)
+                                where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2024,6 +2067,7 @@ def cumsum(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
     dtype: Union[jax.typing.DTypeLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the cumulative sum of the array elements.
@@ -2055,14 +2099,15 @@ def cumsum(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.cumsum(a)
     """
-    return _fun_keep_unit_unary(jnp.cumsum, x, axis=axis, dtype=dtype)
+    return _fun_keep_unit_unary(jnp.cumsum, x, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def ediff1d(
     x: Quantity | jax.typing.ArrayLike,
     to_end: jax.typing.ArrayLike | Quantity = None,
-    to_begin: jax.typing.ArrayLike | Quantity = None
+    to_begin: jax.typing.ArrayLike | Quantity = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the differences between consecutive elements of the array.
@@ -2094,11 +2139,11 @@ def ediff1d(
         to_end = Quantity(to_end).in_unit(x_unit).mantissa
     if to_begin is not None:
         to_begin = Quantity(to_begin).in_unit(x_unit).mantissa
-    return _fun_keep_unit_unary(jnp.ediff1d, x, to_end=to_end, to_begin=to_begin)
+    return _fun_keep_unit_unary(jnp.ediff1d, x, to_end=to_end, to_begin=to_begin, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def absolute(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def absolute(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the absolute value of the argument.
 
@@ -2120,11 +2165,11 @@ def absolute(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Ar
       >>> a = [-1.0, -2.0, 3.0] * u.meter
       >>> u.math.absolute(a)
     """
-    return _fun_keep_unit_unary(jnp.absolute, x)
+    return _fun_keep_unit_unary(jnp.absolute, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def fabs(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]:
+def fabs(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the absolute value of the argument.
 
@@ -2146,7 +2191,7 @@ def fabs(x: Union[Quantity, jax.typing.ArrayLike]) -> Union[Quantity, jax.Array]
       >>> a = [-1.0, -2.0, 3.0] * u.meter
       >>> u.math.fabs(a)
     """
-    return _fun_keep_unit_unary(jnp.fabs, x)
+    return _fun_keep_unit_unary(jnp.fabs, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2154,7 +2199,8 @@ def median(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
     overwrite_input: bool = False,
-    keepdims: bool = False
+    keepdims: bool = False,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the median of the array elements.
@@ -2193,7 +2239,7 @@ def median(
       >>> a = [1, 2, 3, 4, 5] * u.second
       >>> u.math.median(a)
     """
-    return _fun_keep_unit_unary(jnp.median, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims)
+    return _fun_keep_unit_unary(jnp.median, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2203,6 +2249,7 @@ def nanmin(
     keepdims: bool = False,
     initial: Union[jax.typing.ArrayLike, Quantity, None] = None,
     where: Union[jax.typing.ArrayLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the minimum of the array elements, ignoring NaNs.
@@ -2246,7 +2293,7 @@ def nanmin(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary(jnp.nanmin, x, axis=axis, keepdims=keepdims, initial=initial, where=where)
+    return _fun_keep_unit_unary(jnp.nanmin, x, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2256,6 +2303,7 @@ def nanmax(
     keepdims: bool = False,
     initial: Union[jax.typing.ArrayLike, None] = None,
     where: Union[jax.typing.ArrayLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the maximum of the array elements, ignoring NaNs.
@@ -2299,7 +2347,7 @@ def nanmax(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary(jnp.nanmax, x, axis=axis, keepdims=keepdims, initial=initial, where=where)
+    return _fun_keep_unit_unary(jnp.nanmax, x, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2307,6 +2355,7 @@ def ptp(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
     keepdims: bool = False,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the range of the array elements (maximum - minimum).
@@ -2346,7 +2395,7 @@ def ptp(
       >>> a = [1, 2, 3, 4, 5] * u.meter
       >>> u.math.ptp(a)
     """
-    return _fun_keep_unit_unary(jnp.ptp, x, axis=axis, keepdims=keepdims)
+    return _fun_keep_unit_unary(jnp.ptp, x, axis=axis, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2355,7 +2404,8 @@ def average(
     axis: Union[int, Sequence[int], None] = None,
     weights: Union[jax.typing.ArrayLike, None] = None,
     returned: bool = False,
-    keepdims: bool = False
+    keepdims: bool = False,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the weighted average of the array elements.
@@ -2408,7 +2458,7 @@ def average(
       >>> a = [1.0, 2.0, 3.0] * u.second
       >>> u.math.average(a)
     """
-    return _fun_keep_unit_unary(jnp.average, x, axis=axis, weights=weights, returned=returned, keepdims=keepdims)
+    return _fun_keep_unit_unary(jnp.average, x, axis=axis, weights=weights, returned=returned, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2417,7 +2467,8 @@ def mean(
     axis: Union[int, Sequence[int], None] = None,
     dtype: Union[jax.typing.DTypeLike, None] = None,
     keepdims: bool = False, *,
-    where: Union[jax.typing.ArrayLike, None] = None
+    where: Union[jax.typing.ArrayLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the mean of the array elements.
@@ -2462,7 +2513,7 @@ def mean(
       >>> a = [1.0, 2.0, 3.0] * u.second
       >>> u.math.mean(a)
     """
-    return _fun_keep_unit_unary(jnp.mean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where)
+    return _fun_keep_unit_unary(jnp.mean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2472,7 +2523,8 @@ def std(
     dtype: Union[jax.typing.DTypeLike, None] = None,
     ddof: int = 0,
     keepdims: bool = False, *,
-    where: Union[jax.typing.ArrayLike, None] = None
+    where: Union[jax.typing.ArrayLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the standard deviation of the array elements.
@@ -2522,7 +2574,7 @@ def std(
       >>> a = [1.0, 2.0, 3.0] * u.meter
       >>> u.math.std(a)
     """
-    return _fun_keep_unit_unary(jnp.std, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims, where=where)
+    return _fun_keep_unit_unary(jnp.std, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2530,7 +2582,8 @@ def nanmedian(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Union[int, tuple[int, ...], None] = None,
     overwrite_input: bool = False,
-    keepdims: bool = False
+    keepdims: bool = False,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the median of the array elements, ignoring NaNs.
@@ -2576,7 +2629,7 @@ def nanmedian(
       >>> a = [1.0, jnp.nan, 3.0] * u.second
       >>> u.math.nanmedian(a)
     """
-    return _fun_keep_unit_unary(jnp.nanmedian, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims)
+    return _fun_keep_unit_unary(jnp.nanmedian, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2585,7 +2638,8 @@ def nanmean(
     axis: Union[int, Sequence[int], None] = None,
     dtype: Union[jax.typing.DTypeLike, None] = None,
     keepdims: bool = False, *,
-    where: Union[jax.typing.ArrayLike, None] = None
+    where: Union[jax.typing.ArrayLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the mean of the array elements, ignoring NaNs.
@@ -2631,7 +2685,7 @@ def nanmean(
       >>> a = [1.0, jnp.nan, 3.0] * u.meter
       >>> u.math.nanmean(a)
     """
-    return _fun_keep_unit_unary(jnp.nanmean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where)
+    return _fun_keep_unit_unary(jnp.nanmean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2641,7 +2695,8 @@ def nanstd(
     dtype: Union[jax.typing.DTypeLike, None] = None,
     ddof: int = 0,
     keepdims: bool = False, *,
-    where: Union[jax.typing.ArrayLike, None] = None
+    where: Union[jax.typing.ArrayLike, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the standard deviation of the array elements, ignoring NaNs.
@@ -2693,7 +2748,7 @@ def nanstd(
       >>> u.math.nanstd(a)
     """
     return _fun_keep_unit_unary(jnp.nanstd, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims,
-                                where=where)
+                                where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2702,7 +2757,8 @@ def diff(
     n: int = 1,
     axis: int = -1,
     prepend: Union[jax.typing.ArrayLike, Quantity, None] = None,
-    append: Union[jax.typing.ArrayLike, Quantity, None] = None
+    append: Union[jax.typing.ArrayLike, Quantity, None] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the differences between consecutive elements of the array.
@@ -2742,14 +2798,15 @@ def diff(
         prepend = Quantity(prepend).in_unit(x_unit).mantissa
     if append is not None:
         append = Quantity(append).in_unit(x_unit).mantissa
-    return _fun_keep_unit_unary(jnp.diff, x, n=n, axis=axis, prepend=prepend, append=append)
+    return _fun_keep_unit_unary(jnp.diff, x, n=n, axis=axis, prepend=prepend, append=append, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def rot90(
     m: Union[jax.typing.ArrayLike, Quantity],
     k: int = 1,
-    axes: Tuple[int, int] = (0, 1)
+    axes: Tuple[int, int] = (0, 1),
+    **kwargs,
 ) -> Union[
     jax.Array, Quantity]:
     """
@@ -2782,7 +2839,7 @@ def rot90(
       >>> a = [[1, 2], [3, 4]] * u.second
       >>> u.math.rot90(a)
     """
-    return _fun_keep_unit_unary(jnp.rot90, m, k=k, axes=axes)
+    return _fun_keep_unit_unary(jnp.rot90, m, k=k, axes=axes, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2790,7 +2847,8 @@ def intersect1d(
     ar1: Union[jax.typing.ArrayLike, Quantity],
     ar2: Union[jax.typing.ArrayLike, Quantity],
     assume_unique: bool = False,
-    return_indices: bool = False
+    return_indices: bool = False,
+    **kwargs,
 ) -> Union[jax.Array, Quantity, tuple[Union[jax.Array, Quantity], jax.Array, jax.Array]]:
     """
     Find the intersection of two arrays.
@@ -2839,7 +2897,7 @@ def intersect1d(
         unit = ar1.unit
     ar1 = ar1.in_unit(unit).mantissa if isinstance(ar1, Quantity) else ar1
     ar2 = ar2.in_unit(unit).mantissa if isinstance(ar2, Quantity) else ar2
-    result = jnp.intersect1d(ar1, ar2, assume_unique=assume_unique, return_indices=return_indices)
+    result = jnp.intersect1d(ar1, ar2, assume_unique=assume_unique, return_indices=return_indices, **kwargs)
     if return_indices:
         if unit.is_unitless:
             return result
@@ -2857,7 +2915,8 @@ def nan_to_num(
     x: Union[jax.typing.ArrayLike, Quantity],
     nan: float | Quantity = None,
     posinf: float | Quantity = None,
-    neginf: float | Quantity = None
+    neginf: float | Quantity = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Replace NaN with zero and infinity with large finite numbers (default
@@ -2917,11 +2976,11 @@ def nan_to_num(
             posinf = Quantity(posinf).in_unit(x_unit).mantissa
         if neginf is not None:
             neginf = Quantity(neginf).in_unit(x_unit).mantissa
-        r = jnp.nan_to_num(x.mantissa, nan=nan, posinf=posinf, neginf=neginf)
+        r = jnp.nan_to_num(x.mantissa, nan=nan, posinf=posinf, neginf=neginf, **kwargs)
         return r if x_unit.is_unitless else Quantity(r, unit=x_unit)
     else:
         nan = 0.0 if nan is None else nan
-        return jnp.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf)
+        return jnp.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2931,6 +2990,7 @@ def trace(
     axis1: int = 0,
     axis2: int = 1,
     dtype: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Return the sum along diagonals of the array.
@@ -2977,7 +3037,7 @@ def trace(
       >>> a = [[1, 2], [3, 4]] * u.second
       >>> u.math.trace(a)
     """
-    return _fun_keep_unit_unary(jnp.trace, a, offset=offset, axis1=axis1, axis2=axis2, dtype=dtype)
+    return _fun_keep_unit_unary(jnp.trace, a, offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2987,6 +3047,7 @@ def percentile(
     axis: Optional[Union[int, Tuple[int]]] = None,
     method: str = 'linear',
     keepdims: Optional[bool] = False,
+    **kwargs,
 ) -> jax.Array:
     """
     Compute the q-th percentile of the data along the specified axis.
@@ -3047,6 +3108,7 @@ def percentile(
         q = q.mantissa
     return _fun_keep_unit_unary(
         jnp.percentile, a, q=q, axis=axis, method=method, keepdims=keepdims,
+        **kwargs,
     )
 
 
@@ -3057,6 +3119,7 @@ def nanpercentile(
     axis: Optional[Union[int, Tuple[int]]] = None,
     method: str = 'linear',
     keepdims: Optional[bool] = False,
+    **kwargs,
 ) -> jax.Array:
     """
     Compute the q-th percentile of the data along the specified axis, while ignoring nan values.
@@ -3118,6 +3181,7 @@ def nanpercentile(
         q = q.mantissa
     return _fun_keep_unit_unary(
         jnp.nanpercentile, a, q=q, axis=axis, method=method, keepdims=keepdims,
+        **kwargs,
     )
 
 
@@ -3128,6 +3192,7 @@ def quantile(
     axis: Optional[Union[int, Tuple[int]]] = None,
     method: str = 'linear',
     keepdims: Optional[bool] = False,
+    **kwargs,
 ) -> jax.Array:
     """
     Compute the q-th percentile of the data along the specified axis.
@@ -3187,7 +3252,8 @@ def quantile(
             )
         q = q.mantissa
     return _fun_keep_unit_unary(
-        jnp.quantile, a, q=q, axis=axis, method=method, keepdims=keepdims
+        jnp.quantile, a, q=q, axis=axis, method=method, keepdims=keepdims,
+        **kwargs,
     )
 
 
@@ -3198,6 +3264,7 @@ def nanquantile(
     axis: Optional[Union[int, Tuple[int]]] = None,
     method: str = 'linear',
     keepdims: Optional[bool] = False,
+    **kwargs,
 ) -> jax.Array:
     """
     Compute the q-th percentile of the data along the specified axis, while ignoring nan values.
@@ -3259,6 +3326,7 @@ def nanquantile(
         q = q.mantissa
     return _fun_keep_unit_unary(
         jnp.nanquantile, a, q=q, axis=axis, method=method, keepdims=keepdims,
+        **kwargs,
     )
 
 
@@ -3293,7 +3361,7 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
 
 @set_module_as('saiunit.math')
 def fmod(x1: Union[Quantity, jax.typing.ArrayLike],
-         x2: Union[Quantity, jax.Array]) -> Union[Quantity, jax.Array]:
+         x2: Union[Quantity, jax.Array], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the element-wise remainder of division.
 
@@ -3318,11 +3386,11 @@ def fmod(x1: Union[Quantity, jax.typing.ArrayLike],
       >>> b = [2, 3, 4] * u.second
       >>> u.math.fmod(a, b)
     """
-    return _fun_keep_unit_binary(jnp.fmod, x1, x2)
+    return _fun_keep_unit_binary(jnp.fmod, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def mod(x1: Union[Quantity, jax.typing.ArrayLike], x2: Union[Quantity, jax.Array]) -> Union[Quantity, jax.Array]:
+def mod(x1: Union[Quantity, jax.typing.ArrayLike], x2: Union[Quantity, jax.Array], **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the element-wise modulus of division.
 
@@ -3347,13 +3415,14 @@ def mod(x1: Union[Quantity, jax.typing.ArrayLike], x2: Union[Quantity, jax.Array
       >>> b = [2, 3, 4] * u.meter
       >>> u.math.mod(a, b)
     """
-    return _fun_keep_unit_binary(jnp.mod, x1, x2)
+    return _fun_keep_unit_binary(jnp.mod, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def copysign(
     x1: Union[Quantity, jax.typing.ArrayLike],
     x2: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return a copy of the first array elements with the sign of the second array.
@@ -3380,13 +3449,14 @@ def copysign(
       >>> u.math.copysign(a, b)
     """
     x2 = x2.mantissa if isinstance(x2, Quantity) else x2
-    return _fun_keep_unit_unary(jnp.copysign, x1, x2)
+    return _fun_keep_unit_unary(jnp.copysign, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def maximum(
     x1: Union[Quantity, jax.typing.ArrayLike],
     x2: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Element-wise maximum of array elements.
@@ -3412,13 +3482,14 @@ def maximum(
       >>> b = [2, 2, 4] * u.second
       >>> u.math.maximum(a, b)
     """
-    return _fun_keep_unit_binary(jnp.maximum, x1, x2)
+    return _fun_keep_unit_binary(jnp.maximum, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def minimum(
     x1: Union[Quantity, jax.typing.ArrayLike],
     x2: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Element-wise minimum of array elements.
@@ -3444,13 +3515,14 @@ def minimum(
       >>> b = [2, 2, 4] * u.second
       >>> u.math.minimum(a, b)
     """
-    return _fun_keep_unit_binary(jnp.minimum, x1, x2)
+    return _fun_keep_unit_binary(jnp.minimum, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def fmax(
     x1: Union[Quantity, jax.typing.ArrayLike],
     x2: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Element-wise maximum of array elements ignoring NaNs.
@@ -3477,13 +3549,14 @@ def fmax(
       >>> b = [2.0, 2.0, 4.0] * u.meter
       >>> u.math.fmax(a, b)
     """
-    return _fun_keep_unit_binary(jnp.fmax, x1, x2)
+    return _fun_keep_unit_binary(jnp.fmax, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def fmin(
     x1: Union[Quantity, jax.typing.ArrayLike],
     x2: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Element-wise minimum of array elements ignoring NaNs.
@@ -3510,13 +3583,14 @@ def fmin(
       >>> b = [2.0, 2.0, 4.0] * u.meter
       >>> u.math.fmin(a, b)
     """
-    return _fun_keep_unit_binary(jnp.fmin, x1, x2)
+    return _fun_keep_unit_binary(jnp.fmin, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def lcm(
     x1: Union[Quantity, jax.typing.ArrayLike],
     x2: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the least common multiple of `x1` and `x2`.
@@ -3543,12 +3617,12 @@ def lcm(
       >>> b = jnp.array([6, 8]) * u.second
       >>> u.math.lcm(a.astype(jnp.int64), b.astype(jnp.int64))
     """
-    return _fun_keep_unit_binary(jnp.lcm, x1, x2)
+    return _fun_keep_unit_binary(jnp.lcm, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def gcd(x1: Union[Quantity, jax.typing.ArrayLike],
-        x2: Union[Quantity, jax.typing.ArrayLike], ) -> Union[Quantity, jax.Array]:
+        x2: Union[Quantity, jax.typing.ArrayLike],  **kwargs) -> Union[Quantity, jax.Array]:
     """
     Return the greatest common divisor of `x1` and `x2`.
 
@@ -3574,13 +3648,14 @@ def gcd(x1: Union[Quantity, jax.typing.ArrayLike],
       >>> b = jnp.array([6, 8]) * u.second
       >>> u.math.gcd(a.astype(jnp.int64), b.astype(jnp.int64))
     """
-    return _fun_keep_unit_binary(jnp.gcd, x1, x2)
+    return _fun_keep_unit_binary(jnp.gcd, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def add(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Add arguments element-wise.
@@ -3607,13 +3682,14 @@ def add(
       >>> b = [4, 5, 6] * u.meter
       >>> u.math.add(a, b)
     """
-    return _fun_keep_unit_binary(jnp.add, x, y)
+    return _fun_keep_unit_binary(jnp.add, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def subtract(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Subtract arguments, element-wise.
@@ -3640,13 +3716,14 @@ def subtract(
       >>> b = [1, 2, 3] * u.meter
       >>> u.math.subtract(a, b)
     """
-    return _fun_keep_unit_binary(jnp.subtract, x, y)
+    return _fun_keep_unit_binary(jnp.subtract, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def remainder(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Returns the element-wise remainder of division.
@@ -3682,13 +3759,14 @@ def remainder(
       >>> b = [2, 3, 4] * u.second
       >>> u.math.remainder(a, b)
     """
-    return _fun_keep_unit_binary(jnp.remainder, x, y)
+    return _fun_keep_unit_binary(jnp.remainder, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def nextafter(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the next floating-point value after x towards y, element-wise.
@@ -3717,7 +3795,7 @@ def nextafter(
       >>> b = [2.0, 1.0] * u.meter
       >>> u.math.nextafter(a, b)
     """
-    return _fun_keep_unit_binary(jnp.nextafter, x, y)
+    return _fun_keep_unit_binary(jnp.nextafter, x, y, **kwargs)
 
 
 # math funcs keep unit (n-ary)
@@ -3729,7 +3807,8 @@ def interp(
     fp: Union[Quantity, jax.typing.ArrayLike],
     left: Union[Quantity, jax.typing.ArrayLike] = None,
     right: Union[Quantity, jax.typing.ArrayLike] = None,
-    period: Union[Quantity, jax.typing.ArrayLike] = None
+    period: Union[Quantity, jax.typing.ArrayLike] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     One-dimensional linear interpolation.
@@ -3774,7 +3853,7 @@ def interp(
         Quantity(right).in_unit(x_unit).mantissa if right is not None else right,
         Quantity(period).in_unit(x_unit).mantissa if period is not None else period
     )
-    r = jnp.interp(x, xp=xp, fp=fp, left=left, right=right, period=period)
+    r = jnp.interp(x, xp=xp, fp=fp, left=left, right=right, period=period, **kwargs)
     return maybe_decimal(Quantity(r, unit=y_unit))
 
 
@@ -3782,7 +3861,8 @@ def interp(
 def clip(
     a: Union[Quantity, jax.typing.ArrayLike],
     a_min: Union[Quantity, jax.typing.ArrayLike],
-    a_max: Union[Quantity, jax.typing.ArrayLike]
+    a_max: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Clip (limit) the values in an array.
@@ -3814,7 +3894,7 @@ def clip(
         a_min = Quantity(a_min).in_unit(a_unit).mantissa
     if a_max is not None:
         a_max = Quantity(a_max).in_unit(a_unit).mantissa
-    return _fun_keep_unit_unary(jnp.clip, a, min=a_min, max=a_max)
+    return _fun_keep_unit_unary(jnp.clip, a, min=a_min, max=a_max, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3823,7 +3903,8 @@ def histogram(
     bins: jax.typing.ArrayLike = 10,
     range: Optional[Sequence[jax.typing.ArrayLike | Quantity]] = None,
     weights: Optional[jax.typing.ArrayLike] = None,
-    density: Optional[bool] = None
+    density: Optional[bool] = None,
+    **kwargs,
 ) -> Tuple[jax.Array, jax.Array | Quantity]:
     """
     Compute the histogram of a set of data.
@@ -3887,7 +3968,7 @@ def histogram(
             Quantity(range[0]).in_unit(unit).mantissa,
             Quantity(range[1]).in_unit(unit).mantissa
         )
-    hist, bin_edges = jnp.histogram(x, bins, range=range, weights=weights, density=density)
+    hist, bin_edges = jnp.histogram(x, bins, range=range, weights=weights, density=density, **kwargs)
     if unit.is_unitless:
         return hist, bin_edges
     return hist, Quantity(bin_edges, unit=unit)
@@ -3901,6 +3982,7 @@ def compress(
     *,
     size: Optional[int] = None,
     fill_value: Optional[jax.typing.ArrayLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Return selected slices of a quantity or an array along given axis.
@@ -3949,7 +4031,7 @@ def compress(
     else:
         fill_value = 0
     return _fun_keep_unit_unary(functools.partial(jnp.compress, condition),
-                                a, axis=axis, size=size, fill_value=fill_value)
+                                a, axis=axis, size=size, fill_value=fill_value, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3959,6 +4041,7 @@ def extract(
     *,
     size: Optional[int] = None,
     fill_value: Optional[jax.typing.ArrayLike | Quantity] = None,
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Return the elements of an array that satisfy some condition.
@@ -4003,7 +4086,7 @@ def extract(
     else:
         fill_value = 0
     return _fun_keep_unit_unary(functools.partial(jnp.extract, condition),
-                                arr, size=size, fill_value=fill_value)
+                                arr, size=size, fill_value=fill_value, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4015,6 +4098,7 @@ def take(
     unique_indices: bool = False,
     indices_are_sorted: bool = False,
     fill_value: Optional[Union[Quantity, jax.typing.ArrayLike]] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Take elements from an array along an axis.
@@ -4081,14 +4165,15 @@ def take(
                       indices_are_sorted=indices_are_sorted, fill_value=fill_value)
     else:
         return jnp.take(a, indices, axis=axis, mode=mode, unique_indices=unique_indices,
-                        indices_are_sorted=indices_are_sorted, fill_value=fill_value)
+                        indices_are_sorted=indices_are_sorted, fill_value=fill_value, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def select(
     condlist: list[Union[jax.typing.ArrayLike]],
     choicelist: Union[Quantity, jax.typing.ArrayLike],
-    default: int = 0
+    default: int = 0,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return an array drawn from elements in choicelist, depending on conditions.
@@ -4129,11 +4214,11 @@ def select(
                 f'but got a Quantity with unit={cond.unit}. '
                 f'Strip units from all condition arrays before passing them to select.'
             )
-    return _fun_keep_unit_sequence(functools.partial(jnp.select, condlist), choicelist, default=default)
+    return _fun_keep_unit_sequence(functools.partial(jnp.select, condlist), choicelist, default=default, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def where(condition, x=None, y=None, /, *, size=None, fill_value=None):
+def where(condition, x=None, y=None, /, *, size=None, fill_value=None, **kwargs):
     """
     Return elements chosen from `x` or `y` depending on `condition`.
 
@@ -4187,7 +4272,7 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None):
                 f'where requires "fill_value" to be a plain scalar when x and y are not provided, '
                 f'but got fill_value with unit={fill_value.unit}.'
             )
-        return jnp.where(condition, size=size, fill_value=fill_value)
+        return jnp.where(condition, size=size, fill_value=fill_value, **kwargs)
 
     if size is not None or fill_value is not None:
         raise ValueError(
@@ -4196,7 +4281,7 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None):
         )
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         y = y.in_unit(x.unit)
-        return Quantity(jnp.where(condition, x.mantissa, y.mantissa), unit=x.unit)
+        return Quantity(jnp.where(condition, x.mantissa, y.mantissa, **kwargs), unit=x.unit)
     elif isinstance(x, Quantity):
         if not x.is_unitless:
             raise TypeError(
@@ -4213,7 +4298,7 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None):
                 f'Either pass a Quantity for x with matching units, or strip the unit from y.'
             )
         y = y.mantissa
-    return jnp.where(condition, x, y)
+    return jnp.where(condition, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4226,7 +4311,8 @@ def unique(
     *,
     equal_nan: bool = False,
     size: Optional[int] = None,
-    fill_value: Optional[jax.typing.ArrayLike, Quantity] = None
+    fill_value: Optional[jax.typing.ArrayLike, Quantity] = None,
+    **kwargs,
 ) -> Sequence[jax.Array | Quantity] | jax.Array | Quantity:
     """
     Find the unique elements of a quantity or an array.
@@ -4275,7 +4361,7 @@ def unique(
                             axis=axis,
                             equal_nan=equal_nan,
                             size=size,
-                            fill_value=fill_value)
+                            fill_value=fill_value, **kwargs)
         if isinstance(result, tuple):
             output = []
             output.append(Quantity(result[0], unit=a_unit))
@@ -4292,13 +4378,14 @@ def unique(
                           axis=axis,
                           equal_nan=equal_nan,
                           size=size,
-                          fill_value=fill_value)
+                          fill_value=fill_value, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def round(
     x: Union[Quantity, jax.typing.ArrayLike],
     decimals: int = 0,
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Round an array to the nearest integer.
@@ -4323,13 +4410,14 @@ def round(
       >>> a = [1.2, 2.7, 3.1] * u.meter
       >>> u.math.round(a)
     """
-    return _fun_keep_unit_unary(jnp.round, x, decimals=decimals)
+    return _fun_keep_unit_unary(jnp.round, x, decimals=decimals, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def around(
     x: Union[Quantity, jax.typing.ArrayLike],
     decimals: int = 0,
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Round an array to the nearest integer.
@@ -4354,12 +4442,13 @@ def around(
       >>> a = [1.2, 2.7, 3.1] * u.second
       >>> u.math.around(a)
     """
-    return _fun_keep_unit_unary(jnp.around, x, decimals=decimals)
+    return _fun_keep_unit_unary(jnp.around, x, decimals=decimals, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def rint(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Round an array to the nearest integer.
@@ -4382,12 +4471,13 @@ def rint(
       >>> a = [1.2, 2.7, 3.1] * u.meter
       >>> u.math.rint(a)
     """
-    return _fun_keep_unit_unary(jnp.rint, x)
+    return _fun_keep_unit_unary(jnp.rint, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def floor(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Return the floor of the argument.
@@ -4410,12 +4500,13 @@ def floor(
       >>> a = [1.2, 2.7, 3.1] * u.meter
       >>> u.math.floor(a)
     """
-    return _fun_keep_unit_unary(jnp.floor, x)
+    return _fun_keep_unit_unary(jnp.floor, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def ceil(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Return the ceiling of the argument.
@@ -4438,12 +4529,13 @@ def ceil(
       >>> a = [1.2, 2.7, 3.1] * u.meter
       >>> u.math.ceil(a)
     """
-    return _fun_keep_unit_unary(jnp.ceil, x)
+    return _fun_keep_unit_unary(jnp.ceil, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def trunc(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Return the truncated value of the argument.
@@ -4466,12 +4558,13 @@ def trunc(
       >>> a = [1.7, -2.3, 3.9] * u.meter
       >>> u.math.trunc(a)
     """
-    return _fun_keep_unit_unary(jnp.trunc, x)
+    return _fun_keep_unit_unary(jnp.trunc, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def fix(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Return the nearest integer towards zero.
@@ -4494,12 +4587,13 @@ def fix(
       >>> a = [1.7, -2.3, 3.9] * u.meter
       >>> u.math.fix(a)
     """
-    return _fun_keep_unit_unary(jnp.trunc, x)
+    return _fun_keep_unit_unary(jnp.trunc, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def modf(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Tuple[jax.Array | Quantity, jax.Array | Quantity]:
     """
     Return the fractional and integer parts of the array elements.
@@ -4522,12 +4616,12 @@ def modf(
       >>> frac, intg = u.math.modf(a)
     """
     if isinstance(x, Quantity):
-        return jax.tree.map(lambda y: Quantity(y, unit=x.unit), jnp.modf(x.mantissa))
-    return jnp.modf(x)
+        return jax.tree.map(lambda y: Quantity(y, unit=x.unit), jnp.modf(x.mantissa, **kwargs))
+    return jnp.modf(x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def gather(input: jax.Array | Quantity, dim: int, index: jax.Array):
+def gather(input: jax.Array | Quantity, dim: int, index: jax.Array, **kwargs):
     """
     Gather values along an axis specified by dim, according to index.
 
@@ -4580,12 +4674,12 @@ def gather(input: jax.Array | Quantity, dim: int, index: jax.Array):
             # Create meshgrid indices for other dimensions
             shape = [1] * ndim
             shape[i] = idx_shape[i] if i < len(idx_shape) else input.shape[i]
-            idx = jnp.arange(input.shape[i]).reshape(shape)
+            idx = jnp.arange(input.shape[i], **kwargs).reshape(shape)
             # Broadcast to match index shape
             broadcast_shape = list(idx_shape)
             if i < len(idx_shape):
                 broadcast_shape[i] = input.shape[i]
-            indices.append(jnp.broadcast_to(idx, idx_shape))
+            indices.append(jnp.broadcast_to(idx, idx_shape, **kwargs))
 
     result = input[tuple(indices)]
     if unit.is_unitless:

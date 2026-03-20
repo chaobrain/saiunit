@@ -56,6 +56,7 @@ def cholesky(
     *,
     upper: bool = False,
     symmetrize_input: bool = True,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Compute the Cholesky decomposition of a matrix.
@@ -116,7 +117,7 @@ def cholesky(
                                   lambda u: u ** 0.5,
                                   a,
                                   upper=upper,
-                                  symmetrize_input=symmetrize_input)
+                                  symmetrize_input=symmetrize_input, **kwargs)
 
 
 @unit_change(lambda x, y: y / x)
@@ -124,6 +125,7 @@ def cholesky(
 def solve(
     a: Union[jax.typing.ArrayLike, Quantity],
     b: Union[jax.typing.ArrayLike, Quantity],
+    **kwargs,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
     """
     Solve a linear system of equations.
@@ -179,7 +181,7 @@ def solve(
     return _fun_change_unit_binary(jnp.linalg.solve,
                                    lambda a, b: b / a,
                                    a,
-                                   b)
+                                   b, **kwargs)
 
 
 @unit_change(lambda x, y: y / x)
@@ -187,7 +189,8 @@ def solve(
 def tensorsolve(
     a: Union[jax.typing.ArrayLike, Quantity],
     b: Union[jax.typing.ArrayLike, Quantity],
-    axes: tuple[int, ...] | None = None
+    axes: tuple[int, ...] | None = None,
+    **kwargs,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
     """
     Solve the tensor equation ``a x = b`` for ``x``.
@@ -239,7 +242,7 @@ def tensorsolve(
                                    lambda a, b: b / a,
                                    a,
                                    b,
-                                   axes=axes)
+                                   axes=axes, **kwargs)
 
 
 @unit_change(lambda x, y: y / x)
@@ -249,7 +252,8 @@ def lstsq(
     b: Union[jax.typing.ArrayLike, Quantity],
     rcond: float | None = None,
     *,
-    numpy_resid: bool = False
+    numpy_resid: bool = False,
+    **kwargs,
 ) -> tuple[Union[jax.typing.ArrayLike, Quantity], jax.Array, jax.Array, jax.Array]:
     """
     Return the least-squares solution to a linear equation.
@@ -308,22 +312,23 @@ def lstsq(
     a = maybe_custom_array(a)
     b = maybe_custom_array(b)
     if isinstance(a, Quantity) and isinstance(b, Quantity):
-        r = jnp.linalg.lstsq(a.mantissa, b.mantissa, rcond=rcond, numpy_resid=numpy_resid)
+        r = jnp.linalg.lstsq(a.mantissa, b.mantissa, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
         return maybe_decimal(Quantity(r[0], unit=b.unit / a.unit)), r[1], r[2], r[3]
     elif isinstance(a, Quantity):
-        r = jnp.linalg.lstsq(a.mantissa, b, rcond=rcond, numpy_resid=numpy_resid)
+        r = jnp.linalg.lstsq(a.mantissa, b, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
         return maybe_decimal(Quantity(r[0], unit=UNITLESS / a.unit)), r[1], r[2], r[3]
     elif isinstance(b, Quantity):
-        r = jnp.linalg.lstsq(a, b.mantissa, rcond=rcond, numpy_resid=numpy_resid)
+        r = jnp.linalg.lstsq(a, b.mantissa, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
         return maybe_decimal(Quantity(r[0], unit=b.unit)), r[1], r[2], r[3]
     else:
-        return jnp.linalg.lstsq(a, b, rcond=rcond, numpy_resid=numpy_resid)
+        return jnp.linalg.lstsq(a, b, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
 
 
 @unit_change(lambda u: u ** -1)
 @set_module_as('saiunit.linalg')
 def inv(
     a: Union[jax.typing.ArrayLike, Quantity],
+    **kwargs,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
     """
     Return the inverse of a square matrix.
@@ -371,7 +376,7 @@ def inv(
     """
     return _fun_change_unit_unary(jnp.linalg.inv,
                                   lambda u: u ** -1,
-                                  a)
+                                  a, **kwargs)
 
 
 @unit_change(lambda u: u ** -1)
@@ -382,6 +387,7 @@ def pinv(
     hermitian: bool = False,
     *,
     rcond: jax.typing.ArrayLike | None = None,
+    **kwargs,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
     """
     Compute the Moore-Penrose pseudo-inverse of a matrix.
@@ -437,7 +443,7 @@ def pinv(
                                   a,
                                   rtol=rtol,
                                   hermitian=hermitian,
-                                  rcond=rcond)
+                                  rcond=rcond, **kwargs)
 
 
 @unit_change(lambda u: u ** -1)
@@ -445,6 +451,7 @@ def pinv(
 def tensorinv(
     a: Union[jax.typing.ArrayLike, Quantity],
     ind: int = 2,
+    **kwargs,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
     """
     Compute the tensor inverse of an array.
@@ -495,4 +502,4 @@ def tensorinv(
     return _fun_change_unit_unary(jnp.linalg.tensorinv,
                                   lambda u: u ** -1,
                                   a,
-                                  ind=ind)
+                                  ind=ind, **kwargs)

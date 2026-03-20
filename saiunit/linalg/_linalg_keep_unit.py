@@ -48,6 +48,7 @@ def norm(
     ord: int | str | None = None,
     axis: None | tuple[int, ...] | int = None,
     keepdims: bool = False,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """Compute the norm of a matrix or vector.
 
@@ -119,7 +120,7 @@ def norm(
         >>> u.linalg.norm(m)
         10.198039 * meter
     """
-    return _fun_keep_unit_unary(jnp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims)
+    return _fun_keep_unit_unary(jnp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
@@ -127,7 +128,8 @@ def matrix_norm(
     x: Union[jax.typing.ArrayLike, Quantity],
     *,
     keepdims: bool = False,
-    ord: int | str = 'fro'
+    ord: int | str = 'fro',
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """Compute the norm of a matrix or stack of matrices.
 
@@ -165,7 +167,7 @@ def matrix_norm(
     return _fun_keep_unit_unary(jnp.linalg.matrix_norm,
                                 x,
                                 keepdims=keepdims,
-                                ord=ord)
+                                ord=ord, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
@@ -173,7 +175,8 @@ def vector_norm(
     x: Union[jax.typing.ArrayLike, Quantity],
     *, axis: int | tuple[int, ...] | None = None,
     keepdims: bool = False,
-    ord: int | str = 2
+    ord: int | str = 2,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """Compute the vector norm of a vector or batch of vectors.
 
@@ -222,13 +225,14 @@ def vector_norm(
                                 x,
                                 axis=axis,
                                 keepdims=keepdims,
-                                ord=ord)
+                                ord=ord, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
 def qr(
     a: Union[Quantity, jax.typing.ArrayLike],
-    mode: str = "reduced"
+    mode: str = "reduced",
+    **kwargs,
 ) -> Array | Quantity:
     """Compute the QR decomposition of a matrix.
 
@@ -281,14 +285,14 @@ def qr(
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
-        result = jnp.linalg.qr(a.mantissa, mode=mode)
+        result = jnp.linalg.qr(a.mantissa, mode=mode, **kwargs)
         if mode == "r":
             return maybe_decimal(Quantity(result, unit=a.unit))
         else:
             Q, R = result
             return Q, maybe_decimal(Quantity(R, unit=a.unit))
     else:
-        result = jnp.linalg.qr(a, mode=mode)
+        result = jnp.linalg.qr(a, mode=mode, **kwargs)
         if mode == "r":
             return result
         else:
@@ -304,6 +308,7 @@ def svd(
     hermitian: bool = False,
     subset_by_index: tuple[int, int] | None = None,
     algorithm: jax.lax.linalg.SvdAlgorithm | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
     """Singular value decomposition.
 
@@ -366,7 +371,8 @@ def svd(
                     full_matrices=full_matrices,
                     compute_uv=compute_uv,
                     hermitian=hermitian,
-                    subset_by_index=subset_by_index
+                    subset_by_index=subset_by_index,
+                    **kwargs,
                 )
                 return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
             s = jnp.linalg.svd(
@@ -374,7 +380,8 @@ def svd(
                 full_matrices=full_matrices,
                 compute_uv=compute_uv,
                 hermitian=hermitian,
-                subset_by_index=subset_by_index
+                subset_by_index=subset_by_index,
+                **kwargs,
             )
             return maybe_decimal(Quantity(s, unit=x.unit))
         return jnp.linalg.svd(
@@ -382,7 +389,8 @@ def svd(
             full_matrices=full_matrices,
             compute_uv=compute_uv,
             hermitian=hermitian,
-            subset_by_index=subset_by_index
+            subset_by_index=subset_by_index,
+            **kwargs,
         )
 
     return lax_linalg.svd(
@@ -390,13 +398,15 @@ def svd(
         full_matrices=full_matrices,
         compute_uv=compute_uv,
         subset_by_index=subset_by_index,
-        algorithm=algorithm
+        algorithm=algorithm,
+        **kwargs,
     )
 
 
 @set_module_as('saiunit.linalg')
 def svdvals(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """Compute the singular values of a matrix.
 
@@ -424,12 +434,13 @@ def svdvals(
         >>> u.linalg.svdvals(x)
         ArrayImpl([9.50803089, 0.77286941], dtype=float32) * meter
     """
-    return svd(x, compute_uv=False)
+    return svd(x, compute_uv=False, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
 def eig(
     a: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> tuple[Union[jax.Array, Quantity], Union[jax.Array, Quantity]]:
     """Compute the eigenvalues and eigenvectors of a square matrix.
 
@@ -464,14 +475,15 @@ def eig(
         ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
     """
     a = maybe_custom_array(a)
-    return lax_linalg.eig(a, compute_left_eigenvectors=False)
+    return lax_linalg.eig(a, compute_left_eigenvectors=False, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
 def eigh(
     a: Union[Quantity, jax.typing.ArrayLike],
     UPLO: str | None = None,
-    symmetrize_input: bool = True
+    symmetrize_input: bool = True,
+    **kwargs,
 ) -> tuple[Union[jax.Array, Quantity], Union[jax.Array, Quantity]]:
     """Compute eigenvalues and eigenvectors of a Hermitian matrix.
 
@@ -518,13 +530,14 @@ def eigh(
     else:
         msg = f"UPLO must be one of None, 'L', or 'U', got {UPLO}"
         raise ValueError(msg)
-    v, w = lax_linalg.eigh(a, lower=lower, symmetrize_input=symmetrize_input)
+    v, w = lax_linalg.eigh(a, lower=lower, symmetrize_input=symmetrize_input, **kwargs)
     return w, v
 
 
 @set_module_as('saiunit.linalg')
 def eigvals(
     a: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """Compute the eigenvalues of a general matrix.
 
@@ -552,7 +565,7 @@ def eigvals(
         >>> w  # eigenvalues carry the unit
         ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
     """
-    return eig(a)[0]
+    return eig(a, **kwargs)[0]
 
 
 @set_module_as('saiunit.linalg')
@@ -561,6 +574,7 @@ def eigvalsh(
     UPLO: str = 'L',
     *,
     symmetrize_input: bool = True,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """Compute the eigenvalues of a Hermitian matrix.
 
@@ -594,12 +608,13 @@ def eigvalsh(
         >>> w
         Array([-1.,  3.], dtype=float32)
     """
-    return eigh(a, UPLO=UPLO, symmetrize_input=symmetrize_input)[0]
+    return eigh(a, UPLO=UPLO, symmetrize_input=symmetrize_input, **kwargs)[0]
 
 
 @set_module_as('saiunit.linalg')
 def matrix_transpose(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Transpose a matrix or stack of matrices.
 
@@ -629,4 +644,4 @@ def matrix_transpose(
                    [2, 5],
                    [3, 6]], dtype=int32) * meter
     """
-    return _fun_keep_unit_unary(jnp.linalg.matrix_transpose, x)
+    return _fun_keep_unit_unary(jnp.linalg.matrix_transpose, x, **kwargs)

@@ -78,6 +78,7 @@ def fft(
     n: int | None = None,
     axis: int = -1,
     norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Compute a one-dimensional discrete Fourier transform along a given axis.
 
@@ -121,7 +122,7 @@ def fft(
     # check target_time_unit.dim == second.dim
     return _fun_change_unit_unary(jnpfft.fft,
                                   lambda u: u * second,
-                                  a, n=n, axis=axis, norm=norm)
+                                  a, n=n, axis=axis, norm=norm, **kwargs)
 
 
 @unit_change(lambda u: u * second)
@@ -130,6 +131,7 @@ def rfft(
     n: int | None = None,
     axis: int = -1,
     norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Compute a one-dimensional DFT of a real-valued array.
 
@@ -177,7 +179,8 @@ def rfft(
         a,
         n=n,
         axis=axis,
-        norm=norm
+        norm=norm,
+        **kwargs,
     )
 
 
@@ -191,6 +194,7 @@ def ifft(
     n: int | None = None,
     axis: int = -1,
     norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Compute a one-dimensional inverse discrete Fourier transform.
 
@@ -237,7 +241,8 @@ def ifft(
         a,
         n=n,
         axis=axis,
-        norm=norm
+        norm=norm,
+        **kwargs,
     )
 
 
@@ -247,6 +252,7 @@ def irfft(
     n: int | None = None,
     axis: int = -1,
     norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a real-valued one-dimensional inverse DFT.
 
@@ -288,7 +294,7 @@ def irfft(
     """
     return _fun_change_unit_unary(jnpfft.irfft,
                                   lambda u: u / second,
-                                  a, n=n, axis=axis, norm=norm)
+                                  a, n=n, axis=axis, norm=norm, **kwargs)
 
 
 # return original unit * (time unit ^ n)
@@ -299,7 +305,8 @@ def fft2(
     a: Union[Quantity, jax.typing.ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] = (-2, -1),
-    norm: str | None = None
+    norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a two-dimensional discrete Fourier transform along given axes.
 
@@ -340,7 +347,7 @@ def fft2(
     """
     return _fun_change_unit_unary(jnpfft.fft2,
                                   lambda u: u * (second ** 2),
-                                  a, s=s, axes=axes, norm=norm)
+                                  a, s=s, axes=axes, norm=norm, **kwargs)
 
 
 @unit_change(lambda u: u * (second ** 2))
@@ -348,7 +355,8 @@ def rfft2(
     a: Union[Quantity, jax.typing.ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] = (-2, -1),
-    norm: str | None = None
+    norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a two-dimensional DFT of a real-valued array.
 
@@ -389,7 +397,7 @@ def rfft2(
     """
     return _fun_change_unit_unary(jnpfft.rfft2,
                                   lambda u: u * (second ** 2),
-                                  a, s=s, axes=axes, norm=norm)
+                                  a, s=s, axes=axes, norm=norm, **kwargs)
 
 
 @set_module_as('saiunit.fft')
@@ -397,7 +405,8 @@ def fftn(
     a: Union[Quantity, jax.typing.ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] | None = None,
-    norm: str | None = None
+    norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Compute a multidimensional discrete Fourier transform.
 
@@ -437,14 +446,14 @@ def fftn(
         >>> X = sufft.fftn(x)
         >>> x_back = sufft.ifftn(X)
     """
-    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
+    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a, **kwargs).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
     fftn._unit_change_fun = _unit_change_fun
     return _fun_change_unit_unary(jnpfft.fftn,
                                   _unit_change_fun,
-                                  a, s=s, axes=axes, norm=norm)
+                                  a, s=s, axes=axes, norm=norm, **kwargs)
 
 
 @set_module_as('saiunit.fft')
@@ -452,7 +461,8 @@ def rfftn(
     a: Union[Quantity, jax.typing.ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] | None = None,
-    norm: str | None = None
+    norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a multidimensional DFT of a real-valued array.
 
@@ -490,14 +500,14 @@ def rfftn(
         >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * u.meter
         >>> X = sufft.rfftn(x)
     """
-    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
+    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a, **kwargs).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
     rfftn._unit_change_fun = _unit_change_fun
     return _fun_change_unit_unary(jnpfft.rfftn,
                                   _unit_change_fun,
-                                  a, s=s, axes=axes, norm=norm)
+                                  a, s=s, axes=axes, norm=norm, **kwargs)
 
 
 # return original unit / (time unit ^ n) (inverse)
@@ -508,7 +518,8 @@ def ifft2(
     a: Union[Quantity, jax.typing.ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] = (-2, -1),
-    norm: str | None = None
+    norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a two-dimensional inverse discrete Fourier transform.
 
@@ -549,7 +560,7 @@ def ifft2(
     """
     return _fun_change_unit_unary(jnpfft.ifft2,
                                   lambda u: u / (second ** 2),
-                                  a, s=s, axes=axes, norm=norm)
+                                  a, s=s, axes=axes, norm=norm, **kwargs)
 
 
 @unit_change(lambda u: u / (second ** 2))
@@ -557,7 +568,8 @@ def irfft2(
     a: Union[Quantity, jax.typing.ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] = (-2, -1),
-    norm: str | None = None
+    norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a real-valued two-dimensional inverse DFT.
 
@@ -598,7 +610,7 @@ def irfft2(
     """
     return _fun_change_unit_unary(jnpfft.irfft2,
                                   lambda u: u / (second ** 2),
-                                  a, s=s, axes=axes, norm=norm)
+                                  a, s=s, axes=axes, norm=norm, **kwargs)
 
 
 @set_module_as('saiunit.fft')
@@ -606,7 +618,8 @@ def ifftn(
     a: Union[Quantity, jax.typing.ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] | None = None,
-    norm: str | None = None
+    norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Compute a multidimensional inverse discrete Fourier transform.
 
@@ -646,14 +659,14 @@ def ifftn(
         >>> X = sufft.fftn(x)
         >>> x_back = sufft.ifftn(X)
     """
-    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
+    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a, **kwargs).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
     ifftn._unit_change_fun = _unit_change_fun
     return _fun_change_unit_unary(jnpfft.ifftn,
                                   _unit_change_fun,
-                                  a, s=s, axes=axes, norm=norm)
+                                  a, s=s, axes=axes, norm=norm, **kwargs)
 
 
 @set_module_as('saiunit.fft')
@@ -661,7 +674,8 @@ def irfftn(
     a: Union[Quantity, jax.typing.ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] | None = None,
-    norm: str | None = None
+    norm: str | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Compute a real-valued multidimensional inverse DFT.
 
@@ -701,14 +715,14 @@ def irfftn(
         >>> X = sufft.rfftn(x)
         >>> x_back = sufft.irfftn(X)
     """
-    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a).ndim
+    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a, **kwargs).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
     irfftn._unit_change_fun = _unit_change_fun
     return _fun_change_unit_unary(jnpfft.irfftn,
                                   _unit_change_fun,
-                                  a, s=s, axes=axes, norm=norm)
+                                  a, s=s, axes=axes, norm=norm, **kwargs)
 
 
 # return frequency unit
@@ -770,6 +784,7 @@ def fftfreq(
     *,
     dtype: jax.typing.DTypeLike | None = None,
     device: xla_client.Device | jax.sharding.Sharding | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Return sample frequencies for the discrete Fourier transform.
 
@@ -819,8 +834,8 @@ def fftfreq(
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
                                     scale=freq_unit_scale, )
-        return Quantity(jnpfft.fftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device), unit=freq_unit)
-    return jnpfft.fftfreq(n, d, dtype=dtype, device=device)
+        return Quantity(jnpfft.fftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device, **kwargs), unit=freq_unit)
+    return jnpfft.fftfreq(n, d, dtype=dtype, device=device, **kwargs)
 
 
 @set_module_as('saiunit.fft')
@@ -830,6 +845,7 @@ def rfftfreq(
     *,
     dtype: jax.typing.DTypeLike | None = None,
     device: xla_client.Device | jax.sharding.Sharding | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Return sample frequencies for the real discrete Fourier transform.
 
@@ -878,5 +894,5 @@ def rfftfreq(
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
                                     scale=freq_unit_scale, )
-        return Quantity(jnpfft.rfftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device), unit=freq_unit)
-    return jnpfft.rfftfreq(n, d, dtype=dtype, device=device)
+        return Quantity(jnpfft.rfftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device, **kwargs), unit=freq_unit)
+    return jnpfft.rfftfreq(n, d, dtype=dtype, device=device, **kwargs)

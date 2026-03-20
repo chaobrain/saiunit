@@ -54,6 +54,7 @@ def unit_change(
 @unit_change(lambda u: u ** -0.5)
 def rsqrt(
     x: Union[jax.typing.ArrayLike, Quantity],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise reciprocal square root: :math:`1 \over \sqrt{x}`.
 
@@ -82,7 +83,7 @@ def rsqrt(
     """
     return _fun_change_unit_unary(lax.rsqrt,
                                   lambda u: u ** -0.5,
-                                  x)
+                                  x, **kwargs)
 
 
 # math funcs change unit (binary)
@@ -93,7 +94,8 @@ def conv(
     window_strides: Sequence[int],
     padding: str,
     precision: lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None
+    preferred_element_type: jax.typing.DTypeLike | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper around ``conv_general_dilated``.
 
@@ -121,7 +123,7 @@ def conv(
     return _fun_change_unit_binary(lax.conv,
                                    lambda x, y: x * y,
                                    x, y,
-                                   window_strides, padding, precision, preferred_element_type)
+                                   window_strides, padding, precision, preferred_element_type, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -134,7 +136,8 @@ def conv_transpose(
     dimension_numbers: jax.lax.ConvGeneralDilatedDimensionNumbers = None,
     transpose_kernel: bool = False,
     precision: lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None
+    preferred_element_type: jax.typing.DTypeLike | None = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """Convenience wrapper for calculating the N-d convolution "transpose".
 
@@ -174,13 +177,14 @@ def conv_transpose(
                                    lambda x, y: x * y,
                                    x, y,
                                    strides, padding, rhs_dilation, dimension_numbers, transpose_kernel, precision,
-                                   preferred_element_type)
+                                   preferred_element_type, **kwargs)
 
 
 @unit_change(lambda x, y: x / y)
 def div(
     x: Union[jax.typing.ArrayLike, Quantity],
     y: Union[jax.typing.ArrayLike, Quantity],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise division: :math:`x \over y`.
 
@@ -214,7 +218,7 @@ def div(
     """
     return _fun_change_unit_binary(lax.div,
                                    lambda x, y: x / y,
-                                   x, y)
+                                   x, y, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -224,7 +228,8 @@ def dot_general(
     dimension_numbers: jax.lax.DotDimensionNumbers,
     precision: jax.lax.PrecisionLike = None,
     preferred_element_type: jax.typing.DTypeLike | None = None,
-    out_type=None
+    out_type=None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """General dot product/contraction operator.
 
@@ -275,18 +280,19 @@ def dot_general(
         return _fun_change_unit_binary(lax.dot_general,
                                        lambda x, y: x * y,
                                        x, y,
-                                       dimension_numbers, precision, preferred_element_type, out_type)
+                                       dimension_numbers, precision, preferred_element_type, out_type, **kwargs)
     except TypeError:
         return _fun_change_unit_binary(lax.dot_general,
                                        lambda x, y: x * y,
                                        x, y,
-                                       dimension_numbers, precision, preferred_element_type)
+                                       dimension_numbers, precision, preferred_element_type, **kwargs)
 
 
 @set_module_as('saiunit.lax')
 def pow(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise power: :math:`x^y`.
 
@@ -327,20 +333,21 @@ def pow(
             if not y.is_unitless:
                 raise TypeError(f'{jax.lax.pow.__name__} only supports scalar exponent')
             y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.pow(x.mantissa, y), unit=x.unit ** y))
+        return maybe_decimal(Quantity(jax.lax.pow(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(f'{jax.lax.power.__name__} only supports scalar exponent')
         y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.pow(x, y), unit=x ** y))
+        return maybe_decimal(Quantity(jax.lax.pow(x, y, **kwargs), unit=x ** y))
     else:
-        return jax.lax.pow(x, y)
+        return jax.lax.pow(x, y, **kwargs)
 
 
 @set_module_as('saiunit.lax')
 def integer_pow(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise integer power: :math:`x^y`, where :math:`y` is a fixed integer.
 
@@ -381,20 +388,21 @@ def integer_pow(
             if not y.is_unitless:
                 raise TypeError(f'{jax.lax.integer_pow.__name__} only supports scalar exponent')
             y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.integer_pow(x.mantissa, y), unit=x.unit ** y))
+        return maybe_decimal(Quantity(jax.lax.integer_pow(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(f'{jax.lax.integer_power.__name__} only supports scalar exponent')
         y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.integer_pow(x, y), unit=x ** y))
+        return maybe_decimal(Quantity(jax.lax.integer_pow(x, y, **kwargs), unit=x ** y))
     else:
-        return jax.lax.integer_pow(x, y)
+        return jax.lax.integer_pow(x, y, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
 def mul(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Elementwise multiplication: :math:`x \times y`.
 
@@ -425,13 +433,14 @@ def mul(
     """
     return _fun_change_unit_binary(lax.mul,
                                    lambda x, y: x * y,
-                                   x, y)
+                                   x, y, **kwargs)
 
 
 @set_module_as('saiunit.lax')
 def rem(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     r"""Elementwise remainder: :math:`x \bmod y`.
 
@@ -446,20 +455,21 @@ def rem(
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
-        return maybe_decimal(Quantity(lax.rem(x.mantissa, y.mantissa), unit=x.unit))
+        return maybe_decimal(Quantity(lax.rem(x.mantissa, y.mantissa, **kwargs), unit=x.unit))
     elif isinstance(x, Quantity):
-        return maybe_decimal(Quantity(lax.rem(x.mantissa, y), unit=x.unit))
+        return maybe_decimal(Quantity(lax.rem(x.mantissa, y, **kwargs), unit=x.unit))
     elif isinstance(y, Quantity):
-        return maybe_decimal(Quantity(lax.rem(x, y.mantissa), unit=UNITLESS))
+        return maybe_decimal(Quantity(lax.rem(x, y.mantissa, **kwargs), unit=UNITLESS))
     else:
-        return lax.rem(x, y)
+        return lax.rem(x, y, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
 def batch_matmul(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
-    precision: jax.lax.PrecisionLike = None
+    precision: jax.lax.PrecisionLike = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """Batch matrix multiplication.
 
@@ -493,4 +503,4 @@ def batch_matmul(
     """
     return _fun_change_unit_binary(lax.batch_matmul,
                                    lambda x, y: x * y,
-                                   x, y, precision)
+                                   x, y, precision, **kwargs)
