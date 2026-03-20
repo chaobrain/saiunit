@@ -1,5 +1,36 @@
 # Release Notes
 
+## Version 0.2.1
+
+### Breaking Changes
+
+- **Removed `BlockCSR` and `BlockELL` sparse classes**: These experimental
+  block-sparse matrix implementations (along with their benchmarks and tests)
+  have been removed. Users should use `COO`, `CSR`, or `CSC` instead.
+- **`SparseMatrix` no longer inherits from `JAXSparse`**: The base class is now
+  standalone, with its own `shape`, `size`, `ndim`, `T`, `block_until_ready`,
+  `tree_flatten`, `tree_unflatten`, `transpose`, and `todense` interface.
+
+### Improvements
+
+- **Standalone `SparseMatrix` base class**: Decoupled from
+  `jax.experimental.sparse.JAXSparse` to reduce external coupling and provide a
+  self-contained sparse matrix interface with properties (`size`, `ndim`, `nse`,
+  `dtype`) and methods (`__repr__`, `__len__`, `block_until_ready`).
+- **Improved validation in sparse classes**: Replaced `assert` statements with
+  descriptive `ValueError` exceptions in `COO.with_data`, `CSR.with_data`, and
+  `CSC.with_data` for shape, dtype, and unit mismatches.
+- **Broader sparse type checking**: `isinstance` checks in binary and matmul
+  operations now accept both `JAXSparse` and `SparseMatrix`, ensuring correct
+  behavior after the inheritance change.
+- **Fixed `CSC.tree_unflatten` error message**: Corrected the error message from
+  `"CSR.tree_unflatten"` to `"CSC.tree_unflatten"`.
+- **Explicit attribute assignment in `tree_unflatten`**: `CSR` and `CSC` now set
+  `shape`, `indices`, and `indptr` explicitly instead of using
+  `__dict__.update`, improving clarity and avoiding potential issues.
+
+---
+
 ## Version 0.2.0
 
 ### Highlights

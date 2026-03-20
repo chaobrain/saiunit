@@ -47,7 +47,8 @@ __all__ = [
 
 @set_module_as('saiunit.math')
 def get_promote_dtypes(
-    *args: Union[Quantity, jax.typing.ArrayLike]
+    *args: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
     """
     Promote the data types of the inputs to a common type.
@@ -72,7 +73,7 @@ def get_promote_dtypes(
         dtype('float32')
     """
     args = maybe_custom_array_tree(args)
-    return jnp.promote_types(*jax.tree.leaves(args))
+    return jnp.promote_types(*jax.tree.leaves(args), **kwargs)
 
 
 def _fun_remove_unit_unary(func, x, *args, **kwargs):
@@ -88,6 +89,7 @@ def _fun_remove_unit_unary(func, x, *args, **kwargs):
 @set_module_as('saiunit.math')
 def iscomplexobj(
     x: Union[jax.typing.ArrayLike, Quantity],
+    **kwargs,
 ) -> bool:
     """
     Return True if x is a complex type or an array of complex numbers.
@@ -115,13 +117,14 @@ def iscomplexobj(
         >>> u.math.iscomplexobj(jnp.array([1.0 + 2.0j]))
         True
     """
-    return _fun_remove_unit_unary(jnp.iscomplexobj, x)
+    return _fun_remove_unit_unary(jnp.iscomplexobj, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def heaviside(
     x1: Union[Quantity, jax.Array],
-    x2: Union[Quantity, jax.typing.ArrayLike]
+    x2: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Compute the Heaviside step function.
@@ -163,11 +166,11 @@ def heaviside(
                 f'but got x2 with unit={x2.unit}. Strip the unit from x2 before calling heaviside.'
             )
         x2 = x2.mantissa
-    return _fun_remove_unit_unary(jnp.heaviside, x1, x2)
+    return _fun_remove_unit_unary(jnp.heaviside, x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def signbit(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
+def signbit(x: Union[jax.typing.ArrayLike, Quantity], **kwargs) -> jax.Array:
     """
     Return element-wise True where the sign bit is set (less than zero).
 
@@ -195,11 +198,11 @@ def signbit(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
         >>> u.math.signbit(q)
         Array([ True, False], dtype=bool)
     """
-    return _fun_remove_unit_unary(jnp.signbit, x)
+    return _fun_remove_unit_unary(jnp.signbit, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
-def sign(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
+def sign(x: Union[jax.typing.ArrayLike, Quantity], **kwargs) -> jax.Array:
     """
     Return the sign of each element in the input array.
 
@@ -228,7 +231,7 @@ def sign(x: Union[jax.typing.ArrayLike, Quantity]) -> jax.Array:
         >>> u.math.sign(q)
         Array([-1.,  0.,  1.], dtype=float32)
     """
-    return _fun_remove_unit_unary(jnp.sign, x)
+    return _fun_remove_unit_unary(jnp.sign, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -237,7 +240,8 @@ def bincount(
     weights: Optional[jax.typing.ArrayLike] = None,
     minlength: int = 0,
     *,
-    length: Optional[int] = None
+    length: Optional[int] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Count number of occurrences of each value in array of non-negative ints.
@@ -275,14 +279,15 @@ def bincount(
         >>> u.math.bincount(jnp.array([0, 1, 1, 2, 2, 2]))
         Array([1, 2, 3], dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.bincount, x, weights=weights, minlength=minlength, length=length)
+    return _fun_remove_unit_unary(jnp.bincount, x, weights=weights, minlength=minlength, length=length, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def digitize(
     x: Union[jax.typing.ArrayLike, Quantity],
     bins: Union[jax.typing.ArrayLike, Quantity],
-    right: bool = False
+    right: bool = False,
+    **kwargs,
 ) -> jax.Array:
     """
     Return the indices of the bins to which each value in input array belongs.
@@ -350,7 +355,7 @@ def digitize(
                 f'Either pass a Quantity for x with matching units, or strip the unit from bins.'
             )
         bins = bins.mantissa
-    return jnp.digitize(x, bins, right=right)
+    return jnp.digitize(x, bins, right=right, **kwargs)
 
 
 def _fun_logic_unary(func, x, *args, **kwargs):
@@ -369,7 +374,8 @@ def all(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Optional[int] = None,
     keepdims: bool = False,
-    where: Optional[jax.Array] = None
+    where: Optional[jax.Array] = None,
+    **kwargs,
 ) -> Union[bool, jax.Array]:
     """
     Test whether all array elements along a given axis evaluate to True.
@@ -407,7 +413,7 @@ def all(
         >>> u.math.all(jnp.array([[True, False], [True, True]]), axis=1)
         Array([False,  True], dtype=bool)
     """
-    return _fun_logic_unary(jnp.all, x, axis=axis, keepdims=keepdims, where=where)
+    return _fun_logic_unary(jnp.all, x, axis=axis, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -415,7 +421,8 @@ def any(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Optional[int] = None,
     keepdims: bool = False,
-    where: Optional[jax.Array] = None
+    where: Optional[jax.Array] = None,
+    **kwargs,
 ) -> Union[bool, jax.Array]:
     """
     Test whether any array element along a given axis evaluates to True.
@@ -451,12 +458,13 @@ def any(
         >>> u.math.any(jnp.array([False, False, False]))
         Array(False, dtype=bool)
     """
-    return _fun_logic_unary(jnp.any, x, axis=axis, keepdims=keepdims, where=where)
+    return _fun_logic_unary(jnp.any, x, axis=axis, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def logical_not(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[bool, jax.Array]:
     """
     Compute the truth value of NOT x element-wise.
@@ -483,7 +491,7 @@ def logical_not(
         >>> u.math.logical_not(jnp.array([True, False, True]))
         Array([False,  True, False], dtype=bool)
     """
-    return _fun_logic_unary(jnp.logical_not, x)
+    return _fun_logic_unary(jnp.logical_not, x, **kwargs)
 
 
 alltrue = all
@@ -803,7 +811,8 @@ def isclose(
     y: Union[Quantity, jax.typing.ArrayLike],
     rtol: float | Quantity = None,
     atol: float | Quantity = None,
-    equal_nan: bool = False
+    equal_nan: bool = False,
+    **kwargs,
 ) -> Union[bool, jax.Array]:
     """
     Returns a boolean array where two arrays are element-wise equal within a
@@ -870,7 +879,7 @@ def isclose(
         atol = 1e-8 * unit
     atol = Quantity(atol).in_unit(unit).mantissa
     rtol = Quantity(rtol).in_unit(unit).mantissa
-    return _fun_logic_binary(jnp.isclose, x, y, rtol=rtol, atol=atol, equal_nan=equal_nan)
+    return _fun_logic_binary(jnp.isclose, x, y, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -879,7 +888,8 @@ def allclose(
     y: Union[Quantity, jax.typing.ArrayLike],
     rtol: float | Quantity = None,
     atol: float | Quantity = None,
-    equal_nan: bool = False
+    equal_nan: bool = False,
+    **kwargs,
 ) -> Union[bool, jax.Array]:
     """
     Returns True if two arrays are element-wise equal within a tolerance.
@@ -956,7 +966,7 @@ def allclose(
         atol = 1e-8 * unit
     rtol = Quantity(rtol).in_unit(unit).mantissa
     atol = Quantity(atol).in_unit(unit).mantissa
-    return jnp.allclose(x_val, y_val, rtol=rtol, atol=atol, equal_nan=equal_nan)
+    return jnp.allclose(x_val, y_val, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1087,6 +1097,7 @@ def argsort(
     order: None = None,
     stable: bool = True,
     descending: bool = False,
+    **kwargs,
 ) -> jax.Array:
     """
     Return the indices that would sort an array or Quantity.
@@ -1132,13 +1143,14 @@ def argsort(
                                   kind=kind,
                                   order=order,
                                   stable=stable,
-                                  descending=descending)
+                                  descending=descending, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def argmax(
     a: Union[jax.typing.ArrayLike, Quantity],
     axis: Optional[int] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Return the index of the maximum value along an axis.
@@ -1170,14 +1182,15 @@ def argmax(
         >>> u.math.argmax(q)
         Array(1, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.argmax, a, axis=axis)
+    return _fun_remove_unit_unary(jnp.argmax, a, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def argmin(
     a: Union[jax.typing.ArrayLike, Quantity],
     axis: Optional[int] = None,
-    keepdims: Optional[bool] = None
+    keepdims: Optional[bool] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Return the index of the minimum value along an axis.
@@ -1208,14 +1221,15 @@ def argmin(
         >>> u.math.argmin(jnp.array([3.0, 1.0, 2.0]))
         Array(1, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.argmin, a, axis=axis, keepdims=keepdims)
+    return _fun_remove_unit_unary(jnp.argmin, a, axis=axis, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def nanargmax(
     a: Union[jax.typing.ArrayLike, Quantity],
     axis: int = None,
-    keepdims: bool = False
+    keepdims: bool = False,
+    **kwargs,
 ) -> jax.Array:
     """
     Return the index of the maximum value, ignoring NaNs.
@@ -1249,14 +1263,15 @@ def nanargmax(
     return _fun_remove_unit_unary(jnp.nanargmax,
                                   a,
                                   axis=axis,
-                                  keepdims=keepdims)
+                                  keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def nanargmin(
     a: Union[jax.typing.ArrayLike, Quantity],
     axis: int = None,
-    keepdims: bool = False
+    keepdims: bool = False,
+    **kwargs,
 ) -> jax.Array:
     """
     Return the index of the minimum value, ignoring NaNs.
@@ -1290,7 +1305,7 @@ def nanargmin(
     return _fun_remove_unit_unary(jnp.nanargmin,
                                   a,
                                   axis=axis,
-                                  keepdims=keepdims)
+                                  keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1299,6 +1314,7 @@ def argwhere(
     *,
     size: Optional[int] = None,
     fill_value: Optional[jax.typing.ArrayLike] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Find the indices of array elements that are non-zero.
@@ -1330,7 +1346,7 @@ def argwhere(
         Array([[1],
                [3]], dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.argwhere, a, size=size, fill_value=fill_value)
+    return _fun_remove_unit_unary(jnp.argwhere, a, size=size, fill_value=fill_value, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1339,6 +1355,7 @@ def nonzero(
     *,
     size: Optional[int] = None,
     fill_value: Optional[jax.typing.ArrayLike] = None,
+    **kwargs,
 ) -> Sequence[jax.Array]:
     """
     Return the indices of non-zero elements.
@@ -1369,7 +1386,7 @@ def nonzero(
         >>> u.math.nonzero(jnp.array([0, 1, 0, 2]), size=2)
         (Array([1, 3], dtype=int32),)
     """
-    return _fun_remove_unit_unary(jnp.nonzero, a, size=size, fill_value=fill_value)
+    return _fun_remove_unit_unary(jnp.nonzero, a, size=size, fill_value=fill_value, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1378,6 +1395,7 @@ def flatnonzero(
     *,
     size: Optional[int] = None,
     fill_value: Optional[jax.typing.ArrayLike] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Return indices that are non-zero in the flattened input.
@@ -1412,14 +1430,15 @@ def flatnonzero(
     a_unit = get_unit(a)
     if fill_value is not None:
         fill_value = Quantity(fill_value).in_unit(a_unit).mantissa
-    return _fun_remove_unit_unary(jnp.flatnonzero, a, size=size, fill_value=fill_value)
+    return _fun_remove_unit_unary(jnp.flatnonzero, a, size=size, fill_value=fill_value, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def count_nonzero(
     a: Union[jax.typing.ArrayLike, Quantity],
     axis: Optional[int] = None,
-    keepdims: Optional[bool] = None
+    keepdims: Optional[bool] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Count the number of non-zero values in the input.
@@ -1449,7 +1468,7 @@ def count_nonzero(
         >>> u.math.count_nonzero(jnp.array([0, 1, 0, 2, 3]))
         Array(3, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.count_nonzero, a, axis=axis, keepdims=keepdims)
+    return _fun_remove_unit_unary(jnp.count_nonzero, a, axis=axis, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1459,7 +1478,8 @@ def searchsorted(
     side: str = 'left',
     sorter: Optional[jax.Array] = None,
     *,
-    method: Optional[str] = 'scan'
+    method: Optional[str] = 'scan',
+    **kwargs,
 ) -> jax.Array | Quantity:
     """
     Find indices where elements should be inserted to maintain order.
@@ -1500,13 +1520,14 @@ def searchsorted(
     a_unit = get_unit(a)
     v = Quantity(v).in_unit(a_unit).mantissa
     a = Quantity(a).mantissa
-    r = jnp.searchsorted(a, v, side=side, sorter=sorter, method=method)
+    r = jnp.searchsorted(a, v, side=side, sorter=sorter, method=method, **kwargs)
     return r
 
 
 @set_module_as('saiunit.math')
 def diag_indices_from(
     arr: Union[jax.typing.ArrayLike, Quantity],
+    **kwargs,
 ) -> tuple[jax.Array, ...]:
     """
     Return indices for accessing the main diagonal of a given array.
@@ -1533,4 +1554,4 @@ def diag_indices_from(
         >>> u.math.diag_indices_from(arr)
         (Array([0, 1], dtype=int32), Array([0, 1], dtype=int32))
     """
-    return _fun_remove_unit_unary(jnp.diag_indices_from, arr)
+    return _fun_remove_unit_unary(jnp.diag_indices_from, arr, **kwargs)

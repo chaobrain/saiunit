@@ -114,6 +114,7 @@ def _fun_accept_unitless_unary(
 @set_module_as('saiunit.math')
 def exprel(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array:
     """
     Relative error exponential, ``(exp(x) - 1)/x``.
@@ -136,13 +137,14 @@ def exprel(
       Higher values provide better accuracy near x=0 but require more computation.
     """
     x = maybe_custom_array(x)
-    return _fun_accept_unitless_unary(_exprel_impl, x)
+    return _fun_accept_unitless_unary(_exprel_impl, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def exp(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Calculate the exponential of all elements in the input.
@@ -172,13 +174,14 @@ def exp(
         >>> u.math.exp(jnp.array([0.0, 1.0]))
         Array([1.       , 2.7182817], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.exp, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.exp, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def exp2(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Calculate ``2**x`` element-wise.
@@ -204,13 +207,14 @@ def exp2(
         >>> u.math.exp2(jnp.array([0.0, 1.0, 2.0]))
         Array([1., 2., 4.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.exp2, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.exp2, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def expm1(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Calculate ``exp(x) - 1`` element-wise with improved precision near zero.
@@ -236,13 +240,14 @@ def expm1(
         >>> u.math.expm1(jnp.array([0.0, 1e-10]))
         Array([0.e+00, 1.e-10], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.expm1, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.expm1, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def log(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Natural logarithm, element-wise.
@@ -268,13 +273,14 @@ def log(
         >>> u.math.log(jnp.array([1.0, jnp.e, jnp.e**2]))
         Array([0., 1., 2.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.log, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.log, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def log10(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Base-10 logarithm, element-wise.
@@ -300,13 +306,14 @@ def log10(
         >>> u.math.log10(jnp.array([1.0, 10.0, 100.0]))
         Array([0., 1., 2.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.log10, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.log10, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def log1p(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Natural logarithm of ``1 + x``, element-wise.
@@ -334,13 +341,14 @@ def log1p(
         >>> u.math.log1p(jnp.array([0.0, 1e-10]))
         Array([0.e+00, 1.e-10], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.log1p, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.log1p, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def log2(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Base-2 logarithm, element-wise.
@@ -366,13 +374,14 @@ def log2(
         >>> u.math.log2(jnp.array([1.0, 2.0, 4.0]))
         Array([0., 1., 2.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.log2, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.log2, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def arccos(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Inverse cosine, element-wise.
@@ -398,13 +407,14 @@ def arccos(
         >>> u.math.arccos(jnp.array([1.0, 0.0, -1.0]))
         Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arccos, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.arccos, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def arccosh(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Inverse hyperbolic cosine, element-wise.
@@ -430,13 +440,14 @@ def arccosh(
         >>> u.math.arccosh(jnp.array([1.0, 2.0, 3.0]))
         Array([0.       , 1.3169578, 1.7627472], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arccosh, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.arccosh, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def arcsin(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Inverse sine, element-wise.
@@ -462,13 +473,14 @@ def arcsin(
         >>> u.math.arcsin(jnp.array([0.0, 0.5, 1.0]))
         Array([0.       , 0.5235988, 1.5707964], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arcsin, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.arcsin, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def arcsinh(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Inverse hyperbolic sine, element-wise.
@@ -494,13 +506,14 @@ def arcsinh(
         >>> u.math.arcsinh(jnp.array([0.0, 1.0]))
         Array([0.       , 0.8813736], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arcsinh, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.arcsinh, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def arctan(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Inverse tangent, element-wise.
@@ -526,13 +539,14 @@ def arctan(
         >>> u.math.arctan(jnp.array([0.0, 1.0]))
         Array([0.       , 0.7853982], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arctan, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.arctan, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def arctanh(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Inverse hyperbolic tangent, element-wise.
@@ -558,13 +572,14 @@ def arctanh(
         >>> u.math.arctanh(jnp.array([0.0, 0.5]))
         Array([0.       , 0.5493061], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arctanh, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.arctanh, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def cos(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Cosine, element-wise.
@@ -590,13 +605,14 @@ def cos(
         >>> u.math.cos(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([ 1.0000000e+00, -4.3711388e-08, -1.0000000e+00], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.cos, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.cos, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def cosh(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Hyperbolic cosine, element-wise.
@@ -622,13 +638,14 @@ def cosh(
         >>> u.math.cosh(jnp.array([0.0, 1.0]))
         Array([1.       , 1.5430806], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.cosh, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.cosh, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def sin(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Sine, element-wise.
@@ -654,13 +671,14 @@ def sin(
         >>> u.math.sin(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([ 0.0000000e+00,  1.0000000e+00, -8.7422777e-08], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.sin, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.sin, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def sinc(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Normalized sinc function, ``sin(pi*x) / (pi*x)``, element-wise.
@@ -686,13 +704,14 @@ def sinc(
         >>> u.math.sinc(jnp.array([0.0, 1.0]))
         Array([ 1.0000000e+00, -3.8981719e-09], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.sinc, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.sinc, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def sinh(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Hyperbolic sine, element-wise.
@@ -718,13 +737,14 @@ def sinh(
         >>> u.math.sinh(jnp.array([0.0, 1.0]))
         Array([0.       , 1.1752012], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.sinh, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.sinh, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def tan(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Tangent, element-wise.
@@ -750,13 +770,14 @@ def tan(
         >>> u.math.tan(jnp.array([0.0, jnp.pi / 4]))
         Array([0.       , 1.0000001], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.tan, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.tan, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def tanh(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Hyperbolic tangent, element-wise.
@@ -782,13 +803,14 @@ def tanh(
         >>> u.math.tanh(jnp.array([0.0, 1.0]))
         Array([0.       , 0.7615942], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.tanh, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.tanh, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def deg2rad(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Convert angles from degrees to radians.
@@ -814,13 +836,14 @@ def deg2rad(
         >>> u.math.deg2rad(jnp.array([0.0, 90.0, 180.0]))
         Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.deg2rad, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.deg2rad, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def rad2deg(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Convert angles from radians to degrees.
@@ -846,13 +869,14 @@ def rad2deg(
         >>> u.math.rad2deg(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([  0.,  90., 180.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.rad2deg, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.rad2deg, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def degrees(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Convert angles from radians to degrees (alias for :func:`rad2deg`).
@@ -878,13 +902,14 @@ def degrees(
         >>> u.math.degrees(jnp.array([0.0, jnp.pi]))
         Array([  0., 180.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.degrees, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.degrees, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def radians(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Convert angles from degrees to radians (alias for :func:`deg2rad`).
@@ -910,13 +935,14 @@ def radians(
         >>> u.math.radians(jnp.array([0.0, 180.0]))
         Array([0.       , 3.1415927], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.radians, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.radians, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def angle(
     x: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Return the angle of the complex argument, element-wise.
@@ -942,13 +968,14 @@ def angle(
         >>> u.math.angle(jnp.array([1.0 + 1.0j, 1.0 + 0.0j]))
         Array([0.7853982, 0.       ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.angle, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.angle, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def frexp(
     x: Union[Quantity, jax.typing.ArrayLike],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> Tuple[jax.Array, jax.Array]:
     """
     Decompose elements into mantissa and base-2 exponent.
@@ -982,7 +1009,7 @@ def frexp(
         >>> e
         Array([1, 2, 3], dtype=int32)
     """
-    return _fun_accept_unitless_unary(jnp.frexp, x, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_unary(jnp.frexp, x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 # math funcs only accept unitless (binary)
@@ -1030,6 +1057,7 @@ def hypot(
     x: Union[jax.typing.ArrayLike, Quantity],
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Given the legs of a right triangle, return its hypotenuse.
@@ -1059,7 +1087,7 @@ def hypot(
         >>> u.math.hypot(jnp.array([3.0]), jnp.array([4.0]))
         Array([5.], dtype=float32)
     """
-    return _fun_accept_unitless_binary(jnp.hypot, x, y, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_binary(jnp.hypot, x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1067,6 +1095,7 @@ def arctan2(
     x: Union[jax.typing.ArrayLike, Quantity],
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Element-wise arc tangent of ``x / y`` choosing the quadrant correctly.
@@ -1095,7 +1124,7 @@ def arctan2(
         ...                 jnp.array([1.0, 1.0]))
         Array([ 0.7853982, -0.7853982], dtype=float32)
     """
-    return _fun_accept_unitless_binary(jnp.arctan2, x, y, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_binary(jnp.arctan2, x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1103,6 +1132,7 @@ def logaddexp(
     x: Union[jax.typing.ArrayLike, Quantity],
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Logarithm of the sum of exponentiations of the inputs.
@@ -1132,7 +1162,7 @@ def logaddexp(
         >>> u.math.logaddexp(jnp.array([1.0]), jnp.array([2.0]))
         Array([2.3132617], dtype=float32)
     """
-    return _fun_accept_unitless_binary(jnp.logaddexp, x, y, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_binary(jnp.logaddexp, x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1140,6 +1170,7 @@ def logaddexp2(
     x: Union[jax.typing.ArrayLike, Quantity],
     y: Union[jax.typing.ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Logarithm of the sum of exponentiations of the inputs in base 2.
@@ -1169,7 +1200,7 @@ def logaddexp2(
         >>> u.math.logaddexp2(jnp.array([1.0]), jnp.array([2.0]))
         Array([2.321928], dtype=float32)
     """
-    return _fun_accept_unitless_binary(jnp.logaddexp2, x, y, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_binary(jnp.logaddexp2, x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1178,6 +1209,7 @@ def corrcoef(
     y: Union[jax.typing.ArrayLike, Quantity] = None,
     rowvar: bool = True,
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     r"""
     Return Pearson product-moment correlation coefficients.
@@ -1212,7 +1244,7 @@ def corrcoef(
     R : ndarray
       The correlation coefficient matrix of the variables.
     """
-    return _fun_accept_unitless_binary(jnp.corrcoef, x, y, rowvar=rowvar, unit_to_scale=unit_to_scale)
+    return _fun_accept_unitless_binary(jnp.corrcoef, x, y, rowvar=rowvar, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1224,6 +1256,7 @@ def correlate(
     precision: Any = None,
     preferred_element_type: Optional[jax.typing.DTypeLike] = None,
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     r"""
     Cross-correlation of two 1-dimensional sequences.
@@ -1265,7 +1298,8 @@ def correlate(
         jnp.correlate, a, v,
         mode=mode, precision=precision,
         preferred_element_type=preferred_element_type,
-        unit_to_scale=unit_to_scale
+        unit_to_scale=unit_to_scale,
+        **kwargs,
     )
 
 
@@ -1279,6 +1313,7 @@ def cov(
     fweights: Optional[jax.typing.ArrayLike] = None,
     aweights: Optional[jax.typing.ArrayLike] = None,
     unit_to_scale: Optional[Unit] = None,
+    **kwargs,
 ) -> jax.Array:
     """
     Estimate a covariance matrix, given data and weights.
@@ -1335,14 +1370,16 @@ def cov(
     return _fun_accept_unitless_binary(
         jnp.cov, m, y,
         rowvar=rowvar, bias=bias, ddof=ddof, fweights=fweights,
-        aweights=aweights, unit_to_scale=unit_to_scale
+        aweights=aweights, unit_to_scale=unit_to_scale,
+        **kwargs,
     )
 
 
 @set_module_as('saiunit.math')
 def ldexp(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: jax.typing.ArrayLike
+    y: jax.typing.ArrayLike,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
     Returns x * 2**y, element-wise.
@@ -1372,7 +1409,7 @@ def ldexp(
         if not x.dim.is_dimensionless:
             raise TypeError(_dimensionless_required_message(jnp.ldexp, x, arg_name='x'))
         x = x.mantissa
-    return jnp.ldexp(x, y)
+    return jnp.ldexp(x, y, **kwargs)
 
 
 # Elementwise bit operations (unary)
@@ -1382,6 +1419,7 @@ def ldexp(
 @set_module_as('saiunit.math')
 def bitwise_not(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array:
     """
     Compute bit-wise NOT, element-wise.
@@ -1407,12 +1445,13 @@ def bitwise_not(
         >>> u.math.bitwise_not(jnp.array([True, False]))
         Array([False,  True], dtype=bool)
     """
-    return _fun_accept_unitless_unary(jnp.bitwise_not, x)
+    return _fun_accept_unitless_unary(jnp.bitwise_not, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def invert(
     x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array:
     """
     Compute bit-wise inversion (NOT), element-wise.
@@ -1438,7 +1477,7 @@ def invert(
         >>> u.math.invert(jnp.array([True, False]))
         Array([False,  True], dtype=bool)
     """
-    return _fun_accept_unitless_unary(jnp.invert, x)
+    return _fun_accept_unitless_unary(jnp.invert, x, **kwargs)
 
 
 # Elementwise bit operations (binary)
@@ -1467,7 +1506,8 @@ def _fun_unitless_binary(func, x, y, *args, **kwargs):
 @set_module_as('saiunit.math')
 def bitwise_and(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array:
     """
     Compute bit-wise AND of two arrays, element-wise.
@@ -1496,13 +1536,14 @@ def bitwise_and(
         ...                     jnp.array([True, True]))
         Array([ True, False], dtype=bool)
     """
-    return _fun_unitless_binary(jnp.bitwise_and, x, y)
+    return _fun_unitless_binary(jnp.bitwise_and, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def bitwise_or(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array:
     """
     Compute bit-wise OR of two arrays, element-wise.
@@ -1531,13 +1572,14 @@ def bitwise_or(
         ...                    jnp.array([False, False]))
         Array([ True, False], dtype=bool)
     """
-    return _fun_unitless_binary(jnp.bitwise_or, x, y)
+    return _fun_unitless_binary(jnp.bitwise_or, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def bitwise_xor(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array:
     """
     Compute bit-wise XOR of two arrays, element-wise.
@@ -1566,13 +1608,14 @@ def bitwise_xor(
         ...                     jnp.array([True, True]))
         Array([False,  True], dtype=bool)
     """
-    return _fun_unitless_binary(jnp.bitwise_xor, x, y)
+    return _fun_unitless_binary(jnp.bitwise_xor, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def left_shift(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array:
     """
     Shift the bits of an integer to the left, element-wise.
@@ -1600,13 +1643,14 @@ def left_shift(
         >>> u.math.left_shift(jnp.array([1, 2]), jnp.array([1, 2]))
         Array([2, 8], dtype=int32)
     """
-    return _fun_unitless_binary(jnp.left_shift, x, y)
+    return _fun_unitless_binary(jnp.left_shift, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def right_shift(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> jax.Array:
     """
     Shift the bits of an integer to the right, element-wise.
@@ -1634,4 +1678,4 @@ def right_shift(
         >>> u.math.right_shift(jnp.array([8, 16]), jnp.array([1, 2]))
         Array([4, 4], dtype=int32)
     """
-    return _fun_unitless_binary(jnp.right_shift, x, y)
+    return _fun_unitless_binary(jnp.right_shift, x, y, **kwargs)

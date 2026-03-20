@@ -50,7 +50,8 @@ def reduce(
     operands: Any,
     init_values: Any,
     computation: Callable[[Any, Any], Any],
-    dimensions: Sequence[int]
+    dimensions: Sequence[int],
+    **kwargs,
 ) -> Any:
     """Reduce an array along dimensions using a computation.
 
@@ -129,13 +130,14 @@ def reduce(
     """
     operands = maybe_custom_array(operands)
     init_values = maybe_custom_array(init_values)
-    return lax.reduce(operands, init_values, computation, dimensions)
+    return lax.reduce(operands, init_values, computation, dimensions, **kwargs)
 
 
 def reduce_precision(
     operand: Union[jax.typing.ArrayLike, Quantity, float],
     exponent_bits: int,
-    mantissa_bits: int
+    mantissa_bits: int,
+    **kwargs,
 ) -> jax.typing.ArrayLike:
     """Reduce the precision of array elements.
 
@@ -206,13 +208,14 @@ def reduce_precision(
     """
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
-        return maybe_decimal(lax.reduce_precision(operand.mantissa, exponent_bits, mantissa_bits))
-    return lax.reduce_precision(operand, exponent_bits, mantissa_bits)
+        return maybe_decimal(lax.reduce_precision(operand.mantissa, exponent_bits, mantissa_bits, **kwargs))
+    return lax.reduce_precision(operand, exponent_bits, mantissa_bits, **kwargs)
 
 
 @set_module_as('saiunit.lax')
 def broadcast_shapes(
-    *shapes
+    *shapes,
+    **kwargs,
 ):
     """Return the shape that results from NumPy broadcasting of ``shapes``.
 
@@ -278,4 +281,4 @@ def broadcast_shapes(
         >>> sulax.broadcast_shapes((1,), (3, 1), (1, 1, 5))
         (1, 3, 5)
     """
-    return lax.broadcast_shapes(*shapes)
+    return lax.broadcast_shapes(*shapes, **kwargs)

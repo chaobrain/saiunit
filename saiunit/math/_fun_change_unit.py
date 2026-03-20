@@ -68,7 +68,8 @@ def unit_change(
 
 @unit_change(lambda u: u ** -1)
 def reciprocal(
-    x: Union[Quantity, jax.typing.ArrayLike]
+    x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the reciprocal of the argument, element-wise.
@@ -97,7 +98,7 @@ def reciprocal(
         >>> result = u.math.reciprocal(u.math.array([2.0, 4.0]) * u.second)
         >>> result.mantissa  # array([0.5 , 0.25])
     """
-    return _fun_change_unit_unary(jnp.reciprocal, lambda u: u ** -1, x)
+    return _fun_change_unit_unary(jnp.reciprocal, lambda u: u ** -1, x, **kwargs)
 
 
 @unit_change(lambda u: u ** 2)
@@ -108,7 +109,8 @@ def var(
     ddof: int = 0,
     keepdims: bool = False,
     *,
-    where: Optional[jax.typing.ArrayLike] = None
+    where: Optional[jax.typing.ArrayLike] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Compute the variance along the specified axis.
@@ -162,7 +164,7 @@ def var(
                                   dtype=dtype,
                                   ddof=ddof,
                                   keepdims=keepdims,
-                                  where=where)
+                                  where=where, **kwargs)
 
 
 @unit_change(lambda u: u ** 2)
@@ -172,7 +174,8 @@ def nanvar(
     dtype: Optional[Any] = None,
     ddof: int = 0,
     keepdims: bool = False,
-    where: Optional[jax.typing.ArrayLike] = None
+    where: Optional[jax.typing.ArrayLike] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Compute the variance along the specified axis, while ignoring NaNs.
@@ -225,12 +228,13 @@ def nanvar(
                                   dtype=dtype,
                                   ddof=ddof,
                                   keepdims=keepdims,
-                                  where=where)
+                                  where=where, **kwargs)
 
 
 @unit_change(lambda u: u ** 0.5)
 def sqrt(
-    x: Union[Quantity, jax.typing.ArrayLike]
+    x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Compute the positive square root of each element.
@@ -258,12 +262,13 @@ def sqrt(
         >>> q = u.math.array([4.0, 9.0, 16.0]) * (u.meter ** 2)
         >>> u.math.sqrt(q)  # Quantity with unit meter
     """
-    return _fun_change_unit_unary(jnp.sqrt, lambda u: u ** 0.5, x)
+    return _fun_change_unit_unary(jnp.sqrt, lambda u: u ** 0.5, x, **kwargs)
 
 
 @unit_change(lambda u: u ** (1 / 3))
 def cbrt(
-    x: Union[Quantity, jax.typing.ArrayLike]
+    x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Compute the cube root of each element.
@@ -291,12 +296,13 @@ def cbrt(
         >>> q = u.math.array([8.0, 27.0]) * (u.meter ** 3)
         >>> u.math.cbrt(q)  # Quantity with unit meter
     """
-    return _fun_change_unit_unary(jnp.cbrt, lambda u: u ** (1 / 3), x)
+    return _fun_change_unit_unary(jnp.cbrt, lambda u: u ** (1 / 3), x, **kwargs)
 
 
 @unit_change(lambda u: u ** 2)
 def square(
-    x: Union[Quantity, jax.typing.ArrayLike]
+    x: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Compute the square of each element.
@@ -324,7 +330,7 @@ def square(
         >>> q = u.math.array([2.0, 3.0, 4.0]) * u.meter
         >>> u.math.square(q)  # Quantity with unit meter ** 2
     """
-    return _fun_change_unit_unary(jnp.square, lambda u: u ** 2, x)
+    return _fun_change_unit_unary(jnp.square, lambda u: u ** 2, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -335,7 +341,8 @@ def prod(
     keepdims: Optional[bool] = False,
     initial: Union[Quantity, jax.typing.ArrayLike] = None,
     where: Union[Quantity, jax.typing.ArrayLike] = None,
-    promote_integers: bool = True
+    promote_integers: bool = True,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the product of array elements over a given axis.
@@ -394,7 +401,7 @@ def prod(
                         keepdims=keepdims,
                         initial=initial,
                         where=where,
-                        promote_integers=promote_integers)
+                        promote_integers=promote_integers, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -404,7 +411,8 @@ def nanprod(
     dtype: Optional[jax.typing.DTypeLike] = None,
     keepdims: bool = False,
     initial: Union[Quantity, jax.typing.ArrayLike] = None,
-    where: Union[Quantity, jax.typing.ArrayLike] = None
+    where: Union[Quantity, jax.typing.ArrayLike] = None,
+    **kwargs,
 ):
     """
     Return the product of array elements over a given axis treating NaNs as one.
@@ -459,7 +467,7 @@ def nanprod(
                            dtype=dtype,
                            keepdims=keepdims,
                            initial=initial,
-                           where=where)
+                           where=where, **kwargs)
 
 
 product = prod
@@ -469,7 +477,8 @@ product = prod
 def cumprod(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Optional[int] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
     Return the cumulative product of elements along a given axis.
@@ -507,14 +516,15 @@ def cumprod(
     if isinstance(x, Quantity):
         return x.cumprod(axis=axis, dtype=dtype)
     else:
-        return jnp.cumprod(x, axis=axis, dtype=dtype)
+        return jnp.cumprod(x, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def nancumprod(
     x: Union[Quantity, jax.typing.ArrayLike],
     axis: Optional[int] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
     Return the cumulative product of elements along a given axis treating NaNs as one.
@@ -552,7 +562,7 @@ def nancumprod(
     if isinstance(x, Quantity):
         return x.nancumprod(axis=axis, dtype=dtype)
     else:
-        return jnp.nancumprod(x, axis=axis, dtype=dtype)
+        return jnp.nancumprod(x, axis=axis, dtype=dtype, **kwargs)
 
 
 cumproduct = cumprod
@@ -589,7 +599,8 @@ def _fun_change_unit_binary(val_fun, unit_fun, x, y, *args, **kwargs):
 @unit_change(lambda ux, uy: ux * uy)
 def multiply(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
     Multiply arguments element-wise.
@@ -621,13 +632,14 @@ def multiply(
     """
     return _fun_change_unit_binary(jnp.multiply,
                                    lambda ux, uy: ux * uy,
-                                   x, y)
+                                   x, y, **kwargs)
 
 
 @unit_change(lambda ux, uy: ux / uy)
 def divide(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
     Divide arguments element-wise.
@@ -659,7 +671,7 @@ def divide(
     """
     return _fun_change_unit_binary(jnp.divide,
                                    lambda ux, uy: ux / uy,
-                                   x, y)
+                                   x, y, **kwargs)
 
 
 @unit_change(lambda ux, uy: ux * uy)
@@ -669,7 +681,8 @@ def cross(
     axisa: int = -1,
     axisb: int = -1,
     axisc: int = -1,
-    axis: Optional[int] = None
+    axis: Optional[int] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
     Return the cross product of two (arrays of) vectors.
@@ -712,13 +725,14 @@ def cross(
     return _fun_change_unit_binary(jnp.cross,
                                    lambda ux, uy: ux * uy,
                                    a, b,
-                                   axisa=axisa, axisb=axisb, axisc=axisc, axis=axis)
+                                   axisa=axisa, axisb=axisb, axisc=axisc, axis=axis, **kwargs)
 
 
 @unit_change(lambda ux, uy: ux / uy)
 def true_divide(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
     Return a true division of the inputs, element-wise.
@@ -750,13 +764,14 @@ def true_divide(
     """
     return _fun_change_unit_binary(jnp.true_divide,
                                    lambda ux, uy: ux / uy,
-                                   x, y)
+                                   x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def divmod(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Tuple[Union[Quantity, jax.typing.ArrayLike], Union[Quantity, jax.typing.ArrayLike]]:
     """
     Return element-wise quotient and remainder simultaneously.
@@ -793,16 +808,16 @@ def divmod(
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
-        r = jnp.divmod(x.mantissa, y.mantissa)
+        r = jnp.divmod(x.mantissa, y.mantissa, **kwargs)
         return Quantity(r[0], unit=x.unit / y.unit), Quantity(r[1], unit=x.unit)
     elif isinstance(x, Quantity):
-        r = jnp.divmod(x.mantissa, y)
+        r = jnp.divmod(x.mantissa, y, **kwargs)
         return Quantity(r[0], unit=x.unit / UNITLESS), Quantity(r[1], unit=x.unit)
     elif isinstance(y, Quantity):
-        r = jnp.divmod(x, y.mantissa)
+        r = jnp.divmod(x, y.mantissa, **kwargs)
         return Quantity(r[0], unit=UNITLESS / y.unit), Quantity(r[1], unit=UNITLESS)
     else:
-        return jnp.divmod(x, y)
+        return jnp.divmod(x, y, **kwargs)
 
 
 @unit_change(lambda ux, uy: ux * uy)
@@ -812,7 +827,8 @@ def convolve(
     mode: str = 'full',
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None
+    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[Quantity, jax.typing.ArrayLike]:
     """
     Return the discrete, linear convolution of two one-dimensional sequences.
@@ -855,7 +871,8 @@ def convolve(
         a, v,
         mode=mode,
         precision=precision,
-        preferred_element_type=preferred_element_type
+        preferred_element_type=preferred_element_type,
+        **kwargs,
     )
 
 
@@ -863,6 +880,7 @@ def convolve(
 def power(
     x: Union[Quantity, jax.typing.ArrayLike],
     y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     First array elements raised to powers from second array, element-wise.
@@ -910,7 +928,7 @@ def power(
                     f'Strip the unit from y before raising a Quantity to a power.'
                 )
             y = y.mantissa
-        return maybe_decimal(Quantity(jnp.power(x.mantissa, y), unit=x.unit ** y))
+        return maybe_decimal(Quantity(jnp.power(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(
@@ -919,15 +937,16 @@ def power(
                 f'Strip the unit from y before raising a value to a power.'
             )
         y = y.mantissa
-        return maybe_decimal(Quantity(jnp.power(x, y), unit=x ** y))
+        return maybe_decimal(Quantity(jnp.power(x, y, **kwargs), unit=x ** y))
     else:
-        return jnp.power(x, y)
+        return jnp.power(x, y, **kwargs)
 
 
 @unit_change(lambda ux, uy: ux / uy)
 def floor_divide(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike]
+    y: Union[Quantity, jax.typing.ArrayLike],
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the largest integer smaller or equal to the division of the inputs.
@@ -958,13 +977,14 @@ def floor_divide(
         >>> b = u.math.array([2.0, 3.0]) * u.second
         >>> u.math.floor_divide(a, b)  # unit is meter / second
     """
-    return _fun_change_unit_binary(jnp.floor_divide, lambda ux, uy: ux / uy, x, y)
+    return _fun_change_unit_binary(jnp.floor_divide, lambda ux, uy: ux / uy, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def float_power(
     x: Union[Quantity, jax.typing.ArrayLike],
-    y: jax.typing.ArrayLike
+    y: jax.typing.ArrayLike,
+    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     First array elements raised to powers from second array, element-wise.
@@ -1012,7 +1032,7 @@ def float_power(
                     f'Strip the unit from y before raising a Quantity to a power.'
                 )
             y = y.mantissa
-        return maybe_decimal(Quantity(jnp.float_power(x.mantissa, y), unit=x.unit ** y))
+        return maybe_decimal(Quantity(jnp.float_power(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(
@@ -1021,9 +1041,9 @@ def float_power(
                 f'Strip the unit from y before raising a value to a power.'
             )
         y = y.mantissa
-        return maybe_decimal(Quantity(jnp.float_power(x, y), unit=x ** y))
+        return maybe_decimal(Quantity(jnp.float_power(x, y, **kwargs), unit=x ** y))
     else:
-        return jnp.float_power(x, y)
+        return jnp.float_power(x, y, **kwargs)
 
 
 # linear algebra
@@ -1036,7 +1056,8 @@ def dot(
     b: Union[jax.typing.ArrayLike, Quantity],
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None
+    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Compute the dot product of two arrays or quantities.
@@ -1074,14 +1095,15 @@ def dot(
                                    lambda x, y: x * y,
                                    a, b,
                                    precision=precision,
-                                   preferred_element_type=preferred_element_type)
+                                   preferred_element_type=preferred_element_type, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
 def multi_dot(
     arrays: Sequence[jax.typing.ArrayLike | Quantity],
     *,
-    precision: jax.lax.PrecisionLike = None
+    precision: jax.lax.PrecisionLike = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Efficiently compute matrix products between a sequence of arrays.
@@ -1126,7 +1148,7 @@ def multi_dot(
             unit = unit * arr.unit
             arr = arr.mantissa
         new_arrays.append(arr)
-    r = jnp.linalg.multi_dot(new_arrays, precision=precision)
+    r = jnp.linalg.multi_dot(new_arrays, precision=precision, **kwargs)
     if unit.is_unitless:
         return r
     return Quantity(r, unit=unit)
@@ -1138,7 +1160,8 @@ def vdot(
     b: Union[jax.typing.ArrayLike, Quantity],
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None
+    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Perform a conjugate multiplication of two 1D vectors.
@@ -1177,7 +1200,7 @@ def vdot(
                                    lambda x, y: x * y,
                                    a, b,
                                    precision=precision,
-                                   preferred_element_type=preferred_element_type)
+                                   preferred_element_type=preferred_element_type, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1187,7 +1210,8 @@ def vecdot(
     /, *,
     axis: int = -1,
     precision: jax.lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None
+    preferred_element_type: jax.typing.DTypeLike | None = None,
+    **kwargs,
 ):
     """
     Perform a conjugate multiplication of two batched vectors.
@@ -1230,7 +1254,7 @@ def vecdot(
                                    a, b,
                                    axis=axis,
                                    precision=precision,
-                                   preferred_element_type=preferred_element_type)
+                                   preferred_element_type=preferred_element_type, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1239,7 +1263,8 @@ def inner(
     b: Union[jax.typing.ArrayLike, Quantity],
     *,
     precision: jax.lax.PrecisionLike = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None
+    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Compute the inner product of two arrays or quantities.
@@ -1279,14 +1304,15 @@ def inner(
                                    lambda x, y: x * y,
                                    a, b,
                                    precision=precision,
-                                   preferred_element_type=preferred_element_type)
+                                   preferred_element_type=preferred_element_type, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
 def outer(
     a: Union[jax.typing.ArrayLike, Quantity],
     b: Union[jax.typing.ArrayLike, Quantity],
-    out: Optional[Any] = None
+    out: Optional[Any] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Compute the outer product of two vectors or quantities.
@@ -1323,13 +1349,14 @@ def outer(
     return _fun_change_unit_binary(jnp.outer,
                                    lambda x, y: x * y,
                                    a, b,
-                                   out=out)
+                                   out=out, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
 def kron(
     a: Union[jax.typing.ArrayLike, Quantity],
-    b: Union[jax.typing.ArrayLike, Quantity]
+    b: Union[jax.typing.ArrayLike, Quantity],
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Compute the Kronecker product of two arrays or quantities.
@@ -1360,7 +1387,7 @@ def kron(
     """
     return _fun_change_unit_binary(jnp.kron,
                                    lambda x, y: x * y,
-                                   a, b)
+                                   a, b, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1369,7 +1396,8 @@ def matmul(
     b: Union[jax.typing.ArrayLike, Quantity],
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None
+    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Compute the matrix product of two arrays or quantities.
@@ -1407,7 +1435,7 @@ def matmul(
                                    lambda x, y: x * y,
                                    a, b,
                                    precision=precision,
-                                   preferred_element_type=preferred_element_type)
+                                   preferred_element_type=preferred_element_type, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1416,7 +1444,8 @@ def tensordot(
     b: Union[jax.typing.ArrayLike, Quantity],
     axes: int | Sequence[int] | Sequence[Sequence[int]] = 2,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None
+    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """
     Compute tensor dot product along specified axes.
@@ -1457,13 +1486,14 @@ def tensordot(
                                    a, b,
                                    axes=axes,
                                    precision=precision,
-                                   preferred_element_type=preferred_element_type)
+                                   preferred_element_type=preferred_element_type, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def matrix_power(
     a: Union[jax.typing.ArrayLike, Quantity],
-    n: int
+    n: int,
+    **kwargs,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
     """
     Raise a square matrix to the (integer) power `n`.
@@ -1493,14 +1523,15 @@ def matrix_power(
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
-        return maybe_decimal(Quantity(jnp.linalg.matrix_power(a.mantissa, n), unit=a.unit ** n))
+        return maybe_decimal(Quantity(jnp.linalg.matrix_power(a.mantissa, n, **kwargs), unit=a.unit ** n))
     else:
-        return jnp.linalg.matrix_power(a, n)
+        return jnp.linalg.matrix_power(a, n, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def det(
     a: Union[jax.typing.ArrayLike, Quantity],
+    **kwargs,
 ) -> Union[jax.typing.ArrayLike, Quantity]:
     """Compute the determinant of a matrix.
 
@@ -1539,6 +1570,6 @@ def det(
         else:
             msg = "Argument to _det() must have shape [..., n, n], got {}"
             raise ValueError(msg.format(a_shape))
-        return Quantity(jnp.linalg.det(a.mantissa), unit=new_unit)
+        return Quantity(jnp.linalg.det(a.mantissa, **kwargs), unit=new_unit)
     else:
-        return jnp.linalg.det(a)
+        return jnp.linalg.det(a, **kwargs)

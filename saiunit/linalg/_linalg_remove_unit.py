@@ -33,7 +33,8 @@ __all__ = [
 @set_module_as('saiunit.linalg')
 def cond(
     x: Union[jax.typing.ArrayLike, Quantity],
-    p=None
+    p=None,
+    **kwargs,
 ) -> jax.Array:
     """Compute the condition number of a matrix.
 
@@ -95,7 +96,7 @@ def cond(
         >>> u.linalg.cond(x)
         Array(inf, dtype=float32)
     """
-    return _fun_remove_unit_unary(jnp.linalg.cond, x, p=p)
+    return _fun_remove_unit_unary(jnp.linalg.cond, x, p=p, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
@@ -103,7 +104,8 @@ def matrix_rank(
     M: Union[jax.typing.ArrayLike, Quantity],
     rtol: Optional[Union[jax.typing.ArrayLike, Quantity]] = None,
     *,
-    tol: jax.typing.ArrayLike | None = None
+    tol: jax.typing.ArrayLike | None = None,
+    **kwargs,
 ) -> jax.Array:
     """Compute the rank of a matrix.
 
@@ -170,14 +172,15 @@ def matrix_rank(
         >>> u.linalg.matrix_rank(b)
         Array(1, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.linalg.matrix_rank, M, rtol=rtol, tol=tol)
+    return _fun_remove_unit_unary(jnp.linalg.matrix_rank, M, rtol=rtol, tol=tol, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
 def slogdet(
     a: Union[jax.typing.ArrayLike, Quantity],
     *,
-    method: str | None = None
+    method: str | None = None,
+    **kwargs,
 ) -> tuple[jax.Array, jax.Array]:
     """Compute the sign and (natural) logarithm of the absolute determinant.
 
@@ -237,5 +240,5 @@ def slogdet(
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
-        return jnp.linalg.slogdet(a.mantissa, method=method)
-    return jnp.linalg.slogdet(a, method=method)
+        return jnp.linalg.slogdet(a.mantissa, method=method, **kwargs)
+    return jnp.linalg.slogdet(a, method=method, **kwargs)
