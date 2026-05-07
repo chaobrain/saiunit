@@ -235,3 +235,8 @@ cython_debug/
 /.claude/
 /dev/replace_all.py
 /dev/prompt/
+
+# brainx-sphinx-header build artifacts
+docs/_brand/
+docs/_static/css/brainx-header.css
+docs/_static/js/brainx-header.js
