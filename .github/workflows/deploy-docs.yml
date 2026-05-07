@@ -48,6 +48,12 @@ jobs:
           BRAINX_HEADER_TTL: "0"
           TARGET: brainunit
         run: |
+          # make_brainunit_doc.py rewrites paths via str.replace('saiunit','brainunit'),
+          # which assumes a sibling brainunit/ checkout. In CI, GITHUB_WORKSPACE is
+          # /home/runner/work/saiunit/saiunit, so we provide a symlink at the
+          # mangled path so the rewritten files land back in this checkout.
+          mkdir -p "$RUNNER_WORKSPACE/../brainunit"
+          ln -sfn "$GITHUB_WORKSPACE" "$RUNNER_WORKSPACE/../brainunit/brainunit"
           sphinx-build -b html docs docs/_build/html
           test -f docs/_build/html/index.html
 
