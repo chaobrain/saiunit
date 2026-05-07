@@ -46,6 +46,7 @@ jobs:
       - name: Build documentation
         env:
           BRAINX_HEADER_TTL: "0"
+          TARGET: brainunit
         run: |
           sphinx-build -b html docs docs/_build/html
           test -f docs/_build/html/index.html
