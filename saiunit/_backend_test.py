@@ -374,3 +374,35 @@ def test_get_backend_dask_default_for_mixed():
         assert xp is expected
     finally:
         set_default_backend(None)
+
+
+def test_to_backend_numpy_to_dask_default_chunks():
+    da = pytest.importorskip("dask.array")
+    from saiunit._backend import to_backend, is_dask_array
+    arr = np.array([1.0, 2.0, 3.0, 4.0])
+    out = to_backend(arr, "dask")
+    assert is_dask_array(out)
+    assert tuple(out.compute()) == (1.0, 2.0, 3.0, 4.0)
+
+
+def test_to_backend_numpy_to_dask_custom_chunks():
+    da = pytest.importorskip("dask.array")
+    from saiunit._backend import to_backend
+    arr = np.arange(8, dtype=np.float64)
+    out = to_backend(arr, "dask", chunks=2)
+    assert out.numblocks == (4,)
+
+
+def test_to_backend_dask_noop():
+    da = pytest.importorskip("dask.array")
+    from saiunit._backend import to_backend
+    arr = da.from_array(np.array([1.0]), chunks=1)
+    out = to_backend(arr, "dask")
+    assert out is arr
+
+
+def test_to_backend_dask_rejects_unknown_kwarg():
+    pytest.importorskip("dask.array")
+    from saiunit._backend import to_backend
+    with pytest.raises(TypeError, match="does not accept"):
+        to_backend(np.array([1.0]), "dask", device="cuda")

@@ -301,4 +301,18 @@ def to_backend(x, name: BackendName, **kwargs):
             return x
         # torch.as_tensor shares memory where possible; we accept that.
         return torch.as_tensor(x, device=device, dtype=dtype)
-    raise ValueError(f"backend must be one of 'numpy', 'jax', 'cupy', 'torch'; got {name!r}")
+    if name == "dask":
+        da = _try_import("dask.array")
+        if da is None:
+            raise BackendError(
+                "dask backend requested but dask is not installed. "
+                "Install with: pip install saiunit[dask]"
+            )
+        unknown = set(kwargs) - {"chunks"}
+        if unknown:
+            raise TypeError(f"to_backend(name='dask') does not accept {sorted(unknown)}")
+        if is_dask_array(x) and "chunks" not in kwargs:
+            return x
+        chunks = kwargs.get("chunks", "auto")
+        return da.from_array(x, chunks=chunks)
+    raise ValueError(f"backend must be one of 'numpy', 'jax', 'cupy', 'torch', 'dask'; got {name!r}")
