@@ -70,7 +70,7 @@ __all__ = [
     "to_backend",
 ]
 
-BackendName = Literal["numpy", "jax", "cupy", "torch", "dask"]
+BackendName = Literal["numpy", "jax", "cupy", "torch", "dask", "ndonnx"]
 
 _default_backend: ContextVar[Optional[BackendName]] = ContextVar(
     "saiunit_default_backend", default=None
@@ -191,6 +191,14 @@ def _xp_for(name: BackendName) -> ModuleType:
                 "Install with: pip install saiunit[dask]"
             )
         import array_api_compat.dask.array as mod  # noqa: F811
+    elif name == "ndonnx":
+        ndonnx = _try_import("ndonnx")
+        if ndonnx is None:
+            raise BackendError(
+                "ndonnx backend requested but ndonnx is not installed. "
+                "Install with: pip install saiunit[ndonnx]"
+            )
+        mod = ndonnx  # ndonnx is itself array-API-compatible
     else:
         raise ValueError(f"unknown backend: {name!r}")
     _XP_CACHE[name] = mod
@@ -217,11 +225,12 @@ def get_backend(*arrays_or_quantities) -> ModuleType:
     has_cupy = any(is_cupy_array(x) for x in mantissas)
     has_torch = any(is_torch_array(x) for x in mantissas)
     has_dask = any(is_dask_array(x) for x in mantissas)
+    has_ndonnx = any(is_ndonnx_array(x) for x in mantissas)
 
     kinds = [name for name, has in
              [("numpy", has_numpy), ("jax", has_jax),
               ("cupy", has_cupy), ("torch", has_torch),
-              ("dask", has_dask)] if has]
+              ("dask", has_dask), ("ndonnx", has_ndonnx)] if has]
 
     if len(kinds) == 1:
         return _xp_for(kinds[0])

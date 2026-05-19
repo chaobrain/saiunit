@@ -441,3 +441,16 @@ def test_is_ndonnx_array_true_when_available():
     from saiunit._backend import is_ndonnx_array
     arr = ndonnx.asarray(np.array([1.0, 2.0]))
     assert is_ndonnx_array(arr) is True
+
+
+def test_backend_name_includes_ndonnx():
+    from saiunit._backend import BackendName
+    import typing
+    assert "ndonnx" in typing.get_args(BackendName)
+
+
+def test_get_backend_ndonnx_only():
+    ndonnx = pytest.importorskip("ndonnx")
+    from saiunit._backend import get_backend
+    xp = get_backend(ndonnx.asarray(np.array([1.0])))
+    assert xp is ndonnx
