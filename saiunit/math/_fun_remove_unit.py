@@ -19,8 +19,10 @@ from typing import (Union, Optional, Sequence)
 import jax
 import jax.numpy as jnp
 
+from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
 from saiunit._base_quantity import Quantity
+from ._fun_keep_unit import _resolve_for_backend
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
@@ -80,9 +82,12 @@ def _fun_remove_unit_unary(func, x, *args, **kwargs):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
-        # x = x.factorless()
+        xp = get_backend(x.mantissa)
+        func = _resolve_for_backend(func, xp)
         return func(x.mantissa, *args, **kwargs)
     else:
+        xp = get_backend(x)
+        func = _resolve_for_backend(func, xp)
         return func(x, *args, **kwargs)
 
 
@@ -366,6 +371,9 @@ def _fun_logic_unary(func, x, *args, **kwargs):
                 f'{func.__name__} requires a dimensionless input, '
                 f'but got x with unit={x.unit}. Strip the unit from x before calling {func.__name__}.'
             )
+        x = x.mantissa
+    xp = get_backend(x)
+    func = _resolve_for_backend(func, xp)
     return func(x, *args, **kwargs)
 
 
@@ -507,28 +515,33 @@ def _fun_logic_binary(func, x, y, *args, **kwargs):
     y = maybe_custom_array(y)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity) and isinstance(y, Quantity):
-        # x = x.factorless()
-        # y = y.factorless()
-        return func(x.mantissa, y.in_unit(x.unit).mantissa, *args, **kwargs)
+        xm, ym = x.mantissa, y.in_unit(x.unit).mantissa
+        xp = get_backend(xm, ym)
+        func = _resolve_for_backend(func, xp)
+        return func(xm, ym, *args, **kwargs)
     elif isinstance(x, Quantity):
-        # x = x.factorless()
         if not x.is_unitless:
             raise TypeError(
                 f'{func.__name__} requires "x" to be dimensionless when "y" is a plain array, '
                 f'but got x with unit={x.unit}. '
                 f'Either pass a Quantity for y with matching units, or strip the unit from x.'
             )
+        xp = get_backend(x.mantissa, y)
+        func = _resolve_for_backend(func, xp)
         return func(x.mantissa, y, *args, **kwargs)
     elif isinstance(y, Quantity):
-        # y = y.factorless()
         if not y.is_unitless:
             raise TypeError(
                 f'{func.__name__} requires "y" to be dimensionless when "x" is a plain array, '
                 f'but got y with unit={y.unit}. '
                 f'Either pass a Quantity for x with matching units, or strip the unit from y.'
             )
+        xp = get_backend(x, y.mantissa)
+        func = _resolve_for_backend(func, xp)
         return func(x, y.mantissa, *args, **kwargs)
     else:
+        xp = get_backend(x, y)
+        func = _resolve_for_backend(func, xp)
         return func(x, y, *args, **kwargs)
 
 

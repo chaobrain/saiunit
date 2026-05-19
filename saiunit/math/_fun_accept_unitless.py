@@ -19,8 +19,10 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
+from saiunit._backend import get_backend
 from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
+from ._fun_keep_unit import _resolve_for_backend
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 from ._exprel import exprel as _exprel_impl, set_exprel_order
 
@@ -95,19 +97,22 @@ def _fun_accept_unitless_unary(
     kwargs = maybe_custom_array_tree(kwargs)
 
     if isinstance(x, Quantity):
-        # x = x.factorless()
         if unit_to_scale is None:
             if not x.dim.is_dimensionless:
                 raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
             x = x.to_decimal()
-            return func(x, *args, **kwargs)
         else:
             if not isinstance(unit_to_scale, Unit):
                 raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
-            return func(x.to_decimal(unit_to_scale), *args, **kwargs)
+            x = x.to_decimal(unit_to_scale)
+        xp = get_backend(x)
+        func = _resolve_for_backend(func, xp)
+        return func(x, *args, **kwargs)
     else:
         if unit_to_scale is not None:
             raise TypeError(_unit_to_scale_without_quantity_message(func, x))
+        xp = get_backend(x)
+        func = _resolve_for_backend(func, xp)
         return func(x, *args, **kwargs)
 
 
@@ -1030,7 +1035,6 @@ def _fun_accept_unitless_binary(
     kwargs = maybe_custom_array_tree(kwargs)
 
     if isinstance(x, Quantity):
-        # x = x.factorless()
         if unit_to_scale is None:
             if not x.dim.is_dimensionless:
                 raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
@@ -1040,7 +1044,6 @@ def _fun_accept_unitless_binary(
                 raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
             x = x.to_decimal(unit_to_scale)
     if isinstance(y, Quantity):
-        # y = y.factorless()
         if unit_to_scale is None:
             if not y.dim.is_dimensionless:
                 raise TypeError(_dimensionless_required_message(func, y, arg_name='y'))
@@ -1049,6 +1052,8 @@ def _fun_accept_unitless_binary(
             if not isinstance(unit_to_scale, Unit):
                 raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
             y = y.to_decimal(unit_to_scale)
+    xp = get_backend(x, y)
+    func = _resolve_for_backend(func, xp)
     return func(x, y, *args, **kwargs)
 
 
@@ -1491,15 +1496,15 @@ def _fun_unitless_binary(func, x, y, *args, **kwargs):
     kwargs = maybe_custom_array_tree(kwargs)
 
     if isinstance(x, Quantity):
-        # x = x.factorless()
         if not x.dim.is_dimensionless:
             raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
         x = x.to_decimal()
     if isinstance(y, Quantity):
-        # y = y.factorless()
         if not y.dim.is_dimensionless:
             raise TypeError(_dimensionless_required_message(func, y, arg_name='y'))
         y = y.to_decimal()
+    xp = get_backend(x, y)
+    func = _resolve_for_backend(func, xp)
     return func(x, y, *args, **kwargs)
 
 

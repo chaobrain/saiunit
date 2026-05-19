@@ -703,3 +703,13 @@ class TestDocstringExamples(unittest.TestCase):
         result = bm.sign(q)
         expected = jnp.array([-1.0, 0.0, 1.0])
         assert jnp.array_equal(result, expected)
+
+
+def test_argmax_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.array([3.0, 1.0, 2.0]), unit=meter)
+    r = u.math.argmax(q)
+    # argmax strips units; numpy/jax returns an integer-like result
+    assert int(r) == 0
