@@ -113,3 +113,70 @@ checks fire identically:
 np.float64(5) + u.Quantity(np.array([1.0]), unit=u.meter)
 # raises UnitMismatchError (the scalar is dimensionless)
 ```
+
+## CuPy (GPU)
+
+`saiunit` accepts `cupy.ndarray` mantissas via the optional `cupy` extra:
+
+```bash
+pip install saiunit[cupy]
+```
+
+```python
+import cupy
+import saiunit as u
+
+q = u.Quantity(cupy.array([1.0, 2.0, 3.0]), unit=u.meter)
+print(q.backend)            # 'cupy'
+print((q + q).backend)      # 'cupy'
+print(u.math.sin(q / u.meter))  # cupy.ndarray
+```
+
+Convert from another backend with `Quantity.to_cupy(device=...)`:
+
+```python
+q_cpu = u.Quantity([1.0, 2.0], unit=u.meter)
+q_gpu = q_cpu.to_cupy(device=0)
+```
+
+CuPy is GPU-only; the import will fail without a CUDA installation. saiunit
+raises `BackendError` (not `ImportError`) when CuPy is missing.
+
+## PyTorch
+
+`saiunit` accepts `torch.Tensor` mantissas via the optional `torch` extra:
+
+```bash
+pip install saiunit[torch]
+```
+
+```python
+import torch
+import saiunit as u
+
+q = u.Quantity(torch.tensor([1.0, 2.0, 3.0]), unit=u.meter)
+print(q.backend)        # 'torch'
+print((q + q).backend)  # 'torch'
+```
+
+Convert with `Quantity.to_torch(device=..., dtype=...)`. `dtype` accepts a
+torch dtype (e.g. `torch.float32`) or a numpy dtype (e.g. `np.float32`):
+
+```python
+q_cpu  = u.Quantity([1.0, 2.0], unit=u.meter)
+q_cuda = q_cpu.to_torch(device='cuda')
+q_f64  = q_cpu.to_torch(dtype=torch.float64)
+```
+
+### Gradients
+
+Wrapping a tensor with `requires_grad=True` preserves the autograd graph
+through saiunit operations, but `saiunit.autograd.grad` itself remains
+JAX-only. Use `torch.autograd.grad` on the mantissa for backward passes:
+
+```python
+x = torch.tensor([1.0, 2.0], requires_grad=True)
+q = u.Quantity(x, unit=u.meter) * 2.0
+loss = q.mantissa.sum()
+grads = torch.autograd.grad(loss, x)
+```
