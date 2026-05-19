@@ -234,3 +234,49 @@ single.mantissa.compute()  # numpy array; now eager
 Mixing a dask-backed and a non-dask-backed `Quantity` in arithmetic falls
 through the default-backend tiebreaker. If the result lands on dask, the
 non-dask operand is auto-lifted to a dask array.
+
+## ndonnx: symbolic / ONNX export
+
+`saiunit` accepts `ndonnx.Array` mantissas via the optional `ndonnx` extra:
+
+```bash
+pip install saiunit[ndonnx]
+```
+
+```python
+import numpy as np
+import ndonnx
+import saiunit as u
+
+q = u.Quantity(ndonnx.asarray(np.array([1.0, 2.0, 3.0])), unit=u.meter)
+print(q.backend)        # 'ndonnx'
+print((q + q).backend)  # 'ndonnx' — still symbolic
+```
+
+Convert with `Quantity.to_ndonnx()`:
+
+```python
+q_np = u.Quantity(np.array([1.0, 2.0]), unit=u.meter)
+q_nd = q_np.to_ndonnx()
+```
+
+### What works
+
+Dispatch routes correctly: `q + q`, `q * 2`, `u.math.sin(q / u.meter)`, and
+other array-API-standard operations build the ONNX graph as expected.
+Dimensional analysis is independent of backend — `meter + second` still
+raises `UnitMismatchError`.
+
+### What may not work
+
+ndonnx is still maturing; some `saiunit.math` / `saiunit.linalg` operations
+may not have ndonnx implementations. When that happens, the ndonnx error
+surfaces unwrapped — saiunit does not catch it. Consult the ndonnx
+documentation for the supported op set.
+
+### Exporting
+
+Use ndonnx's own export workflow on the mantissa once your computation is
+built. saiunit does not provide saiunit-level export helpers; the unit
+information lives on the Python `Quantity` object and is not encoded in
+the ONNX graph.
