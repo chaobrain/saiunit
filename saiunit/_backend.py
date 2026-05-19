@@ -28,6 +28,8 @@ and ``array_api_compat`` returns it unmodified.
 
 from __future__ import annotations
 
+import functools
+import importlib
 from contextlib import contextmanager
 from contextvars import ContextVar
 from types import ModuleType
@@ -38,6 +40,21 @@ import jax
 import jax.numpy as _jax_xp
 import jax.numpy as jnp
 import numpy as np
+
+from saiunit._exceptions import BackendError
+
+
+@functools.lru_cache(maxsize=None)
+def _try_import(module_name: str):
+    """Import ``module_name`` and return it, or ``None`` on ImportError.
+
+    Results are cached so failed imports aren't retried on every call.
+    Never raises.
+    """
+    try:
+        return importlib.import_module(module_name)
+    except ImportError:
+        return None
 
 __all__ = [
     "get_backend",

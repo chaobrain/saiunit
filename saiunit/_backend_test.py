@@ -132,3 +132,22 @@ def test_get_backend_scalar_no_default_uses_jax():
     import jax.numpy as expected
     xp = get_backend(1.0)
     assert xp is expected
+
+
+def test_try_import_returns_module_when_present():
+    from saiunit._backend import _try_import
+    np_mod = _try_import("numpy")
+    assert np_mod is not None
+    assert hasattr(np_mod, "asarray")
+
+
+def test_try_import_returns_none_when_missing():
+    from saiunit._backend import _try_import
+    assert _try_import("definitely_not_a_real_package_xyz") is None
+
+
+def test_try_import_is_cached():
+    from saiunit._backend import _try_import
+    a = _try_import("numpy")
+    b = _try_import("numpy")
+    assert a is b
