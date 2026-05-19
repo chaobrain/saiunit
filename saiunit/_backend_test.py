@@ -334,3 +334,17 @@ def test_top_level_exports_new_detectors():
     assert hasattr(u, "is_torch_array")
     assert "is_cupy_array" in u.__all__
     assert "is_torch_array" in u.__all__
+
+
+def test_is_dask_array_false_for_non_dask():
+    from saiunit._backend import is_dask_array
+    assert is_dask_array(np.array([1.0])) is False
+    assert is_dask_array(jnp.array([1.0])) is False
+    assert is_dask_array(1.0) is False
+
+
+def test_is_dask_array_true_when_available():
+    da = pytest.importorskip("dask.array")
+    from saiunit._backend import is_dask_array
+    arr = da.from_array(np.array([1.0, 2.0]), chunks=1)
+    assert is_dask_array(arr) is True

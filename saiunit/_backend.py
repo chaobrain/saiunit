@@ -65,6 +65,7 @@ __all__ = [
     "is_numpy_array",
     "is_cupy_array",
     "is_torch_array",
+    "is_dask_array",
     "to_backend",
 ]
 
@@ -104,6 +105,14 @@ def is_torch_array(x) -> bool:
     if torch is None:
         return False
     return isinstance(x, torch.Tensor)
+
+
+def is_dask_array(x) -> bool:
+    """Return True if ``x`` is a dask Array. False if dask is not installed."""
+    da = _try_import("dask.array")
+    if da is None:
+        return False
+    return isinstance(x, da.Array)
 
 
 def get_default_backend() -> Optional[BackendName]:
