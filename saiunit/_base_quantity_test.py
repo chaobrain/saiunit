@@ -1914,3 +1914,38 @@ def test_quantity_to_cupy_with_device():
     q = u.Quantity(np.array([1.0]), unit=u.meter)
     q2 = q.to_cupy(device=0)
     assert is_cupy_array(q2.mantissa)
+
+
+def test_quantity_to_torch_basic():
+    torch = pytest.importorskip("torch")
+    import saiunit as u
+    from saiunit._backend import is_torch_array
+    q = u.Quantity(np.array([1.0, 2.0]), unit=u.meter)
+    q2 = q.to_torch()
+    assert is_torch_array(q2.mantissa)
+    assert q2.unit == u.meter
+
+
+def test_quantity_to_torch_noop_when_already_torch():
+    torch = pytest.importorskip("torch")
+    import saiunit as u
+    q = u.Quantity(torch.tensor([1.0]), unit=u.meter)
+    q2 = q.to_torch()
+    assert q2 is q
+
+
+def test_quantity_to_torch_with_dtype_numpy_mapped():
+    torch = pytest.importorskip("torch")
+    import saiunit as u
+    q = u.Quantity(np.array([1.0]), unit=u.meter)
+    q2 = q.to_torch(dtype=np.float64)
+    assert q2.mantissa.dtype == torch.float64
+
+
+def test_quantity_to_torch_preserves_requires_grad_chain():
+    torch = pytest.importorskip("torch")
+    import saiunit as u
+    t = torch.tensor([1.0, 2.0], requires_grad=True)
+    q = u.Quantity(t, unit=u.meter)
+    q2 = q.to_torch()  # noop — still the same tensor
+    assert q2.mantissa.requires_grad is True

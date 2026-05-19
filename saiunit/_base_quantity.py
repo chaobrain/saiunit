@@ -1175,6 +1175,23 @@ class Quantity:
         kwargs = {} if device is None else {"device": device}
         return Quantity(to_backend(self._mantissa, "cupy", **kwargs), unit=self.unit)
 
+    def to_torch(self, *, device=None, dtype=None) -> 'Quantity':
+        """Return a new Quantity with mantissa converted to a ``torch.Tensor``.
+
+        No-op (returns ``self``) if the mantissa is already a torch tensor and
+        no ``device``/``dtype`` was specified. ``dtype`` accepts either a torch
+        dtype (e.g. ``torch.float32``) or a numpy dtype (e.g. ``np.float32``).
+        """
+        from saiunit._backend import is_torch_array, to_backend
+        if is_torch_array(self._mantissa) and device is None and dtype is None:
+            return self
+        kwargs = {}
+        if device is not None:
+            kwargs["device"] = device
+        if dtype is not None:
+            kwargs["dtype"] = dtype
+        return Quantity(to_backend(self._mantissa, "torch", **kwargs), unit=self.unit)
+
     @property
     def shape(self) -> tuple[int, ...]:
         """
