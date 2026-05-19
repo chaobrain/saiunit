@@ -111,6 +111,8 @@ def slice(
                [ 4,  6],
                [ 8, 10]], dtype=int32)
     """
+    from saiunit._jax_guard import require_jax_backend
+    require_jax_backend("saiunit.lax.slice", operand)
     return _fun_keep_unit_unary(lax.slice, operand, start_indices, limit_indices, strides, **kwargs)
 
 

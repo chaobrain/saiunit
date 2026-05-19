@@ -974,3 +974,12 @@ class TestLaxKeepUnitDocstringExamples:
         expected_vals = jnp.array([10, 20, 30])
         assert_quantity(sorted_keys, expected_keys, unit=u.meter)
         assert jnp.all(sorted_vals == expected_vals)
+
+
+def test_lax_slice_raises_on_numpy_quantity():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.arange(6.0).reshape(2, 3), unit=meter)
+    with pytest.raises(u.BackendError, match="requires the jax backend"):
+        u.lax.slice(q, (0, 0), (1, 2))

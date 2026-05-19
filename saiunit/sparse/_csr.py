@@ -115,6 +115,8 @@ class CSR(SparseMatrix):
 
     @classmethod
     def fromdense(cls, mat, *, nse=None, index_dtype=np.int32):
+        from saiunit._jax_guard import require_jax_backend
+        require_jax_backend("CSR.fromdense", mat)
         if nse is None:
             nse = (get_mantissa(mat) != 0).sum()
         return csr_fromdense(mat, nse=nse, index_dtype=index_dtype)

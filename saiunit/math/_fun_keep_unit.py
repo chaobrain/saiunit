@@ -82,11 +82,12 @@ __all__ = [
 def _resolve_for_backend(func, xp):
     """Return an equivalent of ``func`` on backend namespace ``xp``.
 
-    If ``func`` is a string, look it up directly on ``xp``. If ``func`` is a
-    JAX (or any) callable with a ``__name__`` attribute, look up that name on
-    ``xp`` and fall back to ``func`` itself if not present. Functions that
-    came from a nested namespace (``jax.numpy.linalg``, ``jax.numpy.fft``)
-    are resolved against the corresponding subnamespace on ``xp``.
+    Only functions that originated in the array-API namespace
+    (``jax.numpy``, its ``.linalg`` / ``.fft`` subnamespaces, plain
+    ``numpy``, or ``array_api_compat.numpy``) are redirected. Functions
+    from ``jax.lax``, ``jax.experimental``, or anywhere else keep the
+    callable the caller passed in — their signatures don't match a
+    backend swap.
     """
     if isinstance(func, str):
         return getattr(xp, func)
@@ -94,11 +95,30 @@ def _resolve_for_backend(func, xp):
     if name is None:
         return func
     module = getattr(func, "__module__", "") or ""
-    if module.endswith(".linalg") and hasattr(xp, "linalg"):
+    if module.endswith(".linalg") and ("numpy" in module) and hasattr(xp, "linalg"):
         return getattr(xp.linalg, name, func)
-    if module.endswith(".fft") and hasattr(xp, "fft"):
+    if module.endswith(".fft") and ("numpy" in module) and hasattr(xp, "fft"):
         return getattr(xp.fft, name, func)
+    # Only redirect functions that look like they live in a ``numpy``-flavored
+    # namespace. ``jax.lax``, ``jax.experimental``, etc. are off-limits.
+    if not _looks_like_numpy_namespace(module):
+        return func
     return getattr(xp, name, func)
+
+
+def _looks_like_numpy_namespace(module: str) -> bool:
+    """Heuristic: is ``module`` part of a ``numpy``-style array-API namespace?"""
+    if not module:
+        return False
+    if module == "numpy" or module.startswith("numpy."):
+        return True
+    if module == "jax.numpy" or module.startswith("jax.numpy."):
+        return True
+    if module == "jax._src.numpy" or module.startswith("jax._src.numpy."):
+        return True
+    if module == "array_api_compat.numpy" or module.startswith("array_api_compat.numpy."):
+        return True
+    return False
 
 
 def _fun_keep_unit_sequence(
