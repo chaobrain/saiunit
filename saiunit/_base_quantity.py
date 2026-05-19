@@ -1012,6 +1012,11 @@ class Quantity:
     def _format_value(self, precision: int | None = None) -> str:
         """Format the mantissa value as a string."""
         m = self.mantissa
+        # Lazy backends (dask) print their own task-graph summary; never
+        # materialize to format. ``repr(m)`` is lazy-safe for dask arrays.
+        from saiunit._backend import is_dask_array
+        if is_dask_array(m):
+            return repr(m)
         if isinstance(m, (jax.Array, np.ndarray)):
             value = m
         else:
