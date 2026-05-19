@@ -66,6 +66,7 @@ __all__ = [
     "is_cupy_array",
     "is_torch_array",
     "is_dask_array",
+    "is_ndonnx_array",
     "to_backend",
 ]
 
@@ -113,6 +114,14 @@ def is_dask_array(x) -> bool:
     if da is None:
         return False
     return isinstance(x, da.Array)
+
+
+def is_ndonnx_array(x) -> bool:
+    """Return True if ``x`` is an ndonnx Array. False if ndonnx is not installed."""
+    ndonnx = _try_import("ndonnx")
+    if ndonnx is None:
+        return False
+    return isinstance(x, ndonnx.Array)
 
 
 def get_default_backend() -> Optional[BackendName]:
