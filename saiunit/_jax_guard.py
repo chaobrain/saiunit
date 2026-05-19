@@ -37,7 +37,7 @@ def require_jax_backend(func_name: str, *quantities_or_arrays) -> None:
     """
     from saiunit._base_quantity import Quantity
     from saiunit._backend import (
-        is_cupy_array, is_torch_array, is_dask_array,
+        is_cupy_array, is_torch_array, is_dask_array, is_ndonnx_array,
     )
 
     for q in quantities_or_arrays:
@@ -63,6 +63,11 @@ def require_jax_backend(func_name: str, *quantities_or_arrays) -> None:
         if is_dask_array(q):
             raise BackendError(
                 f"{func_name} requires the jax backend; got dask array. "
+                f"Convert to a JAX array first."
+            )
+        if is_ndonnx_array(q):
+            raise BackendError(
+                f"{func_name} requires the jax backend; got ndonnx array. "
                 f"Convert to a JAX array first."
             )
         # Anything else (numpy ndarray, jax array, python scalar) is fine.

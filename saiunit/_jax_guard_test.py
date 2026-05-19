@@ -88,3 +88,17 @@ def test_require_jax_rejects_bare_dask_array():
     arr = da.from_array(np.array([1.0]), chunks=1)
     with pytest.raises(u.BackendError, match="dask"):
         require_jax_backend("test_fn", arr)
+
+
+def test_require_jax_raises_for_ndonnx_quantity():
+    ndonnx = pytest.importorskip("ndonnx")
+    q = u.Quantity(ndonnx.asarray(np.array([1.0])), unit=u.meter)
+    with pytest.raises(u.BackendError, match="ndonnx-backed Quantity"):
+        require_jax_backend("test_fn", q)
+
+
+def test_require_jax_rejects_bare_ndonnx_array():
+    ndonnx = pytest.importorskip("ndonnx")
+    arr = ndonnx.asarray(np.array([1.0]))
+    with pytest.raises(u.BackendError, match="ndonnx"):
+        require_jax_backend("test_fn", arr)
