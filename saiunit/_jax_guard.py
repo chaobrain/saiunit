@@ -37,7 +37,7 @@ def require_jax_backend(func_name: str, *quantities_or_arrays) -> None:
     """
     from saiunit._base_quantity import Quantity
     from saiunit._backend import (
-        is_cupy_array, is_torch_array,
+        is_cupy_array, is_torch_array, is_dask_array,
     )
 
     for q in quantities_or_arrays:
@@ -49,7 +49,7 @@ def require_jax_backend(func_name: str, *quantities_or_arrays) -> None:
                     f"{backend}-backed Quantity. Call .to_jax() on the input first."
                 )
             continue
-        # Bare arrays: reject cupy/torch; tolerate numpy + jax + scalars.
+        # Bare arrays: reject cupy/torch/dask; tolerate numpy + jax + scalars.
         if is_cupy_array(q):
             raise BackendError(
                 f"{func_name} requires the jax backend; got cupy array. "
@@ -58,6 +58,11 @@ def require_jax_backend(func_name: str, *quantities_or_arrays) -> None:
         if is_torch_array(q):
             raise BackendError(
                 f"{func_name} requires the jax backend; got torch tensor. "
+                f"Convert to a JAX array first."
+            )
+        if is_dask_array(q):
+            raise BackendError(
+                f"{func_name} requires the jax backend; got dask array. "
                 f"Convert to a JAX array first."
             )
         # Anything else (numpy ndarray, jax array, python scalar) is fine.

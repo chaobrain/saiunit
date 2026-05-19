@@ -74,3 +74,17 @@ def test_require_jax_rejects_bare_cupy_array():
     arr = cupy.array([1.0])
     with pytest.raises(u.BackendError, match="cupy"):
         require_jax_backend("test_fn", arr)
+
+
+def test_require_jax_raises_for_dask_quantity():
+    da = pytest.importorskip("dask.array")
+    q = u.Quantity(da.from_array(np.array([1.0]), chunks=1), unit=u.meter)
+    with pytest.raises(u.BackendError, match="dask-backed Quantity"):
+        require_jax_backend("test_fn", q)
+
+
+def test_require_jax_rejects_bare_dask_array():
+    da = pytest.importorskip("dask.array")
+    arr = da.from_array(np.array([1.0]), chunks=1)
+    with pytest.raises(u.BackendError, match="dask"):
+        require_jax_backend("test_fn", arr)
