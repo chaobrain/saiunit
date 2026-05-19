@@ -1998,3 +1998,21 @@ def test_quantity_backend_dask():
     arr = da.from_array(np.array([1.0]), chunks=1)
     q = u.Quantity(arr, unit=u.meter)
     assert q.backend == "dask"
+
+
+def test_quantity_to_ndonnx_basic():
+    ndonnx = pytest.importorskip("ndonnx")
+    import saiunit as u
+    from saiunit._backend import is_ndonnx_array
+    q = u.Quantity(np.array([1.0, 2.0]), unit=u.meter)
+    q2 = q.to_ndonnx()
+    assert is_ndonnx_array(q2.mantissa)
+    assert q2.unit == u.meter
+
+
+def test_quantity_to_ndonnx_noop():
+    ndonnx = pytest.importorskip("ndonnx")
+    import saiunit as u
+    q = u.Quantity(ndonnx.asarray(np.array([1.0])), unit=u.meter)
+    q2 = q.to_ndonnx()
+    assert q2 is q

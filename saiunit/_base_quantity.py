@@ -1237,6 +1237,18 @@ class Quantity:
             return self
         return Quantity(to_backend(self._mantissa, "dask", chunks=chunks), unit=self.unit)
 
+    def to_ndonnx(self) -> 'Quantity':
+        """Return a new Quantity with mantissa converted to an ``ndonnx.Array``.
+
+        No-op (returns ``self``) if the mantissa is already an ndonnx array.
+        ndonnx arrays are symbolic — operations build an ONNX graph rather than
+        eagerly computing.
+        """
+        from saiunit._backend import is_ndonnx_array, to_backend
+        if is_ndonnx_array(self._mantissa):
+            return self
+        return Quantity(to_backend(self._mantissa, "ndonnx"), unit=self.unit)
+
     @property
     def shape(self) -> tuple[int, ...]:
         """
