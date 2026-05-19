@@ -1949,3 +1949,17 @@ def test_quantity_to_torch_preserves_requires_grad_chain():
     q = u.Quantity(t, unit=u.meter)
     q2 = q.to_torch()  # noop — still the same tensor
     assert q2.mantissa.requires_grad is True
+
+
+def test_quantity_backend_cupy():
+    cupy = pytest.importorskip("cupy")
+    import saiunit as u
+    q = u.Quantity(cupy.array([1.0]), unit=u.meter)
+    assert q.backend == "cupy"
+
+
+def test_quantity_backend_torch():
+    torch = pytest.importorskip("torch")
+    import saiunit as u
+    q = u.Quantity(torch.tensor([1.0]), unit=u.meter)
+    assert q.backend == "torch"
