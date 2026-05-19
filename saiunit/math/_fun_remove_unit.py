@@ -1359,7 +1359,13 @@ def argwhere(
         Array([[1],
                [3]], dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.argwhere, a, size=size, fill_value=fill_value, **kwargs)
+    # ``size`` and ``fill_value`` are JAX-only; suppress them when on NumPy.
+    extra = {}
+    if size is not None:
+        extra['size'] = size
+    if fill_value is not None:
+        extra['fill_value'] = fill_value
+    return _fun_remove_unit_unary(jnp.argwhere, a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1447,9 +1453,13 @@ def flatnonzero(
     a = maybe_custom_array(a)
     fill_value = maybe_custom_array(fill_value)
     a_unit = get_unit(a)
+    # ``size`` and ``fill_value`` are JAX-only; suppress them when on NumPy.
+    extra = {}
+    if size is not None:
+        extra['size'] = size
     if fill_value is not None:
-        fill_value = Quantity(fill_value).in_unit(a_unit).mantissa
-    return _fun_remove_unit_unary(jnp.flatnonzero, a, size=size, fill_value=fill_value, **kwargs)
+        extra['fill_value'] = Quantity(fill_value).in_unit(a_unit).mantissa
+    return _fun_remove_unit_unary(jnp.flatnonzero, a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')

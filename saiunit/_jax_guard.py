@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import functools
 
-from saiunit._backend import is_jax_array
+from saiunit._backend import is_numpy_array
 from saiunit._exceptions import BackendError
 
 
@@ -35,16 +35,17 @@ def require_jax_backend(func_name: str, *quantities_or_arrays) -> None:
     Plain NumPy arrays passed alongside JAX-backed inputs are tolerated —
     JAX accepts them and converts on the fly. The guard is specifically
     against NumPy-backed ``Quantity`` objects, which signal that the user
-    intends NumPy semantics for an operation that requires JAX.
+    intends NumPy semantics for an operation that requires JAX. Quantities
+    wrapping Python scalars or other non-array values are also tolerated;
+    they have no explicit backend choice.
     """
     from saiunit._base_quantity import Quantity
     for q in quantities_or_arrays:
-        if isinstance(q, Quantity):
-            if not is_jax_array(q.mantissa):
-                raise BackendError(
-                    f"{func_name} requires the jax backend; got numpy-backed "
-                    f"Quantity. Call .to_jax() on the input first."
-                )
+        if isinstance(q, Quantity) and is_numpy_array(q.mantissa):
+            raise BackendError(
+                f"{func_name} requires the jax backend; got numpy-backed "
+                f"Quantity. Call .to_jax() on the input first."
+            )
 
 
 def jax_only(fn):

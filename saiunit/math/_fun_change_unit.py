@@ -874,13 +874,19 @@ def convolve(
         >>> v = u.math.array([0.5, 1.0]) * u.second
         >>> u.math.convolve(a, v)  # unit is meter * second
     """
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
     return _fun_change_unit_binary(
         jnp.convolve,
         lambda ux, uy: ux * uy,
         a, v,
         mode=mode,
-        precision=precision,
-        preferred_element_type=preferred_element_type,
+        **extra,
         **kwargs,
     )
 
@@ -1158,12 +1164,17 @@ def multi_dot(
     unit = UNITLESS
     for arr in arrays:
         arr = maybe_custom_array(arr)
-        arr = asarray(arr)
         if isinstance(arr, Quantity):
             unit = unit * arr.unit
             arr = arr.mantissa
         new_arrays.append(arr)
-    r = jnp.linalg.multi_dot(new_arrays, precision=precision, **kwargs)
+    xp = get_backend(*new_arrays)
+    func = _resolve_for_backend(jnp.linalg.multi_dot, xp)
+    # ``precision`` is JAX-only; suppress it when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    r = func(new_arrays, **extra, **kwargs)
     if unit.is_unitless:
         return r
     return Quantity(r, unit=unit)
@@ -1211,11 +1222,17 @@ def vdot(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.vdot(a, b)  # scalar Quantity with unit meter * second
     """
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
     return _fun_change_unit_binary(jnp.vdot,
                                    lambda x, y: x * y,
                                    a, b,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1264,12 +1281,18 @@ def vecdot(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.vecdot(a, b)  # scalar Quantity with unit meter * second
     """
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
     return _fun_change_unit_binary(jnp.vecdot,
                                    lambda x, y: x * y,
                                    a, b,
                                    axis=axis,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1315,11 +1338,17 @@ def inner(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.inner(a, b)  # scalar Quantity with unit meter * second
     """
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
     return _fun_change_unit_binary(jnp.inner,
                                    lambda x, y: x * y,
                                    a, b,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1446,11 +1475,17 @@ def matmul(
         >>> b = u.math.array([[5.0, 6.0], [7.0, 8.0]]) * u.second
         >>> u.math.matmul(a, b)  # shape (2, 2), unit meter * second
     """
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
     return _fun_change_unit_binary(jnp.matmul,
                                    lambda x, y: x * y,
                                    a, b,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1496,12 +1531,18 @@ def tensordot(
         >>> b = u.math.array([[5.0, 6.0], [7.0, 8.0]]) * u.second
         >>> u.math.tensordot(a, b, axes=1)  # unit is meter * second
     """
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
     return _fun_change_unit_binary(jnp.tensordot,
                                    lambda x, y: x * y,
                                    a, b,
                                    axes=axes,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')

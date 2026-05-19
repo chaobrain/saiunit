@@ -24,6 +24,7 @@ from jax._src.typing import Shape
 
 from saiunit._base_getters import has_same_unit, maybe_decimal
 from saiunit._base_quantity import Quantity
+from saiunit._jax_guard import require_jax_backend
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from saiunit.math._fun_keep_unit import _fun_keep_unit_unary, _fun_keep_unit_binary
 
@@ -111,7 +112,6 @@ def slice(
                [ 4,  6],
                [ 8, 10]], dtype=int32)
     """
-    from saiunit._jax_guard import require_jax_backend
     require_jax_backend("saiunit.lax.slice", operand)
     return _fun_keep_unit_unary(lax.slice, operand, start_indices, limit_indices, strides, **kwargs)
 
@@ -160,6 +160,7 @@ def dynamic_slice(
         Array([[ 4,  5,  6,  7],
                [ 8,  9, 10, 11]], dtype=int32)
     """
+    require_jax_backend("saiunit.lax.dynamic_slice", operand)
     return _fun_keep_unit_unary(lax.dynamic_slice, operand, start_indices, slice_sizes, **kwargs)
 
 
@@ -208,6 +209,7 @@ def dynamic_update_slice(
                [0., 0., 1., 1.],
                [0., 0., 0., 0.]], dtype=float32)
     """
+    require_jax_backend("saiunit.lax.dynamic_update_slice", operand, update)
     return _fun_keep_unit_binary(lax.dynamic_update_slice, operand, update, start_indices, **kwargs)
 
 
@@ -294,6 +296,7 @@ def gather(
         ...            mode=lax.GatherScatterMode.PROMISE_IN_BOUNDS)
         Array([10, 11, 11, 12, 12, 12], dtype=int32)
     """
+    require_jax_backend("saiunit.lax.gather", operand, fill_value)
     operand = maybe_custom_array(operand)
     fill_value = maybe_custom_array(fill_value)
     if isinstance(operand, Quantity) and isinstance(fill_value, Quantity):
@@ -356,6 +359,7 @@ def index_take(
         Array([[1., 3.],
                [4., 6.]], dtype=float32)
     """
+    require_jax_backend("saiunit.lax.index_take", src)
     return _fun_keep_unit_unary(lax.index_take, src, idxs, axes, **kwargs)
 
 
@@ -409,6 +413,7 @@ def slice_in_dim(
                [ 7,  8],
                [10, 11]], dtype=int32)
     """
+    require_jax_backend("saiunit.lax.slice_in_dim", operand)
     return _fun_keep_unit_unary(lax.slice_in_dim, operand, start_index, limit_index, stride, axis, **kwargs)
 
 
@@ -459,6 +464,7 @@ def index_in_dim(
         >>> lax.index_in_dim(x, 1, axis=1, keepdims=False)
         Array([1, 5, 9], dtype=int32)
     """
+    require_jax_backend("saiunit.lax.index_in_dim", operand)
     return _fun_keep_unit_unary(lax.index_in_dim, operand, index, axis, keepdims, **kwargs)
 
 
@@ -510,6 +516,7 @@ def dynamic_slice_ind_dim(
                [ 5,  6],
                [ 9, 10]], dtype=int32)
     """
+    require_jax_backend("saiunit.lax.dynamic_slice_ind_dim", operand)
     return _fun_keep_unit_unary(lax.dynamic_slice_in_dim, operand, start_index, slice_size, axis, **kwargs)
 
 
@@ -556,6 +563,7 @@ def dynamic_index_in_dim(
         >>> dynamic_index_in_dim(x, 1, axis=1, keepdims=False)
         Array([1, 5, 9], dtype=int32)
     """
+    require_jax_backend("saiunit.lax.dynamic_index_in_dim", operand)
     return _fun_keep_unit_unary(lax.dynamic_index_in_dim, operand, index, axis, keepdims, **kwargs)
 
 
@@ -613,6 +621,7 @@ def dynamic_update_slice_in_dim(
                [1., 1., 1., 0.],
                [0., 0., 0., 0.]], dtype=float32)
     """
+    require_jax_backend("saiunit.lax.dynamic_update_slice_in_dim", operand, update)
     return _fun_keep_unit_binary(lax.dynamic_update_slice_in_dim, operand, update, start_index, axis, **kwargs)
 
 
@@ -673,6 +682,7 @@ def dynamic_update_index_in_dim(
                [0., 0., 0., 0.],
                [0., 0., 0., 0.]], dtype=float32)
     """
+    require_jax_backend("saiunit.lax.dynamic_update_index_in_dim", operand, update)
     return _fun_keep_unit_binary(lax.dynamic_update_index_in_dim, operand, update, index, axis, **kwargs)
 
 
@@ -705,6 +715,7 @@ def sort(
     operand = maybe_custom_array_tree(operand)
     # check if operand is a sequence
     if isinstance(operand, Sequence):
+        require_jax_backend("saiunit.lax.sort", *operand)
         # Convert quantities to mantissas, keeping track of units
         mantissas = []
         units = []
@@ -728,6 +739,7 @@ def sort(
                 output.append(mantissa)
         return output
     else:
+        require_jax_backend("saiunit.lax.sort", operand)
         if isinstance(operand, Quantity):
             return maybe_decimal(
                 Quantity(lax.sort(operand.mantissa, dimension, is_stable, num_keys, **kwargs), unit=operand.unit))
@@ -778,6 +790,7 @@ def sort_key_val(
         >>> sorted_vals
         Array([10, 20, 30], dtype=int32)
     """
+    require_jax_backend("saiunit.lax.sort_key_val", keys, values)
     keys = maybe_custom_array(keys)
     values = maybe_custom_array(values)
     if isinstance(keys, Quantity) and isinstance(values, Quantity):
@@ -825,6 +838,7 @@ def neg(
         >>> result.unit
         meter
     """
+    require_jax_backend("saiunit.lax.neg", x)
     return _fun_keep_unit_unary(lax.neg, x, **kwargs)
 
 
@@ -865,6 +879,7 @@ def cummax(
         >>> result.mantissa
         Array([3., 3., 4., 4.], dtype=float32)
     """
+    require_jax_backend("saiunit.lax.cummax", operand)
     return _fun_keep_unit_unary(lax.cummax, operand, axis, reverse, **kwargs)
 
 
@@ -905,6 +920,7 @@ def cummin(
         >>> result.mantissa
         Array([3., 1., 1., 1.], dtype=float32)
     """
+    require_jax_backend("saiunit.lax.cummin", operand)
     return _fun_keep_unit_unary(lax.cummin, operand, axis, reverse, **kwargs)
 
 
@@ -945,6 +961,7 @@ def cumsum(
         >>> result.mantissa
         Array([ 1.,  3.,  6., 10.], dtype=float32)
     """
+    require_jax_backend("saiunit.lax.cumsum", operand)
     return _fun_keep_unit_unary(lax.cumsum, operand, axis, reverse, **kwargs)
 
 
@@ -958,6 +975,8 @@ def _fun_lax_scatter(
     unique_indices,
     mode
 ) -> Union[Quantity, jax.Array]:
+    fun_name = getattr(fun, "__name__", "scatter")
+    require_jax_backend(f"saiunit.lax.{fun_name}", operand, updates)
     operand = maybe_custom_array(operand)
     updates = maybe_custom_array(updates)
     if isinstance(operand, Quantity) and isinstance(updates, Quantity):
@@ -1366,6 +1385,7 @@ def scatter_apply(
     Returns:
         An array containing the result of applying `func` to `operand` at the given indices.
     """
+    require_jax_backend("saiunit.lax.scatter_apply", operand)
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         return maybe_decimal(Quantity(lax.scatter_apply(operand.mantissa, scatter_indices, func, dimension_numbers,
@@ -1418,6 +1438,7 @@ def complex(
         >>> result.mantissa
         Array([1.+3.j, 2.+4.j], dtype=complex64)
     """
+    require_jax_backend("saiunit.lax.complex", x, y)
     return _fun_keep_unit_binary(lax.complex, x, y, **kwargs)
 
 
@@ -1446,6 +1467,7 @@ def pad(
         The ``operand`` array with padding value ``padding_value`` inserted in each
         dimension according to the ``padding_config``.
     """
+    require_jax_backend("saiunit.lax.pad", operand)
     return _fun_keep_unit_binary(lax.pad, operand, padding_value, padding_config, **kwargs)
 
 
@@ -1482,6 +1504,7 @@ def sub(
         >>> result.mantissa
         Array([4., 5.], dtype=float32)
     """
+    require_jax_backend("saiunit.lax.sub", x, y)
     return _fun_keep_unit_binary(lax.sub, x, y, **kwargs)
 
 
@@ -1563,6 +1586,7 @@ def clamp(
     x & \text{otherwise}
     \end{cases}`.
     """
+    require_jax_backend("saiunit.lax.clamp", min, x, max)
     min = maybe_custom_array(min)
     x = maybe_custom_array(x)
     max = maybe_custom_array(max)
@@ -1630,6 +1654,7 @@ def approx_max_k(
     >>> db = jax.numpy.array(np.random.rand(1024, 64))
     >>> dot_products, neighbors = mips(qy, db, k=10)
     """
+    require_jax_backend("saiunit.lax.approx_max_k", operand)
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         r = lax.approx_max_k(operand.mantissa, k, reduction_dimension, recall_target, reduction_input_size_override,
@@ -1696,6 +1721,7 @@ def approx_min_k(
     ``qy^2 - 2 dot(qy, db^T) + db^2`` for performance reason. The former uses less
     arithmetic and produces the same set of neighbors.
     """
+    require_jax_backend("saiunit.lax.approx_min_k", operand)
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         r = lax.approx_min_k(operand.mantissa, k, reduction_dimension, recall_target, reduction_input_size_override,
@@ -1733,6 +1759,7 @@ def top_k(
         >>> indices
         Array([4, 0, 2], dtype=int32)
     """
+    require_jax_backend("saiunit.lax.top_k", operand)
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
         r = lax.top_k(operand.mantissa, k, **kwargs)
@@ -1773,6 +1800,7 @@ def broadcast(
         >>> result.unit
         second
     """
+    require_jax_backend("saiunit.lax.broadcast", operand)
     return _fun_keep_unit_unary(lax.broadcast, operand, sizes)
 
 
@@ -1811,6 +1839,7 @@ def broadcast_in_dim(
         >>> result.mantissa.shape
         (3, 2)
     """
+    require_jax_backend("saiunit.lax.broadcast_in_dim", operand)
     return _fun_keep_unit_unary(lax.broadcast_in_dim, operand, shape, broadcast_dimensions)
 
 
@@ -1844,4 +1873,5 @@ def broadcast_to_rank(
         >>> result.mantissa.shape
         (1, 1, 2)
     """
+    require_jax_backend("saiunit.lax.broadcast_to_rank", x)
     return _fun_keep_unit_unary(lax.broadcast_to_rank, x, rank)
