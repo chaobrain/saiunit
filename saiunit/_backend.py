@@ -335,4 +335,19 @@ def to_backend(x, name: BackendName, **kwargs):
             return x
         chunks = kwargs.get("chunks", "auto")
         return da.from_array(x, chunks=chunks)
-    raise ValueError(f"backend must be one of 'numpy', 'jax', 'cupy', 'torch', 'dask'; got {name!r}")
+    if name == "ndonnx":
+        ndonnx = _try_import("ndonnx")
+        if ndonnx is None:
+            raise BackendError(
+                "ndonnx backend requested but ndonnx is not installed. "
+                "Install with: pip install saiunit[ndonnx]"
+            )
+        if kwargs:
+            raise TypeError(f"to_backend(name='ndonnx') does not accept kwargs; got {sorted(kwargs)}")
+        if is_ndonnx_array(x):
+            return x
+        return ndonnx.asarray(x)
+    raise ValueError(
+        f"backend must be one of 'numpy', 'jax', 'cupy', 'torch', 'dask', 'ndonnx'; "
+        f"got {name!r}"
+    )

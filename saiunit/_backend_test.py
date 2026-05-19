@@ -454,3 +454,26 @@ def test_get_backend_ndonnx_only():
     from saiunit._backend import get_backend
     xp = get_backend(ndonnx.asarray(np.array([1.0])))
     assert xp is ndonnx
+
+
+def test_to_backend_numpy_to_ndonnx():
+    ndonnx = pytest.importorskip("ndonnx")
+    from saiunit._backend import to_backend, is_ndonnx_array
+    arr = np.array([1.0, 2.0])
+    out = to_backend(arr, "ndonnx")
+    assert is_ndonnx_array(out)
+
+
+def test_to_backend_ndonnx_noop():
+    ndonnx = pytest.importorskip("ndonnx")
+    from saiunit._backend import to_backend
+    arr = ndonnx.asarray(np.array([1.0]))
+    out = to_backend(arr, "ndonnx")
+    assert out is arr
+
+
+def test_to_backend_ndonnx_rejects_kwargs():
+    pytest.importorskip("ndonnx")
+    from saiunit._backend import to_backend
+    with pytest.raises(TypeError, match="does not accept"):
+        to_backend(np.array([1.0]), "ndonnx", device="cuda")
