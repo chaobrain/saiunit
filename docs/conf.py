@@ -82,10 +82,11 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx_thebe',
     'sphinx_design',
-    'brainx_sphinx_header',
 ]
 
-html_baseurl = 'https://brainx.chaobrain.com/brainunit/'
+if package == 'brainunit':
+    extensions.append('brainx_sphinx_header')
+    html_baseurl = 'https://brainx.chaobrain.com/brainunit/'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
