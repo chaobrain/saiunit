@@ -113,7 +113,7 @@ def cholesky(
         >>> u.math.allclose(x, L @ L.T)
         Array(True, dtype=bool)
     """
-    return _fun_change_unit_unary(jnp.linalg.cholesky,
+    return _fun_change_unit_unary('linalg.cholesky',
                                   lambda u: u ** 0.5,
                                   a,
                                   upper=upper,
@@ -178,7 +178,7 @@ def solve(
         >>> u.math.allclose(A @ x, b)
         Array(True, dtype=bool)
     """
-    return _fun_change_unit_binary(jnp.linalg.solve,
+    return _fun_change_unit_binary('linalg.solve',
                                    lambda a, b: b / a,
                                    a,
                                    b, **kwargs)
@@ -238,7 +238,7 @@ def tensorsolve(
         >>> u.math.allclose(b, b_reconstructed)
         Array(True, dtype=bool)
     """
-    return _fun_change_unit_binary(jnp.linalg.tensorsolve,
+    return _fun_change_unit_binary('linalg.tensorsolve',
                                    lambda a, b: b / a,
                                    a,
                                    b,
@@ -374,7 +374,7 @@ def inv(
         >>> u.math.allclose(a @ a_inv, jnp.eye(3), atol=1e-5)
         Array(True, dtype=bool)
     """
-    return _fun_change_unit_unary(jnp.linalg.inv,
+    return _fun_change_unit_unary('linalg.inv',
                                   lambda u: u ** -1,
                                   a, **kwargs)
 
@@ -438,7 +438,7 @@ def pinv(
         >>> u.math.allclose(a_pinv @ a, jnp.eye(2), atol=1e-4)
         Array(True, dtype=bool)
     """
-    return _fun_change_unit_unary(jnp.linalg.pinv,
+    return _fun_change_unit_unary('linalg.pinv',
                                   lambda u: u ** -1,
                                   a,
                                   rtol=rtol,
@@ -499,7 +499,7 @@ def tensorinv(
         >>> u.math.allclose(xinv_x, jnp.eye(4), atol=1e-4)
         Array(True, dtype=bool)
     """
-    return _fun_change_unit_unary(jnp.linalg.tensorinv,
+    return _fun_change_unit_unary('linalg.tensorinv',
                                   lambda u: u ** -1,
                                   a,
                                   ind=ind, **kwargs)

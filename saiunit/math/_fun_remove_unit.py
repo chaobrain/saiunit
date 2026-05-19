@@ -22,7 +22,7 @@ import jax.numpy as jnp
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
 from saiunit._base_quantity import Quantity
-from ._fun_keep_unit import _resolve_for_backend
+from ._fun_keep_unit import _resolve_op
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
@@ -83,11 +83,11 @@ def _fun_remove_unit_unary(func, x, *args, **kwargs):
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
-        func = _resolve_for_backend(func, xp)
+        func = _resolve_op(func, xp)
         return func(x.mantissa, *args, **kwargs)
     else:
         xp = get_backend(x)
-        func = _resolve_for_backend(func, xp)
+        func = _resolve_op(func, xp)
         return func(x, *args, **kwargs)
 
 
@@ -122,7 +122,7 @@ def iscomplexobj(
         >>> u.math.iscomplexobj(jnp.array([1.0 + 2.0j]))
         True
     """
-    return _fun_remove_unit_unary(jnp.iscomplexobj, x, **kwargs)
+    return _fun_remove_unit_unary('iscomplexobj', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -171,7 +171,7 @@ def heaviside(
                 f'but got x2 with unit={x2.unit}. Strip the unit from x2 before calling heaviside.'
             )
         x2 = x2.mantissa
-    return _fun_remove_unit_unary(jnp.heaviside, x1, x2, **kwargs)
+    return _fun_remove_unit_unary('heaviside', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -203,7 +203,7 @@ def signbit(x: Union[jax.typing.ArrayLike, Quantity], **kwargs) -> jax.Array:
         >>> u.math.signbit(q)
         Array([ True, False], dtype=bool)
     """
-    return _fun_remove_unit_unary(jnp.signbit, x, **kwargs)
+    return _fun_remove_unit_unary('signbit', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -236,7 +236,7 @@ def sign(x: Union[jax.typing.ArrayLike, Quantity], **kwargs) -> jax.Array:
         >>> u.math.sign(q)
         Array([-1.,  0.,  1.], dtype=float32)
     """
-    return _fun_remove_unit_unary(jnp.sign, x, **kwargs)
+    return _fun_remove_unit_unary('sign', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -284,7 +284,7 @@ def bincount(
         >>> u.math.bincount(jnp.array([0, 1, 1, 2, 2, 2]))
         Array([1, 2, 3], dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.bincount, x, weights=weights, minlength=minlength, length=length, **kwargs)
+    return _fun_remove_unit_unary('bincount', x, weights=weights, minlength=minlength, length=length, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -363,17 +363,24 @@ def digitize(
     return jnp.digitize(x, bins, right=right, **kwargs)
 
 
+def _name_of(func) -> str:
+    if isinstance(func, str):
+        return func
+    return getattr(func, '__name__', repr(func))
+
+
 def _fun_logic_unary(func, x, *args, **kwargs):
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         if not x.is_unitless:
+            name = _name_of(func)
             raise TypeError(
-                f'{func.__name__} requires a dimensionless input, '
-                f'but got x with unit={x.unit}. Strip the unit from x before calling {func.__name__}.'
+                f'{name} requires a dimensionless input, '
+                f'but got x with unit={x.unit}. Strip the unit from x before calling {name}.'
             )
         x = x.mantissa
     xp = get_backend(x)
-    func = _resolve_for_backend(func, xp)
+    func = _resolve_op(func, xp)
     return func(x, *args, **kwargs)
 
 
@@ -421,7 +428,7 @@ def all(
         >>> u.math.all(jnp.array([[True, False], [True, True]]), axis=1)
         Array([False,  True], dtype=bool)
     """
-    return _fun_logic_unary(jnp.all, x, axis=axis, keepdims=keepdims, where=where, **kwargs)
+    return _fun_logic_unary('all', x, axis=axis, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -466,7 +473,7 @@ def any(
         >>> u.math.any(jnp.array([False, False, False]))
         Array(False, dtype=bool)
     """
-    return _fun_logic_unary(jnp.any, x, axis=axis, keepdims=keepdims, where=where, **kwargs)
+    return _fun_logic_unary('any', x, axis=axis, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -499,7 +506,7 @@ def logical_not(
         >>> u.math.logical_not(jnp.array([True, False, True]))
         Array([False,  True, False], dtype=bool)
     """
-    return _fun_logic_unary(jnp.logical_not, x, **kwargs)
+    return _fun_logic_unary('logical_not', x, **kwargs)
 
 
 alltrue = all
@@ -517,31 +524,31 @@ def _fun_logic_binary(func, x, y, *args, **kwargs):
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         xm, ym = x.mantissa, y.in_unit(x.unit).mantissa
         xp = get_backend(xm, ym)
-        func = _resolve_for_backend(func, xp)
+        func = _resolve_op(func, xp)
         return func(xm, ym, *args, **kwargs)
     elif isinstance(x, Quantity):
         if not x.is_unitless:
             raise TypeError(
-                f'{func.__name__} requires "x" to be dimensionless when "y" is a plain array, '
+                f'{_name_of(func)} requires "x" to be dimensionless when "y" is a plain array, '
                 f'but got x with unit={x.unit}. '
                 f'Either pass a Quantity for y with matching units, or strip the unit from x.'
             )
         xp = get_backend(x.mantissa, y)
-        func = _resolve_for_backend(func, xp)
+        func = _resolve_op(func, xp)
         return func(x.mantissa, y, *args, **kwargs)
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(
-                f'{func.__name__} requires "y" to be dimensionless when "x" is a plain array, '
+                f'{_name_of(func)} requires "y" to be dimensionless when "x" is a plain array, '
                 f'but got y with unit={y.unit}. '
                 f'Either pass a Quantity for x with matching units, or strip the unit from y.'
             )
         xp = get_backend(x, y.mantissa)
-        func = _resolve_for_backend(func, xp)
+        func = _resolve_op(func, xp)
         return func(x, y.mantissa, *args, **kwargs)
     else:
         xp = get_backend(x, y)
-        func = _resolve_for_backend(func, xp)
+        func = _resolve_op(func, xp)
         return func(x, y, *args, **kwargs)
 
 
@@ -584,7 +591,7 @@ def equal(
         >>> u.math.equal(a, b)
         Array([ True,  True], dtype=bool)
     """
-    return _fun_logic_binary(jnp.equal, x, y, *args, **kwargs)
+    return _fun_logic_binary('equal', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -621,7 +628,7 @@ def not_equal(
         >>> u.math.not_equal(jnp.array([1, 2, 3]), jnp.array([1, 0, 3]))
         Array([False,  True, False], dtype=bool)
     """
-    return _fun_logic_binary(jnp.not_equal, x, y, *args, **kwargs)
+    return _fun_logic_binary('not_equal', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -662,7 +669,7 @@ def greater(
         >>> u.math.greater(a, b)
         Array([ True, False], dtype=bool)
     """
-    return _fun_logic_binary(jnp.greater, x, y, *args, **kwargs)
+    return _fun_logic_binary('greater', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -700,7 +707,7 @@ def greater_equal(
         >>> u.math.greater_equal(jnp.array([3, 2, 1]), jnp.array([1, 2, 3]))
         Array([ True,  True, False], dtype=bool)
     """
-    return _fun_logic_binary(jnp.greater_equal, x, y, *args, **kwargs)
+    return _fun_logic_binary('greater_equal', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -737,7 +744,7 @@ def less(
         >>> u.math.less(jnp.array([1, 2, 3]), jnp.array([3, 2, 1]))
         Array([ True, False, False], dtype=bool)
     """
-    return _fun_logic_binary(jnp.less, x, y, *args, **kwargs)
+    return _fun_logic_binary('less', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -775,7 +782,7 @@ def less_equal(
         >>> u.math.less_equal(jnp.array([1, 2, 3]), jnp.array([3, 2, 1]))
         Array([ True,  True, False], dtype=bool)
     """
-    return _fun_logic_binary(jnp.less_equal, x, y, *args, **kwargs)
+    return _fun_logic_binary('less_equal', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -815,7 +822,7 @@ def array_equal(
         >>> u.math.array_equal(jnp.array([1, 2]), jnp.array([1, 3]))
         Array(False, dtype=bool)
     """
-    return _fun_logic_binary(jnp.array_equal, x, y, *args, **kwargs)
+    return _fun_logic_binary('array_equal', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -892,7 +899,7 @@ def isclose(
         atol = 1e-8 * unit
     atol = Quantity(atol).in_unit(unit).mantissa
     rtol = Quantity(rtol).in_unit(unit).mantissa
-    return _fun_logic_binary(jnp.isclose, x, y, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)
+    return _fun_logic_binary('isclose', x, y, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1017,7 +1024,7 @@ def logical_and(
         ...                     jnp.array([True, True]))
         Array([ True, False], dtype=bool)
     """
-    return _fun_logic_binary(jnp.logical_and, x, y, *args, **kwargs)
+    return _fun_logic_binary('logical_and', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1055,7 +1062,7 @@ def logical_or(
         ...                    jnp.array([False, False]))
         Array([ True, False], dtype=bool)
     """
-    return _fun_logic_binary(jnp.logical_or, x, y, *args, **kwargs)
+    return _fun_logic_binary('logical_or', x, y, *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1093,7 +1100,7 @@ def logical_xor(
         ...                     jnp.array([True, True]))
         Array([False,  True], dtype=bool)
     """
-    return _fun_logic_binary(jnp.logical_xor, x, y, *args, **kwargs)
+    return _fun_logic_binary('logical_xor', x, y, *args, **kwargs)
 
 
 # ----------------------
@@ -1150,7 +1157,7 @@ def argsort(
         >>> u.math.argsort(q)
         Array([1, 2, 0], dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.argsort,
+    return _fun_remove_unit_unary('argsort',
                                   a,
                                   axis=axis,
                                   kind=kind,
@@ -1195,7 +1202,7 @@ def argmax(
         >>> u.math.argmax(q)
         Array(1, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.argmax, a, axis=axis, **kwargs)
+    return _fun_remove_unit_unary('argmax', a, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1234,7 +1241,7 @@ def argmin(
         >>> u.math.argmin(jnp.array([3.0, 1.0, 2.0]))
         Array(1, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.argmin, a, axis=axis, keepdims=keepdims, **kwargs)
+    return _fun_remove_unit_unary('argmin', a, axis=axis, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1273,7 +1280,7 @@ def nanargmax(
         >>> u.math.nanargmax(jnp.array([1.0, jnp.nan, 3.0]))
         Array(2, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.nanargmax,
+    return _fun_remove_unit_unary('nanargmax',
                                   a,
                                   axis=axis,
                                   keepdims=keepdims, **kwargs)
@@ -1315,7 +1322,7 @@ def nanargmin(
         >>> u.math.nanargmin(jnp.array([3.0, jnp.nan, 1.0]))
         Array(2, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.nanargmin,
+    return _fun_remove_unit_unary('nanargmin',
                                   a,
                                   axis=axis,
                                   keepdims=keepdims, **kwargs)
@@ -1365,7 +1372,7 @@ def argwhere(
         extra['size'] = size
     if fill_value is not None:
         extra['fill_value'] = fill_value
-    return _fun_remove_unit_unary(jnp.argwhere, a, **extra, **kwargs)
+    return _fun_remove_unit_unary('argwhere', a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1411,7 +1418,7 @@ def nonzero(
         extra['size'] = size
     if fill_value is not None:
         extra['fill_value'] = fill_value
-    return _fun_remove_unit_unary(jnp.nonzero, a, **extra, **kwargs)
+    return _fun_remove_unit_unary('nonzero', a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1459,7 +1466,7 @@ def flatnonzero(
         extra['size'] = size
     if fill_value is not None:
         extra['fill_value'] = Quantity(fill_value).in_unit(a_unit).mantissa
-    return _fun_remove_unit_unary(jnp.flatnonzero, a, **extra, **kwargs)
+    return _fun_remove_unit_unary('flatnonzero', a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1497,7 +1504,7 @@ def count_nonzero(
         >>> u.math.count_nonzero(jnp.array([0, 1, 0, 2, 3]))
         Array(3, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.count_nonzero, a, axis=axis, keepdims=keepdims, **kwargs)
+    return _fun_remove_unit_unary('count_nonzero', a, axis=axis, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1583,4 +1590,4 @@ def diag_indices_from(
         >>> u.math.diag_indices_from(arr)
         (Array([0, 1], dtype=int32), Array([0, 1], dtype=int32))
     """
-    return _fun_remove_unit_unary(jnp.diag_indices_from, arr, **kwargs)
+    return _fun_remove_unit_unary('diag_indices_from', arr, **kwargs)
