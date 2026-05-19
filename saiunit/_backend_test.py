@@ -326,3 +326,11 @@ def test_using_backend_accepts_torch():
     from saiunit._backend import using_backend, get_default_backend
     with using_backend("torch"):
         assert get_default_backend() == "torch"
+
+
+def test_top_level_exports_new_detectors():
+    import saiunit as u
+    assert hasattr(u, "is_cupy_array")
+    assert hasattr(u, "is_torch_array")
+    assert "is_cupy_array" in u.__all__
+    assert "is_torch_array" in u.__all__
