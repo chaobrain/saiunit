@@ -1805,3 +1805,34 @@ def test_quantity_backend_property_numpy():
 def test_quantity_backend_property_jax():
     q = Quantity(jnp.array([1.0, 2.0]), unit=meter)
     assert q.backend == "jax"
+
+
+def test_to_numpy_from_jax():
+    q = Quantity(jnp.array([1.0, 2.0]), unit=meter)
+    qn = q.to_numpy()
+    assert qn.backend == "numpy"
+    assert isinstance(qn.mantissa, np.ndarray)
+    assert qn.unit == q.unit
+    assert np.allclose(np.asarray(qn.mantissa), np.array([1.0, 2.0]))
+
+
+def test_to_jax_from_numpy():
+    q = Quantity(np.array([1.0, 2.0]), unit=meter)
+    qj = q.to_jax()
+    assert qj.backend == "jax"
+    assert isinstance(qj.mantissa, jax.Array)
+    assert qj.unit == q.unit
+
+
+def test_to_numpy_noop_when_already_numpy():
+    q = Quantity(np.array([1.0]), unit=meter)
+    qn = q.to_numpy()
+    assert qn.mantissa is q.mantissa  # no copy
+    assert qn.unit is q.unit
+
+
+def test_to_jax_noop_when_already_jax():
+    q = Quantity(jnp.array([1.0]), unit=meter)
+    qj = q.to_jax()
+    assert qj.mantissa is q.mantissa
+    assert qj.unit is q.unit

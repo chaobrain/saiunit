@@ -1022,6 +1022,26 @@ class Quantity:
         from saiunit._backend import is_numpy_array
         return "numpy" if is_numpy_array(self._mantissa) else "jax"
 
+    def to_numpy(self) -> 'Quantity':
+        """Return a new Quantity with mantissa converted to ``numpy.ndarray``.
+
+        No-op (returns ``self``) if the mantissa is already a NumPy array.
+        """
+        from saiunit._backend import is_numpy_array, to_backend
+        if is_numpy_array(self._mantissa):
+            return self
+        return Quantity(to_backend(self._mantissa, "numpy"), unit=self.unit)
+
+    def to_jax(self) -> 'Quantity':
+        """Return a new Quantity with mantissa converted to ``jax.Array``.
+
+        No-op (returns ``self``) if the mantissa is already a JAX array.
+        """
+        from saiunit._backend import is_jax_array, to_backend
+        if is_jax_array(self._mantissa):
+            return self
+        return Quantity(to_backend(self._mantissa, "jax"), unit=self.unit)
+
     @property
     def shape(self) -> tuple[int, ...]:
         """
