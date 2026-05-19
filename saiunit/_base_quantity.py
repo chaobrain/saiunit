@@ -376,7 +376,13 @@ class Quantity:
                         raise TypeError(f"All elements must have the same unit. But got {unit} != {new_unit}")
                     if not new_unit.has_same_magnitude(unit):
                         mantissa = mantissa * (new_unit.magnitude / unit.magnitude)
-                mantissa = jnp.array(mantissa, dtype=dtype)
+                # Respect the default backend for list/tuple inputs.
+                from saiunit._backend import get_default_backend
+                default = get_default_backend()
+                if default == "numpy":
+                    mantissa = np.asarray(mantissa, dtype=dtype) if dtype is not None else np.asarray(mantissa)
+                else:
+                    mantissa = jnp.array(mantissa, dtype=dtype)
 
             # array mantissa
             elif isinstance(mantissa, Quantity):
@@ -388,9 +394,13 @@ class Quantity:
                 mantissa = mantissa.mantissa
 
             elif isinstance(mantissa, (np.ndarray, jax.Array)):
-                if dtype is not None:
-                    mantissa = jnp.array(mantissa, dtype=dtype)
-                # skip 'asarray' if dtype is not provided
+                # Preserve the input backend: NumPy stays NumPy, JAX stays JAX.
+                if dtype is not None and mantissa.dtype != dtype:
+                    if isinstance(mantissa, jax.Array):
+                        mantissa = jnp.asarray(mantissa, dtype=dtype)
+                    else:
+                        mantissa = mantissa.astype(dtype)
+                # skip if dtype matches or is not provided
 
             elif isinstance(mantissa, (jnp.number, numbers.Number)):
                 pass  # keep as-is; jnp.array conversion deferred to use-site
@@ -1005,6 +1015,12 @@ class Quantity:
                 return jax.dtypes.canonicalize_dtype(complex)
             else:
                 raise TypeError(f'Can not get dtype of {a}.')
+
+    @property
+    def backend(self) -> str:
+        """The backend of the underlying mantissa: ``'numpy'`` or ``'jax'``."""
+        from saiunit._backend import is_numpy_array
+        return "numpy" if is_numpy_array(self._mantissa) else "jax"
 
     @property
     def shape(self) -> tuple[int, ...]:

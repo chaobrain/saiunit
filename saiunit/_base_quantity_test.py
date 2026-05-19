@@ -1795,3 +1795,13 @@ class TestQuantityStringUnit:
     def test_invalid_string_unit_raises(self):
         with pytest.raises(ValueError):
             Quantity(1.0, "nonexistent_xyz")
+
+
+def test_quantity_backend_property_numpy():
+    q = Quantity(np.array([1.0, 2.0]), unit=meter)
+    assert q.backend == "numpy"
+
+
+def test_quantity_backend_property_jax():
+    q = Quantity(jnp.array([1.0, 2.0]), unit=meter)
+    assert q.backend == "jax"
