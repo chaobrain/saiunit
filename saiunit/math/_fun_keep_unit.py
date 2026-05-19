@@ -23,6 +23,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 
+from saiunit._backend import get_backend
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import (
     fail_for_dimension_mismatch,
@@ -78,6 +79,21 @@ __all__ = [
 # -------------------------------------------------------------------
 
 
+def _resolve_for_backend(func, xp):
+    """Return an equivalent of ``func`` on backend namespace ``xp``.
+
+    If ``func`` is a string, look it up directly on ``xp``. If ``func`` is a
+    JAX (or any) callable with a ``__name__`` attribute, look up that name on
+    ``xp`` and fall back to ``func`` itself if not present.
+    """
+    if isinstance(func, str):
+        return getattr(xp, func)
+    name = getattr(func, "__name__", None)
+    if name is None:
+        return func
+    return getattr(xp, name, func)
+
+
 def _fun_keep_unit_sequence(
     func,
     *args,
@@ -93,6 +109,8 @@ def _fun_keep_unit_sequence(
     leaves = unit_scale_align_to_first(*leaves)
     unit = leaves[0].unit
     leaves = [x.mantissa for x in leaves]
+    xp = get_backend(*leaves)
+    func = _resolve_for_backend(func, xp)
     args = treedef.unflatten(leaves)
     r = func(*args, **kwargs)
     if unit.is_unitless:
@@ -390,8 +408,12 @@ def _fun_keep_unit_return_sequence(
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
+        xp = get_backend(x.mantissa)
+        func = _resolve_for_backend(func, xp)
         r = func(x.mantissa, *args, **kwargs)
         return [maybe_decimal(Quantity(rr, unit=x.unit)) for rr in r]
+    xp = get_backend(x)
+    func = _resolve_for_backend(func, xp)
     return func(x, *args, **kwargs)
 
 
@@ -591,8 +613,10 @@ def vsplit(
 def _broadcast_fun(func, *args, **kwargs):
     args = [asarray(x) for x in args]
     args, treedef = jax.tree.flatten(args)
+    xp = get_backend(*args)
+    func = _resolve_for_backend(func, xp)
     r = func(*args, **kwargs)
-    r = treedef.unflatten([r] if isinstance(r, jax.Array) else r)
+    r = treedef.unflatten([r] if not isinstance(r, (list, tuple)) else r)
     if len(r) == 1:
         return r[0]
     return r
@@ -1662,8 +1686,12 @@ def _fun_keep_unit_unary(func, x, *args, **kwargs):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
+        xp = get_backend(x.mantissa)
+        func = _resolve_for_backend(func, xp)
         return Quantity(func(x.mantissa, *args, **kwargs), unit=x.unit)
     else:
+        xp = get_backend(x)
+        func = _resolve_for_backend(func, xp)
         return func(x, *args, **kwargs)
 
 
@@ -3338,6 +3366,8 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
     x2 = maybe_custom_array(x2)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x1, Quantity) and isinstance(x2, Quantity):
+        xp = get_backend(x1.mantissa, x2.mantissa)
+        func = _resolve_for_backend(func, xp)
         return Quantity(func(x1.mantissa, x2.in_unit(x1.unit).mantissa, *args, **kwargs), unit=x1.unit)
     elif isinstance(x1, Quantity):
         if not x1.is_unitless:
@@ -3346,6 +3376,8 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
                 f'but got x1 with unit={x1.unit}. '
                 f'Either pass a Quantity for x2 with matching units, or strip the unit from x1.'
             )
+        xp = get_backend(x1.mantissa, x2)
+        func = _resolve_for_backend(func, xp)
         return func(x1.mantissa, x2, *args, **kwargs)
     elif isinstance(x2, Quantity):
         if not x2.is_unitless:
@@ -3354,8 +3386,12 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
                 f'but got x2 with unit={x2.unit}. '
                 f'Either pass a Quantity for x1 with matching units, or strip the unit from x2.'
             )
+        xp = get_backend(x1, x2.mantissa)
+        func = _resolve_for_backend(func, xp)
         return func(x1, x2.mantissa, *args, **kwargs)
     else:
+        xp = get_backend(x1, x2)
+        func = _resolve_for_backend(func, xp)
         return func(x1, x2, *args, **kwargs)
 
 
