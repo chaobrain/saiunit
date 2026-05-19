@@ -57,8 +57,13 @@ _default_backend: ContextVar[Optional[BackendName]] = ContextVar(
 
 
 def is_numpy_array(x) -> bool:
-    """Return True if ``x`` is a ``numpy.ndarray`` (and not a JAX array)."""
-    return isinstance(x, np.ndarray) and not isinstance(x, jax.Array)
+    """Return True if ``x`` is a NumPy array or scalar (and not a JAX array).
+
+    Includes ``numpy.ndarray`` as well as numpy scalar types (``numpy.float64``,
+    ``numpy.int32``, …) — reductions like ``np.linalg.norm([3., 4.])`` return
+    a numpy scalar, and for backend-routing purposes that's NumPy too.
+    """
+    return isinstance(x, (np.ndarray, np.generic)) and not isinstance(x, jax.Array)
 
 
 def is_jax_array(x) -> bool:

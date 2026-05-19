@@ -1399,7 +1399,13 @@ def nonzero(
         >>> u.math.nonzero(jnp.array([0, 1, 0, 2]), size=2)
         (Array([1, 3], dtype=int32),)
     """
-    return _fun_remove_unit_unary(jnp.nonzero, a, size=size, fill_value=fill_value, **kwargs)
+    # ``size`` and ``fill_value`` are JAX-only; suppress them when on NumPy.
+    extra = {}
+    if size is not None:
+        extra['size'] = size
+    if fill_value is not None:
+        extra['fill_value'] = fill_value
+    return _fun_remove_unit_unary(jnp.nonzero, a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')

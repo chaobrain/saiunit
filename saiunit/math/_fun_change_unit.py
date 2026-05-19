@@ -1100,11 +1100,17 @@ def dot(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.dot(a, b)  # scalar Quantity with unit meter * second
     """
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
     return _fun_change_unit_binary(jnp.dot,
                                    lambda x, y: x * y,
                                    a, b,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)

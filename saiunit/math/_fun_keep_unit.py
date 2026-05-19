@@ -84,13 +84,20 @@ def _resolve_for_backend(func, xp):
 
     If ``func`` is a string, look it up directly on ``xp``. If ``func`` is a
     JAX (or any) callable with a ``__name__`` attribute, look up that name on
-    ``xp`` and fall back to ``func`` itself if not present.
+    ``xp`` and fall back to ``func`` itself if not present. Functions that
+    came from a nested namespace (``jax.numpy.linalg``, ``jax.numpy.fft``)
+    are resolved against the corresponding subnamespace on ``xp``.
     """
     if isinstance(func, str):
         return getattr(xp, func)
     name = getattr(func, "__name__", None)
     if name is None:
         return func
+    module = getattr(func, "__module__", "") or ""
+    if module.endswith(".linalg") and hasattr(xp, "linalg"):
+        return getattr(xp.linalg, name, func)
+    if module.endswith(".fft") and hasattr(xp, "fft"):
+        return getattr(xp.fft, name, func)
     return getattr(xp, name, func)
 
 
