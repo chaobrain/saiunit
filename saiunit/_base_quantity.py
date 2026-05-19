@@ -492,12 +492,13 @@ class Quantity:
                     if not new_unit.has_same_magnitude(unit):
                         mantissa = mantissa * (new_unit.magnitude / unit.magnitude)
                 # Respect the default backend for list/tuple inputs.
-                from saiunit._backend import get_default_backend
-                default = get_default_backend()
-                if default == "numpy":
-                    mantissa = np.asarray(mantissa, dtype=dtype) if dtype is not None else np.asarray(mantissa)
+                from saiunit._backend import _xp_for, get_default_backend
+                default = get_default_backend() or "jax"
+                xp = _xp_for(default)
+                if dtype is not None:
+                    mantissa = xp.asarray(mantissa, dtype=dtype)
                 else:
-                    mantissa = jnp.array(mantissa, dtype=dtype)
+                    mantissa = xp.asarray(mantissa)
 
             # array mantissa
             elif isinstance(mantissa, Quantity):

@@ -212,7 +212,11 @@ def concatenate(
       >>> b = [3, 4] * u.second
       >>> u.math.concatenate([a, b])
     """
-    return _fun_keep_unit_sequence('concatenate', arrays, axis=axis, dtype=dtype, **kwargs)
+    if axis is not None:
+        kwargs["axis"] = axis
+    if dtype is not None:
+        kwargs["dtype"] = dtype
+    return _fun_keep_unit_sequence('concatenate', arrays, **kwargs)
 
 
 @set_module_as('saiunit.math')

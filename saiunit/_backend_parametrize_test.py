@@ -44,9 +44,15 @@ def test_math_function_default_backend(backend):
     r = u.math.sin(q)
     if backend == "numpy":
         assert isinstance(r, np.ndarray)
-    else:
+    elif backend == "jax":
         import jax
         assert isinstance(r, jax.Array)
+    elif backend == "cupy":
+        import cupy
+        assert isinstance(r, cupy.ndarray)
+    elif backend == "torch":
+        import torch
+        assert isinstance(r, torch.Tensor)
 
 
 def test_concatenate_respects_backend(backend):
@@ -54,3 +60,12 @@ def test_concatenate_respects_backend(backend):
     b = u.Quantity([3.0, 4.0], unit=meter)
     r = u.math.concatenate([a, b])
     assert r.backend == backend
+
+
+def test_backend_fixture_includes_cupy_and_torch(backend):
+    """The fixture parameter is one of the four known backends.
+
+    pytest's parametrize machinery is what actually exercises each;
+    importorskip handles missing libraries.
+    """
+    assert backend in {"numpy", "jax", "cupy", "torch"}
