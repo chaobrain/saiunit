@@ -1240,3 +1240,30 @@ class TestDocstringExamples:
         expected = jnp.where(a)
         for r, e in zip(result, expected):
             assert jnp.array_equal(r, e)
+
+
+def test_concatenate_numpy_backend():
+    import numpy as np
+    a = u.Quantity(np.array([1.0, 2.0]), unit=meter)
+    b = u.Quantity(np.array([3.0, 4.0]), unit=meter)
+    r = u.math.concatenate([a, b])
+    assert r.backend == "numpy"
+    assert r.unit == meter
+    assert np.allclose(r.mantissa, [1.0, 2.0, 3.0, 4.0])
+
+
+def test_concatenate_jax_backend():
+    import numpy as np
+    a = u.Quantity(jnp.array([1.0, 2.0]), unit=meter)
+    b = u.Quantity(jnp.array([3.0, 4.0]), unit=meter)
+    r = u.math.concatenate([a, b])
+    assert r.backend == "jax"
+    assert np.allclose(np.asarray(r.mantissa), [1.0, 2.0, 3.0, 4.0])
+
+
+def test_reshape_numpy_backend():
+    import numpy as np
+    q = u.Quantity(np.arange(6.0), unit=meter)
+    r = u.math.reshape(q, (2, 3))
+    assert r.backend == "numpy"
+    assert r.shape == (2, 3)

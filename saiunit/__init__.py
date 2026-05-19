@@ -14,13 +14,15 @@
 # ==============================================================================
 
 """
-saiunit -- Physical units for JAX arrays.
+saiunit -- Physical units for JAX and NumPy arrays.
 
-``saiunit`` provides a :class:`Quantity` type that pairs a JAX array with a
-physical :class:`Unit`, ensuring dimensional correctness at every arithmetic
-operation.  It also supplies the standard SI base and derived units (e.g.
-``meter``, ``second``, ``volt``), physical constants, and unit-aware wrappers
-for NumPy/JAX math functions.
+``saiunit`` provides a :class:`Quantity` type that pairs a JAX array or
+NumPy array with a physical :class:`Unit`, ensuring dimensional correctness
+at every arithmetic operation. The backend is detected from the mantissa
+type; users can force a default with :func:`set_default_backend` or the
+:func:`using_backend` context manager. ``saiunit`` also supplies the standard
+SI base and derived units (e.g. ``meter``, ``second``, ``volt``), physical
+constants, and unit-aware wrappers for NumPy/JAX math functions.
 
 Subpackages
 -----------
@@ -70,6 +72,14 @@ from ._base_dimension import (
     get_dim_for_display,
     get_or_create_dimension,
 )
+from ._backend import (
+    get_default_backend,
+    is_jax_array,
+    is_numpy_array,
+    set_default_backend,
+    using_backend,
+)
+from ._exceptions import BackendError
 from ._base_getters import (
     array_with_unit,
     assert_quantity,
@@ -137,6 +147,14 @@ __all__ = [
               'DIMENSIONLESS',
               'DimensionMismatchError',
               'UnitMismatchError',
+              'BackendError',
+
+              # _backend
+              'get_default_backend',
+              'set_default_backend',
+              'using_backend',
+              'is_jax_array',
+              'is_numpy_array',
               'get_or_create_dimension',
               'get_dim_for_display',
 

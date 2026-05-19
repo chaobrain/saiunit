@@ -736,3 +736,14 @@ class TestDocstringExamplesAcceptUnitless(parameterized.TestCase):
         x = jnp.array([1.0]) * meter
         with pytest.raises(TypeError, match='requires a dimensionless "x"'):
             u.math.arctan2(y, x)
+
+
+def test_sin_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import UNITLESS
+    q = u.Quantity(np.array([0.0, np.pi / 2]), unit=UNITLESS)
+    r = u.math.sin(q)
+    # sin of unitless returns a raw array
+    assert isinstance(r, np.ndarray)
+    assert np.allclose(r, [0.0, 1.0])

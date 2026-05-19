@@ -2,4 +2,5 @@ numpy
 jax
 jaxlib
 typing_extensions
+array_api_compat
 

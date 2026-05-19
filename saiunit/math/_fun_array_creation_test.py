@@ -705,3 +705,22 @@ class TestDocstringExamplesDiag:
         result = um.diag(jnp.array([1.0, 2.0]), unit=meter)
         expected = jnp.diag(jnp.array([1.0, 2.0]))
         assert_quantity(result, expected, unit=meter)
+
+
+def test_zeros_respects_default_backend():
+    import saiunit as u
+    from saiunit import meter
+    with u.using_backend("numpy"):
+        q = u.math.zeros((3,), unit=meter)
+        assert q.backend == "numpy"
+    with u.using_backend("jax"):
+        q = u.math.zeros((3,), unit=meter)
+        assert q.backend == "jax"
+
+
+def test_ones_respects_default_backend():
+    import saiunit as u
+    from saiunit import meter
+    with u.using_backend("numpy"):
+        q = u.math.ones((3,), unit=meter)
+        assert q.backend == "numpy"

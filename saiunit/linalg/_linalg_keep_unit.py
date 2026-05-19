@@ -120,7 +120,7 @@ def norm(
         >>> u.linalg.norm(m)
         10.198039 * meter
     """
-    return _fun_keep_unit_unary(jnp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims, **kwargs)
+    return _fun_keep_unit_unary('linalg.norm', x, ord=ord, axis=axis, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
@@ -164,7 +164,7 @@ def matrix_norm(
         >>> u.linalg.matrix_norm(x)
         16.881943 * second
     """
-    return _fun_keep_unit_unary(jnp.linalg.matrix_norm,
+    return _fun_keep_unit_unary('linalg.matrix_norm',
                                 x,
                                 keepdims=keepdims,
                                 ord=ord, **kwargs)
@@ -221,7 +221,7 @@ def vector_norm(
         >>> u.linalg.vector_norm(x, axis=1)
         ArrayImpl([3.7416575, 9.48683262], dtype=float32) * meter
     """
-    return _fun_keep_unit_unary(jnp.linalg.vector_norm,
+    return _fun_keep_unit_unary('linalg.vector_norm',
                                 x,
                                 axis=axis,
                                 keepdims=keepdims,
@@ -644,4 +644,4 @@ def matrix_transpose(
                    [2, 5],
                    [3, 6]], dtype=int32) * meter
     """
-    return _fun_keep_unit_unary(jnp.linalg.matrix_transpose, x, **kwargs)
+    return _fun_keep_unit_unary('linalg.matrix_transpose', x, **kwargs)

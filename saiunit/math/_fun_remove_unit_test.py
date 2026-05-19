@@ -703,3 +703,46 @@ class TestDocstringExamples(unittest.TestCase):
         result = bm.sign(q)
         expected = jnp.array([-1.0, 0.0, 1.0])
         assert jnp.array_equal(result, expected)
+
+
+def test_argmax_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.array([3.0, 1.0, 2.0]), unit=meter)
+    r = u.math.argmax(q)
+    # argmax strips units; numpy/jax returns an integer-like result
+    assert int(r) == 0
+
+
+def test_argwhere_numpy_backend_default_kwargs():
+    """Regression: argwhere must not forward JAX-only kwargs to NumPy."""
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.array([0.0, 1.0, 0.0, 2.0]), unit=meter)
+    r = u.math.argwhere(q)
+    assert isinstance(r, np.ndarray) and not isinstance(r, type(np.asarray)) and r.dtype.kind in 'iu'
+    assert np.array_equal(r, np.array([[1], [3]]))
+
+
+def test_flatnonzero_numpy_backend_default_kwargs():
+    """Regression: flatnonzero must not forward JAX-only kwargs to NumPy."""
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.array([0.0, 1.0, 0.0, 2.0]), unit=meter)
+    r = u.math.flatnonzero(q)
+    assert isinstance(r, np.ndarray)
+    assert np.array_equal(r, np.array([1, 3]))
+
+
+def test_nonzero_numpy_backend_default_kwargs():
+    """Regression: nonzero must not forward JAX-only kwargs to NumPy."""
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.array([0.0, 1.0, 0.0, 2.0]), unit=meter)
+    r = u.math.nonzero(q)
+    assert isinstance(r, tuple)
+    assert np.array_equal(r[0], np.array([1, 3]))

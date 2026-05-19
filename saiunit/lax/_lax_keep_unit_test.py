@@ -974,3 +974,48 @@ class TestLaxKeepUnitDocstringExamples:
         expected_vals = jnp.array([10, 20, 30])
         assert_quantity(sorted_keys, expected_keys, unit=u.meter)
         assert jnp.all(sorted_vals == expected_vals)
+
+
+def test_lax_slice_raises_on_numpy_quantity():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.arange(6.0).reshape(2, 3), unit=meter)
+    with pytest.raises(u.BackendError, match="requires the jax backend"):
+        u.lax.slice(q, (0, 0), (1, 2))
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda q: u.lax.dynamic_slice(q, (1,), (3,)),
+        lambda q: u.lax.dynamic_update_slice(q, q[:2], (1,)),
+        lambda q: u.lax.slice_in_dim(q, 1, 3),
+        lambda q: u.lax.index_in_dim(q, 1),
+        lambda q: u.lax.dynamic_slice_ind_dim(q, 1, 2),
+        lambda q: u.lax.dynamic_index_in_dim(q, 1),
+        lambda q: u.lax.dynamic_update_slice_in_dim(q, q[:2], 1, axis=0),
+        lambda q: u.lax.dynamic_update_index_in_dim(q, q[:1], 1, axis=0),
+        lambda q: u.lax.sort(q),
+        lambda q: u.lax.sort_key_val(q, q),
+        lambda q: u.lax.neg(q),
+        lambda q: u.lax.cumsum(q),
+        lambda q: u.lax.cummax(q),
+        lambda q: u.lax.cummin(q),
+        lambda q: u.lax.pad(q, q[0], [(1, 1, 0)]),
+        lambda q: u.lax.sub(q, q),
+        lambda q: u.lax.clamp(q[0], q, q[-1]),
+        lambda q: u.lax.top_k(q, 2),
+        lambda q: u.lax.broadcast(q, sizes=(2,)),
+        lambda q: u.lax.broadcast_in_dim(q, shape=(1, q.size), broadcast_dimensions=(1,)),
+        lambda q: u.lax.broadcast_to_rank(q, rank=2),
+    ],
+)
+def test_lax_entry_raises_on_numpy_quantity(call):
+    """Regression: every saiunit.lax entry must reject NumPy-backed Quantity."""
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.arange(4.0), unit=meter)
+    with pytest.raises(u.BackendError, match="requires the jax backend"):
+        call(q)

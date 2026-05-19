@@ -757,3 +757,23 @@ class TestCSCDocstringExamples(unittest.TestCase):
         csc = susparse.csc_fromdense(dense)
         result = susparse.csc_todense(csc)
         self.assertTrue(jnp.allclose(result, dense))
+
+
+def test_csr_fromdense_raises_on_numpy_quantity():
+    import numpy as np
+    import pytest
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.array([[1.0, 0.0], [0.0, 2.0]]), unit=meter)
+    with pytest.raises(u.BackendError, match="requires the jax backend"):
+        u.sparse.CSR.fromdense(q)
+
+
+def test_csr_fromdense_raises_on_numpy_quantity():
+    import numpy as np
+    import pytest
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.array([[1.0, 0.0], [0.0, 2.0]]), unit=meter)
+    with pytest.raises(u.BackendError, match="requires the jax backend"):
+        u.sparse.CSR.fromdense(q)

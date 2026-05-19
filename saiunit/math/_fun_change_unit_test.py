@@ -537,3 +537,118 @@ class TestDocstringExamples(parameterized.TestCase):
         result = um.prod(q)
         expected = jnp.prod(jnp.array([2.0, 3.0]))
         assert_quantity(result, expected, unit=u.meter ** 2)
+
+
+def test_multiply_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([2.0]), unit=meter)
+    b = u.Quantity(np.array([3.0]), unit=second)
+    r = u.math.multiply(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == meter * second
+    assert np.allclose(r.mantissa, [6.0])
+
+
+def test_divide_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([6.0]), unit=meter)
+    b = u.Quantity(np.array([2.0]), unit=second)
+    r = u.math.true_divide(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == meter / second
+
+
+def _matmul_numpy_pair():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([[1.0, 2.0], [3.0, 4.0]]), unit=meter)
+    b = u.Quantity(np.array([[5.0, 6.0], [7.0, 8.0]]), unit=second)
+    return a, b, meter * second
+
+
+def test_matmul_numpy_backend_default_kwargs():
+    """Regression: matmul must not forward JAX-only precision kwargs to NumPy."""
+    import numpy as np
+    import saiunit as u
+    a, b, unit = _matmul_numpy_pair()
+    r = u.math.matmul(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == unit
+    assert np.allclose(r.mantissa, np.array([[19.0, 22.0], [43.0, 50.0]]))
+
+
+def test_inner_numpy_backend_default_kwargs():
+    import numpy as np
+    import saiunit as u
+    a, b, unit = _matmul_numpy_pair()
+    r = u.math.inner(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == unit
+
+
+def test_tensordot_numpy_backend_default_kwargs():
+    import numpy as np
+    import saiunit as u
+    a, b, unit = _matmul_numpy_pair()
+    r = u.math.tensordot(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == unit
+
+
+def test_vdot_numpy_backend_default_kwargs():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([1.0, 2.0, 3.0]), unit=meter)
+    b = u.Quantity(np.array([4.0, 5.0, 6.0]), unit=second)
+    r = u.math.vdot(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == meter * second
+
+
+def test_vecdot_numpy_backend_default_kwargs():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([1.0, 2.0, 3.0]), unit=meter)
+    b = u.Quantity(np.array([4.0, 5.0, 6.0]), unit=second)
+    r = u.math.vecdot(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == meter * second
+
+
+def test_dot_numpy_backend_default_kwargs():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([1.0, 2.0, 3.0]), unit=meter)
+    b = u.Quantity(np.array([4.0, 5.0, 6.0]), unit=second)
+    r = u.math.dot(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == meter * second
+
+
+def test_multi_dot_numpy_backend_default_kwargs():
+    """Regression: multi_dot must dispatch through backend instead of always jnp."""
+    import numpy as np
+    import saiunit as u
+    a, b, unit = _matmul_numpy_pair()
+    r = u.math.multi_dot([a, b])
+    assert r.backend == "numpy"
+    assert r.unit == unit
+
+
+def test_convolve_numpy_backend_default_kwargs():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([1.0, 2.0, 3.0]), unit=meter)
+    v = u.Quantity(np.array([0.5, 1.0]), unit=second)
+    r = u.math.convolve(a, v)
+    assert r.backend == "numpy"
+    assert r.unit == meter * second

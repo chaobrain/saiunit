@@ -72,7 +72,7 @@ def fftshift(
         >>> shifted = sufft.fftshift(freq)
         >>> recovered = sufft.ifftshift(shifted)
     """
-    return _fun_keep_unit_unary(jnpfft.fftshift, x, axes=axes, **kwargs)
+    return _fun_keep_unit_unary('fft.fftshift', x, axes=axes, **kwargs)
 
 
 @set_module_as('saiunit.fft')
@@ -114,4 +114,4 @@ def ifftshift(
         >>> shifted = sufft.fftshift(freq)
         >>> recovered = sufft.ifftshift(shifted)
     """
-    return _fun_keep_unit_unary(jnpfft.ifftshift, x, axes=axes, **kwargs)
+    return _fun_keep_unit_unary('fft.ifftshift', x, axes=axes, **kwargs)
