@@ -180,3 +180,57 @@ q = u.Quantity(x, unit=u.meter) * 2.0
 loss = q.mantissa.sum()
 grads = torch.autograd.grad(loss, x)
 ```
+
+## Dask: lazy semantics
+
+`saiunit` accepts `dask.array.Array` mantissas via the optional `dask` extra:
+
+```bash
+pip install saiunit[dask]
+```
+
+```python
+import numpy as np
+import dask.array as da
+import saiunit as u
+
+big = da.from_array(np.arange(1_000_000.0), chunks=100_000)
+q = u.Quantity(big, unit=u.meter)
+print(q.backend)        # 'dask'
+print(q.shape)          # (1000000,)  — no compute
+print((q + q).backend)  # 'dask'      — still lazy
+```
+
+Convert with `Quantity.to_dask(chunks='auto')`:
+
+```python
+q_np = u.Quantity(np.arange(1_000_000.0), unit=u.meter)
+q_da = q_np.to_dask(chunks=100_000)
+```
+
+### What stays lazy
+
+Building a dask-backed `Quantity`, calling `q.shape` / `q.ndim` / `q.dtype`,
+arithmetic, and most `saiunit.math` / `saiunit.linalg` operations all stay
+lazy — no `.compute()` until you explicitly trigger it.
+
+`repr(q)` is also lazy-safe; it shows dask's task-graph summary rather than
+materializing the array.
+
+### What requires compute
+
+Operations that produce a Python scalar — `float(q)`, `int(q)`,
+`operator.index(q)`, `q.tolist()`, `np.asarray(q)`, `hash(q)` — raise
+`BackendError` on dask-backed quantities. Call `q.mantissa.compute()` first:
+
+```python
+single = u.Quantity(da.from_array(np.array([42.0]), chunks=1), unit=u.meter)
+float(single)              # raises BackendError
+single.mantissa.compute()  # numpy array; now eager
+```
+
+### Mixed-backend arithmetic
+
+Mixing a dask-backed and a non-dask-backed `Quantity` in arithmetic falls
+through the default-backend tiebreaker. If the result lands on dask, the
+non-dask operand is auto-lifted to a dask array.
