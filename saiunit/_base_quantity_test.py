@@ -1836,3 +1836,33 @@ def test_to_jax_noop_when_already_jax():
     qj = q.to_jax()
     assert qj.mantissa is q.mantissa
     assert qj.unit is q.unit
+
+
+def test_array_ufunc_sin_dimensionless():
+    q = Quantity(np.array([0.0, 1.0]), unit=UNITLESS)
+    r = np.sin(q)
+    # sin of unitless returns a raw array (saiunit.math.sin behavior)
+    arr = r.mantissa if hasattr(r, "mantissa") else r
+    assert np.allclose(np.asarray(arr), np.sin([0.0, 1.0]))
+
+
+def test_array_ufunc_add_same_units():
+    a = Quantity(np.array([1.0, 2.0]), unit=meter)
+    b = Quantity(np.array([3.0, 4.0]), unit=meter)
+    r = np.add(a, b)
+    assert r.unit == meter
+    assert np.allclose(np.asarray(r.mantissa), [4.0, 6.0])
+
+
+def test_array_ufunc_add_incompatible_units_raises():
+    a = Quantity(np.array([1.0]), unit=meter)
+    b = Quantity(np.array([1.0]), unit=second)
+    with pytest.raises((u.DimensionMismatchError, u.UnitMismatchError, TypeError)):
+        np.add(a, b)
+
+
+def test_array_ufunc_unsupported_returns_notimplemented():
+    # Unsupported ufuncs must NOT silently strip units.
+    q = Quantity(np.array([1, 2, 3], dtype=np.int64), unit=meter)
+    with pytest.raises((TypeError, u.BackendError)):
+        np.gcd(q, q)

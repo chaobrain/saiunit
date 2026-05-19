@@ -245,6 +245,82 @@ def _quantity_with_unit(mantissa, unit):
 
 _quantity_with_unit.__module__ = 'saiunit._base_quantity'
 
+
+# ---------------------------------------------------------------------------
+# numpy ufunc dispatch table (used by Quantity.__array_ufunc__)
+# ---------------------------------------------------------------------------
+
+_UFUNC_DISPATCH: dict = {}
+
+# Map of numpy binary ufuncs → (forward dunder, reverse dunder) on Quantity.
+# Used to delegate mixed Quantity+plain ufunc calls back to operator dispatch.
+_BINARY_UFUNC_OPNAMES: dict = {
+    np.add: ("__add__", "__radd__"),
+    np.subtract: ("__sub__", "__rsub__"),
+    np.multiply: ("__mul__", "__rmul__"),
+    np.true_divide: ("__truediv__", "__rtruediv__"),
+    np.floor_divide: ("__floordiv__", "__rfloordiv__"),
+    np.mod: ("__mod__", "__rmod__"),
+    np.power: ("__pow__", "__rpow__"),
+    np.equal: ("__eq__", "__eq__"),
+    np.not_equal: ("__ne__", "__ne__"),
+    np.less: ("__lt__", "__gt__"),
+    np.less_equal: ("__le__", "__ge__"),
+    np.greater: ("__gt__", "__lt__"),
+    np.greater_equal: ("__ge__", "__le__"),
+}
+
+
+def _build_ufunc_dispatch() -> dict:
+    """Lazily build the numpy ufunc → saiunit.math function table.
+
+    Only ufuncs in this table are unit-safe. Anything else returns
+    ``NotImplemented`` from ``__array_ufunc__``.
+    """
+    from saiunit import math as _u_math
+    table = {
+        # arithmetic
+        np.add: _u_math.add,
+        np.subtract: _u_math.subtract,
+        np.multiply: _u_math.multiply,
+        np.true_divide: _u_math.true_divide,
+        np.floor_divide: _u_math.floor_divide,
+        np.mod: _u_math.mod,
+        np.power: _u_math.power,
+        np.negative: _u_math.negative,
+        np.positive: _u_math.positive,
+        np.absolute: _u_math.absolute,
+        np.abs: _u_math.absolute,
+        # comparison
+        np.equal: _u_math.equal,
+        np.not_equal: _u_math.not_equal,
+        np.less: _u_math.less,
+        np.less_equal: _u_math.less_equal,
+        np.greater: _u_math.greater,
+        np.greater_equal: _u_math.greater_equal,
+        # trig
+        np.sin: _u_math.sin,
+        np.cos: _u_math.cos,
+        np.tan: _u_math.tan,
+        np.arcsin: _u_math.arcsin,
+        np.arccos: _u_math.arccos,
+        np.arctan: _u_math.arctan,
+        np.arctan2: _u_math.arctan2,
+        # exp/log
+        np.exp: _u_math.exp,
+        np.log: _u_math.log,
+        np.log2: _u_math.log2,
+        np.log10: _u_math.log10,
+        # other common
+        np.sqrt: _u_math.sqrt,
+        np.square: _u_math.square,
+        np.isfinite: _u_math.isfinite,
+        np.isnan: _u_math.isnan,
+        np.isinf: _u_math.isinf,
+    }
+    return table
+
+
 # ---------------------------------------------------------------------------
 # Quantity class
 # ---------------------------------------------------------------------------
@@ -2944,6 +3020,54 @@ class Quantity:
     # ------------------
     # NumPy support
     # ------------------
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        """Intercept numpy ufunc calls so units are preserved or checked.
+
+        For ufuncs in :data:`_UFUNC_DISPATCH` (``np.add``, ``np.sin``, …), route
+        through the matching ``saiunit.math`` function. For anything else,
+        return ``NotImplemented`` so NumPy raises a ``TypeError`` rather than
+        silently stripping units.
+
+        When a binary ufunc mixes a Quantity with a plain scalar/array, delegate
+        to the Quantity's own arithmetic dunder so unit-mismatch errors keep
+        their normal type (``UnitMismatchError``) rather than degrading to a
+        generic ``TypeError`` from the underlying saiunit.math function.
+        """
+        if method != "__call__":
+            # reduce / accumulate / outer / at / reduceat are not supported.
+            return NotImplemented
+
+        global _UFUNC_DISPATCH
+        if not _UFUNC_DISPATCH:
+            _UFUNC_DISPATCH = _build_ufunc_dispatch()
+
+        saiunit_fn = _UFUNC_DISPATCH.get(ufunc)
+        if saiunit_fn is None:
+            return NotImplemented
+
+        if kwargs.pop("out", None) is not None:
+            # ``out=`` writes into a pre-allocated buffer; not supported.
+            return NotImplemented
+
+        # For binary ufuncs mixing a Quantity with a plain scalar/array,
+        # route through Quantity's own dunder so the operator semantics
+        # (including UnitMismatchError on a unit mismatch) are preserved.
+        if len(inputs) == 2 and ufunc in _BINARY_UFUNC_OPNAMES and not kwargs:
+            lhs, rhs = inputs
+            lhs_is_q = isinstance(lhs, Quantity)
+            rhs_is_q = isinstance(rhs, Quantity)
+            if lhs_is_q != rhs_is_q:  # exactly one is a Quantity
+                forward, reverse = _BINARY_UFUNC_OPNAMES[ufunc]
+                if lhs_is_q:
+                    result = getattr(lhs, forward)(rhs)
+                else:
+                    result = getattr(rhs, reverse)(lhs)
+                if result is NotImplemented:
+                    return saiunit_fn(*inputs, **kwargs)
+                return result
+
+        return saiunit_fn(*inputs, **kwargs)
 
     def __array__(self, dtype: jax.typing.DTypeLike | None = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
