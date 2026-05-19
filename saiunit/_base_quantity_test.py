@@ -1866,3 +1866,24 @@ def test_array_ufunc_unsupported_returns_notimplemented():
     q = Quantity(np.array([1, 2, 3], dtype=np.int64), unit=meter)
     with pytest.raises((TypeError, u.BackendError)):
         np.gcd(q, q)
+
+
+def test_numpy_backend_properties():
+    q = Quantity(np.array([[1.0, 2.0], [3.0, 4.0]]), unit=meter)
+    assert q.shape == (2, 2)
+    assert q.ndim == 2
+    assert q.size == 4
+    assert q.T.shape == (2, 2)
+    assert q.mT.shape == (2, 2)
+    assert q.real.backend == "numpy"
+    assert q.imag.backend == "numpy"
+
+
+def test_numpy_backend_finiteness():
+    q = Quantity(np.array([1.0, np.inf, np.nan]), unit=meter)
+    isfinite = q.isfinite
+    assert bool(isfinite[0]) and not bool(isfinite[1]) and not bool(isfinite[2])
+    isnan = q.isnan
+    assert (not bool(isnan[0])) and (not bool(isnan[1])) and bool(isnan[2])
+    isinf = q.isinf
+    assert (not bool(isinf[0])) and bool(isinf[1]) and (not bool(isinf[2]))
