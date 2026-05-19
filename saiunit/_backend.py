@@ -68,7 +68,7 @@ __all__ = [
     "to_backend",
 ]
 
-BackendName = Literal["numpy", "jax"]
+BackendName = Literal["numpy", "jax", "cupy", "torch"]
 
 _default_backend: ContextVar[Optional[BackendName]] = ContextVar(
     "saiunit_default_backend", default=None

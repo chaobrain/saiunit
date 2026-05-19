@@ -180,3 +180,13 @@ def test_is_torch_array_true_when_available():
     from saiunit._backend import is_torch_array
     t = torch.tensor([1.0, 2.0])
     assert is_torch_array(t) is True
+
+
+def test_backend_name_includes_cupy_and_torch():
+    from saiunit._backend import BackendName
+    import typing
+    args = typing.get_args(BackendName)
+    assert "cupy" in args
+    assert "torch" in args
+    assert "numpy" in args
+    assert "jax" in args
