@@ -511,6 +511,9 @@ class Quantity:
                 from saiunit._backend import _xp_for, get_default_backend
                 default = get_default_backend() or "jax"
                 xp = _xp_for(default)
+                # ndonnx.asarray can't infer dtype from a JAX array; route via numpy.
+                if default == "ndonnx" and isinstance(mantissa, jax.Array):
+                    mantissa = np.asarray(mantissa)
                 if dtype is not None:
                     mantissa = xp.asarray(mantissa, dtype=dtype)
                 else:

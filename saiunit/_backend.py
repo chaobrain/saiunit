@@ -280,6 +280,10 @@ def to_backend(x, name: BackendName, **kwargs):
             raise TypeError(f"to_backend(name='numpy') does not accept kwargs; got {sorted(kwargs)}")
         if is_numpy_array(x):
             return x
+        # ndonnx requires explicit materialization; np.asarray returns a 0-d
+        # object wrapper instead of evaluating the symbolic graph.
+        if is_ndonnx_array(x):
+            return x.unwrap_numpy()
         return np.asarray(x)
     if name == "jax":
         if kwargs:
