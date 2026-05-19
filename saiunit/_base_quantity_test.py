@@ -1887,3 +1887,30 @@ def test_numpy_backend_finiteness():
     assert (not bool(isnan[0])) and (not bool(isnan[1])) and bool(isnan[2])
     isinf = q.isinf
     assert (not bool(isinf[0])) and bool(isinf[1]) and (not bool(isinf[2]))
+
+
+def test_quantity_to_cupy_basic():
+    cupy = pytest.importorskip("cupy")
+    import saiunit as u
+    from saiunit._backend import is_cupy_array
+    q = u.Quantity(np.array([1.0, 2.0]), unit=u.meter)
+    q2 = q.to_cupy()
+    assert is_cupy_array(q2.mantissa)
+    assert q2.unit == u.meter
+
+
+def test_quantity_to_cupy_noop_when_already_cupy():
+    cupy = pytest.importorskip("cupy")
+    import saiunit as u
+    q = u.Quantity(cupy.array([1.0]), unit=u.meter)
+    q2 = q.to_cupy()
+    assert q2 is q
+
+
+def test_quantity_to_cupy_with_device():
+    cupy = pytest.importorskip("cupy")
+    import saiunit as u
+    from saiunit._backend import is_cupy_array
+    q = u.Quantity(np.array([1.0]), unit=u.meter)
+    q2 = q.to_cupy(device=0)
+    assert is_cupy_array(q2.mantissa)

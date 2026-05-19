@@ -1163,6 +1163,18 @@ class Quantity:
             return self
         return Quantity(to_backend(self._mantissa, "jax"), unit=self.unit)
 
+    def to_cupy(self, *, device=None) -> 'Quantity':
+        """Return a new Quantity with mantissa converted to a ``cupy.ndarray``.
+
+        No-op (returns ``self``) if the mantissa is already a CuPy array and no
+        ``device`` was specified.
+        """
+        from saiunit._backend import is_cupy_array, to_backend
+        if is_cupy_array(self._mantissa) and device is None:
+            return self
+        kwargs = {} if device is None else {"device": device}
+        return Quantity(to_backend(self._mantissa, "cupy", **kwargs), unit=self.unit)
+
     @property
     def shape(self) -> tuple[int, ...]:
         """
