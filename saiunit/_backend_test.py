@@ -75,8 +75,8 @@ def test_get_backend_mixed_with_numpy_default():
 
 
 def test_set_default_backend_rejects_invalid():
-    with pytest.raises(ValueError, match="must be 'numpy', 'jax', or None"):
-        set_default_backend("torch")
+    with pytest.raises(ValueError, match="must be 'numpy', 'jax', 'cupy', 'torch', or None"):
+        set_default_backend("notabackend")
 
 
 def test_using_backend_context_manager():
@@ -296,3 +296,33 @@ def test_to_backend_torch_rejects_unknown_kwarg():
     from saiunit._backend import to_backend
     with pytest.raises(TypeError, match="does not accept"):
         to_backend(np.array([1.0]), "torch", chunks="auto")
+
+
+def test_set_default_backend_accepts_cupy():
+    from saiunit._backend import set_default_backend, get_default_backend
+    set_default_backend("cupy")
+    try:
+        assert get_default_backend() == "cupy"
+    finally:
+        set_default_backend(None)
+
+
+def test_set_default_backend_accepts_torch():
+    from saiunit._backend import set_default_backend, get_default_backend
+    set_default_backend("torch")
+    try:
+        assert get_default_backend() == "torch"
+    finally:
+        set_default_backend(None)
+
+
+def test_using_backend_accepts_cupy():
+    from saiunit._backend import using_backend, get_default_backend
+    with using_backend("cupy"):
+        assert get_default_backend() == "cupy"
+
+
+def test_using_backend_accepts_torch():
+    from saiunit._backend import using_backend, get_default_backend
+    with using_backend("torch"):
+        assert get_default_backend() == "torch"

@@ -116,12 +116,12 @@ def set_default_backend(name: Optional[BackendName]) -> None:
 
     Parameters
     ----------
-    name : {'numpy', 'jax', None}
+    name : {'numpy', 'jax', 'cupy', 'torch', None}
         Pass ``None`` to clear the default (JAX wins on tie-breaker).
     """
-    if name not in ("numpy", "jax", None):
+    if name not in ("numpy", "jax", "cupy", "torch", None):
         raise ValueError(
-            f"default backend must be 'numpy', 'jax', or None; got {name!r}"
+            f"default backend must be 'numpy', 'jax', 'cupy', 'torch', or None; got {name!r}"
         )
     _default_backend.set(name)
 
@@ -129,8 +129,8 @@ def set_default_backend(name: Optional[BackendName]) -> None:
 @contextmanager
 def using_backend(name: BackendName) -> Iterator[None]:
     """Context manager that temporarily sets the default backend."""
-    if name not in ("numpy", "jax"):
-        raise ValueError(f"backend must be 'numpy' or 'jax'; got {name!r}")
+    if name not in ("numpy", "jax", "cupy", "torch"):
+        raise ValueError(f"backend must be 'numpy', 'jax', 'cupy', or 'torch'; got {name!r}")
     token = _default_backend.set(name)
     try:
         yield
