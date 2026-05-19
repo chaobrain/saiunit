@@ -421,3 +421,9 @@ def test_using_backend_accepts_dask():
     from saiunit._backend import using_backend, get_default_backend
     with using_backend("dask"):
         assert get_default_backend() == "dask"
+
+
+def test_top_level_exports_is_dask_array():
+    import saiunit as u
+    assert hasattr(u, "is_dask_array")
+    assert "is_dask_array" in u.__all__
