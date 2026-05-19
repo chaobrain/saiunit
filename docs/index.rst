@@ -160,6 +160,7 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    :caption: Getting Started
 
    getting_started/quickstart.ipynb
+   getting_started/numpy_backend.md
 
 
 .. toctree::

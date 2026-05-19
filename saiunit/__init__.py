@@ -14,13 +14,15 @@
 # ==============================================================================
 
 """
-saiunit -- Physical units for JAX arrays.
+saiunit -- Physical units for JAX and NumPy arrays.
 
-``saiunit`` provides a :class:`Quantity` type that pairs a JAX array with a
-physical :class:`Unit`, ensuring dimensional correctness at every arithmetic
-operation.  It also supplies the standard SI base and derived units (e.g.
-``meter``, ``second``, ``volt``), physical constants, and unit-aware wrappers
-for NumPy/JAX math functions.
+``saiunit`` provides a :class:`Quantity` type that pairs a JAX array or
+NumPy array with a physical :class:`Unit`, ensuring dimensional correctness
+at every arithmetic operation. The backend is detected from the mantissa
+type; users can force a default with :func:`set_default_backend` or the
+:func:`using_backend` context manager. ``saiunit`` also supplies the standard
+SI base and derived units (e.g. ``meter``, ``second``, ``volt``), physical
+constants, and unit-aware wrappers for NumPy/JAX math functions.
 
 Subpackages
 -----------
