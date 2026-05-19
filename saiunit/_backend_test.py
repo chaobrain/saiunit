@@ -348,3 +348,29 @@ def test_is_dask_array_true_when_available():
     from saiunit._backend import is_dask_array
     arr = da.from_array(np.array([1.0, 2.0]), chunks=1)
     assert is_dask_array(arr) is True
+
+
+def test_backend_name_includes_dask():
+    from saiunit._backend import BackendName
+    import typing
+    assert "dask" in typing.get_args(BackendName)
+
+
+def test_get_backend_dask_only():
+    da = pytest.importorskip("dask.array")
+    from saiunit._backend import get_backend
+    import array_api_compat.dask.array as expected
+    xp = get_backend(da.from_array(np.array([1.0]), chunks=1))
+    assert xp is expected
+
+
+def test_get_backend_dask_default_for_mixed():
+    da = pytest.importorskip("dask.array")
+    from saiunit._backend import get_backend, set_default_backend
+    set_default_backend("dask")
+    try:
+        import array_api_compat.dask.array as expected
+        xp = get_backend(da.from_array(np.array([1.0]), chunks=1), jnp.array([1.0]))
+        assert xp is expected
+    finally:
+        set_default_backend(None)
