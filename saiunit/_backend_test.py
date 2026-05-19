@@ -227,3 +227,34 @@ def test_get_backend_mixed_with_torch_default():
         assert xp is expected
     finally:
         set_default_backend(None)
+
+
+def test_to_backend_numpy_to_cupy():
+    cupy = pytest.importorskip("cupy")
+    from saiunit._backend import to_backend, is_cupy_array
+    arr = np.array([1.0, 2.0])
+    out = to_backend(arr, "cupy")
+    assert is_cupy_array(out)
+    assert cupy.allclose(out, cupy.asarray(arr))
+
+
+def test_to_backend_cupy_noop():
+    cupy = pytest.importorskip("cupy")
+    from saiunit._backend import to_backend
+    arr = cupy.array([1.0])
+    out = to_backend(arr, "cupy")
+    assert out is arr
+
+
+def test_to_backend_cupy_with_device_kwarg():
+    cupy = pytest.importorskip("cupy")
+    from saiunit._backend import to_backend, is_cupy_array
+    arr = np.array([1.0])
+    out = to_backend(arr, "cupy", device=0)
+    assert is_cupy_array(out)
+
+
+def test_to_backend_numpy_rejects_unknown_kwargs():
+    from saiunit._backend import to_backend
+    with pytest.raises(TypeError, match="does not accept"):
+        to_backend(np.array([1.0]), "numpy", device="cuda")

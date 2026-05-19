@@ -203,14 +203,44 @@ def get_backend(*arrays_or_quantities) -> ModuleType:
     return _xp_for("jax")
 
 
-def to_backend(x, name: BackendName):
-    """Convert ``x`` to the given backend; no-op if already there."""
+def to_backend(x, name: BackendName, **kwargs):
+    """Convert ``x`` to the given backend; no-op if already there.
+
+    Backend-specific kwargs:
+      - cupy: device
+      - torch: device, dtype
+    Other backends raise TypeError on any kwargs.
+    """
     if name == "numpy":
+        if kwargs:
+            raise TypeError(f"to_backend(name='numpy') does not accept kwargs; got {sorted(kwargs)}")
         if is_numpy_array(x):
             return x
         return np.asarray(x)
     if name == "jax":
+        if kwargs:
+            raise TypeError(f"to_backend(name='jax') does not accept kwargs; got {sorted(kwargs)}")
         if is_jax_array(x):
             return x
         return jnp.asarray(x)
-    raise ValueError(f"backend must be 'numpy' or 'jax'; got {name!r}")
+    if name == "cupy":
+        cupy = _try_import("cupy")
+        if cupy is None:
+            raise BackendError(
+                "cupy backend requested but cupy is not installed. "
+                "Install with: pip install saiunit[cupy]"
+            )
+        unknown = set(kwargs) - {"device"}
+        if unknown:
+            raise TypeError(f"to_backend(name='cupy') does not accept {sorted(unknown)}")
+        if is_cupy_array(x) and "device" not in kwargs:
+            return x
+        device = kwargs.get("device")
+        if device is not None:
+            with cupy.cuda.Device(device):
+                return cupy.asarray(x)
+        return cupy.asarray(x)
+    if name == "torch":
+        # Implemented in Task 6.
+        raise NotImplementedError("torch branch added in Task 6")
+    raise ValueError(f"backend must be one of 'numpy', 'jax', 'cupy', 'torch'; got {name!r}")
