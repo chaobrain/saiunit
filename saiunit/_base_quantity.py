@@ -113,6 +113,22 @@ def _wrap_function_keep_unit(func):
     return f
 
 
+def _dask_materialization_guard(mantissa, op_name: str) -> None:
+    """Raise ``BackendError`` if ``mantissa`` is a dask array.
+
+    Used by ``Quantity`` methods that would otherwise call ``.compute()``
+    implicitly (``__float__``, ``__int__``, ``__array__``, ``tolist``, etc.).
+    The caller passes a human-readable ``op_name`` for the error message.
+    """
+    from saiunit._backend import is_dask_array
+    if is_dask_array(mantissa):
+        from saiunit._exceptions import BackendError
+        raise BackendError(
+            f"{op_name} would materialize a dask-backed Quantity. "
+            f"Call `q.mantissa.compute()` first."
+        )
+
+
 def _wrap_function_change_unit(func, unit_fun):
     """
     Returns a new function that wraps the given function `func` so that it
@@ -1355,6 +1371,7 @@ class Quantity:
         Returns:
           int: The hash value of the Quantity object.
         """
+        _dask_materialization_guard(self._mantissa, "hash(Quantity)")
         try:
             return hash((np.asarray(self.mantissa).tobytes(), self.unit))
         except Exception:
@@ -2961,6 +2978,7 @@ class Quantity:
             >>> q.tolist()
             [Quantity(1., "mV"), Quantity(2., "mV")]
         """
+        _dask_materialization_guard(self._mantissa, "Quantity.tolist()")
         if isinstance(self.mantissa, numbers.Number):
             list_mantissa = self.mantissa
         else:
@@ -3222,6 +3240,7 @@ class Quantity:
 
     def __array__(self, dtype: jax.typing.DTypeLike | None = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
+        _dask_materialization_guard(self._mantissa, "np.asarray(Quantity)")
         if self.dim.is_dimensionless:
             return np.asarray(self.to_decimal(), dtype=dtype)
         else:
@@ -3231,6 +3250,7 @@ class Quantity:
             )
 
     def __float__(self):
+        _dask_materialization_guard(self._mantissa, "float(Quantity)")
         if self.dim.is_dimensionless and self.ndim == 0:
             return float(self.to_decimal())
         else:
@@ -3240,6 +3260,7 @@ class Quantity:
             )
 
     def __int__(self):
+        _dask_materialization_guard(self._mantissa, "int(Quantity)")
         if self.dim.is_dimensionless and self.ndim == 0:
             return int(self.to_decimal())
         else:
@@ -3249,6 +3270,7 @@ class Quantity:
             )
 
     def __index__(self):
+        _dask_materialization_guard(self._mantissa, "operator.index(Quantity)")
         if self.dim.is_dimensionless:
             return operator.index(self.to_decimal())
         else:

@@ -86,3 +86,52 @@ def test_dask_quantity_compute_does_materialize(dask_quantity):
     q, counter = dask_quantity
     _ = q.mantissa.compute()
     assert counter.reads > 0, "explicit .compute() did not actually materialize"
+
+
+def test_dask_quantity_float_raises_clear_error():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    q = u.Quantity(da.from_array(np.array([3.0]), chunks=1), unit=u.UNITLESS)
+    with pytest.raises(u.BackendError, match="compute"):
+        float(q)
+
+
+def test_dask_quantity_int_raises_clear_error():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    q = u.Quantity(da.from_array(np.array([3.0]), chunks=1), unit=u.UNITLESS)
+    with pytest.raises(u.BackendError, match="compute"):
+        int(q)
+
+
+def test_dask_quantity_index_raises_clear_error():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    q = u.Quantity(da.from_array(np.array([3]), chunks=1), unit=u.UNITLESS)
+    with pytest.raises(u.BackendError, match="compute"):
+        import operator
+        operator.index(q)
+
+
+def test_dask_quantity_array_protocol_raises_clear_error():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    q = u.Quantity(da.from_array(np.array([1.0, 2.0]), chunks=1), unit=u.UNITLESS)
+    with pytest.raises(u.BackendError, match="compute"):
+        np.asarray(q)
+
+
+def test_dask_quantity_tolist_raises_clear_error():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    q = u.Quantity(da.from_array(np.array([1.0, 2.0]), chunks=1), unit=u.meter)
+    with pytest.raises(u.BackendError, match="compute"):
+        q.tolist()
+
+
+def test_dask_quantity_hash_raises_clear_error():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    q = u.Quantity(da.from_array(np.array([1.0]), chunks=1), unit=u.meter)
+    with pytest.raises(u.BackendError, match="compute"):
+        hash(q)
