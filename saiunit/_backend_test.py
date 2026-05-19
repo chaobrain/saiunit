@@ -75,7 +75,7 @@ def test_get_backend_mixed_with_numpy_default():
 
 
 def test_set_default_backend_rejects_invalid():
-    with pytest.raises(ValueError, match="must be 'numpy', 'jax', 'cupy', 'torch', or None"):
+    with pytest.raises(ValueError, match="must be 'numpy', 'jax', 'cupy', 'torch', 'dask', or None"):
         set_default_backend("notabackend")
 
 
@@ -406,3 +406,18 @@ def test_to_backend_dask_rejects_unknown_kwarg():
     from saiunit._backend import to_backend
     with pytest.raises(TypeError, match="does not accept"):
         to_backend(np.array([1.0]), "dask", device="cuda")
+
+
+def test_set_default_backend_accepts_dask():
+    from saiunit._backend import set_default_backend, get_default_backend
+    set_default_backend("dask")
+    try:
+        assert get_default_backend() == "dask"
+    finally:
+        set_default_backend(None)
+
+
+def test_using_backend_accepts_dask():
+    from saiunit._backend import using_backend, get_default_backend
+    with using_backend("dask"):
+        assert get_default_backend() == "dask"
