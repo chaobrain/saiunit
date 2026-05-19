@@ -258,3 +258,41 @@ def test_to_backend_numpy_rejects_unknown_kwargs():
     from saiunit._backend import to_backend
     with pytest.raises(TypeError, match="does not accept"):
         to_backend(np.array([1.0]), "numpy", device="cuda")
+
+
+def test_to_backend_numpy_to_torch():
+    torch = pytest.importorskip("torch")
+    from saiunit._backend import to_backend, is_torch_array
+    arr = np.array([1.0, 2.0])
+    out = to_backend(arr, "torch")
+    assert is_torch_array(out)
+    assert torch.allclose(out, torch.tensor([1.0, 2.0], dtype=out.dtype))
+
+
+def test_to_backend_torch_noop():
+    torch = pytest.importorskip("torch")
+    from saiunit._backend import to_backend
+    t = torch.tensor([1.0])
+    out = to_backend(t, "torch")
+    assert out is t
+
+
+def test_to_backend_torch_with_dtype_torch_native():
+    torch = pytest.importorskip("torch")
+    from saiunit._backend import to_backend
+    out = to_backend(np.array([1.0, 2.0]), "torch", dtype=torch.float64)
+    assert out.dtype == torch.float64
+
+
+def test_to_backend_torch_with_dtype_numpy_mapped():
+    torch = pytest.importorskip("torch")
+    from saiunit._backend import to_backend
+    out = to_backend(np.array([1.0, 2.0]), "torch", dtype=np.float64)
+    assert out.dtype == torch.float64
+
+
+def test_to_backend_torch_rejects_unknown_kwarg():
+    pytest.importorskip("torch")
+    from saiunit._backend import to_backend
+    with pytest.raises(TypeError, match="does not accept"):
+        to_backend(np.array([1.0]), "torch", chunks="auto")

@@ -203,6 +203,30 @@ def get_backend(*arrays_or_quantities) -> ModuleType:
     return _xp_for("jax")
 
 
+_NUMPY_TO_TORCH_DTYPE = {
+    "float16": "float16",
+    "float32": "float32",
+    "float64": "float64",
+    "int8": "int8",
+    "int16": "int16",
+    "int32": "int32",
+    "int64": "int64",
+    "uint8": "uint8",
+    "bool": "bool",
+    "complex64": "complex64",
+    "complex128": "complex128",
+}
+
+
+def _numpy_to_torch_dtype(np_dtype, torch_mod):
+    """Translate a numpy dtype (or np.dtype-like) to a torch dtype."""
+    name = np.dtype(np_dtype).name
+    torch_name = _NUMPY_TO_TORCH_DTYPE.get(name)
+    if torch_name is None:
+        raise TypeError(f"no torch dtype mapping for numpy dtype {name!r}")
+    return getattr(torch_mod, torch_name)
+
+
 def to_backend(x, name: BackendName, **kwargs):
     """Convert ``x`` to the given backend; no-op if already there.
 
@@ -241,6 +265,22 @@ def to_backend(x, name: BackendName, **kwargs):
                 return cupy.asarray(x)
         return cupy.asarray(x)
     if name == "torch":
-        # Implemented in Task 6.
-        raise NotImplementedError("torch branch added in Task 6")
+        torch = _try_import("torch")
+        if torch is None:
+            raise BackendError(
+                "torch backend requested but torch is not installed. "
+                "Install with: pip install saiunit[torch]"
+            )
+        unknown = set(kwargs) - {"device", "dtype"}
+        if unknown:
+            raise TypeError(f"to_backend(name='torch') does not accept {sorted(unknown)}")
+        # Translate numpy dtype to torch dtype if needed.
+        dtype = kwargs.get("dtype")
+        if dtype is not None and not isinstance(dtype, torch.dtype):
+            dtype = _numpy_to_torch_dtype(dtype, torch)
+        device = kwargs.get("device")
+        if is_torch_array(x) and not kwargs:
+            return x
+        # torch.as_tensor shares memory where possible; we accept that.
+        return torch.as_tensor(x, device=device, dtype=dtype)
     raise ValueError(f"backend must be one of 'numpy', 'jax', 'cupy', 'torch'; got {name!r}")
