@@ -53,6 +53,9 @@ def test_math_function_default_backend(backend):
     elif backend == "torch":
         import torch
         assert isinstance(r, torch.Tensor)
+    elif backend == "dask":
+        import dask.array as da
+        assert isinstance(r, da.Array)
 
 
 def test_concatenate_respects_backend(backend):
@@ -86,6 +89,9 @@ def test_math_sin_on_each_backend(backend):
     elif backend == "torch":
         import torch
         assert isinstance(r, torch.Tensor)
+    elif backend == "dask":
+        import dask.array as da
+        assert isinstance(r, da.Array)
 
 
 def test_linalg_norm_on_each_backend(backend):
@@ -94,7 +100,11 @@ def test_linalg_norm_on_each_backend(backend):
     n = u.linalg.norm(q)
     # Should be 5 meters regardless of backend.
     assert n.unit == meter
-    assert float(n.mantissa) == 5.0
+    if backend == "dask":
+        # For dask, .mantissa is a lazy scalar; compute to read the value.
+        assert float(n.mantissa.compute()) == 5.0
+    else:
+        assert float(n.mantissa) == 5.0
 
 
 def test_to_method_round_trip_on_each_backend(backend):
