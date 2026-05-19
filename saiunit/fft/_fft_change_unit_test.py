@@ -529,3 +529,14 @@ def test_docstring_example_fftfreq():
     assert isinstance(freqs, u.Quantity)
     assert freqs.shape == (4,)
     assert freqs.unit == u.hertz
+
+
+def test_fft_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import UNITLESS
+    q = u.Quantity(np.array([1.0, 0.0, -1.0, 0.0]), unit=UNITLESS)
+    r = u.fft.fft(q)
+    # fft of unitless returns either a raw numpy ndarray or a Quantity on the numpy backend
+    arr = r.mantissa if hasattr(r, "mantissa") else r
+    assert isinstance(arr, np.ndarray)
