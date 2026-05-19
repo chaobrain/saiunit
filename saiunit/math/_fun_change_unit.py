@@ -20,11 +20,13 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
+from saiunit._backend import get_backend
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ._fun_array_creation import asarray
+from ._fun_keep_unit import _resolve_for_backend
 
 __all__ = [
 
@@ -50,9 +52,12 @@ def _fun_change_unit_unary(val_fun, unit_fun, x, *args, **kwargs):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
-        # x = x.factorless()
+        xp = get_backend(x.mantissa)
+        val_fun = _resolve_for_backend(val_fun, xp)
         r = Quantity(val_fun(x.mantissa, *args, **kwargs), unit=unit_fun(x.unit))
         return maybe_decimal(r)
+    xp = get_backend(x)
+    val_fun = _resolve_for_backend(val_fun, xp)
     return val_fun(x, *args, **kwargs)
 
 
@@ -577,22 +582,26 @@ def _fun_change_unit_binary(val_fun, unit_fun, x, y, *args, **kwargs):
     y = maybe_custom_array(y)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity) and isinstance(y, Quantity):
-        # x = x.factorless()
-        # y = y.factorless()
+        xp = get_backend(x.mantissa, y.mantissa)
+        val_fun = _resolve_for_backend(val_fun, xp)
         return maybe_decimal(
             Quantity(val_fun(x.mantissa, y.mantissa, *args, **kwargs), unit=unit_fun(x.unit, y.unit))
         )
     elif isinstance(x, Quantity):
-        # x = x.factorless()
+        xp = get_backend(x.mantissa, y)
+        val_fun = _resolve_for_backend(val_fun, xp)
         return maybe_decimal(
             Quantity(val_fun(x.mantissa, y, *args, **kwargs), unit=unit_fun(x.unit, UNITLESS))
         )
     elif isinstance(y, Quantity):
-        # y = y.factorless()
+        xp = get_backend(x, y.mantissa)
+        val_fun = _resolve_for_backend(val_fun, xp)
         return maybe_decimal(
             Quantity(val_fun(x, y.mantissa, *args, **kwargs), unit=unit_fun(UNITLESS, y.unit))
         )
     else:
+        xp = get_backend(x, y)
+        val_fun = _resolve_for_backend(val_fun, xp)
         return val_fun(x, y, *args, **kwargs)
 
 

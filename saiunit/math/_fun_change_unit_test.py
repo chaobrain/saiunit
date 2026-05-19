@@ -537,3 +537,26 @@ class TestDocstringExamples(parameterized.TestCase):
         result = um.prod(q)
         expected = jnp.prod(jnp.array([2.0, 3.0]))
         assert_quantity(result, expected, unit=u.meter ** 2)
+
+
+def test_multiply_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([2.0]), unit=meter)
+    b = u.Quantity(np.array([3.0]), unit=second)
+    r = u.math.multiply(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == meter * second
+    assert np.allclose(r.mantissa, [6.0])
+
+
+def test_divide_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter, second
+    a = u.Quantity(np.array([6.0]), unit=meter)
+    b = u.Quantity(np.array([2.0]), unit=second)
+    r = u.math.true_divide(a, b)
+    assert r.backend == "numpy"
+    assert r.unit == meter / second
