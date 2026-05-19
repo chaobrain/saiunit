@@ -1963,3 +1963,30 @@ def test_quantity_backend_torch():
     import saiunit as u
     q = u.Quantity(torch.tensor([1.0]), unit=u.meter)
     assert q.backend == "torch"
+
+
+def test_quantity_to_dask_basic():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    from saiunit._backend import is_dask_array
+    q = u.Quantity(np.array([1.0, 2.0, 3.0]), unit=u.meter)
+    q2 = q.to_dask()
+    assert is_dask_array(q2.mantissa)
+    assert q2.unit == u.meter
+
+
+def test_quantity_to_dask_noop_when_already_dask():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    arr = da.from_array(np.array([1.0]), chunks=1)
+    q = u.Quantity(arr, unit=u.meter)
+    q2 = q.to_dask()
+    assert q2 is q
+
+
+def test_quantity_to_dask_custom_chunks():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    q = u.Quantity(np.arange(8, dtype=np.float64), unit=u.meter)
+    q2 = q.to_dask(chunks=2)
+    assert q2.mantissa.numblocks == (4,)

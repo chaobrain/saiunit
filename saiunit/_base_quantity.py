@@ -1203,6 +1203,17 @@ class Quantity:
             kwargs["dtype"] = dtype
         return Quantity(to_backend(self._mantissa, "torch", **kwargs), unit=self.unit)
 
+    def to_dask(self, *, chunks='auto') -> 'Quantity':
+        """Return a new Quantity with mantissa converted to a ``dask.array.Array``.
+
+        No-op (returns ``self``) if the mantissa is already a dask array and no
+        ``chunks`` was specified.
+        """
+        from saiunit._backend import is_dask_array, to_backend
+        if is_dask_array(self._mantissa) and chunks == 'auto':
+            return self
+        return Quantity(to_backend(self._mantissa, "dask", chunks=chunks), unit=self.unit)
+
     @property
     def shape(self) -> tuple[int, ...]:
         """
