@@ -77,6 +77,7 @@ from ._backend import (
     is_cupy_array,
     is_dask_array,
     is_jax_array,
+    is_ndonnx_array,
     is_numpy_array,
     is_torch_array,
     set_default_backend,
@@ -161,6 +162,7 @@ __all__ = [
               'is_cupy_array',
               'is_torch_array',
               'is_dask_array',
+              'is_ndonnx_array',
               'get_or_create_dimension',
               'get_dim_for_display',
 

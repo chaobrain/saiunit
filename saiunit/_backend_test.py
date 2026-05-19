@@ -432,6 +432,12 @@ def test_top_level_exports_is_dask_array():
     assert "is_dask_array" in u.__all__
 
 
+def test_top_level_exports_is_ndonnx_array():
+    import saiunit as u
+    assert hasattr(u, "is_ndonnx_array")
+    assert "is_ndonnx_array" in u.__all__
+
+
 def test_is_ndonnx_array_false_for_non_ndonnx():
     from saiunit._backend import is_ndonnx_array
     assert is_ndonnx_array(np.array([1.0])) is False
