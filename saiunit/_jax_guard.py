@@ -25,27 +25,42 @@ from __future__ import annotations
 
 import functools
 
-from saiunit._backend import is_numpy_array
 from saiunit._exceptions import BackendError
 
 
 def require_jax_backend(func_name: str, *quantities_or_arrays) -> None:
-    """Raise :class:`BackendError` if any input is a NumPy-backed Quantity.
+    """Raise :class:`BackendError` if any input is not jax-compatible.
 
-    Plain NumPy arrays passed alongside JAX-backed inputs are tolerated —
-    JAX accepts them and converts on the fly. The guard is specifically
-    against NumPy-backed ``Quantity`` objects, which signal that the user
-    intends NumPy semantics for an operation that requires JAX. Quantities
-    wrapping Python scalars or other non-array values are also tolerated;
-    they have no explicit backend choice.
+    - Quantity wrapping non-jax mantissa → reject, naming the backend.
+    - Bare cupy / torch arrays → reject (jax cannot lift them).
+    - Bare numpy arrays, python scalars → tolerated (jax auto-lifts).
     """
     from saiunit._base_quantity import Quantity
+    from saiunit._backend import (
+        is_cupy_array, is_torch_array,
+    )
+
     for q in quantities_or_arrays:
-        if isinstance(q, Quantity) and is_numpy_array(q.mantissa):
+        if isinstance(q, Quantity):
+            backend = q.backend
+            if backend != "jax":
+                raise BackendError(
+                    f"{func_name} requires the jax backend; got "
+                    f"{backend}-backed Quantity. Call .to_jax() on the input first."
+                )
+            continue
+        # Bare arrays: reject cupy/torch; tolerate numpy + jax + scalars.
+        if is_cupy_array(q):
             raise BackendError(
-                f"{func_name} requires the jax backend; got numpy-backed "
-                f"Quantity. Call .to_jax() on the input first."
+                f"{func_name} requires the jax backend; got cupy array. "
+                f"Convert to a JAX array first."
             )
+        if is_torch_array(q):
+            raise BackendError(
+                f"{func_name} requires the jax backend; got torch tensor. "
+                f"Convert to a JAX array first."
+            )
+        # Anything else (numpy ndarray, jax array, python scalar) is fine.
 
 
 def jax_only(fn):
