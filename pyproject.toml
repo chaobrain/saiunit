@@ -50,6 +50,7 @@ dependencies = [
     'jax',
     'numpy',
     'typing_extensions',
+    'array_api_compat>=1.9',
 ]
 
 dynamic = ['version']
