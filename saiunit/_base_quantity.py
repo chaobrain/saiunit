@@ -1162,9 +1162,10 @@ class Quantity:
     @property
     def backend(self) -> str:
         """The backend of the underlying mantissa: one of
-        ``'numpy'``, ``'jax'``, ``'cupy'``, ``'torch'``, ``'dask'``."""
+        ``'numpy'``, ``'jax'``, ``'cupy'``, ``'torch'``, ``'dask'``, ``'ndonnx'``."""
         from saiunit._backend import (
-            is_numpy_array, is_cupy_array, is_torch_array, is_dask_array,
+            is_numpy_array, is_cupy_array, is_torch_array,
+            is_dask_array, is_ndonnx_array,
         )
         m = self._mantissa
         if is_numpy_array(m):
@@ -1175,6 +1176,8 @@ class Quantity:
             return "torch"
         if is_dask_array(m):
             return "dask"
+        if is_ndonnx_array(m):
+            return "ndonnx"
         return "jax"  # jax is the fallthrough (preserves existing behavior)
 
     def to_numpy(self) -> 'Quantity':

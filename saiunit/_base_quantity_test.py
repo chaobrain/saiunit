@@ -2016,3 +2016,10 @@ def test_quantity_to_ndonnx_noop():
     q = u.Quantity(ndonnx.asarray(np.array([1.0])), unit=u.meter)
     q2 = q.to_ndonnx()
     assert q2 is q
+
+
+def test_quantity_backend_ndonnx():
+    ndonnx = pytest.importorskip("ndonnx")
+    import saiunit as u
+    q = u.Quantity(ndonnx.asarray(np.array([1.0])), unit=u.meter)
+    assert q.backend == "ndonnx"
