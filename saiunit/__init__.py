@@ -70,6 +70,13 @@ from ._base_dimension import (
     get_dim_for_display,
     get_or_create_dimension,
 )
+from ._backend import (
+    get_default_backend,
+    is_jax_array,
+    is_numpy_array,
+    set_default_backend,
+    using_backend,
+)
 from ._exceptions import BackendError
 from ._base_getters import (
     array_with_unit,
@@ -139,6 +146,13 @@ __all__ = [
               'DimensionMismatchError',
               'UnitMismatchError',
               'BackendError',
+
+              # _backend
+              'get_default_backend',
+              'set_default_backend',
+              'using_backend',
+              'is_jax_array',
+              'is_numpy_array',
               'get_or_create_dimension',
               'get_dim_for_display',
 
