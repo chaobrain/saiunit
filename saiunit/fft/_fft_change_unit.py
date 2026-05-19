@@ -120,7 +120,7 @@ def fft(
         >>> x_roundtrip = sufft.ifft(X)
     """
     # check target_time_unit.dim == second.dim
-    return _fun_change_unit_unary(jnpfft.fft,
+    return _fun_change_unit_unary('fft.fft',
                                   lambda u: u * second,
                                   a, n=n, axis=axis, norm=norm, **kwargs)
 
@@ -174,7 +174,7 @@ def rfft(
         >>> X = sufft.rfft(x)
     """
     return _fun_change_unit_unary(
-        jnpfft.rfft,
+        'fft.rfft',
         lambda u: u * second,
         a,
         n=n,
@@ -236,7 +236,7 @@ def ifft(
         >>> x_back = sufft.ifft(X)
     """
     return _fun_change_unit_unary(
-        jnpfft.ifft,
+        'fft.ifft',
         lambda u: u / second,
         a,
         n=n,
@@ -292,7 +292,7 @@ def irfft(
         >>> X = sufft.rfft(x)
         >>> x_back = sufft.irfft(X)
     """
-    return _fun_change_unit_unary(jnpfft.irfft,
+    return _fun_change_unit_unary('fft.irfft',
                                   lambda u: u / second,
                                   a, n=n, axis=axis, norm=norm, **kwargs)
 
@@ -345,7 +345,7 @@ def fft2(
         >>> X = sufft.fft2(x)
         >>> x_back = sufft.ifft2(X)
     """
-    return _fun_change_unit_unary(jnpfft.fft2,
+    return _fun_change_unit_unary('fft.fft2',
                                   lambda u: u * (second ** 2),
                                   a, s=s, axes=axes, norm=norm, **kwargs)
 
@@ -395,7 +395,7 @@ def rfft2(
         >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * u.meter
         >>> X = sufft.rfft2(x)
     """
-    return _fun_change_unit_unary(jnpfft.rfft2,
+    return _fun_change_unit_unary('fft.rfft2',
                                   lambda u: u * (second ** 2),
                                   a, s=s, axes=axes, norm=norm, **kwargs)
 
@@ -451,7 +451,7 @@ def fftn(
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
     fftn._unit_change_fun = _unit_change_fun
-    return _fun_change_unit_unary(jnpfft.fftn,
+    return _fun_change_unit_unary('fft.fftn',
                                   _unit_change_fun,
                                   a, s=s, axes=axes, norm=norm, **kwargs)
 
@@ -505,7 +505,7 @@ def rfftn(
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
     rfftn._unit_change_fun = _unit_change_fun
-    return _fun_change_unit_unary(jnpfft.rfftn,
+    return _fun_change_unit_unary('fft.rfftn',
                                   _unit_change_fun,
                                   a, s=s, axes=axes, norm=norm, **kwargs)
 
@@ -558,7 +558,7 @@ def ifft2(
         >>> X = sufft.fft2(x)
         >>> x_back = sufft.ifft2(X)
     """
-    return _fun_change_unit_unary(jnpfft.ifft2,
+    return _fun_change_unit_unary('fft.ifft2',
                                   lambda u: u / (second ** 2),
                                   a, s=s, axes=axes, norm=norm, **kwargs)
 
@@ -608,7 +608,7 @@ def irfft2(
         >>> X = sufft.rfft2(x)
         >>> x_back = sufft.irfft2(X)
     """
-    return _fun_change_unit_unary(jnpfft.irfft2,
+    return _fun_change_unit_unary('fft.irfft2',
                                   lambda u: u / (second ** 2),
                                   a, s=s, axes=axes, norm=norm, **kwargs)
 
@@ -664,7 +664,7 @@ def ifftn(
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
     ifftn._unit_change_fun = _unit_change_fun
-    return _fun_change_unit_unary(jnpfft.ifftn,
+    return _fun_change_unit_unary('fft.ifftn',
                                   _unit_change_fun,
                                   a, s=s, axes=axes, norm=norm, **kwargs)
 
@@ -720,7 +720,7 @@ def irfftn(
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
     irfftn._unit_change_fun = _unit_change_fun
-    return _fun_change_unit_unary(jnpfft.irfftn,
+    return _fun_change_unit_unary('fft.irfftn',
                                   _unit_change_fun,
                                   a, s=s, axes=axes, norm=norm, **kwargs)
 

@@ -20,11 +20,13 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
+from saiunit._backend import get_backend
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ._fun_array_creation import asarray
+from ._fun_keep_unit import _resolve_op
 
 __all__ = [
 
@@ -50,9 +52,12 @@ def _fun_change_unit_unary(val_fun, unit_fun, x, *args, **kwargs):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
-        # x = x.factorless()
+        xp = get_backend(x.mantissa)
+        val_fun = _resolve_op(val_fun, xp)
         r = Quantity(val_fun(x.mantissa, *args, **kwargs), unit=unit_fun(x.unit))
         return maybe_decimal(r)
+    xp = get_backend(x)
+    val_fun = _resolve_op(val_fun, xp)
     return val_fun(x, *args, **kwargs)
 
 
@@ -98,7 +103,7 @@ def reciprocal(
         >>> result = u.math.reciprocal(u.math.array([2.0, 4.0]) * u.second)
         >>> result.mantissa  # array([0.5 , 0.25])
     """
-    return _fun_change_unit_unary(jnp.reciprocal, lambda u: u ** -1, x, **kwargs)
+    return _fun_change_unit_unary('reciprocal', lambda u: u ** -1, x, **kwargs)
 
 
 @unit_change(lambda u: u ** 2)
@@ -157,7 +162,7 @@ def var(
         >>> q = u.math.array([1.0, 2.0, 3.0]) * u.meter
         >>> u.math.var(q)  # unit becomes meter ** 2
     """
-    return _fun_change_unit_unary(jnp.var,
+    return _fun_change_unit_unary('var',
                                   lambda u: u ** 2,
                                   a,
                                   axis=axis,
@@ -221,7 +226,7 @@ def nanvar(
         >>> q = u.math.array([1.0, jnp.nan, 3.0]) * u.meter
         >>> u.math.nanvar(q)  # unit becomes meter ** 2
     """
-    return _fun_change_unit_unary(jnp.nanvar,
+    return _fun_change_unit_unary('nanvar',
                                   lambda u: u ** 2,
                                   x,
                                   axis=axis,
@@ -262,7 +267,7 @@ def sqrt(
         >>> q = u.math.array([4.0, 9.0, 16.0]) * (u.meter ** 2)
         >>> u.math.sqrt(q)  # Quantity with unit meter
     """
-    return _fun_change_unit_unary(jnp.sqrt, lambda u: u ** 0.5, x, **kwargs)
+    return _fun_change_unit_unary('sqrt', lambda u: u ** 0.5, x, **kwargs)
 
 
 @unit_change(lambda u: u ** (1 / 3))
@@ -296,7 +301,7 @@ def cbrt(
         >>> q = u.math.array([8.0, 27.0]) * (u.meter ** 3)
         >>> u.math.cbrt(q)  # Quantity with unit meter
     """
-    return _fun_change_unit_unary(jnp.cbrt, lambda u: u ** (1 / 3), x, **kwargs)
+    return _fun_change_unit_unary('cbrt', lambda u: u ** (1 / 3), x, **kwargs)
 
 
 @unit_change(lambda u: u ** 2)
@@ -330,7 +335,7 @@ def square(
         >>> q = u.math.array([2.0, 3.0, 4.0]) * u.meter
         >>> u.math.square(q)  # Quantity with unit meter ** 2
     """
-    return _fun_change_unit_unary(jnp.square, lambda u: u ** 2, x, **kwargs)
+    return _fun_change_unit_unary('square', lambda u: u ** 2, x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -577,22 +582,26 @@ def _fun_change_unit_binary(val_fun, unit_fun, x, y, *args, **kwargs):
     y = maybe_custom_array(y)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity) and isinstance(y, Quantity):
-        # x = x.factorless()
-        # y = y.factorless()
+        xp = get_backend(x.mantissa, y.mantissa)
+        val_fun = _resolve_op(val_fun, xp)
         return maybe_decimal(
             Quantity(val_fun(x.mantissa, y.mantissa, *args, **kwargs), unit=unit_fun(x.unit, y.unit))
         )
     elif isinstance(x, Quantity):
-        # x = x.factorless()
+        xp = get_backend(x.mantissa, y)
+        val_fun = _resolve_op(val_fun, xp)
         return maybe_decimal(
             Quantity(val_fun(x.mantissa, y, *args, **kwargs), unit=unit_fun(x.unit, UNITLESS))
         )
     elif isinstance(y, Quantity):
-        # y = y.factorless()
+        xp = get_backend(x, y.mantissa)
+        val_fun = _resolve_op(val_fun, xp)
         return maybe_decimal(
             Quantity(val_fun(x, y.mantissa, *args, **kwargs), unit=unit_fun(UNITLESS, y.unit))
         )
     else:
+        xp = get_backend(x, y)
+        val_fun = _resolve_op(val_fun, xp)
         return val_fun(x, y, *args, **kwargs)
 
 
@@ -630,7 +639,7 @@ def multiply(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.multiply(a, b)  # unit is meter * second
     """
-    return _fun_change_unit_binary(jnp.multiply,
+    return _fun_change_unit_binary('multiply',
                                    lambda ux, uy: ux * uy,
                                    x, y, **kwargs)
 
@@ -669,7 +678,7 @@ def divide(
         >>> time = u.math.array([2.0, 4.0]) * u.second
         >>> u.math.divide(distance, time)  # unit is meter / second
     """
-    return _fun_change_unit_binary(jnp.divide,
+    return _fun_change_unit_binary('divide',
                                    lambda ux, uy: ux / uy,
                                    x, y, **kwargs)
 
@@ -722,7 +731,7 @@ def cross(
         >>> b = u.math.array([0.0, 1.0, 0.0]) * u.second
         >>> u.math.cross(a, b)  # unit is meter * second
     """
-    return _fun_change_unit_binary(jnp.cross,
+    return _fun_change_unit_binary('cross',
                                    lambda ux, uy: ux * uy,
                                    a, b,
                                    axisa=axisa, axisb=axisb, axisc=axisc, axis=axis, **kwargs)
@@ -762,7 +771,7 @@ def true_divide(
         >>> b = u.math.array([2.0, 5.0]) * u.second
         >>> u.math.true_divide(a, b)  # unit is meter / second
     """
-    return _fun_change_unit_binary(jnp.true_divide,
+    return _fun_change_unit_binary('true_divide',
                                    lambda ux, uy: ux / uy,
                                    x, y, **kwargs)
 
@@ -865,13 +874,19 @@ def convolve(
         >>> v = u.math.array([0.5, 1.0]) * u.second
         >>> u.math.convolve(a, v)  # unit is meter * second
     """
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
     return _fun_change_unit_binary(
-        jnp.convolve,
+        'convolve',
         lambda ux, uy: ux * uy,
         a, v,
         mode=mode,
-        precision=precision,
-        preferred_element_type=preferred_element_type,
+        **extra,
         **kwargs,
     )
 
@@ -977,7 +992,7 @@ def floor_divide(
         >>> b = u.math.array([2.0, 3.0]) * u.second
         >>> u.math.floor_divide(a, b)  # unit is meter / second
     """
-    return _fun_change_unit_binary(jnp.floor_divide, lambda ux, uy: ux / uy, x, y, **kwargs)
+    return _fun_change_unit_binary('floor_divide', lambda ux, uy: ux / uy, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1091,11 +1106,17 @@ def dot(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.dot(a, b)  # scalar Quantity with unit meter * second
     """
-    return _fun_change_unit_binary(jnp.dot,
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
+    return _fun_change_unit_binary('dot',
                                    lambda x, y: x * y,
                                    a, b,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1143,12 +1164,17 @@ def multi_dot(
     unit = UNITLESS
     for arr in arrays:
         arr = maybe_custom_array(arr)
-        arr = asarray(arr)
         if isinstance(arr, Quantity):
             unit = unit * arr.unit
             arr = arr.mantissa
         new_arrays.append(arr)
-    r = jnp.linalg.multi_dot(new_arrays, precision=precision, **kwargs)
+    xp = get_backend(*new_arrays)
+    func = _resolve_op('linalg.multi_dot', xp)
+    # ``precision`` is JAX-only; suppress it when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    r = func(new_arrays, **extra, **kwargs)
     if unit.is_unitless:
         return r
     return Quantity(r, unit=unit)
@@ -1196,11 +1222,17 @@ def vdot(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.vdot(a, b)  # scalar Quantity with unit meter * second
     """
-    return _fun_change_unit_binary(jnp.vdot,
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
+    return _fun_change_unit_binary('vdot',
                                    lambda x, y: x * y,
                                    a, b,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1249,12 +1281,18 @@ def vecdot(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.vecdot(a, b)  # scalar Quantity with unit meter * second
     """
-    return _fun_change_unit_binary(jnp.vecdot,
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
+    return _fun_change_unit_binary('vecdot',
                                    lambda x, y: x * y,
                                    a, b,
                                    axis=axis,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1300,11 +1338,17 @@ def inner(
         >>> b = u.math.array([4.0, 5.0, 6.0]) * u.second
         >>> u.math.inner(a, b)  # scalar Quantity with unit meter * second
     """
-    return _fun_change_unit_binary(jnp.inner,
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
+    return _fun_change_unit_binary('inner',
                                    lambda x, y: x * y,
                                    a, b,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1346,7 +1390,7 @@ def outer(
         >>> b = u.math.array([3.0, 4.0, 5.0]) * u.second
         >>> u.math.outer(a, b)  # shape (2, 3), unit meter * second
     """
-    return _fun_change_unit_binary(jnp.outer,
+    return _fun_change_unit_binary('outer',
                                    lambda x, y: x * y,
                                    a, b,
                                    out=out, **kwargs)
@@ -1385,7 +1429,7 @@ def kron(
         >>> b = u.math.array([3.0, 4.0]) * u.second
         >>> u.math.kron(a, b)  # unit is meter * second
     """
-    return _fun_change_unit_binary(jnp.kron,
+    return _fun_change_unit_binary('kron',
                                    lambda x, y: x * y,
                                    a, b, **kwargs)
 
@@ -1431,11 +1475,17 @@ def matmul(
         >>> b = u.math.array([[5.0, 6.0], [7.0, 8.0]]) * u.second
         >>> u.math.matmul(a, b)  # shape (2, 2), unit meter * second
     """
-    return _fun_change_unit_binary(jnp.matmul,
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
+    return _fun_change_unit_binary('matmul',
                                    lambda x, y: x * y,
                                    a, b,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @unit_change(lambda x, y: x * y)
@@ -1481,12 +1531,18 @@ def tensordot(
         >>> b = u.math.array([[5.0, 6.0], [7.0, 8.0]]) * u.second
         >>> u.math.tensordot(a, b, axes=1)  # unit is meter * second
     """
-    return _fun_change_unit_binary(jnp.tensordot,
+    # ``precision`` and ``preferred_element_type`` are JAX-only; suppress
+    # them when on NumPy backend.
+    extra = {}
+    if precision is not None:
+        extra['precision'] = precision
+    if preferred_element_type is not None:
+        extra['preferred_element_type'] = preferred_element_type
+    return _fun_change_unit_binary('tensordot',
                                    lambda x, y: x * y,
                                    a, b,
                                    axes=axes,
-                                   precision=precision,
-                                   preferred_element_type=preferred_element_type, **kwargs)
+                                   **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')

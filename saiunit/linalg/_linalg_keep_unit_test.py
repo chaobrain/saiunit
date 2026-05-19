@@ -240,3 +240,14 @@ class TestLinalgKeepUnit(parameterized.TestCase):
         result = bulinalg.matrix_norm(x, ord=2)
         expected = jnp.linalg.matrix_norm(x.mantissa, ord=2)
         assert_quantity(result, expected, unit=second)
+
+
+def test_norm_numpy_backend():
+    import numpy as np
+    import saiunit as u
+    from saiunit import meter
+    q = u.Quantity(np.array([3.0, 4.0]), unit=meter)
+    r = u.linalg.norm(q)
+    assert r.backend == "numpy"
+    assert r.unit == meter
+    assert np.allclose(np.asarray(r.mantissa), 5.0)

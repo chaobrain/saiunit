@@ -22,10 +22,18 @@ import jax.numpy as jnp
 import numpy as np
 from jax import Array
 
+from saiunit._backend import get_backend, get_default_backend
 from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import fail_for_unit_mismatch, get_unit, unit_scale_align_to_first
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
+
+import array_api_compat.numpy as _numpy_xp
+
+
+def _default_xp():
+    """Return the backend namespace selected by the current default."""
+    return _numpy_xp if get_default_backend() == "numpy" else jnp
 
 Shape = Union[int, Sequence[int]]
 
@@ -96,8 +104,10 @@ def full(
     """
     fill_value = maybe_custom_array(fill_value)
     if isinstance(fill_value, Quantity):
-        return Quantity(jnp.full(shape, fill_value.mantissa, dtype=dtype), unit=fill_value.unit)
-    return jnp.full(shape, fill_value, dtype=dtype)
+        xp = get_backend(fill_value.mantissa)
+        return Quantity(xp.full(shape, fill_value.mantissa, dtype=dtype), unit=fill_value.unit)
+    xp = _default_xp()
+    return xp.full(shape, fill_value, dtype=dtype)
 
 
 @set_module_as('saiunit.math')
@@ -296,9 +306,9 @@ def empty(
     if not isinstance(unit, Unit):
         raise TypeError(f'empty requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
-        return jnp.empty(shape, dtype=dtype) * unit
+        return _default_xp().empty(shape, dtype=dtype) * unit
     else:
-        return jnp.empty(shape, dtype=dtype)
+        return _default_xp().empty(shape, dtype=dtype)
 
 
 @set_module_as('saiunit.math')
@@ -339,9 +349,9 @@ def ones(
     if not isinstance(unit, Unit):
         raise TypeError(f'ones requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
-        return jnp.ones(shape, dtype=dtype) * unit
+        return _default_xp().ones(shape, dtype=dtype) * unit
     else:
-        return jnp.ones(shape, dtype=dtype)
+        return _default_xp().ones(shape, dtype=dtype)
 
 
 @set_module_as('saiunit.math')
@@ -381,9 +391,9 @@ def zeros(
     if not isinstance(unit, Unit):
         raise TypeError(f'zeros requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
-        return jnp.zeros(shape, dtype=dtype) * unit
+        return _default_xp().zeros(shape, dtype=dtype) * unit
     else:
-        return jnp.zeros(shape, dtype=dtype)
+        return _default_xp().zeros(shape, dtype=dtype)
 
 
 @set_module_as('saiunit.math')

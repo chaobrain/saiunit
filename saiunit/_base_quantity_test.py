@@ -1795,3 +1795,95 @@ class TestQuantityStringUnit:
     def test_invalid_string_unit_raises(self):
         with pytest.raises(ValueError):
             Quantity(1.0, "nonexistent_xyz")
+
+
+def test_quantity_backend_property_numpy():
+    q = Quantity(np.array([1.0, 2.0]), unit=meter)
+    assert q.backend == "numpy"
+
+
+def test_quantity_backend_property_jax():
+    q = Quantity(jnp.array([1.0, 2.0]), unit=meter)
+    assert q.backend == "jax"
+
+
+def test_to_numpy_from_jax():
+    q = Quantity(jnp.array([1.0, 2.0]), unit=meter)
+    qn = q.to_numpy()
+    assert qn.backend == "numpy"
+    assert isinstance(qn.mantissa, np.ndarray)
+    assert qn.unit == q.unit
+    assert np.allclose(np.asarray(qn.mantissa), np.array([1.0, 2.0]))
+
+
+def test_to_jax_from_numpy():
+    q = Quantity(np.array([1.0, 2.0]), unit=meter)
+    qj = q.to_jax()
+    assert qj.backend == "jax"
+    assert isinstance(qj.mantissa, jax.Array)
+    assert qj.unit == q.unit
+
+
+def test_to_numpy_noop_when_already_numpy():
+    q = Quantity(np.array([1.0]), unit=meter)
+    qn = q.to_numpy()
+    assert qn.mantissa is q.mantissa  # no copy
+    assert qn.unit is q.unit
+
+
+def test_to_jax_noop_when_already_jax():
+    q = Quantity(jnp.array([1.0]), unit=meter)
+    qj = q.to_jax()
+    assert qj.mantissa is q.mantissa
+    assert qj.unit is q.unit
+
+
+def test_array_ufunc_sin_dimensionless():
+    q = Quantity(np.array([0.0, 1.0]), unit=UNITLESS)
+    r = np.sin(q)
+    # sin of unitless returns a raw array (saiunit.math.sin behavior)
+    arr = r.mantissa if hasattr(r, "mantissa") else r
+    assert np.allclose(np.asarray(arr), np.sin([0.0, 1.0]))
+
+
+def test_array_ufunc_add_same_units():
+    a = Quantity(np.array([1.0, 2.0]), unit=meter)
+    b = Quantity(np.array([3.0, 4.0]), unit=meter)
+    r = np.add(a, b)
+    assert r.unit == meter
+    assert np.allclose(np.asarray(r.mantissa), [4.0, 6.0])
+
+
+def test_array_ufunc_add_incompatible_units_raises():
+    a = Quantity(np.array([1.0]), unit=meter)
+    b = Quantity(np.array([1.0]), unit=second)
+    with pytest.raises((u.DimensionMismatchError, u.UnitMismatchError, TypeError)):
+        np.add(a, b)
+
+
+def test_array_ufunc_unsupported_returns_notimplemented():
+    # Unsupported ufuncs must NOT silently strip units.
+    q = Quantity(np.array([1, 2, 3], dtype=np.int64), unit=meter)
+    with pytest.raises((TypeError, u.BackendError)):
+        np.gcd(q, q)
+
+
+def test_numpy_backend_properties():
+    q = Quantity(np.array([[1.0, 2.0], [3.0, 4.0]]), unit=meter)
+    assert q.shape == (2, 2)
+    assert q.ndim == 2
+    assert q.size == 4
+    assert q.T.shape == (2, 2)
+    assert q.mT.shape == (2, 2)
+    assert q.real.backend == "numpy"
+    assert q.imag.backend == "numpy"
+
+
+def test_numpy_backend_finiteness():
+    q = Quantity(np.array([1.0, np.inf, np.nan]), unit=meter)
+    isfinite = q.isfinite
+    assert bool(isfinite[0]) and not bool(isfinite[1]) and not bool(isfinite[2])
+    isnan = q.isnan
+    assert (not bool(isnan[0])) and (not bool(isnan[1])) and bool(isnan[2])
+    isinf = q.isinf
+    assert (not bool(isinf[0])) and bool(isinf[1]) and (not bool(isinf[2]))

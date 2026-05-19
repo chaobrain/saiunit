@@ -23,6 +23,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 
+from saiunit._backend import get_backend
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import (
     fail_for_dimension_mismatch,
@@ -78,6 +79,79 @@ __all__ = [
 # -------------------------------------------------------------------
 
 
+def _resolve_for_backend(func, xp):
+    """Return an equivalent of ``func`` on backend namespace ``xp``.
+
+    Callable-input path used by ``saiunit/lax/`` helpers. Callers in
+    ``saiunit/math/``, ``saiunit/linalg/``, and ``saiunit/fft/`` should pass
+    a dotted operation name (string) instead — :func:`_resolve_op` routes
+    those to :func:`_resolve_xp_name` for strict, namespace-explicit lookup.
+
+    Only functions that originated in the array-API namespace
+    (``jax.numpy``, its ``.linalg`` / ``.fft`` subnamespaces, plain
+    ``numpy``, or ``array_api_compat.numpy``) are redirected. Functions
+    from ``jax.lax``, ``jax.experimental``, or anywhere else keep the
+    callable the caller passed in — their signatures don't match a
+    backend swap.
+    """
+    name = getattr(func, "__name__", None)
+    if name is None:
+        return func
+    module = getattr(func, "__module__", "") or ""
+    if module.endswith(".linalg") and ("numpy" in module) and hasattr(xp, "linalg"):
+        return getattr(xp.linalg, name, func)
+    if module.endswith(".fft") and ("numpy" in module) and hasattr(xp, "fft"):
+        return getattr(xp.fft, name, func)
+    # Only redirect functions that look like they live in a ``numpy``-flavored
+    # namespace. ``jax.lax``, ``jax.experimental``, etc. are off-limits.
+    if not _looks_like_numpy_namespace(module):
+        return func
+    return getattr(xp, name, func)
+
+
+def _resolve_xp_name(xp, name: str):
+    """Resolve a dotted operation name against ``xp``; raise if any segment is missing.
+
+    Examples
+    --------
+    ``'reciprocal'``        -> ``xp.reciprocal``
+    ``'linalg.cholesky'``   -> ``xp.linalg.cholesky``
+    ``'fft.fftn'``          -> ``xp.fft.fftn``
+    """
+    obj = xp
+    for part in name.split("."):
+        try:
+            obj = getattr(obj, part)
+        except AttributeError:
+            backend = getattr(xp, "__name__", repr(xp))
+            raise AttributeError(
+                f"saiunit: backend {backend!r} has no operation {name!r}"
+            ) from None
+    return obj
+
+
+def _resolve_op(func_or_name, xp):
+    """Dispatch to the string-name or callable resolver based on input type."""
+    if isinstance(func_or_name, str):
+        return _resolve_xp_name(xp, func_or_name)
+    return _resolve_for_backend(func_or_name, xp)
+
+
+def _looks_like_numpy_namespace(module: str) -> bool:
+    """Heuristic: is ``module`` part of a ``numpy``-style array-API namespace?"""
+    if not module:
+        return False
+    if module == "numpy" or module.startswith("numpy."):
+        return True
+    if module == "jax.numpy" or module.startswith("jax.numpy."):
+        return True
+    if module == "jax._src.numpy" or module.startswith("jax._src.numpy."):
+        return True
+    if module == "array_api_compat.numpy" or module.startswith("array_api_compat.numpy."):
+        return True
+    return False
+
+
 def _fun_keep_unit_sequence(
     func,
     *args,
@@ -93,6 +167,8 @@ def _fun_keep_unit_sequence(
     leaves = unit_scale_align_to_first(*leaves)
     unit = leaves[0].unit
     leaves = [x.mantissa for x in leaves]
+    xp = get_backend(*leaves)
+    func = _resolve_op(func, xp)
     args = treedef.unflatten(leaves)
     r = func(*args, **kwargs)
     if unit.is_unitless:
@@ -136,7 +212,7 @@ def concatenate(
       >>> b = [3, 4] * u.second
       >>> u.math.concatenate([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.concatenate, arrays, axis=axis, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence('concatenate', arrays, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -173,7 +249,7 @@ def stack(
       >>> b = [4, 5, 6] * u.second
       >>> u.math.stack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.stack, arrays, axis=axis, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence('stack', arrays, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -207,7 +283,7 @@ def vstack(
       >>> b = [4, 5, 6] * u.meter
       >>> u.math.vstack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.vstack, tup, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence('vstack', tup, dtype=dtype, **kwargs)
 
 
 row_stack = vstack
@@ -244,7 +320,7 @@ def hstack(
       >>> b = [4, 5, 6] * u.meter
       >>> u.math.hstack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.hstack, arrays, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence('hstack', arrays, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -278,7 +354,7 @@ def dstack(
       >>> b = [[4], [5], [6]] * u.meter
       >>> u.math.dstack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.dstack, arrays, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence('dstack', arrays, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -311,7 +387,7 @@ def column_stack(
       >>> b = [4, 5, 6] * u.second
       >>> u.math.column_stack([a, b])
     """
-    return _fun_keep_unit_sequence(jnp.column_stack, tup, **kwargs)
+    return _fun_keep_unit_sequence('column_stack', tup, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -341,7 +417,7 @@ def block(
       >>> a = [[1, 2], [3, 4]] * u.second
       >>> u.math.block(a)
     """
-    return _fun_keep_unit_sequence(jnp.block, arrays, **kwargs)
+    return _fun_keep_unit_sequence('block', arrays, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -378,7 +454,7 @@ def append(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.append(a, 4 * u.second)
     """
-    return _fun_keep_unit_sequence(jnp.append, arr, values, axis=axis, **kwargs)
+    return _fun_keep_unit_sequence('append', arr, values, axis=axis, **kwargs)
 
 
 def _fun_keep_unit_return_sequence(
@@ -390,8 +466,12 @@ def _fun_keep_unit_return_sequence(
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
+        xp = get_backend(x.mantissa)
+        func = _resolve_op(func, xp)
         r = func(x.mantissa, *args, **kwargs)
         return [maybe_decimal(Quantity(rr, unit=x.unit)) for rr in r]
+    xp = get_backend(x)
+    func = _resolve_op(func, xp)
     return func(x, *args, **kwargs)
 
 
@@ -435,7 +515,7 @@ def split(
       >>> a = jnp.arange(9.0) * u.second
       >>> u.math.split(a, 3)
     """
-    return _fun_keep_unit_return_sequence(jnp.split, a, indices_or_sections=indices_or_sections, axis=axis, **kwargs)
+    return _fun_keep_unit_return_sequence('split', a, indices_or_sections=indices_or_sections, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -473,7 +553,7 @@ def array_split(
       >>> a = jnp.arange(9.0) * u.second
       >>> u.math.array_split(a, 3)
     """
-    return _fun_keep_unit_return_sequence(jnp.split, ary, indices_or_sections=indices_or_sections, axis=axis, **kwargs)
+    return _fun_keep_unit_return_sequence('split', ary, indices_or_sections=indices_or_sections, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -509,7 +589,7 @@ def dsplit(
       >>> a = jnp.arange(16.0).reshape(2, 2, 4) * u.meter
       >>> u.math.dsplit(a, 2)
     """
-    return _fun_keep_unit_return_sequence(jnp.dsplit, a, indices_or_sections, **kwargs)
+    return _fun_keep_unit_return_sequence('dsplit', a, indices_or_sections, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -545,7 +625,7 @@ def hsplit(
       >>> a = jnp.arange(16.0).reshape(4, 4) * u.meter
       >>> u.math.hsplit(a, 2)
     """
-    return _fun_keep_unit_return_sequence(jnp.hsplit, a, indices_or_sections, **kwargs)
+    return _fun_keep_unit_return_sequence('hsplit', a, indices_or_sections, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -581,7 +661,7 @@ def vsplit(
       >>> a = jnp.arange(16.0).reshape(4, 4) * u.meter
       >>> u.math.vsplit(a, 2)
     """
-    return _fun_keep_unit_return_sequence(jnp.vsplit, a, indices_or_sections, **kwargs)
+    return _fun_keep_unit_return_sequence('vsplit', a, indices_or_sections, **kwargs)
 
 
 # broadcasting arrays
@@ -591,8 +671,10 @@ def vsplit(
 def _broadcast_fun(func, *args, **kwargs):
     args = [asarray(x) for x in args]
     args, treedef = jax.tree.flatten(args)
+    xp = get_backend(*args)
+    func = _resolve_op(func, xp)
     r = func(*args, **kwargs)
-    r = treedef.unflatten([r] if isinstance(r, jax.Array) else r)
+    r = treedef.unflatten([r] if not isinstance(r, (list, tuple)) else r)
     if len(r) == 1:
         return r[0]
     return r
@@ -704,7 +786,7 @@ def broadcast_to(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.broadcast_to(a, (2, 3))
     """
-    return _fun_keep_unit_unary(jnp.broadcast_to, array, shape=shape, **kwargs)
+    return _fun_keep_unit_unary('broadcast_to', array, shape=shape, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -845,7 +927,7 @@ def reshape(
       >>> a = [1, 2, 3, 4] * u.second
       >>> u.math.reshape(a, (2, 2))
     """
-    return _fun_keep_unit_unary(jnp.reshape, a, shape=shape, order=order, **kwargs)
+    return _fun_keep_unit_unary('reshape', a, shape=shape, order=order, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -884,7 +966,7 @@ def moveaxis(
       >>> u.math.moveaxis(a, 0, -1).shape
       (4, 5, 3)
     """
-    return _fun_keep_unit_unary(jnp.moveaxis, a, source=source, destination=destination, **kwargs)
+    return _fun_keep_unit_unary('moveaxis', a, source=source, destination=destination, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -920,7 +1002,7 @@ def transpose(
       >>> u.math.transpose(a).shape
       (3, 2)
     """
-    return _fun_keep_unit_unary(jnp.transpose, a, axes=axes, **kwargs)
+    return _fun_keep_unit_unary('transpose', a, axes=axes, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -957,7 +1039,7 @@ def swapaxes(
       >>> u.math.swapaxes(a, 0, 2).shape
       (5, 4, 3)
     """
-    return _fun_keep_unit_unary(jnp.swapaxes, a, axis1=axis1, axis2=axis2, **kwargs)
+    return _fun_keep_unit_unary('swapaxes', a, axis1=axis1, axis2=axis2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -989,7 +1071,7 @@ def tile(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.tile(a, 2)
     """
-    return _fun_keep_unit_unary(jnp.tile, A, reps=reps, **kwargs)
+    return _fun_keep_unit_unary('tile', A, reps=reps, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1028,7 +1110,7 @@ def repeat(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.repeat(a, 2)
     """
-    return _fun_keep_unit_unary(jnp.repeat, a, repeats=repeats, axis=axis, total_repeat_length=total_repeat_length, **kwargs)
+    return _fun_keep_unit_unary('repeat', a, repeats=repeats, axis=axis, total_repeat_length=total_repeat_length, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1060,7 +1142,7 @@ def flip(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.flip(a)
     """
-    return _fun_keep_unit_unary(jnp.flip, m, axis=axis, **kwargs)
+    return _fun_keep_unit_unary('flip', m, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1089,7 +1171,7 @@ def fliplr(
       >>> a = [[1, 2], [3, 4]] * u.meter
       >>> u.math.fliplr(a)
     """
-    return _fun_keep_unit_unary(jnp.fliplr, m, **kwargs)
+    return _fun_keep_unit_unary('fliplr', m, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1118,7 +1200,7 @@ def flipud(
       >>> a = [[1, 2], [3, 4]] * u.meter
       >>> u.math.flipud(a)
     """
-    return _fun_keep_unit_unary(jnp.flipud, m, **kwargs)
+    return _fun_keep_unit_unary('flipud', m, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1156,7 +1238,7 @@ def roll(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.roll(a, 1)
     """
-    return _fun_keep_unit_unary(jnp.roll, a, shift=shift, axis=axis, **kwargs)
+    return _fun_keep_unit_unary('roll', a, shift=shift, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1189,7 +1271,7 @@ def expand_dims(
       >>> u.math.expand_dims(a, axis=0).shape
       (1, 3)
     """
-    return _fun_keep_unit_unary(jnp.expand_dims, a, axis=axis, **kwargs)
+    return _fun_keep_unit_unary('expand_dims', a, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1223,7 +1305,7 @@ def squeeze(
       >>> u.math.squeeze(a).shape
       (3,)
     """
-    return _fun_keep_unit_unary(jnp.squeeze, a, axis=axis, **kwargs)
+    return _fun_keep_unit_unary('squeeze', a, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1270,7 +1352,7 @@ def sort(
       >>> a = [3, 1, 2] * u.meter
       >>> u.math.sort(a)
     """
-    return _fun_keep_unit_unary(jnp.sort, a, axis=axis, kind=kind, order=order, stable=stable, descending=descending, **kwargs)
+    return _fun_keep_unit_unary('sort', a, axis=axis, kind=kind, order=order, stable=stable, descending=descending, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1315,7 +1397,7 @@ def max(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.max(a)
     """
-    return _fun_keep_unit_unary(jnp.max, a, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
+    return _fun_keep_unit_unary('max', a, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1360,7 +1442,7 @@ def min(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.min(a)
     """
-    return _fun_keep_unit_unary(jnp.min, a, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
+    return _fun_keep_unit_unary('min', a, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
 
 
 amax = max
@@ -1405,7 +1487,7 @@ def diagonal(
       >>> a = [[1, 2], [3, 4]] * u.second
       >>> u.math.diagonal(a)
     """
-    return _fun_keep_unit_unary(jnp.diagonal, a, offset=offset, axis1=axis1, axis2=axis2, **kwargs)
+    return _fun_keep_unit_unary('diagonal', a, offset=offset, axis1=axis1, axis2=axis2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1442,7 +1524,7 @@ def ravel(
       >>> a = [[1, 2], [3, 4]] * u.meter
       >>> u.math.ravel(a)
     """
-    return _fun_keep_unit_unary(jnp.ravel, a, order=order, **kwargs)
+    return _fun_keep_unit_unary('ravel', a, order=order, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1499,7 +1581,7 @@ def flatten(
     if end_axis < 0 or end_axis > ndim:
         raise ValueError(f'end_axis {end_axis} is out of size.')
     new_shape = shape[:start_axis] + (np.prod(shape[start_axis: end_axis], dtype=int, **kwargs),) + shape[end_axis:]
-    return _fun_keep_unit_unary(jnp.reshape, x, shape=new_shape, **kwargs)
+    return _fun_keep_unit_unary('reshape', x, shape=new_shape, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1539,7 +1621,7 @@ def unflatten(
         )
     shape = x.shape
     new_shape = shape[:axis] + tuple(sizes) + shape[axis + 1:]
-    return _fun_keep_unit_unary(jnp.reshape, x, shape=new_shape, **kwargs)
+    return _fun_keep_unit_unary('reshape', x, shape=new_shape, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1619,7 +1701,7 @@ def choose(
       >>> choices = [jnp.array([1, 2, 3]), jnp.array([4, 5, 6])]
       >>> u.math.choose(jnp.array([0, 1, 0]), choices)
     """
-    return _fun_keep_unit_unary(jnp.choose, a, choices=choices, mode=mode, **kwargs)
+    return _fun_keep_unit_unary('choose', a, choices=choices, mode=mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1651,7 +1733,7 @@ def diagflat(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.diagflat(a)
     """
-    return _fun_keep_unit_unary(jnp.diagflat, v, k=k, **kwargs)
+    return _fun_keep_unit_unary('diagflat', v, k=k, **kwargs)
 
 
 # math funcs keep unit (unary)
@@ -1662,8 +1744,12 @@ def _fun_keep_unit_unary(func, x, *args, **kwargs):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x, Quantity):
+        xp = get_backend(x.mantissa)
+        func = _resolve_op(func, xp)
         return Quantity(func(x.mantissa, *args, **kwargs), unit=x.unit)
     else:
+        xp = get_backend(x)
+        func = _resolve_op(func, xp)
         return func(x, *args, **kwargs)
 
 
@@ -1695,7 +1781,7 @@ def astype(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.astype(a, jnp.float32)
     """
-    return _fun_keep_unit_unary(jnp.astype, x, dtype)
+    return _fun_keep_unit_unary('astype', x, dtype)
 
 
 @set_module_as('saiunit.math')
@@ -1721,7 +1807,7 @@ def real(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, 
       >>> a = [1 + 2j, 3 + 4j] * u.second
       >>> u.math.real(a)
     """
-    return _fun_keep_unit_unary(jnp.real, x, **kwargs)
+    return _fun_keep_unit_unary('real', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1747,7 +1833,7 @@ def imag(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, 
       >>> a = [1 + 2j, 3 + 4j] * u.second
       >>> u.math.imag(a)
     """
-    return _fun_keep_unit_unary(jnp.imag, x, **kwargs)
+    return _fun_keep_unit_unary('imag', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1773,7 +1859,7 @@ def conj(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, 
       >>> a = [1 + 2j, 3 + 4j] * u.second
       >>> u.math.conj(a)
     """
-    return _fun_keep_unit_unary(jnp.conj, x, **kwargs)
+    return _fun_keep_unit_unary('conj', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1799,7 +1885,7 @@ def conjugate(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quant
       >>> a = [1 + 2j, 3 + 4j] * u.second
       >>> u.math.conjugate(a)
     """
-    return _fun_keep_unit_unary(jnp.conjugate, x, **kwargs)
+    return _fun_keep_unit_unary('conjugate', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1825,7 +1911,7 @@ def negative(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quanti
       >>> a = [1, -2, 3] * u.meter
       >>> u.math.negative(a)
     """
-    return _fun_keep_unit_unary(jnp.negative, x, **kwargs)
+    return _fun_keep_unit_unary('negative', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1851,7 +1937,7 @@ def positive(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quanti
       >>> a = [1, -2, 3] * u.meter
       >>> u.math.positive(a)
     """
-    return _fun_keep_unit_unary(jnp.positive, x, **kwargs)
+    return _fun_keep_unit_unary('positive', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1877,7 +1963,7 @@ def abs(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, j
       >>> a = [-1, -2, 3] * u.meter
       >>> u.math.abs(a)
     """
-    return _fun_keep_unit_unary(jnp.abs, x, **kwargs)
+    return _fun_keep_unit_unary('abs', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1945,7 +2031,7 @@ def sum(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary(jnp.sum,
+    return _fun_keep_unit_unary('sum',
                                 x,
                                 axis=axis,
                                 dtype=dtype,
@@ -1993,7 +2079,7 @@ def nancumsum(
       >>> a = [1.0, jnp.nan, 3.0] * u.meter
       >>> u.math.nancumsum(a)
     """
-    return _fun_keep_unit_unary(jnp.nancumsum, x, axis=axis, dtype=dtype, **kwargs)
+    return _fun_keep_unit_unary('nancumsum', x, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2053,7 +2139,7 @@ def nansum(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary(jnp.nansum,
+    return _fun_keep_unit_unary('nansum',
                                 x,
                                 axis=axis,
                                 dtype=dtype,
@@ -2099,7 +2185,7 @@ def cumsum(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.cumsum(a)
     """
-    return _fun_keep_unit_unary(jnp.cumsum, x, axis=axis, dtype=dtype, **kwargs)
+    return _fun_keep_unit_unary('cumsum', x, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2139,7 +2225,7 @@ def ediff1d(
         to_end = Quantity(to_end).in_unit(x_unit).mantissa
     if to_begin is not None:
         to_begin = Quantity(to_begin).in_unit(x_unit).mantissa
-    return _fun_keep_unit_unary(jnp.ediff1d, x, to_end=to_end, to_begin=to_begin, **kwargs)
+    return _fun_keep_unit_unary('ediff1d', x, to_end=to_end, to_begin=to_begin, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2165,7 +2251,7 @@ def absolute(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quanti
       >>> a = [-1.0, -2.0, 3.0] * u.meter
       >>> u.math.absolute(a)
     """
-    return _fun_keep_unit_unary(jnp.absolute, x, **kwargs)
+    return _fun_keep_unit_unary('absolute', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2191,7 +2277,7 @@ def fabs(x: Union[Quantity, jax.typing.ArrayLike], **kwargs) -> Union[Quantity, 
       >>> a = [-1.0, -2.0, 3.0] * u.meter
       >>> u.math.fabs(a)
     """
-    return _fun_keep_unit_unary(jnp.fabs, x, **kwargs)
+    return _fun_keep_unit_unary('fabs', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2239,7 +2325,7 @@ def median(
       >>> a = [1, 2, 3, 4, 5] * u.second
       >>> u.math.median(a)
     """
-    return _fun_keep_unit_unary(jnp.median, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims, **kwargs)
+    return _fun_keep_unit_unary('median', x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2293,7 +2379,7 @@ def nanmin(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary(jnp.nanmin, x, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
+    return _fun_keep_unit_unary('nanmin', x, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2347,7 +2433,7 @@ def nanmax(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary(jnp.nanmax, x, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
+    return _fun_keep_unit_unary('nanmax', x, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2395,7 +2481,7 @@ def ptp(
       >>> a = [1, 2, 3, 4, 5] * u.meter
       >>> u.math.ptp(a)
     """
-    return _fun_keep_unit_unary(jnp.ptp, x, axis=axis, keepdims=keepdims, **kwargs)
+    return _fun_keep_unit_unary('ptp', x, axis=axis, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2458,7 +2544,7 @@ def average(
       >>> a = [1.0, 2.0, 3.0] * u.second
       >>> u.math.average(a)
     """
-    return _fun_keep_unit_unary(jnp.average, x, axis=axis, weights=weights, returned=returned, keepdims=keepdims, **kwargs)
+    return _fun_keep_unit_unary('average', x, axis=axis, weights=weights, returned=returned, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2513,7 +2599,7 @@ def mean(
       >>> a = [1.0, 2.0, 3.0] * u.second
       >>> u.math.mean(a)
     """
-    return _fun_keep_unit_unary(jnp.mean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where, **kwargs)
+    return _fun_keep_unit_unary('mean', x, axis=axis, dtype=dtype, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2574,7 +2660,7 @@ def std(
       >>> a = [1.0, 2.0, 3.0] * u.meter
       >>> u.math.std(a)
     """
-    return _fun_keep_unit_unary(jnp.std, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims, where=where, **kwargs)
+    return _fun_keep_unit_unary('std', x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2629,7 +2715,7 @@ def nanmedian(
       >>> a = [1.0, jnp.nan, 3.0] * u.second
       >>> u.math.nanmedian(a)
     """
-    return _fun_keep_unit_unary(jnp.nanmedian, x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims, **kwargs)
+    return _fun_keep_unit_unary('nanmedian', x, axis=axis, overwrite_input=overwrite_input, keepdims=keepdims, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2685,7 +2771,7 @@ def nanmean(
       >>> a = [1.0, jnp.nan, 3.0] * u.meter
       >>> u.math.nanmean(a)
     """
-    return _fun_keep_unit_unary(jnp.nanmean, x, axis=axis, dtype=dtype, keepdims=keepdims, where=where, **kwargs)
+    return _fun_keep_unit_unary('nanmean', x, axis=axis, dtype=dtype, keepdims=keepdims, where=where, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2747,7 +2833,7 @@ def nanstd(
       >>> a = [1.0, jnp.nan, 3.0] * u.meter
       >>> u.math.nanstd(a)
     """
-    return _fun_keep_unit_unary(jnp.nanstd, x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims,
+    return _fun_keep_unit_unary('nanstd', x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims,
                                 where=where, **kwargs)
 
 
@@ -2798,7 +2884,7 @@ def diff(
         prepend = Quantity(prepend).in_unit(x_unit).mantissa
     if append is not None:
         append = Quantity(append).in_unit(x_unit).mantissa
-    return _fun_keep_unit_unary(jnp.diff, x, n=n, axis=axis, prepend=prepend, append=append, **kwargs)
+    return _fun_keep_unit_unary('diff', x, n=n, axis=axis, prepend=prepend, append=append, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -2839,7 +2925,7 @@ def rot90(
       >>> a = [[1, 2], [3, 4]] * u.second
       >>> u.math.rot90(a)
     """
-    return _fun_keep_unit_unary(jnp.rot90, m, k=k, axes=axes, **kwargs)
+    return _fun_keep_unit_unary('rot90', m, k=k, axes=axes, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3037,7 +3123,7 @@ def trace(
       >>> a = [[1, 2], [3, 4]] * u.second
       >>> u.math.trace(a)
     """
-    return _fun_keep_unit_unary(jnp.trace, a, offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, **kwargs)
+    return _fun_keep_unit_unary('trace', a, offset=offset, axis1=axis1, axis2=axis2, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3107,7 +3193,7 @@ def percentile(
             )
         q = q.mantissa
     return _fun_keep_unit_unary(
-        jnp.percentile, a, q=q, axis=axis, method=method, keepdims=keepdims,
+        'percentile', a, q=q, axis=axis, method=method, keepdims=keepdims,
         **kwargs,
     )
 
@@ -3180,7 +3266,7 @@ def nanpercentile(
             )
         q = q.mantissa
     return _fun_keep_unit_unary(
-        jnp.nanpercentile, a, q=q, axis=axis, method=method, keepdims=keepdims,
+        'nanpercentile', a, q=q, axis=axis, method=method, keepdims=keepdims,
         **kwargs,
     )
 
@@ -3252,7 +3338,7 @@ def quantile(
             )
         q = q.mantissa
     return _fun_keep_unit_unary(
-        jnp.quantile, a, q=q, axis=axis, method=method, keepdims=keepdims,
+        'quantile', a, q=q, axis=axis, method=method, keepdims=keepdims,
         **kwargs,
     )
 
@@ -3325,7 +3411,7 @@ def nanquantile(
             )
         q = q.mantissa
     return _fun_keep_unit_unary(
-        jnp.nanquantile, a, q=q, axis=axis, method=method, keepdims=keepdims,
+        'nanquantile', a, q=q, axis=axis, method=method, keepdims=keepdims,
         **kwargs,
     )
 
@@ -3338,6 +3424,8 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
     x2 = maybe_custom_array(x2)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     if isinstance(x1, Quantity) and isinstance(x2, Quantity):
+        xp = get_backend(x1.mantissa, x2.mantissa)
+        func = _resolve_op(func, xp)
         return Quantity(func(x1.mantissa, x2.in_unit(x1.unit).mantissa, *args, **kwargs), unit=x1.unit)
     elif isinstance(x1, Quantity):
         if not x1.is_unitless:
@@ -3346,6 +3434,8 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
                 f'but got x1 with unit={x1.unit}. '
                 f'Either pass a Quantity for x2 with matching units, or strip the unit from x1.'
             )
+        xp = get_backend(x1.mantissa, x2)
+        func = _resolve_op(func, xp)
         return func(x1.mantissa, x2, *args, **kwargs)
     elif isinstance(x2, Quantity):
         if not x2.is_unitless:
@@ -3354,8 +3444,12 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
                 f'but got x2 with unit={x2.unit}. '
                 f'Either pass a Quantity for x1 with matching units, or strip the unit from x2.'
             )
+        xp = get_backend(x1, x2.mantissa)
+        func = _resolve_op(func, xp)
         return func(x1, x2.mantissa, *args, **kwargs)
     else:
+        xp = get_backend(x1, x2)
+        func = _resolve_op(func, xp)
         return func(x1, x2, *args, **kwargs)
 
 
@@ -3386,7 +3480,7 @@ def fmod(x1: Union[Quantity, jax.typing.ArrayLike],
       >>> b = [2, 3, 4] * u.second
       >>> u.math.fmod(a, b)
     """
-    return _fun_keep_unit_binary(jnp.fmod, x1, x2, **kwargs)
+    return _fun_keep_unit_binary('fmod', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3415,7 +3509,7 @@ def mod(x1: Union[Quantity, jax.typing.ArrayLike], x2: Union[Quantity, jax.Array
       >>> b = [2, 3, 4] * u.meter
       >>> u.math.mod(a, b)
     """
-    return _fun_keep_unit_binary(jnp.mod, x1, x2, **kwargs)
+    return _fun_keep_unit_binary('mod', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3449,7 +3543,7 @@ def copysign(
       >>> u.math.copysign(a, b)
     """
     x2 = x2.mantissa if isinstance(x2, Quantity) else x2
-    return _fun_keep_unit_unary(jnp.copysign, x1, x2, **kwargs)
+    return _fun_keep_unit_unary('copysign', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3482,7 +3576,7 @@ def maximum(
       >>> b = [2, 2, 4] * u.second
       >>> u.math.maximum(a, b)
     """
-    return _fun_keep_unit_binary(jnp.maximum, x1, x2, **kwargs)
+    return _fun_keep_unit_binary('maximum', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3515,7 +3609,7 @@ def minimum(
       >>> b = [2, 2, 4] * u.second
       >>> u.math.minimum(a, b)
     """
-    return _fun_keep_unit_binary(jnp.minimum, x1, x2, **kwargs)
+    return _fun_keep_unit_binary('minimum', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3549,7 +3643,7 @@ def fmax(
       >>> b = [2.0, 2.0, 4.0] * u.meter
       >>> u.math.fmax(a, b)
     """
-    return _fun_keep_unit_binary(jnp.fmax, x1, x2, **kwargs)
+    return _fun_keep_unit_binary('fmax', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3583,7 +3677,7 @@ def fmin(
       >>> b = [2.0, 2.0, 4.0] * u.meter
       >>> u.math.fmin(a, b)
     """
-    return _fun_keep_unit_binary(jnp.fmin, x1, x2, **kwargs)
+    return _fun_keep_unit_binary('fmin', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3617,7 +3711,7 @@ def lcm(
       >>> b = jnp.array([6, 8]) * u.second
       >>> u.math.lcm(a.astype(jnp.int64), b.astype(jnp.int64))
     """
-    return _fun_keep_unit_binary(jnp.lcm, x1, x2, **kwargs)
+    return _fun_keep_unit_binary('lcm', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3648,7 +3742,7 @@ def gcd(x1: Union[Quantity, jax.typing.ArrayLike],
       >>> b = jnp.array([6, 8]) * u.second
       >>> u.math.gcd(a.astype(jnp.int64), b.astype(jnp.int64))
     """
-    return _fun_keep_unit_binary(jnp.gcd, x1, x2, **kwargs)
+    return _fun_keep_unit_binary('gcd', x1, x2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3682,7 +3776,7 @@ def add(
       >>> b = [4, 5, 6] * u.meter
       >>> u.math.add(a, b)
     """
-    return _fun_keep_unit_binary(jnp.add, x, y, **kwargs)
+    return _fun_keep_unit_binary('add', x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3716,7 +3810,7 @@ def subtract(
       >>> b = [1, 2, 3] * u.meter
       >>> u.math.subtract(a, b)
     """
-    return _fun_keep_unit_binary(jnp.subtract, x, y, **kwargs)
+    return _fun_keep_unit_binary('subtract', x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3759,7 +3853,7 @@ def remainder(
       >>> b = [2, 3, 4] * u.second
       >>> u.math.remainder(a, b)
     """
-    return _fun_keep_unit_binary(jnp.remainder, x, y, **kwargs)
+    return _fun_keep_unit_binary('remainder', x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -3795,7 +3889,7 @@ def nextafter(
       >>> b = [2.0, 1.0] * u.meter
       >>> u.math.nextafter(a, b)
     """
-    return _fun_keep_unit_binary(jnp.nextafter, x, y, **kwargs)
+    return _fun_keep_unit_binary('nextafter', x, y, **kwargs)
 
 
 # math funcs keep unit (n-ary)
@@ -3894,7 +3988,7 @@ def clip(
         a_min = Quantity(a_min).in_unit(a_unit).mantissa
     if a_max is not None:
         a_max = Quantity(a_max).in_unit(a_unit).mantissa
-    return _fun_keep_unit_unary(jnp.clip, a, min=a_min, max=a_max, **kwargs)
+    return _fun_keep_unit_unary('clip', a, min=a_min, max=a_max, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4410,7 +4504,7 @@ def round(
       >>> a = [1.2, 2.7, 3.1] * u.meter
       >>> u.math.round(a)
     """
-    return _fun_keep_unit_unary(jnp.round, x, decimals=decimals, **kwargs)
+    return _fun_keep_unit_unary('round', x, decimals=decimals, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4442,7 +4536,7 @@ def around(
       >>> a = [1.2, 2.7, 3.1] * u.second
       >>> u.math.around(a)
     """
-    return _fun_keep_unit_unary(jnp.around, x, decimals=decimals, **kwargs)
+    return _fun_keep_unit_unary('around', x, decimals=decimals, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4471,7 +4565,7 @@ def rint(
       >>> a = [1.2, 2.7, 3.1] * u.meter
       >>> u.math.rint(a)
     """
-    return _fun_keep_unit_unary(jnp.rint, x, **kwargs)
+    return _fun_keep_unit_unary('rint', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4500,7 +4594,7 @@ def floor(
       >>> a = [1.2, 2.7, 3.1] * u.meter
       >>> u.math.floor(a)
     """
-    return _fun_keep_unit_unary(jnp.floor, x, **kwargs)
+    return _fun_keep_unit_unary('floor', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4529,7 +4623,7 @@ def ceil(
       >>> a = [1.2, 2.7, 3.1] * u.meter
       >>> u.math.ceil(a)
     """
-    return _fun_keep_unit_unary(jnp.ceil, x, **kwargs)
+    return _fun_keep_unit_unary('ceil', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4558,7 +4652,7 @@ def trunc(
       >>> a = [1.7, -2.3, 3.9] * u.meter
       >>> u.math.trunc(a)
     """
-    return _fun_keep_unit_unary(jnp.trunc, x, **kwargs)
+    return _fun_keep_unit_unary('trunc', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4587,7 +4681,7 @@ def fix(
       >>> a = [1.7, -2.3, 3.9] * u.meter
       >>> u.math.fix(a)
     """
-    return _fun_keep_unit_unary(jnp.trunc, x, **kwargs)
+    return _fun_keep_unit_unary('trunc', x, **kwargs)
 
 
 @set_module_as('saiunit.math')

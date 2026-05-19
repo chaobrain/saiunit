@@ -96,7 +96,7 @@ def cond(
         >>> u.linalg.cond(x)
         Array(inf, dtype=float32)
     """
-    return _fun_remove_unit_unary(jnp.linalg.cond, x, p=p, **kwargs)
+    return _fun_remove_unit_unary('linalg.cond', x, p=p, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
@@ -172,7 +172,7 @@ def matrix_rank(
         >>> u.linalg.matrix_rank(b)
         Array(1, dtype=int32)
     """
-    return _fun_remove_unit_unary(jnp.linalg.matrix_rank, M, rtol=rtol, tol=tol, **kwargs)
+    return _fun_remove_unit_unary('linalg.matrix_rank', M, rtol=rtol, tol=tol, **kwargs)
 
 
 @set_module_as('saiunit.linalg')

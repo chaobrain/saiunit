@@ -19,8 +19,10 @@ from typing import Union, Optional, Tuple, Any, Callable
 import jax
 import jax.numpy as jnp
 
+from saiunit._backend import get_backend
 from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
+from ._fun_keep_unit import _resolve_op
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 from ._exprel import exprel as _exprel_impl, set_exprel_order
 
@@ -47,7 +49,9 @@ __all__ = [
 # ---------------------------------------
 
 
-def _func_name(func: Callable) -> str:
+def _func_name(func) -> str:
+    if isinstance(func, str):
+        return func
     return getattr(func, '__name__', repr(func))
 
 
@@ -95,19 +99,22 @@ def _fun_accept_unitless_unary(
     kwargs = maybe_custom_array_tree(kwargs)
 
     if isinstance(x, Quantity):
-        # x = x.factorless()
         if unit_to_scale is None:
             if not x.dim.is_dimensionless:
                 raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
             x = x.to_decimal()
-            return func(x, *args, **kwargs)
         else:
             if not isinstance(unit_to_scale, Unit):
                 raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
-            return func(x.to_decimal(unit_to_scale), *args, **kwargs)
+            x = x.to_decimal(unit_to_scale)
+        xp = get_backend(x)
+        func = _resolve_op(func, xp)
+        return func(x, *args, **kwargs)
     else:
         if unit_to_scale is not None:
             raise TypeError(_unit_to_scale_without_quantity_message(func, x))
+        xp = get_backend(x)
+        func = _resolve_op(func, xp)
         return func(x, *args, **kwargs)
 
 
@@ -174,7 +181,7 @@ def exp(
         >>> u.math.exp(jnp.array([0.0, 1.0]))
         Array([1.       , 2.7182817], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.exp, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('exp', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -207,7 +214,7 @@ def exp2(
         >>> u.math.exp2(jnp.array([0.0, 1.0, 2.0]))
         Array([1., 2., 4.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.exp2, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('exp2', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -240,7 +247,7 @@ def expm1(
         >>> u.math.expm1(jnp.array([0.0, 1e-10]))
         Array([0.e+00, 1.e-10], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.expm1, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('expm1', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -273,7 +280,7 @@ def log(
         >>> u.math.log(jnp.array([1.0, jnp.e, jnp.e**2]))
         Array([0., 1., 2.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.log, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('log', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -306,7 +313,7 @@ def log10(
         >>> u.math.log10(jnp.array([1.0, 10.0, 100.0]))
         Array([0., 1., 2.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.log10, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('log10', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -341,7 +348,7 @@ def log1p(
         >>> u.math.log1p(jnp.array([0.0, 1e-10]))
         Array([0.e+00, 1.e-10], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.log1p, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('log1p', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -374,7 +381,7 @@ def log2(
         >>> u.math.log2(jnp.array([1.0, 2.0, 4.0]))
         Array([0., 1., 2.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.log2, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('log2', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -407,7 +414,7 @@ def arccos(
         >>> u.math.arccos(jnp.array([1.0, 0.0, -1.0]))
         Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arccos, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('arccos', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -440,7 +447,7 @@ def arccosh(
         >>> u.math.arccosh(jnp.array([1.0, 2.0, 3.0]))
         Array([0.       , 1.3169578, 1.7627472], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arccosh, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('arccosh', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -473,7 +480,7 @@ def arcsin(
         >>> u.math.arcsin(jnp.array([0.0, 0.5, 1.0]))
         Array([0.       , 0.5235988, 1.5707964], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arcsin, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('arcsin', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -506,7 +513,7 @@ def arcsinh(
         >>> u.math.arcsinh(jnp.array([0.0, 1.0]))
         Array([0.       , 0.8813736], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arcsinh, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('arcsinh', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -539,7 +546,7 @@ def arctan(
         >>> u.math.arctan(jnp.array([0.0, 1.0]))
         Array([0.       , 0.7853982], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arctan, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('arctan', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -572,7 +579,7 @@ def arctanh(
         >>> u.math.arctanh(jnp.array([0.0, 0.5]))
         Array([0.       , 0.5493061], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.arctanh, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('arctanh', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -605,7 +612,7 @@ def cos(
         >>> u.math.cos(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([ 1.0000000e+00, -4.3711388e-08, -1.0000000e+00], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.cos, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('cos', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -638,7 +645,7 @@ def cosh(
         >>> u.math.cosh(jnp.array([0.0, 1.0]))
         Array([1.       , 1.5430806], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.cosh, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('cosh', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -671,7 +678,7 @@ def sin(
         >>> u.math.sin(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([ 0.0000000e+00,  1.0000000e+00, -8.7422777e-08], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.sin, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('sin', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -704,7 +711,7 @@ def sinc(
         >>> u.math.sinc(jnp.array([0.0, 1.0]))
         Array([ 1.0000000e+00, -3.8981719e-09], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.sinc, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('sinc', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -737,7 +744,7 @@ def sinh(
         >>> u.math.sinh(jnp.array([0.0, 1.0]))
         Array([0.       , 1.1752012], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.sinh, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('sinh', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -770,7 +777,7 @@ def tan(
         >>> u.math.tan(jnp.array([0.0, jnp.pi / 4]))
         Array([0.       , 1.0000001], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.tan, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('tan', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -803,7 +810,7 @@ def tanh(
         >>> u.math.tanh(jnp.array([0.0, 1.0]))
         Array([0.       , 0.7615942], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.tanh, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('tanh', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -836,7 +843,7 @@ def deg2rad(
         >>> u.math.deg2rad(jnp.array([0.0, 90.0, 180.0]))
         Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.deg2rad, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('deg2rad', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -869,7 +876,7 @@ def rad2deg(
         >>> u.math.rad2deg(jnp.array([0.0, jnp.pi / 2, jnp.pi]))
         Array([  0.,  90., 180.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.rad2deg, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('rad2deg', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -902,7 +909,7 @@ def degrees(
         >>> u.math.degrees(jnp.array([0.0, jnp.pi]))
         Array([  0., 180.], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.degrees, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('degrees', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -935,7 +942,7 @@ def radians(
         >>> u.math.radians(jnp.array([0.0, 180.0]))
         Array([0.       , 3.1415927], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.radians, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('radians', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -968,7 +975,7 @@ def angle(
         >>> u.math.angle(jnp.array([1.0 + 1.0j, 1.0 + 0.0j]))
         Array([0.7853982, 0.       ], dtype=float32)
     """
-    return _fun_accept_unitless_unary(jnp.angle, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('angle', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1009,7 +1016,7 @@ def frexp(
         >>> e
         Array([1, 2, 3], dtype=int32)
     """
-    return _fun_accept_unitless_unary(jnp.frexp, x, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_unary('frexp', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
 # math funcs only accept unitless (binary)
@@ -1030,7 +1037,6 @@ def _fun_accept_unitless_binary(
     kwargs = maybe_custom_array_tree(kwargs)
 
     if isinstance(x, Quantity):
-        # x = x.factorless()
         if unit_to_scale is None:
             if not x.dim.is_dimensionless:
                 raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
@@ -1040,7 +1046,6 @@ def _fun_accept_unitless_binary(
                 raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
             x = x.to_decimal(unit_to_scale)
     if isinstance(y, Quantity):
-        # y = y.factorless()
         if unit_to_scale is None:
             if not y.dim.is_dimensionless:
                 raise TypeError(_dimensionless_required_message(func, y, arg_name='y'))
@@ -1049,6 +1054,8 @@ def _fun_accept_unitless_binary(
             if not isinstance(unit_to_scale, Unit):
                 raise TypeError(_invalid_unit_to_scale_type_message(func, unit_to_scale))
             y = y.to_decimal(unit_to_scale)
+    xp = get_backend(x, y)
+    func = _resolve_op(func, xp)
     return func(x, y, *args, **kwargs)
 
 
@@ -1087,7 +1094,7 @@ def hypot(
         >>> u.math.hypot(jnp.array([3.0]), jnp.array([4.0]))
         Array([5.], dtype=float32)
     """
-    return _fun_accept_unitless_binary(jnp.hypot, x, y, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_binary('hypot', x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1124,7 +1131,7 @@ def arctan2(
         ...                 jnp.array([1.0, 1.0]))
         Array([ 0.7853982, -0.7853982], dtype=float32)
     """
-    return _fun_accept_unitless_binary(jnp.arctan2, x, y, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_binary('arctan2', x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1162,7 +1169,7 @@ def logaddexp(
         >>> u.math.logaddexp(jnp.array([1.0]), jnp.array([2.0]))
         Array([2.3132617], dtype=float32)
     """
-    return _fun_accept_unitless_binary(jnp.logaddexp, x, y, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_binary('logaddexp', x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1200,7 +1207,7 @@ def logaddexp2(
         >>> u.math.logaddexp2(jnp.array([1.0]), jnp.array([2.0]))
         Array([2.321928], dtype=float32)
     """
-    return _fun_accept_unitless_binary(jnp.logaddexp2, x, y, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_binary('logaddexp2', x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1244,7 +1251,7 @@ def corrcoef(
     R : ndarray
       The correlation coefficient matrix of the variables.
     """
-    return _fun_accept_unitless_binary(jnp.corrcoef, x, y, rowvar=rowvar, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_binary('corrcoef', x, y, rowvar=rowvar, unit_to_scale=unit_to_scale, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1295,7 +1302,7 @@ def correlate(
       Discrete cross-correlation of `a` and `v`.
     """
     return _fun_accept_unitless_binary(
-        jnp.correlate, a, v,
+        'correlate', a, v,
         mode=mode, precision=precision,
         preferred_element_type=preferred_element_type,
         unit_to_scale=unit_to_scale,
@@ -1368,7 +1375,7 @@ def cov(
       The covariance matrix of the variables.
     """
     return _fun_accept_unitless_binary(
-        jnp.cov, m, y,
+        'cov', m, y,
         rowvar=rowvar, bias=bias, ddof=ddof, fweights=fweights,
         aweights=aweights, unit_to_scale=unit_to_scale,
         **kwargs,
@@ -1445,7 +1452,7 @@ def bitwise_not(
         >>> u.math.bitwise_not(jnp.array([True, False]))
         Array([False,  True], dtype=bool)
     """
-    return _fun_accept_unitless_unary(jnp.bitwise_not, x, **kwargs)
+    return _fun_accept_unitless_unary('bitwise_not', x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1477,7 +1484,7 @@ def invert(
         >>> u.math.invert(jnp.array([True, False]))
         Array([False,  True], dtype=bool)
     """
-    return _fun_accept_unitless_unary(jnp.invert, x, **kwargs)
+    return _fun_accept_unitless_unary('invert', x, **kwargs)
 
 
 # Elementwise bit operations (binary)
@@ -1491,15 +1498,15 @@ def _fun_unitless_binary(func, x, y, *args, **kwargs):
     kwargs = maybe_custom_array_tree(kwargs)
 
     if isinstance(x, Quantity):
-        # x = x.factorless()
         if not x.dim.is_dimensionless:
             raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
         x = x.to_decimal()
     if isinstance(y, Quantity):
-        # y = y.factorless()
         if not y.dim.is_dimensionless:
             raise TypeError(_dimensionless_required_message(func, y, arg_name='y'))
         y = y.to_decimal()
+    xp = get_backend(x, y)
+    func = _resolve_op(func, xp)
     return func(x, y, *args, **kwargs)
 
 
@@ -1536,7 +1543,7 @@ def bitwise_and(
         ...                     jnp.array([True, True]))
         Array([ True, False], dtype=bool)
     """
-    return _fun_unitless_binary(jnp.bitwise_and, x, y, **kwargs)
+    return _fun_unitless_binary('bitwise_and', x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1572,7 +1579,7 @@ def bitwise_or(
         ...                    jnp.array([False, False]))
         Array([ True, False], dtype=bool)
     """
-    return _fun_unitless_binary(jnp.bitwise_or, x, y, **kwargs)
+    return _fun_unitless_binary('bitwise_or', x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1608,7 +1615,7 @@ def bitwise_xor(
         ...                     jnp.array([True, True]))
         Array([False,  True], dtype=bool)
     """
-    return _fun_unitless_binary(jnp.bitwise_xor, x, y, **kwargs)
+    return _fun_unitless_binary('bitwise_xor', x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1643,7 +1650,7 @@ def left_shift(
         >>> u.math.left_shift(jnp.array([1, 2]), jnp.array([1, 2]))
         Array([2, 8], dtype=int32)
     """
-    return _fun_unitless_binary(jnp.left_shift, x, y, **kwargs)
+    return _fun_unitless_binary('left_shift', x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1678,4 +1685,4 @@ def right_shift(
         >>> u.math.right_shift(jnp.array([8, 16]), jnp.array([1, 2]))
         Array([4, 4], dtype=int32)
     """
-    return _fun_unitless_binary(jnp.right_shift, x, y, **kwargs)
+    return _fun_unitless_binary('right_shift', x, y, **kwargs)
