@@ -1,5 +1,37 @@
 # Release Notes
 
+## Unreleased
+
+### Added
+
+- **NumPy as a first-class array backend.** ``Quantity`` can now wrap an
+  ``np.ndarray`` directly; all math, linalg, and fft operations dispatch
+  to the matching backend via ``array_api_compat``. JAX remains the default
+  and is still a mandatory dependency.
+- ``Quantity.backend`` property reporting ``'numpy'`` or ``'jax'``.
+- ``Quantity.to_numpy()`` and ``Quantity.to_jax()`` conversion methods.
+- ``saiunit.set_default_backend()``, ``saiunit.get_default_backend()``, and
+  ``saiunit.using_backend()`` context manager for controlling the default
+  backend when input backend is ambiguous (Python scalars, list inputs).
+- ``saiunit.is_numpy_array()`` / ``saiunit.is_jax_array()`` helpers.
+- ``Quantity.__array_ufunc__`` so calls like ``np.sin(quantity)``,
+  ``np.add(q1, q2)`` preserve units instead of stripping them.
+- ``saiunit.BackendError`` exception type (subclass of ``TypeError``).
+- ``saiunit.lax`` and ``saiunit.sparse`` entry points now raise
+  ``BackendError`` with a clear ``"call .to_jax() first"`` hint when given a
+  NumPy-backed ``Quantity`` (JAX-only modules require JAX semantics).
+
+### Changed
+
+- ``Quantity(np.ndarray(...))`` now keeps the mantissa as ``np.ndarray``.
+  Previously it was implicitly converted to ``jax.Array`` on construction.
+  Call ``.to_jax()`` or run under ``with using_backend("jax")`` for the
+  previous behavior.
+
+### Dependencies
+
+- New mandatory dependency: ``array_api_compat>=1.9``.
+
 ## Version 0.2.1
 
 ### Breaking Changes
