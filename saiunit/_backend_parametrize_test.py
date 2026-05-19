@@ -62,13 +62,13 @@ def test_concatenate_respects_backend(backend):
     assert r.backend == backend
 
 
-def test_backend_fixture_includes_cupy_and_torch(backend):
-    """The fixture parameter is one of the four known backends.
+def test_backend_fixture_includes_all_phase1_and_2(backend):
+    """The fixture parameter is one of the five known backends.
 
     pytest's parametrize machinery is what actually exercises each;
     importorskip handles missing libraries.
     """
-    assert backend in {"numpy", "jax", "cupy", "torch"}
+    assert backend in {"numpy", "jax", "cupy", "torch", "dask"}
 
 
 def test_math_sin_on_each_backend(backend):
