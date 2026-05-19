@@ -63,6 +63,8 @@ __all__ = [
     "using_backend",
     "is_jax_array",
     "is_numpy_array",
+    "is_cupy_array",
+    "is_torch_array",
     "to_backend",
 ]
 
@@ -86,6 +88,22 @@ def is_numpy_array(x) -> bool:
 def is_jax_array(x) -> bool:
     """Return True if ``x`` is a ``jax.Array``."""
     return isinstance(x, jax.Array)
+
+
+def is_cupy_array(x) -> bool:
+    """Return True if ``x`` is a CuPy ndarray. False if CuPy is not installed."""
+    cupy = _try_import("cupy")
+    if cupy is None:
+        return False
+    return isinstance(x, cupy.ndarray)
+
+
+def is_torch_array(x) -> bool:
+    """Return True if ``x`` is a PyTorch tensor. False if PyTorch is not installed."""
+    torch = _try_import("torch")
+    if torch is None:
+        return False
+    return isinstance(x, torch.Tensor)
 
 
 def get_default_backend() -> Optional[BackendName]:

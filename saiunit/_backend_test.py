@@ -151,3 +151,32 @@ def test_try_import_is_cached():
     a = _try_import("numpy")
     b = _try_import("numpy")
     assert a is b
+
+
+def test_is_cupy_array_false_when_cupy_missing_or_not_cupy():
+    from saiunit._backend import is_cupy_array
+    # Non-cupy inputs always return False (works whether or not cupy is installed).
+    assert is_cupy_array(np.array([1.0])) is False
+    assert is_cupy_array(jnp.array([1.0])) is False
+    assert is_cupy_array(1.0) is False
+
+
+def test_is_cupy_array_true_when_available():
+    cupy = pytest.importorskip("cupy")
+    from saiunit._backend import is_cupy_array
+    arr = cupy.array([1.0, 2.0])
+    assert is_cupy_array(arr) is True
+
+
+def test_is_torch_array_false_for_non_torch():
+    from saiunit._backend import is_torch_array
+    assert is_torch_array(np.array([1.0])) is False
+    assert is_torch_array(jnp.array([1.0])) is False
+    assert is_torch_array(1.0) is False
+
+
+def test_is_torch_array_true_when_available():
+    torch = pytest.importorskip("torch")
+    from saiunit._backend import is_torch_array
+    t = torch.tensor([1.0, 2.0])
+    assert is_torch_array(t) is True
