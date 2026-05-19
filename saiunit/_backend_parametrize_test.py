@@ -21,6 +21,7 @@ default backend and once with ``jax``.
 """
 
 import numpy as np
+import pytest
 
 import saiunit as u
 from saiunit import UNITLESS, meter
@@ -56,9 +57,14 @@ def test_math_function_default_backend(backend):
     elif backend == "dask":
         import dask.array as da
         assert isinstance(r, da.Array)
+    elif backend == "ndonnx":
+        import ndonnx
+        assert isinstance(r, ndonnx.Array)
 
 
 def test_concatenate_respects_backend(backend):
+    if backend == "ndonnx":
+        pytest.skip("ndonnx exposes array-API 'concat' but not numpy-style 'concatenate'")
     a = u.Quantity([1.0, 2.0], unit=meter)
     b = u.Quantity([3.0, 4.0], unit=meter)
     r = u.math.concatenate([a, b])
@@ -92,10 +98,15 @@ def test_math_sin_on_each_backend(backend):
     elif backend == "dask":
         import dask.array as da
         assert isinstance(r, da.Array)
+    elif backend == "ndonnx":
+        import ndonnx
+        assert isinstance(r, ndonnx.Array)
 
 
 def test_linalg_norm_on_each_backend(backend):
     """saiunit.linalg.norm returns a scalar of the active backend."""
+    if backend == "ndonnx":
+        pytest.skip("ndonnx scalar materialization is out of scope for this smoke test")
     q = u.Quantity([3.0, 4.0], unit=meter)
     n = u.linalg.norm(q)
     # Should be 5 meters regardless of backend.
