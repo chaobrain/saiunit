@@ -70,6 +70,7 @@ from ._base_dimension import (
     get_dim_for_display,
     get_or_create_dimension,
 )
+from ._exceptions import BackendError
 from ._base_getters import (
     array_with_unit,
     assert_quantity,
@@ -137,6 +138,7 @@ __all__ = [
               'DIMENSIONLESS',
               'DimensionMismatchError',
               'UnitMismatchError',
+              'BackendError',
               'get_or_create_dimension',
               'get_dim_for_display',
 
