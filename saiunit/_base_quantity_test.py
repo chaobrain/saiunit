@@ -1990,3 +1990,11 @@ def test_quantity_to_dask_custom_chunks():
     q = u.Quantity(np.arange(8, dtype=np.float64), unit=u.meter)
     q2 = q.to_dask(chunks=2)
     assert q2.mantissa.numblocks == (4,)
+
+
+def test_quantity_backend_dask():
+    da = pytest.importorskip("dask.array")
+    import saiunit as u
+    arr = da.from_array(np.array([1.0]), chunks=1)
+    q = u.Quantity(arr, unit=u.meter)
+    assert q.backend == "dask"
