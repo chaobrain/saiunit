@@ -190,3 +190,40 @@ def test_backend_name_includes_cupy_and_torch():
     assert "torch" in args
     assert "numpy" in args
     assert "jax" in args
+
+
+def test_get_backend_cupy_only():
+    cupy = pytest.importorskip("cupy")
+    from saiunit._backend import get_backend
+    import array_api_compat.cupy as expected
+    xp = get_backend(cupy.array([1.0]))
+    assert xp is expected
+
+
+def test_get_backend_torch_only():
+    torch = pytest.importorskip("torch")
+    from saiunit._backend import get_backend
+    import array_api_compat.torch as expected
+    xp = get_backend(torch.tensor([1.0]))
+    assert xp is expected
+
+
+def test_get_backend_mixed_torch_jax_default_jax_wins():
+    torch = pytest.importorskip("torch")
+    from saiunit._backend import get_backend, set_default_backend
+    set_default_backend(None)
+    import jax.numpy as expected
+    xp = get_backend(torch.tensor([1.0]), jnp.array([1.0]))
+    assert xp is expected
+
+
+def test_get_backend_mixed_with_torch_default():
+    torch = pytest.importorskip("torch")
+    from saiunit._backend import get_backend, set_default_backend
+    set_default_backend("torch")
+    try:
+        import array_api_compat.torch as expected
+        xp = get_backend(torch.tensor([1.0]), jnp.array([1.0]))
+        assert xp is expected
+    finally:
+        set_default_backend(None)
