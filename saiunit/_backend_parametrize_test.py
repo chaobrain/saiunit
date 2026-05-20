@@ -21,6 +21,7 @@ default backend and once with ``jax``.
 """
 
 import numpy as np
+import pytest
 
 import saiunit as u
 from saiunit import UNITLESS, meter
@@ -44,13 +45,82 @@ def test_math_function_default_backend(backend):
     r = u.math.sin(q)
     if backend == "numpy":
         assert isinstance(r, np.ndarray)
-    else:
+    elif backend == "jax":
         import jax
         assert isinstance(r, jax.Array)
+    elif backend == "cupy":
+        import cupy
+        assert isinstance(r, cupy.ndarray)
+    elif backend == "torch":
+        import torch
+        assert isinstance(r, torch.Tensor)
+    elif backend == "dask":
+        import dask.array as da
+        assert isinstance(r, da.Array)
+    elif backend == "ndonnx":
+        import ndonnx
+        assert isinstance(r, ndonnx.Array)
 
 
 def test_concatenate_respects_backend(backend):
+    if backend == "ndonnx":
+        pytest.skip("ndonnx exposes array-API 'concat' but not numpy-style 'concatenate'")
     a = u.Quantity([1.0, 2.0], unit=meter)
     b = u.Quantity([3.0, 4.0], unit=meter)
     r = u.math.concatenate([a, b])
     assert r.backend == backend
+
+
+def test_backend_fixture_includes_all_backends(backend):
+    """The fixture parameter is one of the six known backends.
+
+    pytest's parametrize machinery is what actually exercises each;
+    importorskip handles missing libraries.
+    """
+    assert backend in {"numpy", "jax", "cupy", "torch", "dask", "ndonnx"}
+
+
+def test_math_sin_on_each_backend(backend):
+    """saiunit.math.sin returns a mantissa native to the active backend."""
+    q = u.Quantity([0.0, 1.0], unit=UNITLESS)
+    r = u.math.sin(q)
+    if backend == "numpy":
+        assert isinstance(r, np.ndarray)
+    elif backend == "jax":
+        import jax
+        assert isinstance(r, jax.Array)
+    elif backend == "cupy":
+        import cupy
+        assert isinstance(r, cupy.ndarray)
+    elif backend == "torch":
+        import torch
+        assert isinstance(r, torch.Tensor)
+    elif backend == "dask":
+        import dask.array as da
+        assert isinstance(r, da.Array)
+    elif backend == "ndonnx":
+        import ndonnx
+        assert isinstance(r, ndonnx.Array)
+
+
+def test_linalg_norm_on_each_backend(backend):
+    """saiunit.linalg.norm returns a scalar of the active backend."""
+    if backend == "ndonnx":
+        pytest.skip("ndonnx scalar materialization is out of scope for this smoke test")
+    q = u.Quantity([3.0, 4.0], unit=meter)
+    n = u.linalg.norm(q)
+    # Should be 5 meters regardless of backend.
+    assert n.unit == meter
+    if backend == "dask":
+        # For dask, .mantissa is a lazy scalar; compute to read the value.
+        assert float(n.mantissa.compute()) == 5.0
+    else:
+        assert float(n.mantissa) == 5.0
+
+
+def test_to_method_round_trip_on_each_backend(backend):
+    """Convert to numpy and back; mantissa values preserved."""
+    q = u.Quantity([1.0, 2.0, 3.0], unit=meter)
+    q_np = q.to_numpy()
+    assert np.allclose(q_np.mantissa, [1.0, 2.0, 3.0])
+    assert q_np.unit == meter

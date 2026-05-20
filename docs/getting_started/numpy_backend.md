@@ -113,3 +113,170 @@ checks fire identically:
 np.float64(5) + u.Quantity(np.array([1.0]), unit=u.meter)
 # raises UnitMismatchError (the scalar is dimensionless)
 ```
+
+## CuPy (GPU)
+
+`saiunit` accepts `cupy.ndarray` mantissas via the optional `cupy` extra:
+
+```bash
+pip install saiunit[cupy]
+```
+
+```python
+import cupy
+import saiunit as u
+
+q = u.Quantity(cupy.array([1.0, 2.0, 3.0]), unit=u.meter)
+print(q.backend)            # 'cupy'
+print((q + q).backend)      # 'cupy'
+print(u.math.sin(q / u.meter))  # cupy.ndarray
+```
+
+Convert from another backend with `Quantity.to_cupy(device=...)`:
+
+```python
+q_cpu = u.Quantity([1.0, 2.0], unit=u.meter)
+q_gpu = q_cpu.to_cupy(device=0)
+```
+
+CuPy is GPU-only; the import will fail without a CUDA installation. saiunit
+raises `BackendError` (not `ImportError`) when CuPy is missing.
+
+## PyTorch
+
+`saiunit` accepts `torch.Tensor` mantissas via the optional `torch` extra:
+
+```bash
+pip install saiunit[torch]
+```
+
+```python
+import torch
+import saiunit as u
+
+q = u.Quantity(torch.tensor([1.0, 2.0, 3.0]), unit=u.meter)
+print(q.backend)        # 'torch'
+print((q + q).backend)  # 'torch'
+```
+
+Convert with `Quantity.to_torch(device=..., dtype=...)`. `dtype` accepts a
+torch dtype (e.g. `torch.float32`) or a numpy dtype (e.g. `np.float32`):
+
+```python
+q_cpu  = u.Quantity([1.0, 2.0], unit=u.meter)
+q_cuda = q_cpu.to_torch(device='cuda')
+q_f64  = q_cpu.to_torch(dtype=torch.float64)
+```
+
+### Gradients
+
+Wrapping a tensor with `requires_grad=True` preserves the autograd graph
+through saiunit operations, but `saiunit.autograd.grad` itself remains
+JAX-only. Use `torch.autograd.grad` on the mantissa for backward passes:
+
+```python
+x = torch.tensor([1.0, 2.0], requires_grad=True)
+q = u.Quantity(x, unit=u.meter) * 2.0
+loss = q.mantissa.sum()
+grads = torch.autograd.grad(loss, x)
+```
+
+## Dask: lazy semantics
+
+`saiunit` accepts `dask.array.Array` mantissas via the optional `dask` extra:
+
+```bash
+pip install saiunit[dask]
+```
+
+```python
+import numpy as np
+import dask.array as da
+import saiunit as u
+
+big = da.from_array(np.arange(1_000_000.0), chunks=100_000)
+q = u.Quantity(big, unit=u.meter)
+print(q.backend)        # 'dask'
+print(q.shape)          # (1000000,)  — no compute
+print((q + q).backend)  # 'dask'      — still lazy
+```
+
+Convert with `Quantity.to_dask(chunks='auto')`:
+
+```python
+q_np = u.Quantity(np.arange(1_000_000.0), unit=u.meter)
+q_da = q_np.to_dask(chunks=100_000)
+```
+
+### What stays lazy
+
+Building a dask-backed `Quantity`, calling `q.shape` / `q.ndim` / `q.dtype`,
+arithmetic, and most `saiunit.math` / `saiunit.linalg` operations all stay
+lazy — no `.compute()` until you explicitly trigger it.
+
+`repr(q)` is also lazy-safe; it shows dask's task-graph summary rather than
+materializing the array.
+
+### What requires compute
+
+Operations that produce a Python scalar — `float(q)`, `int(q)`,
+`operator.index(q)`, `q.tolist()`, `np.asarray(q)`, `hash(q)` — raise
+`BackendError` on dask-backed quantities. Call `q.mantissa.compute()` first:
+
+```python
+single = u.Quantity(da.from_array(np.array([42.0]), chunks=1), unit=u.meter)
+float(single)              # raises BackendError
+single.mantissa.compute()  # numpy array; now eager
+```
+
+### Mixed-backend arithmetic
+
+Mixing a dask-backed and a non-dask-backed `Quantity` in arithmetic falls
+through the default-backend tiebreaker. If the result lands on dask, the
+non-dask operand is auto-lifted to a dask array.
+
+## ndonnx: symbolic / ONNX export
+
+`saiunit` accepts `ndonnx.Array` mantissas via the optional `ndonnx` extra:
+
+```bash
+pip install saiunit[ndonnx]
+```
+
+```python
+import numpy as np
+import ndonnx
+import saiunit as u
+
+q = u.Quantity(ndonnx.asarray(np.array([1.0, 2.0, 3.0])), unit=u.meter)
+print(q.backend)        # 'ndonnx'
+print((q + q).backend)  # 'ndonnx' — still symbolic
+```
+
+Convert with `Quantity.to_ndonnx()`:
+
+```python
+q_np = u.Quantity(np.array([1.0, 2.0]), unit=u.meter)
+q_nd = q_np.to_ndonnx()
+```
+
+### What works
+
+Dispatch routes correctly: `q + q`, `q * 2`, `u.math.sin(q / u.meter)`, and
+other array-API-standard operations build the ONNX graph as expected.
+Dimensional analysis is independent of backend — `meter + second` still
+raises `UnitMismatchError`.
+
+### What may not work
+
+ndonnx is still maturing; some `saiunit.math` / `saiunit.linalg` operations
+may not have ndonnx implementations. When that happens, the ndonnx error
+surfaces unwrapped — saiunit does not catch it. Consult the ndonnx
+documentation for the supported op set.
+
+### Exporting
+
+Use ndonnx's own export workflow on the mantissa once your computation is
+built. saiunit does not provide saiunit-level export helpers; the unit
+information lives on the Python `Quantity` object and is not encoded in
+the ONNX graph.

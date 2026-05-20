@@ -113,6 +113,22 @@ def _wrap_function_keep_unit(func):
     return f
 
 
+def _dask_materialization_guard(mantissa, op_name: str) -> None:
+    """Raise ``BackendError`` if ``mantissa`` is a dask array.
+
+    Used by ``Quantity`` methods that would otherwise call ``.compute()``
+    implicitly (``__float__``, ``__int__``, ``__array__``, ``tolist``, etc.).
+    The caller passes a human-readable ``op_name`` for the error message.
+    """
+    from saiunit._backend import is_dask_array
+    if is_dask_array(mantissa):
+        from saiunit._exceptions import BackendError
+        raise BackendError(
+            f"{op_name} would materialize a dask-backed Quantity. "
+            f"Call `q.mantissa.compute()` first."
+        )
+
+
 def _wrap_function_change_unit(func, unit_fun):
     """
     Returns a new function that wraps the given function `func` so that it
@@ -492,12 +508,16 @@ class Quantity:
                     if not new_unit.has_same_magnitude(unit):
                         mantissa = mantissa * (new_unit.magnitude / unit.magnitude)
                 # Respect the default backend for list/tuple inputs.
-                from saiunit._backend import get_default_backend
-                default = get_default_backend()
-                if default == "numpy":
-                    mantissa = np.asarray(mantissa, dtype=dtype) if dtype is not None else np.asarray(mantissa)
+                from saiunit._backend import _xp_for, get_default_backend
+                default = get_default_backend() or "jax"
+                xp = _xp_for(default)
+                # ndonnx.asarray can't infer dtype from a JAX array; route via numpy.
+                if default == "ndonnx" and isinstance(mantissa, jax.Array):
+                    mantissa = np.asarray(mantissa)
+                if dtype is not None:
+                    mantissa = xp.asarray(mantissa, dtype=dtype)
                 else:
-                    mantissa = jnp.array(mantissa, dtype=dtype)
+                    mantissa = xp.asarray(mantissa)
 
             # array mantissa
             elif isinstance(mantissa, Quantity):
@@ -1011,6 +1031,11 @@ class Quantity:
     def _format_value(self, precision: int | None = None) -> str:
         """Format the mantissa value as a string."""
         m = self.mantissa
+        # Lazy backends (dask) print their own task-graph summary; never
+        # materialize to format. ``repr(m)`` is lazy-safe for dask arrays.
+        from saiunit._backend import is_dask_array
+        if is_dask_array(m):
+            return repr(m)
         if isinstance(m, (jax.Array, np.ndarray)):
             value = m
         else:
@@ -1139,9 +1164,24 @@ class Quantity:
 
     @property
     def backend(self) -> str:
-        """The backend of the underlying mantissa: ``'numpy'`` or ``'jax'``."""
-        from saiunit._backend import is_numpy_array
-        return "numpy" if is_numpy_array(self._mantissa) else "jax"
+        """The backend of the underlying mantissa: one of
+        ``'numpy'``, ``'jax'``, ``'cupy'``, ``'torch'``, ``'dask'``, ``'ndonnx'``."""
+        from saiunit._backend import (
+            is_numpy_array, is_cupy_array, is_torch_array,
+            is_dask_array, is_ndonnx_array,
+        )
+        m = self._mantissa
+        if is_numpy_array(m):
+            return "numpy"
+        if is_cupy_array(m):
+            return "cupy"
+        if is_torch_array(m):
+            return "torch"
+        if is_dask_array(m):
+            return "dask"
+        if is_ndonnx_array(m):
+            return "ndonnx"
+        return "jax"  # jax is the fallthrough (preserves existing behavior)
 
     def to_numpy(self) -> 'Quantity':
         """Return a new Quantity with mantissa converted to ``numpy.ndarray``.
@@ -1162,6 +1202,58 @@ class Quantity:
         if is_jax_array(self._mantissa):
             return self
         return Quantity(to_backend(self._mantissa, "jax"), unit=self.unit)
+
+    def to_cupy(self, *, device=None) -> 'Quantity':
+        """Return a new Quantity with mantissa converted to a ``cupy.ndarray``.
+
+        No-op (returns ``self``) if the mantissa is already a CuPy array and no
+        ``device`` was specified.
+        """
+        from saiunit._backend import is_cupy_array, to_backend
+        if is_cupy_array(self._mantissa) and device is None:
+            return self
+        kwargs = {} if device is None else {"device": device}
+        return Quantity(to_backend(self._mantissa, "cupy", **kwargs), unit=self.unit)
+
+    def to_torch(self, *, device=None, dtype=None) -> 'Quantity':
+        """Return a new Quantity with mantissa converted to a ``torch.Tensor``.
+
+        No-op (returns ``self``) if the mantissa is already a torch tensor and
+        no ``device``/``dtype`` was specified. ``dtype`` accepts either a torch
+        dtype (e.g. ``torch.float32``) or a numpy dtype (e.g. ``np.float32``).
+        """
+        from saiunit._backend import is_torch_array, to_backend
+        if is_torch_array(self._mantissa) and device is None and dtype is None:
+            return self
+        kwargs = {}
+        if device is not None:
+            kwargs["device"] = device
+        if dtype is not None:
+            kwargs["dtype"] = dtype
+        return Quantity(to_backend(self._mantissa, "torch", **kwargs), unit=self.unit)
+
+    def to_dask(self, *, chunks='auto') -> 'Quantity':
+        """Return a new Quantity with mantissa converted to a ``dask.array.Array``.
+
+        No-op (returns ``self``) if the mantissa is already a dask array and no
+        ``chunks`` was specified.
+        """
+        from saiunit._backend import is_dask_array, to_backend
+        if is_dask_array(self._mantissa) and chunks == 'auto':
+            return self
+        return Quantity(to_backend(self._mantissa, "dask", chunks=chunks), unit=self.unit)
+
+    def to_ndonnx(self) -> 'Quantity':
+        """Return a new Quantity with mantissa converted to an ``ndonnx.Array``.
+
+        No-op (returns ``self``) if the mantissa is already an ndonnx array.
+        ndonnx arrays are symbolic — operations build an ONNX graph rather than
+        eagerly computing.
+        """
+        from saiunit._backend import is_ndonnx_array, to_backend
+        if is_ndonnx_array(self._mantissa):
+            return self
+        return Quantity(to_backend(self._mantissa, "ndonnx"), unit=self.unit)
 
     @property
     def shape(self) -> tuple[int, ...]:
@@ -1297,6 +1389,7 @@ class Quantity:
         Returns:
           int: The hash value of the Quantity object.
         """
+        _dask_materialization_guard(self._mantissa, "hash(Quantity)")
         try:
             return hash((np.asarray(self.mantissa).tobytes(), self.unit))
         except Exception:
@@ -2903,6 +2996,7 @@ class Quantity:
             >>> q.tolist()
             [Quantity(1., "mV"), Quantity(2., "mV")]
         """
+        _dask_materialization_guard(self._mantissa, "Quantity.tolist()")
         if isinstance(self.mantissa, numbers.Number):
             list_mantissa = self.mantissa
         else:
@@ -3164,6 +3258,7 @@ class Quantity:
 
     def __array__(self, dtype: jax.typing.DTypeLike | None = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
+        _dask_materialization_guard(self._mantissa, "np.asarray(Quantity)")
         if self.dim.is_dimensionless:
             return np.asarray(self.to_decimal(), dtype=dtype)
         else:
@@ -3173,6 +3268,7 @@ class Quantity:
             )
 
     def __float__(self):
+        _dask_materialization_guard(self._mantissa, "float(Quantity)")
         if self.dim.is_dimensionless and self.ndim == 0:
             return float(self.to_decimal())
         else:
@@ -3182,6 +3278,7 @@ class Quantity:
             )
 
     def __int__(self):
+        _dask_materialization_guard(self._mantissa, "int(Quantity)")
         if self.dim.is_dimensionless and self.ndim == 0:
             return int(self.to_decimal())
         else:
@@ -3191,6 +3288,7 @@ class Quantity:
             )
 
     def __index__(self):
+        _dask_materialization_guard(self._mantissa, "operator.index(Quantity)")
         if self.dim.is_dimensionless:
             return operator.index(self.to_decimal())
         else:

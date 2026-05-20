@@ -40,3 +40,65 @@ def test_require_jax_ignores_plain_numpy_array():
 
 def test_require_jax_ignores_python_scalar():
     require_jax_backend("test_fn", 1.0, 2)  # no raise
+
+
+def test_require_jax_raises_for_torch_quantity():
+    torch = pytest.importorskip("torch")
+    q = u.Quantity(torch.tensor([1.0]), unit=u.meter)
+    with pytest.raises(u.BackendError, match="torch-backed Quantity"):
+        require_jax_backend("test_fn", q)
+
+
+def test_require_jax_raises_for_cupy_quantity():
+    cupy = pytest.importorskip("cupy")
+    q = u.Quantity(cupy.array([1.0]), unit=u.meter)
+    with pytest.raises(u.BackendError, match="cupy-backed Quantity"):
+        require_jax_backend("test_fn", q)
+
+
+def test_require_jax_message_for_numpy_quantity_names_backend():
+    q = u.Quantity(np.array([1.0]), unit=u.meter)
+    with pytest.raises(u.BackendError, match="numpy-backed Quantity"):
+        require_jax_backend("test_fn", q)
+
+
+def test_require_jax_rejects_bare_torch_tensor():
+    torch = pytest.importorskip("torch")
+    t = torch.tensor([1.0])
+    with pytest.raises(u.BackendError, match="torch"):
+        require_jax_backend("test_fn", t)
+
+
+def test_require_jax_rejects_bare_cupy_array():
+    cupy = pytest.importorskip("cupy")
+    arr = cupy.array([1.0])
+    with pytest.raises(u.BackendError, match="cupy"):
+        require_jax_backend("test_fn", arr)
+
+
+def test_require_jax_raises_for_dask_quantity():
+    da = pytest.importorskip("dask.array")
+    q = u.Quantity(da.from_array(np.array([1.0]), chunks=1), unit=u.meter)
+    with pytest.raises(u.BackendError, match="dask-backed Quantity"):
+        require_jax_backend("test_fn", q)
+
+
+def test_require_jax_rejects_bare_dask_array():
+    da = pytest.importorskip("dask.array")
+    arr = da.from_array(np.array([1.0]), chunks=1)
+    with pytest.raises(u.BackendError, match="dask"):
+        require_jax_backend("test_fn", arr)
+
+
+def test_require_jax_raises_for_ndonnx_quantity():
+    ndonnx = pytest.importorskip("ndonnx")
+    q = u.Quantity(ndonnx.asarray(np.array([1.0])), unit=u.meter)
+    with pytest.raises(u.BackendError, match="ndonnx-backed Quantity"):
+        require_jax_backend("test_fn", q)
+
+
+def test_require_jax_rejects_bare_ndonnx_array():
+    ndonnx = pytest.importorskip("ndonnx")
+    arr = ndonnx.asarray(np.array([1.0]))
+    with pytest.raises(u.BackendError, match="ndonnx"):
+        require_jax_backend("test_fn", arr)

@@ -46,6 +46,9 @@ jobs:
           python -m pip install --upgrade pip setuptools  --no-cache-dir
           python -m pip install -r requirements-dev.txt  --no-cache-dir
           pip install . --no-cache-dir
+          pip install torch --no-cache-dir
+          pip install 'dask[array]' --no-cache-dir
+          pip install ndonnx --no-cache-dir
       - name: Build and install BrainUnit
         run: |
           python make_brainunit_setup.py
@@ -80,6 +83,9 @@ jobs:
           python -m pip install --upgrade pip setuptools --no-cache-dir
           python -m pip install -r requirements-dev.txt  --no-cache-dir
           pip install . --no-cache-dir
+          pip install torch --no-cache-dir
+          pip install 'dask[array]' --no-cache-dir
+          pip install ndonnx --no-cache-dir
       - name: Build and install BrainUnit
         run: |
           python make_brainunit_setup.py
@@ -114,6 +120,9 @@ jobs:
           python -m pip install --upgrade pip setuptools --no-cache-dir
           python -m pip install -r requirements-dev.txt  --no-cache-dir
           pip install .  --no-cache-dir
+          pip install torch --no-cache-dir
+          pip install 'dask[array]' --no-cache-dir
+          pip install ndonnx --no-cache-dir
       - name: Build and install BrainUnit
         run: |
           python make_brainunit_setup.py

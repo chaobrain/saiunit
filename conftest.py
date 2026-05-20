@@ -25,8 +25,19 @@ import pytest
 import saiunit as u
 
 
-@pytest.fixture(params=["numpy", "jax"])
+@pytest.fixture(params=["numpy", "jax", "cupy", "torch", "dask", "ndonnx"])
 def backend(request):
-    """Set the saiunit default backend for the duration of the test."""
+    """Set the saiunit default backend for the duration of the test.
+
+    Skips automatically when the requested backend's library isn't installed.
+    """
+    if request.param == "cupy":
+        pytest.importorskip("cupy")
+    elif request.param == "torch":
+        pytest.importorskip("torch")
+    elif request.param == "dask":
+        pytest.importorskip("dask.array")
+    elif request.param == "ndonnx":
+        pytest.importorskip("ndonnx")
     with u.using_backend(request.param):
         yield request.param

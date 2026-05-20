@@ -74,8 +74,12 @@ from ._base_dimension import (
 )
 from ._backend import (
     get_default_backend,
+    is_cupy_array,
+    is_dask_array,
     is_jax_array,
+    is_ndonnx_array,
     is_numpy_array,
+    is_torch_array,
     set_default_backend,
     using_backend,
 )
@@ -155,6 +159,10 @@ __all__ = [
               'using_backend',
               'is_jax_array',
               'is_numpy_array',
+              'is_cupy_array',
+              'is_torch_array',
+              'is_dask_array',
+              'is_ndonnx_array',
               'get_or_create_dimension',
               'get_dim_for_display',
 
