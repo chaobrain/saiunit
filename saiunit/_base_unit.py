@@ -1359,6 +1359,7 @@ class Unit:
                     _get_display_parts(self),
                     _get_display_parts(other),
                 )
+                parts = _normalise_display_parts(parts)
                 canonical = _format_display_parts(parts)
                 return Unit(
                     dim, scale=scale, base=self.base, factor=factor,
@@ -1417,6 +1418,7 @@ class Unit:
                 parts = _merge_display_parts(
                     _get_display_parts(self), other_parts,
                 )
+                parts = _normalise_display_parts(parts)
                 canonical = _format_display_parts(parts)
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
