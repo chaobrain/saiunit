@@ -133,12 +133,17 @@ class TestUnitProperties:
         with pytest.raises(NotImplementedError):
             u.factor = 1.0
 
-    def test_base_property(self):
-        # Units canonicalize to base=10; a base!=10 is folded into factor.
-        u = Unit(DIMENSIONLESS, base=2.0, scale=3)
+    def test_base_property_rejects_non_10(self):
+        # Units are fixed to base=10 — non-10 bases used to be silently
+        # folded into ``factor``, which dropped information.  See #11.
+        with pytest.raises(ValueError, match="only supports base=10"):
+            Unit(DIMENSIONLESS, base=2.0, scale=3)
+
+    def test_base_property_default(self):
+        u = Unit(DIMENSIONLESS, scale=3)
         assert u.base == 10.0
-        assert u.scale == 0
-        assert u.factor == 8.0
+        assert u.scale == 3
+        assert u.factor == 1.0
 
     def test_base_setter_raises(self):
         u = Unit()
@@ -1396,6 +1401,29 @@ class TestParseUnit:
         assert "mV" in _unit_name_registry
         assert "volt" in _unit_name_registry
         assert "V" in _unit_name_registry
+
+    # --- Unit(str, ...) rejects extra kwargs (#8) ---
+    def test_string_construction_rejects_extra_args(self):
+        with pytest.raises(TypeError, match="does not accept additional"):
+            Unit("mV", scale=99)
+        with pytest.raises(TypeError, match="does not accept additional"):
+            Unit("mV", factor=99.0)
+        with pytest.raises(TypeError, match="does not accept additional"):
+            Unit("mV", name="zzz")
+
+    # --- non-10 base rejected (#11) ---
+    def test_base_non_10_raises(self):
+        with pytest.raises(ValueError, match="only supports base=10"):
+            Unit(DIMENSIONLESS, base=2.0)
+
+    # --- NaN/inf factor rejected (#16) ---
+    def test_nan_factor_raises(self):
+        with pytest.raises(ValueError, match="finite real number"):
+            Unit(u.metre.dim, factor=float('nan'))
+
+    def test_inf_factor_raises(self):
+        with pytest.raises(ValueError, match="finite real number"):
+            Unit(u.metre.dim, factor=float('inf'))
 
     # --- named-dimensionless identity preserved (#7) ---
     def test_radian_mul_unitless_preserves_name(self):

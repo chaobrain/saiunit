@@ -730,6 +730,30 @@ class Unit:
     ):
         # String-based construction: Unit("mV"), Unit("J / kg"), etc.
         if isinstance(dim, str):
+            # The string form ignores every other constructor argument —
+            # silently dropping ``Unit("mV", scale=99, factor=99)`` was a
+            # source of confusing bugs.  Reject any non-default secondary
+            # argument explicitly so the caller knows.
+            extras = []
+            if scale != 0:
+                extras.append("scale")
+            if base != 10.:
+                extras.append("base")
+            if factor != 1.:
+                extras.append("factor")
+            if name is not None:
+                extras.append("name")
+            if dispname is not None:
+                extras.append("dispname")
+            if display_parts is not None:
+                extras.append("display_parts")
+            if extras:
+                raise TypeError(
+                    "Unit(str, ...) does not accept additional arguments: "
+                    + ", ".join(extras)
+                    + ". Use parse_unit() and modify the result, or construct "
+                    "the Unit from a Dimension instead."
+                )
             parsed = parse_unit(dim)
             self._base = parsed._base
             self._scale = parsed._scale
@@ -742,14 +766,23 @@ class Unit:
             self._display_parts = parsed._display_parts
             return
 
-        # All Units canonicalize to base=10; a non-10 ``base`` is folded into
-        # ``factor`` as ``base**scale`` so that ``base**scale * factor`` is
-        # preserved. This keeps arithmetic on units (mul/div) closed without
-        # needing to reconcile mismatched bases at every call site.
+        # ``base`` is fixed at 10 for now — Units canonicalize to base=10
+        # internally, and accepting other bases silently rewrote them,
+        # losing information.  Raise so callers can not be surprised.
         if base != 10.:
-            factor = factor * (base ** scale)
-            base = 10.
-            scale = 0
+            raise ValueError(
+                f"Unit currently only supports base=10; got base={base!r}. "
+                "Encode non-decimal scales in ``factor`` instead."
+            )
+
+        # Reject NaN/inf factors — these poison arithmetic downstream and
+        # cannot represent a valid physical conversion.
+        if isinstance(factor, (int, float)):
+            import math
+            if math.isnan(factor) or math.isinf(factor):
+                raise ValueError(
+                    f"Unit factor must be a finite real number; got factor={factor!r}."
+                )
 
         self._base = base
         self._scale = scale
