@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-import jax
+from saiunit._jax_compat import tree as _jtree
 
 CustomArray = None
 
@@ -155,4 +155,4 @@ def maybe_custom_array_tree(x):
     global CustomArray
     if CustomArray is None:
         from saiunit.custom_array import CustomArray
-    return jax.tree.map(maybe_custom_array, x, is_leaf=lambda a: isinstance(a, CustomArray))
+    return _jtree.map(maybe_custom_array, x, is_leaf=lambda a: isinstance(a, CustomArray))

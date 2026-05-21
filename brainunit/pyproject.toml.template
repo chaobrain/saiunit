@@ -62,7 +62,13 @@ repository = 'https://github.com/chaobrain/brainunit'
 
 [project.optional-dependencies]
 testing = ["pytest", "brainstate"]
+jax = ["jax"]
 cpu = ["jax[cpu]"]
 cuda12 = ["jax[cuda12]"]
 cuda13 = ["jax[cuda13]"]
 tpu = ["jax[tpu]"]
+cupy = ["cupy-cuda12x>=13.0"]
+torch = ["torch>=2.0"]
+dask = ["dask[array]>=2024.1"]
+ndonnx = ["ndonnx>=0.9"]
+all = ["brainunit[jax,cupy,torch,dask,ndonnx]"]

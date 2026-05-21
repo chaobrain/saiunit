@@ -80,15 +80,33 @@ jax.vmap(f)(u.math.arange(0. * u.mV, 10. * u.mV, 1. * u.mV))
 
 ## Installation
 
-``saiunit`` has been well tested on ``python>=3.9`` + ``jax>=0.4.30`` environments, and can be installed on Windows, Linux, and MacOS.
+``saiunit`` has been well tested on ``python>=3.10`` and can be installed on
+Windows, Linux, and MacOS. The core package depends only on NumPy. JAX is
+optional — install it to enable the ``saiunit.autograd``, ``saiunit.lax``,
+and ``saiunit.sparse`` submodules, the custom ``exprel`` primitive, and the
+``"jax"`` backend.
 
-You can install ``saiunit`` via pip:
+Install the NumPy-only core:
 
 ```bash
 pip install saiunit --upgrade
 ```
 
-which should install in about 1 minute. If you want to install the latest version from the source, you can clone the repository and install it:
+Or pull in JAX as well (pick the variant matching your accelerator):
+
+```bash
+pip install -U "saiunit[jax]"     # plain JAX
+pip install -U "saiunit[cpu]"     # JAX with CPU XLA
+pip install -U "saiunit[cuda12]"  # JAX with CUDA 12
+pip install -U "saiunit[cuda13]"  # JAX with CUDA 13
+pip install -U "saiunit[tpu]"     # JAX with TPU
+```
+
+Without JAX, the NumPy backend is auto-selected and any access to a
+JAX-only submodule (``saiunit.autograd``, ``saiunit.lax``, ``saiunit.sparse``)
+raises ``saiunit.BackendError`` with an install hint.
+
+To install the latest version from source:
 
 ```bash
 git clone https://github.com/chaobrain/saiunit.git

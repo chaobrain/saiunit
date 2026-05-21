@@ -21,6 +21,51 @@ concurrency:
 
 
 jobs:
+  test_no_jax:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.13" ]
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          access_token: ${{ github.token }}
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies (without JAX)
+        run: |
+          python -m pip cache purge
+          python -m pip install --upgrade pip setuptools --no-cache-dir
+          python -m pip install -r requirements.txt --no-cache-dir
+          python -m pip install pytest --no-cache-dir
+          pip install . --no-cache-dir
+      - name: Verify JAX is not installed
+        run: |
+          python -c "import importlib.util, sys; assert importlib.util.find_spec('jax') is None, 'jax should not be installed'; print('OK: JAX is not installed')"
+      - name: Verify top-level import works
+        run: |
+          python -c "import saiunit as u; print('saiunit', u.__version__); q = u.Quantity(3.0, u.meter); print('Quantity:', q)"
+      - name: Verify JAX-only submodules raise BackendError
+        run: |
+          python -c "import saiunit as u; from saiunit._exceptions import BackendError
+          for name in ('autograd', 'lax', 'sparse'):
+              try:
+                  getattr(u, name)
+              except BackendError as e:
+                  print(f'OK: u.{name} raised BackendError: {e}')
+              else:
+                  raise SystemExit(f'FAIL: u.{name} should have raised BackendError')"
+      - name: Run no-jax smoke tests
+        run: |
+          pytest saiunit/_no_jax_test.py -v
+
+
   test_linux:
     runs-on: ubuntu-latest
     strategy:

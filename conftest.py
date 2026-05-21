@@ -23,6 +23,21 @@ Tests that want backend coverage should add ``backend`` to their signature.
 import pytest
 
 import saiunit as u
+from saiunit._jax_compat import HAS_JAX
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "requires_jax: mark test as requiring an installed JAX (skipped otherwise)",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    skip_jax = pytest.mark.skip(reason="JAX not installed")
+    for item in items:
+        if "requires_jax" in item.keywords and not HAS_JAX:
+            item.add_marker(skip_jax)
 
 
 @pytest.fixture(params=["numpy", "jax", "cupy", "torch", "dask", "ndonnx"])
@@ -31,7 +46,10 @@ def backend(request):
 
     Skips automatically when the requested backend's library isn't installed.
     """
-    if request.param == "cupy":
+    if request.param == "jax":
+        if not HAS_JAX:
+            pytest.skip("JAX not installed")
+    elif request.param == "cupy":
         pytest.importorskip("cupy")
     elif request.param == "torch":
         pytest.importorskip("torch")

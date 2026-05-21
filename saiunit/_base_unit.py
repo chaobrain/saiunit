@@ -13,10 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
+from __future__ import annotations
+
 import re
 from copy import deepcopy
-
-import jax
 
 from ._base_dimension import (
     Dimension,

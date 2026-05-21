@@ -24,11 +24,24 @@ q = u.Quantity(jnp.array([1.0, 2.0, 3.0]), unit=u.meter)
 print(q.backend)   # 'jax'
 ```
 
+## JAX is optional
+
+JAX is **not** a hard dependency. The core package installs with NumPy only;
+install JAX with `pip install "saiunit[jax]"` (or `[cpu]`, `[cuda12]`,
+`[cuda13]`, `[tpu]`) to unlock JAX-specific features. Without JAX:
+
+- The default backend auto-selects `'numpy'`.
+- `saiunit.autograd`, `saiunit.lax`, and `saiunit.sparse` raise
+  `saiunit.BackendError` on first access.
+- The custom-primitive `saiunit.math.exprel` raises `BackendError`.
+- All other `saiunit.math`, `saiunit.linalg`, `saiunit.fft`, and core
+  `Quantity`/`Unit` functionality continues to work on NumPy arrays.
+
 ## Choosing the default backend
 
 When a `Quantity` is built from a Python scalar or list (no array yet),
-saiunit consults the default backend. The default is `'jax'` unless you
-change it:
+saiunit consults the default backend. The default is `'jax'` when JAX is
+installed and `'numpy'` otherwise. Override explicitly:
 
 ```python
 u.set_default_backend("numpy")

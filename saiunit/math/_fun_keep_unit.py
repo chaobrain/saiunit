@@ -18,8 +18,7 @@ from __future__ import annotations
 import functools
 from typing import (Union, Sequence, Tuple, Optional)
 
-import jax
-import jax.numpy as jnp
+from saiunit._jax_compat import jax, jnp
 import numpy as np
 
 from saiunit._backend import get_backend

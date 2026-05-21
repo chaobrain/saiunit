@@ -17,8 +17,7 @@ from __future__ import annotations
 
 from typing import Union
 
-import jax
-import jax.numpy as jnp
+from saiunit._jax_compat import jax, jnp
 
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import maybe_decimal

@@ -14,16 +14,15 @@
 # ==============================================================================
 
 
+from __future__ import annotations
+
 import operator
 from typing import Any, Optional, Union, Sequence
 
-import jax.numpy as jnp
-import jax.typing
 import numpy as np
 
 from saiunit import math
-
-ArrayLike = jax.typing.ArrayLike
+from saiunit._jax_compat import HAS_JAX, jnp, ArrayLike  # type: ignore[attr-defined]
 
 __all__ = [
     'CustomArray',
@@ -194,7 +193,8 @@ class CustomArray:
     @property
     def mT(self):
         """Transpose the last two dimensions (for batched matrix operations)."""
-        return jnp.swapaxes(self.data, -1, -2)
+        _xp = jnp if HAS_JAX else np
+        return _xp.swapaxes(self.data, -1, -2)
 
     @property
     def nbytes(self):
@@ -737,7 +737,8 @@ class CustomArray:
         return math.expand_dims(self.data, axis)
 
     def expand_as(self, array: ArrayLike) -> ArrayLike:
-        return math.broadcast_to(self.data, jnp.asarray(array).shape)
+        _xp = jnp if HAS_JAX else np
+        return math.broadcast_to(self.data, _xp.asarray(array).shape)
 
     def pow(self, index: int):
         return self.data ** index
@@ -922,22 +923,22 @@ class CustomArray:
         return self
 
     def bool(self):
-        return math.asarray(self.data, dtype=jnp.bool_)
+        return math.asarray(self.data, dtype=np.bool_)
 
     def int(self):
-        return math.asarray(self.data, dtype=jnp.int32)
+        return math.asarray(self.data, dtype=np.int32)
 
     def long(self):
-        return math.asarray(self.data, dtype=jnp.int64)
+        return math.asarray(self.data, dtype=np.int64)
 
     def half(self):
-        return math.asarray(self.data, dtype=jnp.float16)
+        return math.asarray(self.data, dtype=np.float16)
 
     def float(self):
-        return math.asarray(self.data, dtype=jnp.float32)
+        return math.asarray(self.data, dtype=np.float32)
 
     def double(self):
-        return math.asarray(self.data, dtype=jnp.float64)
+        return math.asarray(self.data, dtype=np.float64)
 
     def tree_flatten(self):
         return (self.data,), None

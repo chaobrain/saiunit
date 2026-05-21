@@ -17,17 +17,20 @@ from __future__ import annotations
 
 from typing import Union
 
-import jax
-import jax.numpy as jnp
-from jax import Array
+from saiunit._jax_compat import HAS_JAX, jax, jnp, Array, require_jax
 
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
-from saiunit.lax import _lax_linalg as lax_linalg
 from saiunit.math._fun_keep_unit import (
     _fun_keep_unit_unary, trace, diagonal
 )
+
+
+def _lax_linalg():
+    require_jax("saiunit.linalg.svd / eig / eigh")
+    from saiunit.lax import _lax_linalg as _m
+    return _m
 
 __all__ = [
     # Decompositions
@@ -393,7 +396,7 @@ def svd(
             **kwargs,
         )
 
-    return lax_linalg.svd(
+    return _lax_linalg().svd(
         x,
         full_matrices=full_matrices,
         compute_uv=compute_uv,
@@ -475,7 +478,7 @@ def eig(
         ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
     """
     a = maybe_custom_array(a)
-    return lax_linalg.eig(a, compute_left_eigenvectors=False, **kwargs)
+    return _lax_linalg().eig(a, compute_left_eigenvectors=False, **kwargs)
 
 
 @set_module_as('saiunit.linalg')
@@ -530,7 +533,7 @@ def eigh(
     else:
         msg = f"UPLO must be one of None, 'L', or 'U', got {UPLO}"
         raise ValueError(msg)
-    v, w = lax_linalg.eigh(a, lower=lower, symmetrize_input=symmetrize_input, **kwargs)
+    v, w = _lax_linalg().eigh(a, lower=lower, symmetrize_input=symmetrize_input, **kwargs)
     return w, v
 
 

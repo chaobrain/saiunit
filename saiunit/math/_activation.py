@@ -13,10 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 
+from __future__ import annotations
+
 from typing import Optional, Union
 
-import jax
-from jax import nn
+from saiunit._jax_compat import HAS_JAX, jax, require_jax
+
+if HAS_JAX:
+    from jax import nn
+else:
+    nn = None
 
 from saiunit._base_getters import get_mantissa
 from saiunit._base_quantity import Quantity

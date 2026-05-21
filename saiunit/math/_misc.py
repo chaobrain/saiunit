@@ -18,8 +18,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import (Union, TypeVar, Any)
 
-import jax
-import jax.numpy as jnp
+from saiunit._jax_compat import jax, jnp
 import numpy as np
 
 from saiunit._base_unit import Unit
@@ -77,29 +76,43 @@ __all__ = [
     'bartlett', 'blackman', 'hamming', 'hanning', 'kaiser',
 ]
 
-bool_ = jnp.bool_
-uint2 = jnp.uint2
-uint4 = jnp.uint4
-uint8 = jnp.uint8
-uint16 = jnp.uint16
-uint32 = jnp.uint32
-uint64 = jnp.uint64
-int2 = jnp.int2
-int4 = jnp.int4
-int8 = jnp.int8
-int16 = jnp.int16
-int32 = jnp.int32
-int64 = jnp.int64
-bfloat16 = jnp.bfloat16
-float16 = jnp.float16
-float32 = single = jnp.float32
-float64 = double = jnp.float64
-complex64 = csingle = jnp.complex64
-complex128 = cdouble = jnp.complex128
-int_ = jnp.int_
-uint = jnp.uint
-float_ = jnp.float_
-complex_ = jnp.complex_
+def _dtype_or_none(attr_name: str):
+    """Return ``jnp.<attr>`` if JAX provides it, else fall back to ``np.<attr>``.
+
+    Some dtypes (``uint2``, ``uint4``, ``int2``, ``int4``, ``bfloat16``) exist
+    only in JAX. Without JAX they evaluate to ``None`` and using them as a
+    dtype argument will raise downstream. Standard widths (``float32`` etc.)
+    transparently fall back to NumPy.
+    """
+    src = jnp if jnp is not None else None
+    if src is not None and hasattr(src, attr_name):
+        return getattr(src, attr_name)
+    return getattr(np, attr_name, None)
+
+
+bool_ = _dtype_or_none('bool_')
+uint2 = _dtype_or_none('uint2')
+uint4 = _dtype_or_none('uint4')
+uint8 = _dtype_or_none('uint8')
+uint16 = _dtype_or_none('uint16')
+uint32 = _dtype_or_none('uint32')
+uint64 = _dtype_or_none('uint64')
+int2 = _dtype_or_none('int2')
+int4 = _dtype_or_none('int4')
+int8 = _dtype_or_none('int8')
+int16 = _dtype_or_none('int16')
+int32 = _dtype_or_none('int32')
+int64 = _dtype_or_none('int64')
+bfloat16 = _dtype_or_none('bfloat16')
+float16 = _dtype_or_none('float16')
+float32 = single = _dtype_or_none('float32')
+float64 = double = _dtype_or_none('float64')
+complex64 = csingle = _dtype_or_none('complex64')
+complex128 = cdouble = _dtype_or_none('complex128')
+int_ = _dtype_or_none('int_')
+uint = _dtype_or_none('uint')
+float_ = _dtype_or_none('float_')
+complex_ = _dtype_or_none('complex_')
 
 
 def _removechars(s, chars):
@@ -112,13 +125,13 @@ e = np.e
 pi = np.pi
 inf = np.inf
 nan = np.nan
-inexact = jnp.inexact
+inexact = _dtype_or_none('inexact')
 euler_gamma = np.euler_gamma
 
 # data types
 # ----------
-dtype = jnp.dtype
-newaxis = jnp.newaxis
+dtype = (jnp.dtype if jnp is not None else np.dtype)
+newaxis = (jnp.newaxis if jnp is not None else np.newaxis)
 
 
 def is_quantity(x: Any) -> bool:
@@ -712,8 +725,15 @@ def gradient(
 # window funcs
 # ------------
 
-bartlett = jnp.bartlett
-blackman = jnp.blackman
-hamming = jnp.hamming
-hanning = jnp.hanning
-kaiser = jnp.kaiser
+def _np_or_jnp_attr(attr_name: str):
+    """Window-function lookup: prefer ``jnp.<attr>``; fall back to ``np.<attr>``."""
+    if jnp is not None and hasattr(jnp, attr_name):
+        return getattr(jnp, attr_name)
+    return getattr(np, attr_name)
+
+
+bartlett = _np_or_jnp_attr('bartlett')
+blackman = _np_or_jnp_attr('blackman')
+hamming = _np_or_jnp_attr('hamming')
+hanning = _np_or_jnp_attr('hanning')
+kaiser = _np_or_jnp_attr('kaiser')

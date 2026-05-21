@@ -13,10 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 
+from __future__ import annotations
+
 from typing import Union, Sequence
 
-import jax
-from jax.numpy import fft as jnpfft
+from saiunit._jax_compat import HAS_JAX, jax
+
+if HAS_JAX:
+    from jax.numpy import fft as jnpfft
+else:
+    import numpy.fft as jnpfft  # type: ignore[assignment]
 
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as

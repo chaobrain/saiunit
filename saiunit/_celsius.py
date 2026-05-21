@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-import jax.typing
+from __future__ import annotations
 
 from ._base_quantity import Quantity
 from ._misc import maybe_custom_array

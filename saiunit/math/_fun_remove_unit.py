@@ -16,8 +16,7 @@ from __future__ import annotations
 
 from typing import (Union, Optional, Sequence)
 
-import jax
-import jax.numpy as jnp
+from saiunit._jax_compat import jax, jnp
 
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
