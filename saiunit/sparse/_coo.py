@@ -34,7 +34,7 @@ from saiunit._base_getters import (
 )
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
-from saiunit._sparse_base import SparseMatrix
+from saiunit._sparse_base import SparseMatrix, _same_sparsity_pattern
 from saiunit.math._fun_array_creation import asarray
 from saiunit.math._fun_keep_unit import promote_dtypes
 
@@ -359,7 +359,7 @@ class COO(SparseMatrix):
 
     def _binary_op(self, other, op):
         if isinstance(other, COO):
-            if id(self.row) == id(other.row) and id(self.col) == id(other.col):
+            if _same_sparsity_pattern(self.row, other.row) and _same_sparsity_pattern(self.col, other.col):
                 return COO(
                     (
                         op(self.data, other.data),
@@ -402,7 +402,7 @@ class COO(SparseMatrix):
 
     def _binary_rop(self, other, op):
         if isinstance(other, COO):
-            if id(self.row) == id(other.row) and id(self.col) == id(other.col):
+            if _same_sparsity_pattern(self.row, other.row) and _same_sparsity_pattern(self.col, other.col):
                 return COO(
                     (
                         op(other.data, self.data),

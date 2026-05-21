@@ -51,9 +51,6 @@ Volume
 Speed
     ``speed_unit``, ``kmh``, ``mph``, ``mach``/``speed_of_sound``, ``knot``
 
-Temperature
-    ``degree_Fahrenheit``
-
 Energy
     ``eV``/``electron_volt``, ``calorie``/``calorie_th``, ``calorie_IT``,
     ``erg``, ``Btu``/``Btu_IT``, ``Btu_th``, ``ton_TNT``
@@ -67,7 +64,7 @@ Force
 """
 
 from ._base_unit import Unit
-from ._unit_common import joule, kilogram, second, meter, radian, pascal, meter2, meter3, kelvin, watt, newton
+from ._unit_common import joule, kilogram, second, meter, radian, pascal, meter2, meter3, watt, newton
 from .math import pi
 
 __all__ = [
@@ -77,7 +74,7 @@ __all__ = [
     "mil", "point", "pica", "survey_foot", "survey_mile", "nautical_mile", "fermi", "angstrom", "micron",
     "astronomical_unit", "au", "light_year", "parsec", "atm", "atmosphere", "bar", "mmHg", "torr", "psi",
     "hectare", "acre", "gallon", "gallon_US", "gallon_imp", "fluid_ounce", "fluid_ounce_US", "fluid_ounce_imp",
-    "bbl", "barrel", "speed_unit", "kmh", "mph", "mach", "speed_of_sound", "knot", "degree_Fahrenheit", "eV",
+    "bbl", "barrel", "speed_unit", "kmh", "mph", "mach", "speed_of_sound", "knot", "eV",
     "electron_volt", "calorie", "calorie_th", "calorie_IT", "erg", "Btu", "Btu_IT", "Btu_th", "ton_TNT", "hp",
     "horsepower", "dyn", "dyne", "lbf", "pound_force", "kgf", "kilogram_force", "IMF", 'kcal_per_h'
 ]
@@ -168,12 +165,6 @@ mph = Unit.create(speed_unit.dim, name="mile per hour", dispname="mph", scale=sp
 mach = speed_of_sound = Unit.create(speed_unit.dim, name="speed of sound", dispname="mach", scale=speed_unit.scale + 2,
                                     factor=3.405)
 knot = Unit.create(speed_unit.dim, name="knot", dispname="kn", scale=speed_unit.scale - 1, factor=5.14444444)
-
-# ----- Temperature -----
-# TODO: The relationship between Celsius and Kelvin should be linear, but the current implementation is not.
-# zero_Celsius = Unit.create(kelvin.dim, name="zero Celsius", dispname="0°C", scale=kelvin.scale, factor=273.15)
-degree_Fahrenheit = Unit.create(kelvin.dim, name="degree Fahrenheit", dispname="°F", scale=kelvin.scale,
-                                factor=5/9)
 
 # ----- Energy -----
 eV = electron_volt = Unit.create(joule.dim, name="electronvolt", dispname="eV", scale=joule.scale - 19, factor=1.602176634)

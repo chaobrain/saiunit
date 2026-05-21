@@ -21,15 +21,18 @@ import pytest
 import saiunit as u
 from saiunit import _matplotlib_compat as mpl_compat
 
-if not mpl_compat.matplotlib_converter_registered:
-    pytest.skip("matplotlib converter is not available", allow_module_level=True)
+if not mpl_compat.matplotlib_installed:
+    pytest.skip("matplotlib is not available", allow_module_level=True)
+
+if not u.enable_matplotlib_support():
+    pytest.skip("matplotlib converter could not be registered", allow_module_level=True)
 
 from matplotlib import units as mpl_units
 from matplotlib.units import ConversionError
 
 
 def test_quantity_converter_is_registered():
-    assert mpl_compat.register_quantity_converter()
+    assert u.enable_matplotlib_support()
     assert isinstance(mpl_units.registry[u.Quantity], mpl_compat.QuantityConverter)
 
 

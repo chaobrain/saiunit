@@ -61,9 +61,6 @@ The constants are organised into the following groups:
     ``fluid_ounce`` / ``fluid_ounce_US``, ``fluid_ounce_imp``,
     ``bbl`` / ``barrel``
 
-**Temperature**
-    ``degree_Fahrenheit`` (size of one Fahrenheit degree in kelvin)
-
 **Speed**
     ``kmh``, ``mph``, ``knot``, ``mach``
 
@@ -82,17 +79,20 @@ The constants are organised into the following groups:
 Fundamental Constants Table
 ---------------------------
 
+All fundamental-constant values below match CODATA 2018 (the 2019 SI
+redefinition fixed several to exact values, marked *exact*).
+
 ==================== ================== ======================= ==================================================================
 Constant             Symbol(s)          Name                    Value
 ==================== ================== ======================= ==================================================================
-Avogadro constant    :math:`N_A, L`     ``avogadro``            :math:`6.022140857\times 10^{23}\,\mathrm{mol}^{-1}`
-Boltzmann constant   :math:`k`          ``boltzmann``           :math:`1.38064852\times 10^{-23}\,\mathrm{J}\,\mathrm{K}^{-1}`
-Electric constant    :math:`\epsilon_0` ``electric``            :math:`8.854187817\times 10^{-12}\,\mathrm{F}\,\mathrm{m}^{-1}`
-Electron mass        :math:`m_e`        ``electron_mass``       :math:`9.10938356\times 10^{-31}\,\mathrm{kg}`
-Elementary charge    :math:`e`          ``elementary_charge``   :math:`1.6021766208\times 10^{-19}\,\mathrm{C}`
-Faraday constant     :math:`F`          ``faraday``             :math:`96485.33289\,\mathrm{C}\,\mathrm{mol}^{-1}`
-Gas constant         :math:`R`          ``gas``                 :math:`8.3144598\,\mathrm{J}\,\mathrm{mol}^{-1}\,\mathrm{K}^{-1}`
-Magnetic constant    :math:`\mu_0`      ``magnetic``            :math:`12.566370614\times 10^{-7}\,\mathrm{N}\,\mathrm{A}^{-2}`
+Avogadro constant    :math:`N_A, L`     ``avogadro``            :math:`6.02214076\times 10^{23}\,\mathrm{mol}^{-1}` (exact)
+Boltzmann constant   :math:`k`          ``boltzmann``           :math:`1.380649\times 10^{-23}\,\mathrm{J}\,\mathrm{K}^{-1}` (exact)
+Electric constant    :math:`\epsilon_0` ``electric``            :math:`8.8541878188\times 10^{-12}\,\mathrm{F}\,\mathrm{m}^{-1}`
+Electron mass        :math:`m_e`        ``electron_mass``       :math:`9.1093837139\times 10^{-31}\,\mathrm{kg}`
+Elementary charge    :math:`e`          ``elementary_charge``   :math:`1.602176634\times 10^{-19}\,\mathrm{C}` (exact)
+Faraday constant     :math:`F`          ``faraday``             :math:`96485.33212331\,\mathrm{C}\,\mathrm{mol}^{-1}`
+Gas constant         :math:`R`          ``gas``                 :math:`8.31446261815324\,\mathrm{J}\,\mathrm{mol}^{-1}\,\mathrm{K}^{-1}`
+Magnetic constant    :math:`\mu_0`      ``magnetic``            :math:`1.25663706127\times 10^{-6}\,\mathrm{N}\,\mathrm{A}^{-2}`
 Molar mass constant  :math:`M_u`        ``molar_mass``          :math:`1\times 10^{-3}\,\mathrm{kg}\,\mathrm{mol}^{-1}`
 0 deg C                                 ``zero_celsius``        :math:`273.15\,\mathrm{K}`
 ==================== ================== ======================= ==================================================================
@@ -148,7 +148,7 @@ from ._unit_constants import speed_unit
 __all__ = [
     'acre', 'arcmin', 'arcminute', 'arcsec', 'arcsecond', 'atomic_mass', 'au', 'astronomical_unit',
     'angstrom', 'atm', 'atmosphere', 'avogadro', 'bar', 'barrel', 'bbl', 'blob', 'boltzmann', 'Btu', 'Btu_IT',
-    'Btu_th', 'carat', 'calorie', 'calorie_IT', 'calorie_th', 'day', 'degree', 'degree_Fahrenheit',
+    'Btu_th', 'carat', 'calorie', 'calorie_IT', 'calorie_th', 'day', 'degree',
     'dyn', 'dyne', 'eV', 'electron_mass', 'electric', 'electronvolt', 'elementary_charge', 'erg',
     'faraday', 'fermi', 'fluid_ounce', 'fluid_ounce_US', 'fluid_ounce_imp', 'foot', 'gas', 'grain',
     'gallon', 'gallon_US', 'gallon_imp', 'gram', 'hectare', 'hour', 'hp', 'horsepower', 'IMF',
@@ -245,11 +245,6 @@ gallon_imp = np.asarray(4.54609e-3) * meter3  # Imperial gallon
 fluid_ounce = fluid_ounce_US = np.asarray(2.95735295625e-5) * meter3  # Fluid ounce (US)
 fluid_ounce_imp = np.asarray(2.84130625e-5) * meter3  # Imperial fluid ounce
 bbl = barrel = np.asarray(1.58987294928e-1) * meter3  # Barrel (oil)
-
-# ----- Temperature -----
-# Note: Fahrenheit is a temperature scale, not a unit. Use conversion functions instead.
-# This constant represents the conversion factor from Fahrenheit to Kelvin degrees
-degree_Fahrenheit = np.asarray(5/9) * kelvin  # Fahrenheit degree size in Kelvin
 
 # ----- Speed -----
 kmh = np.asarray(2.77777778e-1) * speed_unit  # Kilometer per hour

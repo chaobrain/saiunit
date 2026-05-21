@@ -90,6 +90,11 @@ def _find_standard_unit(
     (name, dispname, is_fullname, is_dimensionless)
     """
     if dim == DIMENSIONLESS:
+        # Dimensionless aliases (radian, steradian, percent, ...) intentionally
+        # drop their display name in arithmetic results: ``radian / radian``
+        # is bare 1, not "rad". Callers needing to preserve a dimensionless
+        # alias (e.g. ``factorless()`` on radian) consult ``_standard_units``
+        # directly before invoking this helper.
         return None, None, False, True
     if isinstance(base, (int, float)):
         if isinstance(scale, (int, float)):
@@ -227,7 +232,11 @@ def add_standard_unit(u: 'Unit'):
     ):
         key = (u.dim, u.scale, u.base, u.factor)
         aliases = _standard_unit_aliases.setdefault(key, [])
-        aliases.append(u)
+        # Dedup by identity: a Unit instance is registered at most once.
+        # Without this, repeated calls grow the alias list unboundedly
+        # and poison the ambiguity heuristic below.
+        if not any(existing is u for existing in aliases):
+            aliases.append(u)
         _standard_units[key] = _select_preferred_standard_unit(aliases)
 
         # Auto-detect ambiguity: >=2 distinct display names → ambiguous
@@ -687,17 +696,17 @@ class Unit:
             self._display_parts = parsed._display_parts
             return
 
-        # The base for this unit (as the base of the exponent), i.e.
-        # a base of 10 means 10^3, for a "k" prefix.
+        # All Units canonicalize to base=10; a non-10 ``base`` is folded into
+        # ``factor`` as ``base**scale`` so that ``base**scale * factor`` is
+        # preserved. This keeps arithmetic on units (mul/div) closed without
+        # needing to reconcile mismatched bases at every call site.
+        if base != 10.:
+            factor = factor * (base ** scale)
+            base = 10.
+            scale = 0
+
         self._base = base
-
-        # The scale for this unit (as the integer exponent of 10), i.e.
-        # a scale of 3 means base^3, for a "k" prefix.
         self._scale = scale
-
-        # The factor for this unit (as the conversion factor), i.e.
-        # a factor of cal = 4.18400 means 1 cal = 4.18400 J,
-        # where 4.18400 is the factor.
         self._factor = factor
 
         # The physical unit dimensions of this unit
@@ -1564,38 +1573,32 @@ class Unit:
     def __ipow__(self, other, modulo=None):
         raise NotImplementedError("Units cannot be modified in-place")
 
-    def __add__(self, other: 'Unit') -> 'Unit':
-        # self + other
-        if not isinstance(other, Unit):
-            raise TypeError(f"Expected a Unit, but got {other}")
-        if self.has_same_dim(other):
-            if self.has_same_magnitude(other):
-                return self.copy()
-            else:
-                raise TypeError(f"Units {self} and {other} have different units.")
-        else:
-            raise TypeError(f"Units {self} and {other} have different dimensions.")
+    def __add__(self, other):
+        raise TypeError(
+            "Units cannot be added: addition is defined on quantities, not units. "
+            "To add quantities, attach mantissas first (e.g. 1*ms + 2*ms)."
+        )
 
-    def __radd__(self, oc: 'Unit') -> 'Unit':
-        return self.__add__(oc)
+    def __radd__(self, other):
+        raise TypeError(
+            "Units cannot be added: addition is defined on quantities, not units. "
+            "To add quantities, attach mantissas first (e.g. 1*ms + 2*ms)."
+        )
 
     def __iadd__(self, other):
         raise NotImplementedError("Units cannot be modified in-place")
 
-    def __sub__(self, other: 'Unit') -> 'Unit':
-        # self - other
-        if not isinstance(other, Unit):
-            raise TypeError(f"Expected a Unit, but got {other}")
-        if self.has_same_dim(other):
-            if self.has_same_magnitude(other):
-                return self.copy()
-            else:
-                raise TypeError(f"Units {self} and {other} have different units.")
-        else:
-            raise TypeError(f"Units {self} and {other} have different dimensions.")
+    def __sub__(self, other):
+        raise TypeError(
+            "Units cannot be subtracted: subtraction is defined on quantities, not "
+            "units. To subtract quantities, attach mantissas first (e.g. 2*ms - 1*ms)."
+        )
 
-    def __rsub__(self, oc: 'Unit') -> 'Unit':
-        return self.__sub__(oc)
+    def __rsub__(self, other):
+        raise TypeError(
+            "Units cannot be subtracted: subtraction is defined on quantities, not "
+            "units. To subtract quantities, attach mantissas first (e.g. 2*ms - 1*ms)."
+        )
 
     def __isub__(self, other):
         raise NotImplementedError("Units cannot be modified in-place")
@@ -1610,17 +1613,26 @@ class Unit:
         raise NotImplementedError("Units cannot be modified in-place")
 
     def __eq__(self, other) -> bool:
-        if isinstance(other, Unit):
-            return (
-                (other.dim == self.dim)
-                and (other.scale == self.scale)
-                and (other.base == self.base)
-                and (other.factor == self.factor)
-                # and (other.name == self.name)
-                # and (other.dispname == self.dispname)
-            )
-        else:
+        # Two Units are equal when they represent the same physical
+        # quantity (matching dim/scale/base/factor) *and* render to the
+        # same canonical display string. The canonical string already
+        # folds registry-canonical aliases (e.g. ``A * ohm`` displays as
+        # ``V``) and respects the no-intermediate-simplification rule
+        # for genuinely composed units, so this comparison naturally
+        # treats math-equivalent aliases (metre/meter, A*ohm/volt) as
+        # equal without collapsing intermediate display order.
+        # Use ``is_unit_equal_math`` for a name-agnostic, math-only
+        # equivalence test.
+        if not isinstance(other, Unit):
             return False
+        if not (
+            (other.dim == self.dim)
+            and (other.scale == self.scale)
+            and (other.base == self.base)
+            and (other.factor == self.factor)
+        ):
+            return False
+        return self._canonical_str() == other._canonical_str()
 
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)

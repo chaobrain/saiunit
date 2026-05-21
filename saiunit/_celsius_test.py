@@ -265,3 +265,43 @@ def test_docstring_example_kelvin2celsius():
     with pytest.raises(TypeError):
         u.kelvin2celsius(300.0)
 
+
+def test_docstring_example_fahrenheit2kelvin():
+    import saiunit as u
+
+    result_32 = u.fahrenheit2kelvin(32.0)
+    assert u.math.allclose(result_32, 273.15 * u.kelvin, atol=1e-10 * u.kelvin)
+
+    result_212 = u.fahrenheit2kelvin(212.0)
+    assert u.math.allclose(result_212, 373.15 * u.kelvin, atol=1e-10 * u.kelvin)
+
+    # Verify TypeError when passing a Quantity
+    with pytest.raises(TypeError):
+        u.fahrenheit2kelvin(100.0 * u.kelvin)
+
+
+def test_docstring_example_kelvin2fahrenheit():
+    import saiunit as u
+
+    result_freezing = u.kelvin2fahrenheit(273.15 * u.kelvin)
+    assert np.isclose(float(result_freezing), 32.0)
+
+    result_boiling = u.kelvin2fahrenheit(373.15 * u.kelvin)
+    assert np.isclose(float(result_boiling), 212.0)
+
+    # Verify TypeError when passing a plain number
+    with pytest.raises(TypeError):
+        u.kelvin2fahrenheit(300.0)
+
+    # Verify TypeError when passing a non-temperature Quantity
+    with pytest.raises(TypeError):
+        u.kelvin2fahrenheit(300.0 * u.meter)
+
+
+def test_fahrenheit_kelvin_roundtrip():
+    import saiunit as u
+
+    for f in [-40.0, 0.0, 32.0, 68.0, 100.0, 212.0]:
+        k = u.fahrenheit2kelvin(f)
+        assert np.isclose(float(u.kelvin2fahrenheit(k)), f, atol=1e-9)
+

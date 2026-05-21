@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import numbers
+import threading
 
 import jax
 import numpy as np
@@ -545,8 +546,8 @@ class Dimension:
         Compare this Dimension object with another for equality.
 
         This method implements the equality comparison (==) for Dimension objects.
-        Two Dimension objects are considered equal if they have the same dimensional
-        exponents (within a small numerical tolerance).
+        Two Dimension objects are considered equal if their seven SI exponent
+        vectors are bit-for-bit identical (no floating-point tolerance).
 
         Parameters
         ----------
@@ -561,9 +562,10 @@ class Dimension:
 
         Notes
         -----
-        The comparison uses numpy's allclose() function to handle potential
-        floating-point precision issues in the dimension exponents.
-        If value is not a Dimension object, returns False without attempting comparison.
+        The comparison uses ``numpy.array_equal``. Equal Dimensions are
+        produced by ``get_or_create_dimension`` from the same exponent tuple,
+        so callers that round their exponents identically observe equal
+        instances. If value is not a Dimension object, returns False.
         """
         if not isinstance(value, Dimension):
             return False
@@ -676,8 +678,12 @@ class Dimension:
         return self.hash
 
 
-# Cache for get_or_create_dimension — maps tuple(dims) -> Dimension
+# Cache for get_or_create_dimension — maps tuple(dims) -> Dimension.
+# The lock guards the get/insert window so concurrent callers always
+# observe the same Dimension instance for a given key (identity is
+# load-bearing throughout the library).
 _dimension_cache: dict[tuple, 'Dimension'] = {}
+_dimension_cache_lock = threading.Lock()
 
 
 @set_module_as('saiunit')
@@ -758,9 +764,13 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
     cached = _dimension_cache.get(key)
     if cached is not None:
         return cached
-    new_dim = Dimension(dims)
-    _dimension_cache[key] = new_dim
-    return new_dim
+    with _dimension_cache_lock:
+        cached = _dimension_cache.get(key)
+        if cached is not None:
+            return cached
+        new_dim = Dimension(dims)
+        _dimension_cache[key] = new_dim
+        return new_dim
 
 
 DIMENSIONLESS = get_or_create_dimension([0, 0, 0, 0, 0, 0, 0])

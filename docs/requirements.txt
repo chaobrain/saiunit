@@ -4,6 +4,7 @@ jaxlib
 typing_extensions
 matplotlib
 brainstate
+array_api_compat
 
 # document requirements
 pandoc

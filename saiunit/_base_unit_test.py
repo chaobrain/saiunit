@@ -134,8 +134,11 @@ class TestUnitProperties:
             u.factor = 1.0
 
     def test_base_property(self):
-        u = Unit(DIMENSIONLESS, base=2.0)
-        assert u.base == 2.0
+        # Units canonicalize to base=10; a base!=10 is folded into factor.
+        u = Unit(DIMENSIONLESS, base=2.0, scale=3)
+        assert u.base == 10.0
+        assert u.scale == 0
+        assert u.factor == 8.0
 
     def test_base_setter_raises(self):
         u = Unit()
@@ -262,12 +265,6 @@ class TestUnitComparison:
         u2 = Unit(d, base=10.)
         assert u1.has_same_base(u2)
 
-    def test_has_same_base_different(self):
-        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
-        u1 = Unit(d, base=10.)
-        u2 = Unit(d, base=2.)
-        assert not u1.has_same_base(u2)
-
     def test_has_same_dim(self):
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         u1 = Unit(d, scale=0)
@@ -293,13 +290,6 @@ class TestUnitArithmetic:
         result = u1 * u2
         assert result.dim == d1 * d2
         assert result.scale == 0
-
-    def test_mul_different_base_raises(self):
-        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
-        u1 = Unit(d, base=10.)
-        u2 = Unit(d, base=2.)
-        with pytest.raises(TypeError, match="different bases"):
-            u1 * u2
 
     def test_mul_by_dimension_raises(self):
         u = Unit()
@@ -352,39 +342,32 @@ class TestUnitArithmetic:
         with pytest.raises(TypeError, match="non-scalar"):
             u ** np.array([2, 3])
 
-    def test_add_same_unit(self):
+    def test_add_units_raises(self):
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         u1 = Unit(d, name="m", dispname="m", scale=0)
         u2 = Unit(d, name="m", dispname="m", scale=0)
-        result = u1 + u2
-        assert result == u1
+        with pytest.raises(TypeError, match="cannot be added"):
+            u1 + u2
 
     def test_add_different_dim_raises(self):
         d1 = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         d2 = get_or_create_dimension([0, 1, 0, 0, 0, 0, 0])
-        with pytest.raises(TypeError, match="different dimensions"):
+        with pytest.raises(TypeError, match="cannot be added"):
             Unit(d1, name="m", dispname="m") + Unit(d2, name="kg", dispname="kg")
 
-    def test_add_different_scale_raises(self):
-        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
-        u1 = Unit(d, name="m", dispname="m", scale=0)
-        u2 = Unit(d, name="km", dispname="km", scale=3)
-        with pytest.raises(TypeError, match="different units"):
-            u1 + u2
-
     def test_add_non_unit_raises(self):
-        with pytest.raises(TypeError, match="Expected a Unit"):
+        with pytest.raises(TypeError, match="cannot be added"):
             Unit() + 42
 
-    def test_sub_same_unit(self):
+    def test_sub_units_raises(self):
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         u1 = Unit(d, name="m", dispname="m", scale=0)
         u2 = Unit(d, name="m", dispname="m", scale=0)
-        result = u1 - u2
-        assert result == u1
+        with pytest.raises(TypeError, match="cannot be subtracted"):
+            u1 - u2
 
     def test_sub_non_unit_raises(self):
-        with pytest.raises(TypeError, match="Expected a Unit"):
+        with pytest.raises(TypeError, match="cannot be subtracted"):
             Unit() - 42
 
     # ---- In-place raises ----
@@ -623,14 +606,6 @@ class TestDisplayParts:
         u2 = Unit(d, base=10.)
         _assert_same_base(u1, u2)  # should not raise
 
-    def test_assert_same_base_raises(self):
-        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
-        u1 = Unit(d, base=10.)
-        u2 = Unit(d, base=2.)
-        with pytest.raises(TypeError, match="different bases"):
-            _assert_same_base(u1, u2)
-
-
 # =========================================================================
 # _find_standard_unit / _find_a_name / add_standard_unit
 # =========================================================================
@@ -698,12 +673,6 @@ class TestUnitIntegration:
 
         _ = u.Unit((u.ms / u.ms).dim, scale=2)
         _ = u.Unit(u.ms.dim, scale=2)
-
-    def test_mul_different_base_raises(self):
-        a = u.Unit(base=2)
-        b = u.Unit(base=10)
-        with pytest.raises(TypeError):
-            a * b
 
     def test_inplace_operations(self):
         # make sure that inplace operations do not work on units/dimensions

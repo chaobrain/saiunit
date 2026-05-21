@@ -133,5 +133,7 @@ def test_dask_quantity_hash_raises_clear_error():
     da = pytest.importorskip("dask.array")
     import saiunit as u
     q = u.Quantity(da.from_array(np.array([1.0]), chunks=1), unit=u.meter)
-    with pytest.raises(u.BackendError, match="compute"):
+    # Quantity is unhashable across all backends (Quantity.__hash__ is None
+    # to preserve the hash/eq invariant, since __eq__ returns an array).
+    with pytest.raises(TypeError, match="unhashable"):
         hash(q)

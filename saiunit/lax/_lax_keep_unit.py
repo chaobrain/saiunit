@@ -15,12 +15,15 @@
 from __future__ import annotations
 
 import builtins
-from typing import Union, Sequence, Callable
+from typing import Any, Union, Sequence, Callable
 
 import jax
 import numpy as np
 from jax import lax
-from jax._src.typing import Shape
+
+# Mirror of ``jax._src.typing.Shape`` (which has no public alias).
+# Used purely for type-hint clarity in this module.
+Shape = Sequence[Union[int, Any]]
 
 from saiunit._base_getters import has_same_unit, maybe_decimal
 from saiunit._base_quantity import Quantity

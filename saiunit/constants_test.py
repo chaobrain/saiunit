@@ -47,8 +47,6 @@ constants_list = [
     'gallon', 'gallon_imp', 'fluid_ounce', 'fluid_ounce_imp', 'bbl',
     # Speed
     'kmh', 'mph', 'knot', 'mach',
-    # Temperature
-    'degree_Fahrenheit',
     # Energy
     'eV', 'calorie', 'calorie_IT', 'erg', 'Btu', 'Btu_IT', 'ton_TNT',
     # Power
@@ -355,10 +353,6 @@ class TestQuantityConstantValues:
 
     def test_mach(self):
         self._check("mach", 340.5)
-
-    # Temperature
-    def test_degree_fahrenheit(self):
-        self._check("degree_Fahrenheit", 5.0 / 9)
 
     # Energy
     def test_ev(self):

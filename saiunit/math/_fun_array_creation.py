@@ -23,6 +23,7 @@ import numpy as np
 from jax import Array
 
 from saiunit._backend import get_backend, get_default_backend
+from saiunit._base_dimension import UnitMismatchError
 from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import fail_for_unit_mismatch, get_unit, unit_scale_align_to_first
 from saiunit._base_quantity import Quantity
@@ -159,9 +160,9 @@ def eye(
     if not isinstance(unit, Unit):
         raise TypeError(f'eye requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
-        return jnp.eye(N, M, k, dtype=dtype) * unit
+        return _default_xp().eye(N, M, k, dtype=dtype) * unit
     else:
-        return jnp.eye(N, M, k, dtype=dtype)
+        return _default_xp().eye(N, M, k, dtype=dtype)
 
 
 @set_module_as('saiunit.math')
@@ -207,9 +208,9 @@ def identity(
     if not isinstance(unit, Unit):
         raise TypeError(f'identity requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
-        return jnp.identity(n, dtype=dtype) * unit
+        return _default_xp().identity(n, dtype=dtype) * unit
     else:
-        return jnp.identity(n, dtype=dtype)
+        return _default_xp().identity(n, dtype=dtype)
 
 
 @set_module_as('saiunit.math')
@@ -262,9 +263,9 @@ def tri(
     if not isinstance(unit, Unit):
         raise TypeError(f'tri requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
-        return jnp.tri(N, M, k, dtype=dtype) * unit
+        return _default_xp().tri(N, M, k, dtype=dtype) * unit
     else:
-        return jnp.tri(N, M, k, dtype=dtype)
+        return _default_xp().tri(N, M, k, dtype=dtype)
 
 
 @set_module_as('saiunit.math')
@@ -445,11 +446,12 @@ def full_like(
     """
     a = maybe_custom_array(a)
     fill_value = maybe_custom_array(fill_value)
+    xp = get_backend(a.mantissa if isinstance(a, Quantity) else a)
     if isinstance(fill_value, Quantity):
         if isinstance(a, Quantity):
             fill_value = fill_value.in_unit(a.unit)
             return Quantity(
-                jnp.full_like(a.mantissa, fill_value.mantissa, dtype=dtype, shape=shape),
+                xp.full_like(a.mantissa, fill_value.mantissa, dtype=dtype, shape=shape),
                 unit=a.unit
             )
         else:
@@ -460,7 +462,7 @@ def full_like(
                     f'Either pass a plain number as fill_value or wrap "a" as a Quantity.'
                 )
             return Quantity(
-                jnp.full_like(a, fill_value.mantissa, dtype=dtype, shape=shape),
+                xp.full_like(a, fill_value.mantissa, dtype=dtype, shape=shape),
                 unit=fill_value.unit
             )
     else:
@@ -471,9 +473,9 @@ def full_like(
                     f'but got a with unit={a.unit}. '
                     f'Either pass a Quantity as fill_value or use a plain array for "a".'
                 )
-            return jnp.full_like(a.mantissa, fill_value, dtype=dtype, shape=shape)
+            return xp.full_like(a.mantissa, fill_value, dtype=dtype, shape=shape)
         else:
-            return jnp.full_like(a, fill_value, dtype=dtype, shape=shape)
+            return xp.full_like(a, fill_value, dtype=dtype, shape=shape)
 
 
 @set_module_as('saiunit.math')
@@ -523,15 +525,16 @@ def diag(
     if not isinstance(unit, Unit):
         raise TypeError(f'diag requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     v = maybe_custom_array(v)
+    xp = get_backend(v.mantissa if isinstance(v, Quantity) else v)
     if isinstance(v, Quantity):
         if not unit.is_unitless:
             v = v.in_unit(unit)
-        return Quantity(jnp.diag(v.mantissa, k=k), unit=v.unit)
+        return Quantity(xp.diag(v.mantissa, k=k), unit=v.unit)
     else:
         if not unit.is_unitless:
-            return jnp.diag(v, k=k) * unit
+            return xp.diag(v, k=k) * unit
         else:
-            return jnp.diag(v, k=k)
+            return xp.diag(v, k=k)
 
 
 @set_module_as('saiunit.math')
@@ -576,15 +579,16 @@ def tril(
     if not isinstance(unit, Unit):
         raise TypeError(f'tril requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     m = maybe_custom_array(m)
+    xp = get_backend(m.mantissa if isinstance(m, Quantity) else m)
     if isinstance(m, Quantity):
         if not unit.is_unitless:
             m = m.in_unit(unit)
-        return Quantity(jnp.tril(m.mantissa, k=k), unit=m.unit)
+        return Quantity(xp.tril(m.mantissa, k=k), unit=m.unit)
     else:
         if not unit.is_unitless:
-            return jnp.tril(m, k=k) * unit
+            return xp.tril(m, k=k) * unit
         else:
-            return jnp.tril(m, k=k)
+            return xp.tril(m, k=k)
 
 
 @set_module_as('saiunit.math')
@@ -633,15 +637,16 @@ def triu(
     if not isinstance(unit, Unit):
         raise TypeError(f'triu requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     m = maybe_custom_array(m)
+    xp = get_backend(m.mantissa if isinstance(m, Quantity) else m)
     if isinstance(m, Quantity):
         if not unit.is_unitless:
             m = m.in_unit(unit)
-        return Quantity(jnp.triu(m.mantissa, k=k), unit=m.unit)
+        return Quantity(xp.triu(m.mantissa, k=k), unit=m.unit)
     else:
         if not unit.is_unitless:
-            return jnp.triu(m, k=k) * unit
+            return xp.triu(m, k=k) * unit
         else:
-            return jnp.triu(m, k=k)
+            return xp.triu(m, k=k)
 
 
 @set_module_as('saiunit.math')
@@ -686,15 +691,16 @@ def empty_like(
     if not isinstance(unit, Unit):
         raise TypeError(f'empty_like requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     prototype = maybe_custom_array(prototype)
+    xp = get_backend(prototype.mantissa if isinstance(prototype, Quantity) else prototype)
     if isinstance(prototype, Quantity):
         if not unit.is_unitless:
             prototype = prototype.in_unit(unit)
-        return Quantity(jnp.empty_like(prototype.mantissa, dtype=dtype), unit=prototype.unit)
+        return Quantity(xp.empty_like(prototype.mantissa, dtype=dtype), unit=prototype.unit)
     else:
         if not unit.is_unitless:
-            return jnp.empty_like(prototype, dtype=dtype, shape=shape) * unit
+            return xp.empty_like(prototype, dtype=dtype, shape=shape) * unit
         else:
-            return jnp.empty_like(prototype, dtype=dtype, shape=shape)
+            return xp.empty_like(prototype, dtype=dtype, shape=shape)
 
 
 @set_module_as('saiunit.math')
@@ -739,15 +745,16 @@ def ones_like(
     if not isinstance(unit, Unit):
         raise TypeError(f'ones_like requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     a = maybe_custom_array(a)
+    xp = get_backend(a.mantissa if isinstance(a, Quantity) else a)
     if isinstance(a, Quantity):
         if not unit.is_unitless:
             a = a.in_unit(unit)
-        return Quantity(jnp.ones_like(a.mantissa, dtype=dtype, shape=shape), unit=a.unit)
+        return Quantity(xp.ones_like(a.mantissa, dtype=dtype, shape=shape), unit=a.unit)
     else:
         if not unit.is_unitless:
-            return jnp.ones_like(a, dtype=dtype, shape=shape) * unit
+            return xp.ones_like(a, dtype=dtype, shape=shape) * unit
         else:
-            return jnp.ones_like(a, dtype=dtype, shape=shape)
+            return xp.ones_like(a, dtype=dtype, shape=shape)
 
 
 @set_module_as('saiunit.math')
@@ -792,15 +799,16 @@ def zeros_like(
     if not isinstance(unit, Unit):
         raise TypeError(f'zeros_like requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     a = maybe_custom_array(a)
+    xp = get_backend(a.mantissa if isinstance(a, Quantity) else a)
     if isinstance(a, Quantity):
         if not unit.is_unitless:
             a = a.in_unit(unit)
-        return Quantity(jnp.zeros_like(a.mantissa, dtype=dtype, shape=shape), unit=a.unit)
+        return Quantity(xp.zeros_like(a.mantissa, dtype=dtype, shape=shape), unit=a.unit)
     else:
         if not unit.is_unitless:
-            return jnp.zeros_like(a, dtype=dtype, shape=shape) * unit
+            return xp.zeros_like(a, dtype=dtype, shape=shape) * unit
         else:
-            return jnp.zeros_like(a, dtype=dtype, shape=shape)
+            return xp.zeros_like(a, dtype=dtype, shape=shape)
 
 
 @set_module_as('saiunit.math')
@@ -858,6 +866,11 @@ def asarray(
     """
     if a is None:
         return a
+    if isinstance(a, dict):
+        raise TypeError(
+            f"asarray does not accept dict inputs (got {type(a).__name__}); "
+            "pass an array, list, or Quantity."
+        )
 
     # get leaves
     leaves, treedef = jax.tree.flatten(a, is_leaf=lambda x: isinstance(x, Quantity))
@@ -874,7 +887,7 @@ def asarray(
 
     # reconstruct mantissa
     a = treedef.unflatten([leaf.mantissa for leaf in leaves])
-    a = jnp.asarray(a, dtype=dtype, order=order)
+    a = _default_xp().asarray(a, dtype=dtype, order=order)
 
     # returns
     if unit.is_unitless:
@@ -958,7 +971,7 @@ def arange(
     step = step.in_unit(unit).mantissa if isinstance(step, Quantity) else step
     # compute
     with jax.ensure_compile_time_eval():
-        r = jnp.arange(start, stop, step, dtype=dtype)
+        r = _default_xp().arange(start, stop, step, dtype=dtype)
     return r if unit.is_unitless else Quantity(r, unit=unit)
 
 
@@ -1030,14 +1043,14 @@ def linspace(
     start = start.in_unit(unit).mantissa if isinstance(start, Quantity) else start
     stop = stop.in_unit(unit).mantissa if isinstance(stop, Quantity) else stop
     with jax.ensure_compile_time_eval():
-        result = jnp.linspace(start, stop, num=num, endpoint=endpoint, retstep=retstep, dtype=dtype)
+        result = _default_xp().linspace(start, stop, num=num, endpoint=endpoint, retstep=retstep, dtype=dtype)
     return result if unit.is_unitless else Quantity(result, unit=unit)
 
 
 @set_module_as('saiunit.math')
 def logspace(
-    start: Union[Quantity, jax.typing.ArrayLike],
-    stop: Union[Quantity, jax.typing.ArrayLike],
+    start: jax.typing.ArrayLike,
+    stop: jax.typing.ArrayLike,
     num: Optional[int] = 50,
     endpoint: Optional[bool] = True,
     base: Optional[float] = 10.0,
@@ -1047,16 +1060,18 @@ def logspace(
     Return numbers spaced evenly on a log scale.
 
     In linear space, the sequence starts at ``base ** start`` and ends with
-    ``base ** stop`` in ``num`` steps.
+    ``base ** stop`` in ``num`` steps. Because ``base ** x`` is dimensionless,
+    ``start`` and ``stop`` must be dimensionless and the result is a plain
+    array (never a :class:`Quantity`).
 
     Parameters
     ----------
-    start : Quantity or array_like
-        ``base ** start`` is the starting value of the sequence.
-    stop : Quantity or array_like
+    start : array_like
+        ``base ** start`` is the starting value of the sequence. Must be
+        dimensionless.
+    stop : array_like
         ``base ** stop`` is the final value of the sequence (unless
-        ``endpoint`` is ``False``).  Must share the same unit as ``start``
-        when either is a ``Quantity``.
+        ``endpoint`` is ``False``). Must be dimensionless.
     num : int, optional
         Number of samples to generate.  Default is 50.
     endpoint : bool, optional
@@ -1069,13 +1084,13 @@ def logspace(
 
     Returns
     -------
-    samples : Quantity or jax.Array
+    samples : jax.Array
         ``num`` samples, equally spaced on a log scale.
 
     Raises
     ------
     UnitMismatchError
-        If ``start`` and ``stop`` do not share the same unit.
+        If ``start`` or ``stop`` carries a non-trivial unit.
 
     Examples
     --------
@@ -1087,19 +1102,19 @@ def logspace(
     """
     start = maybe_custom_array(start)
     stop = maybe_custom_array(stop)
-    fail_for_unit_mismatch(
-        start,
-        stop,
-        error_message="Start value {start} and stop value {stop} have to have the same units.",
-        start=start,
-        stop=stop,
-    )
-    unit = get_unit(start)
-    start = start.in_unit(unit).mantissa if isinstance(start, Quantity) else start
-    stop = stop.in_unit(unit).mantissa if isinstance(stop, Quantity) else stop
+    for argname, value in (("start", start), ("stop", stop)):
+        u = get_unit(value)
+        if not u.is_unitless:
+            raise UnitMismatchError(
+                f"logspace requires dimensionless `{argname}`, got unit {u!r}. "
+                f"`base ** x` is intrinsically dimensionless; pass a plain "
+                f"scalar/array instead.",
+                u,
+            )
+    start = start.mantissa if isinstance(start, Quantity) else start
+    stop = stop.mantissa if isinstance(stop, Quantity) else stop
     with jax.ensure_compile_time_eval():
-        result = jnp.logspace(start, stop, num=num, endpoint=endpoint, base=base, dtype=dtype)
-    return result if unit.is_unitless else Quantity(result, unit=unit)
+        return _default_xp().logspace(start, stop, num=num, endpoint=endpoint, base=base, dtype=dtype)
 
 
 @set_module_as('saiunit.math')
@@ -1147,17 +1162,18 @@ def fill_diagonal(
     """
     a = maybe_custom_array(a)
     val = maybe_custom_array(val)
+    xp = get_backend(a.mantissa if isinstance(a, Quantity) else a)
     if isinstance(val, Quantity):
         if isinstance(a, Quantity):
             val = val.in_unit(a.unit)
-            return Quantity(jnp.fill_diagonal(a.mantissa, val.mantissa, wrap, inplace=inplace), unit=a.unit)
+            return Quantity(xp.fill_diagonal(a.mantissa, val.mantissa, wrap, inplace=inplace), unit=a.unit)
         else:
-            return Quantity(jnp.fill_diagonal(a, val.mantissa, wrap, inplace=inplace), unit=val.unit)
+            return Quantity(xp.fill_diagonal(a, val.mantissa, wrap, inplace=inplace), unit=val.unit)
     else:
         if isinstance(a, Quantity):
-            return Quantity(jnp.fill_diagonal(a.mantissa, val, wrap, inplace=inplace), unit=a.unit)
+            return Quantity(xp.fill_diagonal(a.mantissa, val, wrap, inplace=inplace), unit=a.unit)
         else:
-            return jnp.fill_diagonal(a, val, wrap, inplace=inplace)
+            return xp.fill_diagonal(a, val, wrap, inplace=inplace)
 
 
 @set_module_as('saiunit.math')
@@ -1284,7 +1300,7 @@ def vander(
                 f'Pass "unit_to_scale" or strip the unit before calling vander.'
             )
         x = x.mantissa
-    r = jnp.vander(x, N=N, increasing=increasing)
+    r = get_backend(x).vander(x, N=N, increasing=increasing)
     if not isinstance(unit, Unit):
         raise TypeError(f'vander requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
     if not unit.is_unitless:
@@ -1296,7 +1312,8 @@ def vander(
 # indexing funcs
 # --------------
 
-tril_indices = jnp.tril_indices
+def tril_indices(n, k=0, m=None):
+    return _default_xp().tril_indices(n, k=k, m=m)
 
 
 @set_module_as('saiunit.math')
@@ -1331,13 +1348,12 @@ def tril_indices_from(
         Array([0, 1, 1, 2, 2, 2], dtype=int32)
     """
     arr = maybe_custom_array(arr)
-    if isinstance(arr, Quantity):
-        return jnp.tril_indices_from(arr.mantissa, k=k)
-    else:
-        return jnp.tril_indices_from(arr, k=k)
+    inner = arr.mantissa if isinstance(arr, Quantity) else arr
+    return get_backend(inner).tril_indices_from(inner, k=k)
 
 
-triu_indices = jnp.triu_indices
+def triu_indices(n, k=0, m=None):
+    return _default_xp().triu_indices(n, k=k, m=m)
 
 
 @set_module_as('saiunit.math')
@@ -1372,10 +1388,8 @@ def triu_indices_from(
         Array([0, 0, 0, 1, 1, 2], dtype=int32)
     """
     arr = maybe_custom_array(arr)
-    if isinstance(arr, Quantity):
-        return jnp.triu_indices_from(arr.mantissa, k=k)
-    else:
-        return jnp.triu_indices_from(arr, k=k)
+    inner = arr.mantissa if isinstance(arr, Quantity) else arr
+    return get_backend(inner).triu_indices_from(inner, k=k)
 
 
 # --- others ---
@@ -1414,9 +1428,10 @@ def from_numpy(
     x = maybe_custom_array(x)
     if not isinstance(unit, Unit):
         raise TypeError(f'from_numpy requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
+    xp = _default_xp()
     if not unit.is_unitless:
-        return jnp.array(x) * unit
-    return jnp.array(x)
+        return xp.asarray(x) * unit
+    return xp.asarray(x)
 
 
 @set_module_as('saiunit.math')

@@ -1015,19 +1015,14 @@ class TestQuantityIntegration:
             with pytest.raises(u.UnitMismatchError):
                 np.array([5], dtype=np.float64) - q
 
-            # Check that operations with 0 raise
-            with pytest.raises(u.UnitMismatchError):
-                q + 0
-            with pytest.raises(u.UnitMismatchError):
-                0 + q
-            with pytest.raises(u.UnitMismatchError):
-                q - 0
-            with pytest.raises(u.UnitMismatchError):
-                q + np.float64(0)
-            with pytest.raises(u.UnitMismatchError):
-                np.float64(0) + q
-            with pytest.raises(u.UnitMismatchError):
-                q - np.float64(0)
+            # Concrete zero is treated as dimensionally compatible with any
+            # unit (physics convention: 0 has any dimension).
+            assert_quantity(q + 0, q.mantissa, unit)
+            assert_quantity(0 + q, q.mantissa, unit)
+            assert_quantity(q - 0, q.mantissa, unit)
+            assert_quantity(q + np.float64(0), q.mantissa, unit)
+            assert_quantity(np.float64(0) + q, q.mantissa, unit)
+            assert_quantity(q - np.float64(0), q.mantissa, unit)
 
     def test_binary_operations(self):
         """Test whether binary operations work when they should and raise
@@ -1218,8 +1213,11 @@ class TestQuantityIntegration:
 
         assert type(2 / meter) == Quantity
         assert type(2 * meter) == Quantity
-        assert type(meter + meter) == Unit
-        assert type(meter - meter) == Unit
+        # Unit + Unit / Unit - Unit are not defined; arithmetic is on quantities.
+        with pytest.raises(TypeError):
+            meter + meter
+        with pytest.raises(TypeError):
+            meter - meter
 
     def test_jit_array(self):
         @jax.jit

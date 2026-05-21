@@ -458,6 +458,21 @@ class TestFunArrayCreation(parameterized.TestCase):
 
                 with pytest.raises(u.UnitMismatchError):
                     result = bm_fun(3, 9, 1 * unit)
+            elif bm_fun.__name__ == 'logspace':
+                # logspace rejects unit-bearing start/stop: the result lives in
+                # multiplicative space (10**x), so inputs must be dimensionless.
+                result = bm_fun(5, 15, 5)
+                expected = jnp_fun(5, 15, 5)
+                assert_quantity(result, expected)
+
+                with pytest.raises(u.UnitMismatchError):
+                    result = bm_fun(5 * unit, 15 * unit, 5)
+
+                with pytest.raises(u.UnitMismatchError):
+                    result = bm_fun(5, 15 * unit, 5)
+
+                with pytest.raises(u.UnitMismatchError):
+                    result = bm_fun(5 * unit, 15, 5)
             else:
                 result = bm_fun(5, 15, 5)
                 expected = jnp_fun(5, 15, 5)
