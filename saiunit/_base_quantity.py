@@ -250,6 +250,45 @@ def _element_not_quantity(x):
     return x
 
 
+def _reduction_count_from_shape(shape, axis) -> int:
+    """Number of elements reduced over ``axis`` for an array of static ``shape``.
+
+    JIT-safe: depends only on the static shape, never on values.
+    """
+    if axis is None:
+        n = 1
+        for d in shape:
+            n *= int(d)
+        return n
+    if isinstance(axis, (int, np.integer)):
+        return int(shape[int(axis)])
+    n = 1
+    for a in axis:
+        n *= int(shape[int(a)])
+    return n
+
+
+def _is_concrete_zero(mantissa) -> bool:
+    """Return True iff ``mantissa`` is a concrete (non-traced) numeric zero.
+
+    Used to honour the physics convention that ``0`` is compatible with any
+    dimension. Returns False under JIT tracing or for any non-zero value.
+    """
+    if _is_tracer(mantissa):
+        return False
+    if isinstance(mantissa, (int, float, complex)):
+        return mantissa == 0
+    if isinstance(mantissa, (np.ndarray, jax.Array, np.generic)):
+        try:
+            arr = np.asarray(mantissa)
+        except Exception:
+            return False
+        if arr.size == 0:
+            return False
+        return bool(np.all(arr == 0))
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Pickle helper
 # ---------------------------------------------------------------------------
@@ -481,7 +520,11 @@ class Quantity:
         dtype: jax.typing.DTypeLike | None = None,
     ):
 
-        with jax.ensure_compile_time_eval():  # inside JIT, this can avoid to trace the constant mantissa value
+        # ``ensure_compile_time_eval`` is a no-op outside tracing; inside a
+        # JIT trace it forces constant mantissas (lists, scalars, parse_unit
+        # output) through eager evaluation so they are baked into the
+        # traced graph rather than promoted to tracers.
+        with jax.ensure_compile_time_eval():
 
             # String-based unit: Quantity(1.0, "mV")
             if isinstance(unit, str):
@@ -709,6 +752,12 @@ class Quantity:
             Quantity([4. 5. 6.], "mV")
         """
         self_value = self.mantissa
+        if _is_tracer(self_value):
+            raise RuntimeError(
+                "update_mantissa() cannot mutate a Quantity whose mantissa is a "
+                "JAX tracer (e.g., inside jit/vmap/grad). Construct a new Quantity "
+                "instead, e.g. Quantity(new_mantissa, unit=q.unit)."
+            )
         if isinstance(mantissa, Quantity):
             raise ValueError("Cannot set the mantissa of a Quantity to another Quantity.")
         if is_numpy_array(self_value):
@@ -1382,18 +1431,11 @@ class Quantity:
     # Python inherent methods #
     # ----------------------- #
 
-    def __hash__(self):
-        """
-        Hash the Quantity object.
-
-        Returns:
-          int: The hash value of the Quantity object.
-        """
-        _dask_materialization_guard(self._mantissa, "hash(Quantity)")
-        try:
-            return hash((np.asarray(self.mantissa).tobytes(), self.unit))
-        except Exception:
-            return hash((id(self.mantissa), self.unit))
+    # Quantity is unhashable: ``__eq__`` returns an elementwise array, not a
+    # bool, so any hash would silently violate the hash/eq invariant and
+    # corrupt dict/set lookups. Use ``id(q)`` if a stable identity key is
+    # really required.
+    __hash__ = None
 
     def __repr__(self) -> str:
         value_str = self._format_value()
@@ -1469,6 +1511,13 @@ class Quantity:
         return Quantity(self.mantissa[index], unit=self.unit)
 
     def __setitem__(self, index, value: 'Quantity | jax.typing.ArrayLike'):
+        if _is_tracer(self.mantissa):
+            raise RuntimeError(
+                "Quantity[...] = value cannot mutate a Quantity whose mantissa "
+                "is a JAX tracer (e.g., inside jit/vmap/grad). Use the functional "
+                "form Quantity(q.mantissa.at[index].set(value.mantissa), unit=q.unit) "
+                "instead, or perform the update outside the traced function."
+            )
         # check value
         if not isinstance(value, Quantity):
             if self.is_unitless:
@@ -1852,12 +1901,25 @@ class Quantity:
 
         # format the unit and mantissa of "other"
         if fail_for_mismatch:
-            other = other.in_unit(
-                self.unit,
-                err_msg=f"Cannot calculate \n"
-                        f"{self} {operator_str} {other}, "
-                        f"because units do not match: {self.unit} != {other.unit}"
-            )
+            # 0-as-any-dimension: a concrete zero (unitless) is treated as
+            # dimensionally compatible with self, matching standard physics
+            # convention so e.g. ``0 + 3*ms`` works.
+            if (other.unit.is_unitless
+                    and not self.unit.is_unitless
+                    and _is_concrete_zero(other.mantissa)):
+                other = Quantity(other.mantissa, unit=self.unit)
+            elif (self.unit.is_unitless
+                    and not other.unit.is_unitless
+                    and _is_concrete_zero(self.mantissa)):
+                # mirror case: ``Quantity(0) + 3*ms``
+                self = Quantity(self.mantissa, unit=other.unit)
+            else:
+                other = other.in_unit(
+                    self.unit,
+                    err_msg=f"Cannot calculate \n"
+                            f"{self} {operator_str} {other}, "
+                            f"because units do not match: {self.unit} != {other.unit}"
+                )
         other_value = other.mantissa
         other_unit = other.unit
 
@@ -1869,6 +1931,10 @@ class Quantity:
 
         # update the mantissa in-place or not
         if inplace:
+            if _is_tracer(self.mantissa):
+                # Under JIT/vmap/grad, mutation isn't supported; degrade to the
+                # functional form so `q += x` still works (Python rebinds the name).
+                return r
             self.update_mantissa(r.mantissa)
             return self
         else:
@@ -1892,7 +1958,7 @@ class Quantity:
         return self._binary_operation(oc, operator.sub, fail_for_mismatch=True, operator_str="-")
 
     def __rsub__(self, oc):
-        return Quantity(oc).__sub__(self)
+        return _to_quantity(oc).__sub__(self)
 
     def __isub__(self, oc):
         # a -= b
@@ -2574,19 +2640,11 @@ class Quantity:
 
         xp = get_backend(self)
         prod_res = xp.prod(self.mantissa, *args, **kwds)
-        # Calculating the correct dimensions is not completly trivial (e.g.
-        # like doing self.dim**self.size) because prod can be called on
-        # multidimensional arrays along a certain axis.
-        # Our solution: Use a "dummy matrix" containing a 1 (without units) at
-        # each entry and sum it, using the same keyword arguments as provided.
-        # The result gives the exponent for the dimensions.
-        # This relies on sum and prod having the same arguments, which is true
-        # now and probably remains like this in the future
-        dim_exponent = xp.ones_like(self.mantissa).sum(*args, **kwds)
-        # The result is possibly multidimensional but all entries should be
-        # identical
-        if dim_exponent.size > 1:
-            dim_exponent = dim_exponent.ravel()[0]
+        # The unit exponent is the number of elements multiplied along the
+        # reduction axis. Derive it from the static shape so the computation
+        # is JIT-safe (no `bool(traced_array)` or traced unit exponents).
+        axis = args[0] if args else kwds.get('axis', None)
+        dim_exponent = _reduction_count_from_shape(self.mantissa.shape, axis)
         r = Quantity(prod_res, unit=self.unit ** dim_exponent)
         return maybe_decimal(r)
 
@@ -2619,21 +2677,29 @@ class Quantity:
         if self.is_unitless:
             return maybe_decimal(Quantity(prod_res, unit=self.unit))
 
-        # Count non-NaN elements along the reduction axis.
-        nan_mask = xp.isnan(self.mantissa)
-        non_nan_counts = xp.sum(xp.where(nan_mask, 0, 1), *args, **kwds)
+        # Unit exponent is the count of elements along the reduction axis.
+        # Use the static shape so the result is JIT-safe.
+        axis = args[0] if args else kwds.get('axis', None)
+        dim_exponent = _reduction_count_from_shape(self.mantissa.shape, axis)
 
-        # Verify uniform counts when axis is not None (result is not scalar).
-        if non_nan_counts.ndim > 0:
-            if not bool(xp.all(non_nan_counts == non_nan_counts.ravel()[0])):
-                raise ValueError(
-                    "nanprod over an axis with non-uniform NaN counts is not "
-                    "supported for quantities with units, because the resulting "
-                    "elements would have different unit exponents."
-                )
-            dim_exponent = non_nan_counts.ravel()[0]
-        else:
-            dim_exponent = non_nan_counts
+        # Eager (non-traced) inputs: verify NaN counts are uniform along the
+        # reduction axis. Otherwise different output elements would carry
+        # different unit exponents, which is unrepresentable. Skipped under
+        # tracing because traced booleans cannot drive a Python ``if``.
+        if not _is_tracer(self.mantissa):
+            nan_mask = xp.isnan(self.mantissa)
+            non_nan_counts = xp.sum(xp.where(nan_mask, 0, 1), *args, **kwds)
+            if non_nan_counts.ndim > 0:
+                first = non_nan_counts.ravel()[0]
+                if not bool(xp.all(non_nan_counts == first)):
+                    raise ValueError(
+                        "nanprod over an axis with non-uniform NaN counts is not "
+                        "supported for quantities with units, because the resulting "
+                        "elements would have different unit exponents."
+                    )
+                dim_exponent = int(first)
+            else:
+                dim_exponent = int(non_nan_counts)
 
         r = Quantity(prod_res, unit=self.unit ** dim_exponent)
         return maybe_decimal(r)
@@ -3257,7 +3323,12 @@ class Quantity:
         return saiunit_fn(*inputs, **kwargs)
 
     def __array__(self, dtype: jax.typing.DTypeLike | None = None) -> np.ndarray:
-        """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
+        """Support ``numpy.array()`` and ``numpy.asarray()`` functions.
+
+        Only dimensionless quantities are coercible — converting a unit-bearing
+        Quantity would silently drop the unit and produce a numerically
+        misleading array, so we raise ``TypeError`` instead.
+        """
         _dask_materialization_guard(self._mantissa, "np.asarray(Quantity)")
         if self.dim.is_dimensionless:
             return np.asarray(self.to_decimal(), dtype=dtype)

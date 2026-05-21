@@ -31,7 +31,7 @@ from saiunit._base_getters import (
 )
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
-from saiunit._sparse_base import SparseMatrix
+from saiunit._sparse_base import SparseMatrix, _same_sparsity_pattern
 from saiunit.math._fun_array_creation import asarray
 from saiunit.math._fun_keep_unit import promote_dtypes
 
@@ -233,7 +233,7 @@ class CSR(SparseMatrix):
 
     def _binary_op(self, other, op):
         if isinstance(other, CSR):
-            if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
+            if _same_sparsity_pattern(self.indices, other.indices) and _same_sparsity_pattern(self.indptr, other.indptr):
                 return CSR(
                     (op(self.data, other.data),
                      self.indices,
@@ -263,7 +263,7 @@ class CSR(SparseMatrix):
 
     def _binary_rop(self, other, op):
         if isinstance(other, CSR):
-            if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
+            if _same_sparsity_pattern(self.indices, other.indices) and _same_sparsity_pattern(self.indptr, other.indptr):
                 return CSR(
                     (op(other.data, self.data),
                      self.indices,
@@ -577,7 +577,7 @@ class CSC(SparseMatrix):
 
     def _binary_op(self, other, op):
         if isinstance(other, CSC):
-            if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
+            if _same_sparsity_pattern(self.indices, other.indices) and _same_sparsity_pattern(self.indptr, other.indptr):
                 return CSC(
                     (op(self.data, other.data),
                      self.indices,
@@ -609,7 +609,7 @@ class CSC(SparseMatrix):
 
     def _binary_rop(self, other, op):
         if isinstance(other, CSC):
-            if id(other.indices) == id(self.indices) and id(other.indptr) == id(self.indptr):
+            if _same_sparsity_pattern(self.indices, other.indices) and _same_sparsity_pattern(self.indptr, other.indptr):
                 return CSC(
                     (op(other.data, self.data),
                      self.indices,

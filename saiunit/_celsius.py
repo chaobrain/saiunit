@@ -23,6 +23,8 @@ from ._unit_common import kelvin
 __all__ = [
     "celsius2kelvin",
     "kelvin2celsius",
+    "fahrenheit2kelvin",
+    "kelvin2fahrenheit",
 ]
 
 
@@ -107,3 +109,70 @@ def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
             f"but got unit {value.unit}."
         )
     return value.to_decimal(kelvin) - 273.15
+
+
+def fahrenheit2kelvin(fahrenheit: jax.typing.ArrayLike) -> Quantity:
+    """
+    Convert a Fahrenheit value to a kelvin :class:`~saiunit.Quantity`.
+
+    Parameters
+    ----------
+    fahrenheit : jax.typing.ArrayLike
+        The temperature in degrees Fahrenheit. Must not be a
+        :class:`~saiunit.Quantity`.
+
+    Returns
+    -------
+    Quantity
+        The temperature expressed in kelvin.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as u
+        >>> u.fahrenheit2kelvin(32.0)
+        273.15 * kelvin
+        >>> u.fahrenheit2kelvin(212.0)
+        373.15 * kelvin
+    """
+    fahrenheit = maybe_custom_array(fahrenheit)
+    if isinstance(fahrenheit, Quantity):
+        raise TypeError("The input value should be not be a Quantity.")
+    return ((fahrenheit - 32.0) * (5.0 / 9.0) + 273.15) * kelvin
+
+
+def kelvin2fahrenheit(value: Quantity) -> jax.typing.ArrayLike:
+    """
+    Convert a kelvin :class:`~saiunit.Quantity` to a Fahrenheit value.
+
+    Parameters
+    ----------
+    value : Quantity
+        The temperature expressed as a :class:`~saiunit.Quantity` with
+        kelvin units.
+
+    Returns
+    -------
+    jax.typing.ArrayLike
+        The temperature in degrees Fahrenheit (unitless scalar or array).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as u
+        >>> u.kelvin2fahrenheit(273.15 * u.kelvin)
+        32.0
+        >>> u.kelvin2fahrenheit(373.15 * u.kelvin)
+        212.0
+    """
+    value = maybe_custom_array(value)
+    if not isinstance(value, Quantity):
+        raise TypeError("The input value should be a Quantity with a temperature unit.")
+    if not value.unit.has_same_dim(kelvin):
+        raise TypeError(
+            f"The input value should be a Quantity with a temperature unit, "
+            f"but got unit {value.unit}."
+        )
+    return (value.to_decimal(kelvin) - 273.15) * (9.0 / 5.0) + 32.0

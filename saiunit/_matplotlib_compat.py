@@ -145,4 +145,29 @@ def register_quantity_converter(units_module: Any | None = None) -> bool:
 
 
 matplotlib_installed = _has_matplotlib()
-matplotlib_converter_registered = register_quantity_converter()
+matplotlib_converter_registered = False
+
+
+def enable_matplotlib_support(units_module: Any | None = None) -> bool:
+    """
+    Opt in to Matplotlib unit support by registering :class:`QuantityConverter`.
+
+    Importing :mod:`saiunit` does not modify Matplotlib's global converter
+    registry on its own — callers that want Quantity values to render on
+    Matplotlib axes must invoke this function once at startup.
+
+    Parameters
+    ----------
+    units_module : Any, optional
+        A ``matplotlib.units``-like module, primarily for testing.
+
+    Returns
+    -------
+    bool
+        ``True`` if registration succeeded, otherwise ``False``.
+    """
+    global matplotlib_converter_registered
+    registered = register_quantity_converter(units_module)
+    if units_module is None and registered:
+        matplotlib_converter_registered = True
+    return registered

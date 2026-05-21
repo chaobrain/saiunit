@@ -21,9 +21,21 @@ from typing import (Union, Sequence, Tuple, Optional)
 import jax
 import jax.numpy as jnp
 import numpy as np
-from jax._src.numpy.util import promote_dtypes as _promote_dtypes
 
 from saiunit._backend import get_backend
+
+
+def _promote_dtypes(*arrays):
+    """Cast a sequence of arrays to a common dtype via the public JAX API.
+
+    Avoids depending on the private ``jax._src.numpy.util.promote_dtypes``
+    helper, which can move or change shape between JAX releases.
+    """
+    if not arrays:
+        return []
+    dtype = jnp.result_type(*arrays)
+    return [jnp.asarray(a, dtype=dtype) for a in arrays]
+
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import (
     fail_for_dimension_mismatch,

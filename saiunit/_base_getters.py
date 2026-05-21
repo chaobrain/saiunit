@@ -44,6 +44,7 @@ __all__ = [
     'assert_quantity',
     'have_same_dim',
     'has_same_unit',
+    'is_unit_equal_math',
     'unit_scale_align_to_first',
     'array_with_unit',
     'is_scalar_type',
@@ -334,13 +335,63 @@ def have_same_dim(obj1, obj2) -> bool:
 
 
 @set_module_as('saiunit')
+def is_unit_equal_math(u1, u2) -> bool:
+    """
+    Check whether two units are mathematically equivalent.
+
+    Two units are mathematically equivalent when they have the same
+    ``dim``, ``scale``, ``base``, and ``factor`` — i.e. they convert
+    quantities the same way. The display ``name`` and ``dispname`` are
+    ignored, so e.g. ``metre`` and ``meter`` (different aliases of the
+    SI meter) are equivalent, and a freshly-composed ``A * ohm`` is
+    equivalent to ``volt``.
+
+    This is distinct from ``Unit.__eq__``, which also requires
+    ``name``/``dispname`` to match — that operator treats two aliases as
+    different units. Use ``is_unit_equal_math`` when you only care that
+    two units convert the same way.
+
+    Parameters
+    ----------
+    u1, u2 : Unit
+        The units to compare.
+
+    Returns
+    -------
+    bool
+        ``True`` if `u1` and `u2` are mathematically equivalent.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as u
+        >>> u.is_unit_equal_math(u.metre, u.meter)
+        True
+        >>> u.is_unit_equal_math(u.amp * u.ohm, u.volt)
+        True
+        >>> u.is_unit_equal_math(u.mV, u.volt)
+        False
+    """
+    if not isinstance(u1, Unit) or not isinstance(u2, Unit):
+        return False
+    return (
+        (u1.dim == u2.dim)
+        and (u1.scale == u2.scale)
+        and (u1.base == u2.base)
+        and (u1.factor == u2.factor)
+    )
+
+
+@set_module_as('saiunit')
 def has_same_unit(obj1, obj2) -> bool:
     """
     Check whether two objects have the same unit.
 
-    Unlike `have_same_dim`, this function also checks that the *scale*
-    matches (e.g. ``mV`` and ``V`` have the same dimension but different
-    units).
+    Compares the underlying units mathematically (``dim``, ``scale``,
+    ``base``, ``factor``) — alias spellings and display-name differences
+    are ignored. For strict identity-level equality use ``Unit.__eq__``
+    directly.
 
     Parameters
     ----------
@@ -357,6 +408,7 @@ def has_same_unit(obj1, obj2) -> bool:
     See Also
     --------
     have_same_dim : Check whether two objects share the same dimension.
+    is_unit_equal_math : Same-math comparison for Unit objects directly.
 
     Examples
     --------
@@ -374,7 +426,7 @@ def has_same_unit(obj1, obj2) -> bool:
     obj2 = maybe_custom_array(obj2)
     unit1 = get_unit(obj1)
     unit2 = get_unit(obj2)
-    return unit1 == unit2
+    return is_unit_equal_math(unit1, unit2)
 
 
 @set_module_as('saiunit')

@@ -29,7 +29,6 @@ from saiunit._unit_constants import (
     hectare, acre,
     gallon, gallon_US, gallon_imp, fluid_ounce, fluid_ounce_US, fluid_ounce_imp, bbl, barrel,
     speed_unit, kmh, mph, mach, speed_of_sound, knot,
-    degree_Fahrenheit,
     eV, electron_volt, calorie, calorie_th, calorie_IT, erg, Btu, Btu_IT, Btu_th, ton_TNT,
     hp, horsepower, kcal_per_h,
     dyn, dyne, lbf, pound_force, kgf, kilogram_force, IMF,
@@ -112,7 +111,6 @@ class TestUnitType:
         hectare, acre,
         gallon, gallon_imp, fluid_ounce, fluid_ounce_imp, barrel,
         speed_unit, kmh, mph, mach, knot,
-        degree_Fahrenheit,
         electron_volt, calorie, calorie_IT, erg, Btu, Btu_th, ton_TNT,
         horsepower, kcal_per_h,
         dyne, pound_force, kilogram_force, IMF,
@@ -314,12 +312,6 @@ class TestSpeedMagnitudes:
         assert_magnitude(knot, 1852.0 / 3600)
 
 
-class TestTemperatureMagnitudes:
-    def test_degree_fahrenheit(self):
-        # Scale factor only (no offset)
-        assert_magnitude(degree_Fahrenheit, 5.0 / 9)
-
-
 class TestEnergyMagnitudes:
     def test_electronvolt(self):
         # CODATA 2018 exact
@@ -423,7 +415,6 @@ class TestAgainstScipy:
         (mph, sc.mph),
         (mach, sc.mach),
         (knot, sc.knot),
-        (degree_Fahrenheit, sc.degree_Fahrenheit),
         (electron_volt, sc.eV),
         (calorie, sc.calorie),
         (calorie_IT, sc.calorie_IT),
@@ -594,10 +585,6 @@ class TestDimensions:
         from saiunit._unit_common import newton
         for unit_obj in [dyne, pound_force, kilogram_force, IMF]:
             assert unit_obj.dim == newton.dim, f"{unit_obj.name} dim mismatch"
-
-    def test_temperature_dimensions(self):
-        from saiunit._unit_common import kelvin
-        assert degree_Fahrenheit.dim == kelvin.dim
 
 
 # ===========================================================================

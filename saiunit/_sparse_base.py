@@ -27,6 +27,25 @@ __all__ = [
 ]
 
 
+def _same_sparsity_pattern(a, b) -> bool:
+    """Check whether two index arrays describe the same sparsity pattern.
+
+    Returns ``True`` if ``a`` and ``b`` are the same Python object, or if both
+    are concrete arrays with equal shape and values. Under JIT tracing, falls
+    back to object identity since traced values aren't comparable in Python
+    boolean context.
+    """
+    if a is b:
+        return True
+    if isinstance(a, jax.core.Tracer) or isinstance(b, jax.core.Tracer):
+        return False
+    a_shape = getattr(a, "shape", None)
+    b_shape = getattr(b, "shape", None)
+    if a_shape is not None and b_shape is not None and a_shape != b_shape:
+        return False
+    return bool(np.array_equal(a, b))
+
+
 class SparseMatrix:
     """
     Base class for sparse matrices in ``saiunit``.

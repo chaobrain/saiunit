@@ -43,13 +43,19 @@ try:
     from jax.core import concrete_or_error
 except ImportError:
     def concrete_or_error(typ, val, context=""):
-        """Minimal shim used when jax.core.concrete_or_error is unavailable."""
+        """Minimal shim used when jax.core.concrete_or_error is unavailable.
+
+        Raises TypeError for traced/abstract values so callers don't silently
+        receive a tracer where they expected a static Python value.
+        """
+        from jax.core import Tracer
+        if isinstance(val, Tracer):
+            raise TypeError(
+                f"Expected a concrete value but got a JAX tracer ({val!r}). {context}"
+            )
         if typ is None:
             return val
-        try:
-            return typ(val)
-        except Exception:
-            return val
+        return typ(val)
 
 
 def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):

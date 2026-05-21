@@ -69,7 +69,7 @@ def _split(x, indices, axis):
         return jnp.split(x, indices, axis)
 
 
-def _unravel_array_into_pytree(pytree, axis, arr, is_leaf=None, divide_units=False):
+def _unravel_array_into_pytree(pytree, axis, arr, is_leaf=None):
     """Unravel an array into a PyTree with a given structure.
 
     Args:
@@ -77,20 +77,12 @@ def _unravel_array_into_pytree(pytree, axis, arr, is_leaf=None, divide_units=Fal
         axis: The parameter axis is either -1, 0, or 1.
         arr: The array to be unraveled.
         is_leaf: Optional leaf predicate for tree flattening.
-        divide_units: If True, divide each part's unit by the corresponding leaf's unit.
     """
     leaves, treedef = jax.tree.flatten(pytree, is_leaf=is_leaf)
     axis = axis % arr.ndim
     shapes = [arr.shape[:axis] + np.shape(l) + arr.shape[axis + 1:] for l in leaves]
     parts = _split(arr, np.cumsum(safe_map(np.size, leaves[:-1])), axis)
     reshaped_parts = [x.reshape(shape) for x, shape in zip(parts, shapes)]
-    if divide_units:
-        reshaped_parts = [
-            maybe_decimal(
-                Quantity(get_magnitude(part), unit=get_unit(part) / get_unit(leaf))
-            )
-            for part, leaf in zip(reshaped_parts, leaves)
-        ]
     return jax.tree.unflatten(treedef, reshaped_parts)
 
 
@@ -102,11 +94,48 @@ def _std_basis(pytree):
     return _unravel_array_into_pytree(pytree, 1, flat_basis)
 
 
+def _assign_jacobian_units(outputs, inputs, jac_tree):
+    """Walk an outputs-of-inputs jacobian pytree and stamp output/input units.
+
+    The Jacobian leaf at position ``(i, j)`` should carry unit
+    ``output_leaves[i].unit / input_leaves[j].unit`` regardless of which AD
+    mode produced it. Centralizing the assignment here makes ``jacrev`` and
+    ``jacfwd`` use the same unit logic.
+    """
+    out_leaves, _ = jax.tree.flatten(outputs, is_leaf=_is_quantity)
+    in_leaves, _ = jax.tree.flatten(inputs, is_leaf=_is_quantity)
+    out_units = [get_unit(l) for l in out_leaves]
+    in_units = [get_unit(l) for l in in_leaves]
+
+    out_paths_leaves, out_treedef = jax.tree.flatten(jac_tree, is_leaf=_is_quantity)
+    # jac_tree has shape: outputs-tree of inputs-trees; flatten gives
+    # output_size * input_size leaves in row-major order.
+    inner_size = len(in_leaves)
+    if len(out_paths_leaves) != inner_size * len(out_leaves):
+        raise TypeError(
+            f"Jacobian tree has {len(out_paths_leaves)} leaves but expected "
+            f"{inner_size * len(out_leaves)} (output_leaves * input_leaves)."
+        )
+
+    new_leaves = []
+    for i in range(len(out_leaves)):
+        for j in range(inner_size):
+            leaf = out_paths_leaves[i * inner_size + j]
+            new_leaves.append(
+                maybe_decimal(
+                    Quantity(get_magnitude(leaf), unit=out_units[i] / in_units[j])
+                )
+            )
+    return jax.tree.unflatten(out_treedef, new_leaves)
+
+
 def _tree_transpose(outer, inner, pytree_to_transpose):
-    outer_leaves, outer_treedef = jax.tree.flatten(outer, is_leaf=_is_quantity)
-    inner_leaves, inner_treedef = jax.tree.flatten(inner, is_leaf=_is_quantity)
-    outer_leaf_units = [get_unit(leaf) for leaf in outer_leaves]
-    inner_leaf_units = [get_unit(leaf) for leaf in inner_leaves]
+    """Transpose a tree of structure outer-of-inner into inner-of-outer.
+
+    Structural only; unit assignment is handled by ``_assign_jacobian_units``.
+    """
+    _, outer_treedef = jax.tree.flatten(outer, is_leaf=_is_quantity)
+    _, inner_treedef = jax.tree.flatten(inner, is_leaf=_is_quantity)
 
     flat, treedef = jax.tree.flatten(pytree_to_transpose, is_leaf=_is_quantity)
     inner_size = inner_treedef.num_leaves
@@ -114,18 +143,9 @@ def _tree_transpose(outer, inner, pytree_to_transpose):
     if treedef.num_leaves != (inner_size * outer_size):
         expected_treedef = outer_treedef.compose(inner_treedef)
         raise TypeError(f"Mismatch\n{treedef}\n != \n{expected_treedef}")
-    iter_flat = iter(flat)
 
     lol = [
-        [
-            maybe_decimal(
-                Quantity(
-                    get_magnitude(next(iter_flat)),
-                    unit=inner_leaf_units[j] / outer_leaf_units[i]
-                )
-            )
-            for j in range(inner_size)
-        ]
+        [flat[i * inner_size + j] for j in range(inner_size)]
         for i in range(outer_size)
     ]
     transposed_lol = zip(*lol)
@@ -238,6 +258,7 @@ def jacrev(
         )
         example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
         jac_tree = _tree_transpose(outer=example_args, inner=y, pytree_to_transpose=jac_tree)
+        jac_tree = _assign_jacobian_units(y, example_args, jac_tree)
         if not has_aux:
             return jac_tree
         else:
@@ -409,10 +430,11 @@ def jacfwd(
         jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, name="jacfwd"), y)
         example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
         jac_tree = jax.tree.map(
-            lambda arr: _unravel_array_into_pytree(example_args, -1, arr, is_leaf=_is_quantity, divide_units=True),
+            lambda arr: _unravel_array_into_pytree(example_args, -1, arr, is_leaf=_is_quantity),
             jac,
             is_leaf=_is_quantity,
         )
+        jac_tree = _assign_jacobian_units(y, example_args, jac_tree)
         if not has_aux:
             return jac_tree
         else:

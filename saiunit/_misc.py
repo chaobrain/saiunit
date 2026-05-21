@@ -96,6 +96,10 @@ def maybe_custom_array(x):
         array([1, 2, 3])
 
     """
+    # Lazy import to avoid circular dependency. Concurrent callers may both
+    # see ``CustomArray is None`` and re-import — that's safe: CPython's
+    # module import lock makes the import itself atomic, and every winner
+    # rebinds the global to the same class object.
     global CustomArray
     if CustomArray is None:
         from saiunit.custom_array import CustomArray
@@ -144,6 +148,10 @@ def maybe_custom_array_tree(x):
         array([4])
 
     """
+    # Lazy import to avoid circular dependency. Concurrent callers may both
+    # see ``CustomArray is None`` and re-import — that's safe: CPython's
+    # module import lock makes the import itself atomic, and every winner
+    # rebinds the global to the same class object.
     global CustomArray
     if CustomArray is None:
         from saiunit.custom_array import CustomArray

@@ -18,6 +18,7 @@ __version__ = saiunit.__version__
 __version_info__ = saiunit.__version_info__
 
 from . import autograd
+from saiunit._matplotlib_compat import enable_matplotlib_support
 from . import constants
 from . import fft
 from . import lax
@@ -34,6 +35,18 @@ from ._base_dimension import (
     get_dim_for_display,
     get_or_create_dimension,
 )
+from ._backend import (
+    get_default_backend,
+    is_cupy_array,
+    is_dask_array,
+    is_jax_array,
+    is_ndonnx_array,
+    is_numpy_array,
+    is_torch_array,
+    set_default_backend,
+    using_backend,
+)
+from ._exceptions import BackendError
 from ._base_getters import (
     array_with_unit,
     assert_quantity,
@@ -48,6 +61,7 @@ from ._base_getters import (
     have_same_dim,
     is_dimensionless,
     is_scalar_type,
+    is_unit_equal_math,
     is_unitless,
     maybe_decimal,
     split_mantissa_unit,
@@ -55,7 +69,7 @@ from ._base_getters import (
 )
 from ._base_quantity import Quantity, compatible_with_equinox
 from ._base_unit import UNITLESS, Unit, add_standard_unit, parse_unit
-from ._celsius import celsius2kelvin, kelvin2celsius
+from ._celsius import celsius2kelvin, kelvin2celsius, fahrenheit2kelvin, kelvin2fahrenheit
 from ._misc import maybe_custom_array, maybe_custom_array_tree
 from ._unit_common import *
 from ._unit_common import __all__ as _common_all
@@ -100,6 +114,18 @@ __all__ = [
               'DIMENSIONLESS',
               'DimensionMismatchError',
               'UnitMismatchError',
+              'BackendError',
+
+              # _backend
+              'get_default_backend',
+              'set_default_backend',
+              'using_backend',
+              'is_jax_array',
+              'is_numpy_array',
+              'is_cupy_array',
+              'is_torch_array',
+              'is_dask_array',
+              'is_ndonnx_array',
               'get_or_create_dimension',
               'get_dim_for_display',
 
@@ -125,6 +151,7 @@ __all__ = [
               'assert_quantity',
               'have_same_dim',
               'has_same_unit',
+              'is_unit_equal_math',
               'unit_scale_align_to_first',
               'array_with_unit',
 
@@ -140,6 +167,11 @@ __all__ = [
               # _celsius
               'celsius2kelvin',
               'kelvin2celsius',
+              'fahrenheit2kelvin',
+              'kelvin2fahrenheit',
+
+              # _matplotlib_compat
+              'enable_matplotlib_support',
 
               # old version compatibility
               'avogadro_constant',
