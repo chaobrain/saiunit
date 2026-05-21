@@ -1,36 +1,178 @@
 # Release Notes
 
-## Unreleased
+## Version 0.2.2
 
-### Added
+### Highlights
 
-- **NumPy as a first-class array backend.** ``Quantity`` can now wrap an
-  ``np.ndarray`` directly; all math, linalg, and fft operations dispatch
-  to the matching backend via ``array_api_compat``. JAX remains the default
-  and is still a mandatory dependency.
-- ``Quantity.backend`` property reporting ``'numpy'`` or ``'jax'``.
-- ``Quantity.to_numpy()`` and ``Quantity.to_jax()`` conversion methods.
+This release turns saiunit into a multi-backend library. ``Quantity`` can now
+wrap NumPy, JAX, CuPy, PyTorch, Dask, and ndonnx arrays, with operations
+dispatched via the array API standard (``array_api_compat``). JAX is now an
+**optional** dependency — the core package installs and runs on NumPy alone.
+This release also lands a 22-issue audit of ``Unit`` naming, display, hashing,
+and parsing, and tightens correctness in ``Quantity``'s hash/equality and
+tracer interactions.
+
+### Breaking Changes
+
+- **JAX is no longer a mandatory dependency.** Install with ``pip install
+  saiunit`` for the NumPy-only build, or ``pip install "saiunit[jax]"`` (or
+  ``[cpu]``/``[cuda12]``/``[cuda13]``/``[tpu]``) to enable JAX. Without JAX,
+  the default backend auto-selects ``"numpy"`` and JAX-only modules
+  (``saiunit.autograd``, ``saiunit.lax``, ``saiunit.sparse``) raise
+  ``BackendError`` on import with an install hint.
+- ``Quantity(np.ndarray(...))`` now preserves the mantissa as ``np.ndarray``
+  instead of implicitly converting to ``jax.Array``. Call ``.to_jax()`` or
+  use ``with using_backend("jax"):`` to restore the previous behaviour.
+- ``Quantity`` is now **unhashable** (``__hash__ = None``). ``Quantity.__eq__``
+  returns an array, so any hash implementation would violate the hash/eq
+  invariant. This matches NumPy/JAX array semantics across all backends.
+- ``Unit(dim, base=B)`` with ``B != 10`` now raises ``ValueError``. Previously
+  the non-decimal base was silently folded into ``factor`` and then forgotten.
+  Encode non-decimal scales directly in ``factor``.
+- ``Unit("symbol", scale=..., factor=..., name=..., ...)`` now raises
+  ``TypeError`` when extra construction kwargs are combined with a string
+  ``dim``. Previously the extras were silently dropped.
+- ``Unit(dim, factor=...)`` now raises ``ValueError`` for NaN or infinite
+  factors instead of constructing a poisoned unit that propagated NaN through
+  all subsequent arithmetic.
+- ``Quantity + Unit`` and ``Unit + Quantity`` now both raise ``TypeError``
+  symmetrically. Previously the former silently promoted the bare Unit to
+  ``Quantity(1, unit)`` while the latter raised — making ``q + metre`` and
+  ``metre + q`` produce different results.
+
+### New Features
+
+#### Multi-backend support
+
+- **NumPy backend.** ``Quantity`` can wrap ``np.ndarray`` directly; math,
+  linalg, and fft operations dispatch through ``array_api_compat``.
+- **CuPy backend** (``saiunit[cupy]``). GPU arrays via the CuPy array API,
+  with ``Quantity.to_cupy(device=None)`` for conversion.
+- **PyTorch backend** (``saiunit[torch]``). Torch tensors with
+  ``Quantity.to_torch(device=None, dtype=None)``.
+- **Dask backend** (``saiunit[dask]``). Lazy chunked arrays via
+  ``Quantity.to_dask(chunks='auto')``; ``__repr__`` and other materializing
+  methods are lazy-safe and guarded to avoid implicit computation.
+- **ndonnx backend** (``saiunit[ndonnx]``). Symbolic ONNX-graph arrays via
+  ``Quantity.to_ndonnx()`` for export-oriented workflows.
+- ``saiunit[all]`` meta-extra installs every optional backend.
+
+#### Backend control API
+
+- ``Quantity.backend`` property reporting the active backend name
+  (``'numpy'``, ``'jax'``, ``'cupy'``, ``'torch'``, ``'dask'``, ``'ndonnx'``).
+- ``Quantity.to_numpy()`` / ``.to_jax()`` / ``.to_cupy()`` / ``.to_torch()``
+  / ``.to_dask()`` / ``.to_ndonnx()`` conversion methods.
 - ``saiunit.set_default_backend()``, ``saiunit.get_default_backend()``, and
   ``saiunit.using_backend()`` context manager for controlling the default
   backend when input backend is ambiguous (Python scalars, list inputs).
-- ``saiunit.is_numpy_array()`` / ``saiunit.is_jax_array()`` helpers.
-- ``Quantity.__array_ufunc__`` so calls like ``np.sin(quantity)``,
+- ``saiunit.is_numpy_array()``, ``is_jax_array()``, ``is_cupy_array()``,
+  ``is_torch_array()``, ``is_dask_array()``, and ``is_ndonnx_array()``
+  detector helpers.
+- ``Quantity.__array_ufunc__`` so calls like ``np.sin(quantity)`` and
   ``np.add(q1, q2)`` preserve units instead of stripping them.
-- ``saiunit.BackendError`` exception type (subclass of ``TypeError``).
-- ``saiunit.lax`` and ``saiunit.sparse`` entry points now raise
-  ``BackendError`` with a clear ``"call .to_jax() first"`` hint when given a
-  NumPy-backed ``Quantity`` (JAX-only modules require JAX semantics).
+- ``saiunit.BackendError`` exception type (subclass of ``TypeError``) raised
+  by JAX-only modules (``saiunit.lax``, ``saiunit.sparse``,
+  ``saiunit.autograd``, and the custom ``exprel`` primitive) when given a
+  non-JAX backend, with a clear ``"call .to_jax() first"`` (or install)
+  hint.
 
-### Changed
+#### Unit additions
 
-- ``Quantity(np.ndarray(...))`` now keeps the mantissa as ``np.ndarray``.
-  Previously it was implicitly converted to ``jax.Array`` on construction.
-  Call ``.to_jax()`` or run under ``with using_backend("jax")`` for the
-  previous behavior.
+- SI-prefixed kelvin variants (``ykelvin`` through ``Ykelvin``, including
+  ``mK``, ``uK``, ``nK``, ``kK``, ``MK``), bringing kelvin in line with
+  every other base unit. ``parse_unit("mK")`` now succeeds.
+
+### Improvements
+
+#### Unit display, hashing, and parsing (22-issue audit)
+
+- **Compound-exponent normalization.** ``metre * metre2`` now displays as
+  ``m^3`` instead of ``m * m^2``; display parts are merged after compound
+  arithmetic.
+- **Eager standard-name resolution.** Compound results from
+  ``__mul__``/``__div__``/``__pow__`` now write the resolved standard-unit
+  name into ``self._name``/``self._dispname`` at construction time, keeping
+  ``unit.name``, ``unit.dispname``, and ``str(unit)`` in sync. Display
+  parts survive ``copy``, ``deepcopy``, and pickle round-trips.
+- **Hash/eq invariant restored.** ``Unit.__hash__`` no longer folds in
+  spelling fields (``name``/``dispname``), so aliases like ``metre`` and
+  ``meter`` hash and compare consistently — sets and dicts no longer hold
+  silent duplicates. ``Unit.__eq__`` now compares
+  ``(dim, scale, base, factor, _canonical_str())``, with a new
+  ``is_unit_equal_math()`` helper for name-agnostic math equivalence;
+  ``has_same_unit()`` delegates to it.
+- **Built-in units win over user aliases.** ``add_standard_unit`` now
+  stamps a monotonic registration index; built-ins (registered during
+  import) outrank user-added aliases, so registering
+  ``Unit(metre.dim, name="aaaa_meter")`` no longer hijacks the canonical
+  metre display. Alphabetical order remains the tie-breaker for
+  same-batch registrations.
+- **Named-dimensionless identity preserved.** ``radian * UNITLESS``,
+  ``radian ** 1``, and ``UNITLESS * radian`` now render as ``rad`` instead
+  of collapsing to bare ``Unit("1")``; ``radian * radian`` → ``rad^2``;
+  ``radian / radian`` → ``1`` (genuine cancellation).
+- **Parser improvements.** ``parse_unit`` now accepts parenthesised
+  sub-expressions in numerators (``(m * s) / A``), and numeric-base tokens
+  like ``"2^3"`` are encoded as ``Unit(DIMENSIONLESS, factor=8.0)`` rather
+  than raising. Anonymous ``Unit`` instances (constructed without a
+  ``name``) now render with parser-compatible grammar, so
+  ``parse_unit(repr(u))`` round-trips for any anonymous unit.
+
+#### Core correctness
+
+- **Tracer safety.** ``Quantity.update_mantissa()`` and ``__setitem__`` now
+  raise a clear ``RuntimeError`` when called on a traced mantissa, instead
+  of producing silently wrong state.
+- **JIT-safe reductions.** New ``_reduction_count_from_shape`` and
+  ``_is_concrete_zero`` helpers ensure reductions stay JIT-safe, and the
+  "0 is dimensionless" convention only applies to concrete zeros — never
+  tracers.
+- **Foreign-tensor rejection.** ``require_jax_backend`` now names the
+  offending backend and rejects foreign tensors (CuPy, Torch, Dask,
+  ndonnx) at JAX-only entry points.
+
+### Documentation
+
+- New multi-backend user-guide sections covering NumPy, CuPy, PyTorch,
+  Dask (lazy semantics), and ndonnx (symbolic execution).
+- Per-backend Jupyter notebooks demonstrating end-to-end workflows.
+- Updated installation docs covering the new extras layout (``jax``,
+  ``cpu``, ``cuda12``, ``cuda13``, ``tpu``, ``cupy``, ``torch``, ``dask``,
+  ``ndonnx``, ``all``).
+- Sphinx ``conf.py`` gates brainx header injection on ``TARGET=brainunit``;
+  docs build/deploy split (deploy on release, build-only on main push).
 
 ### Dependencies
 
-- New mandatory dependency: ``array_api_compat>=1.9``.
+- New mandatory runtime dependencies: ``array_api_compat>=1.9`` and
+  ``opt_einsum``.
+- ``jax`` moved to the ``[jax]`` optional extra. Install with
+  ``pip install "saiunit[jax]"`` (or ``[cpu]`` / ``[cuda12]`` / ``[cuda13]``
+  / ``[tpu]``) to enable JAX-backed features.
+- New optional extras: ``[cupy]``, ``[torch]``, ``[dask]``, ``[ndonnx]``,
+  and the ``[all]`` meta-extra.
+
+### Internal / CI
+
+- New ``_jax_compat`` module centralizes safely-degradable JAX symbols
+  (sentinel classes, no-op decorators, NumPy fallbacks for
+  ``dtypes``/``result_type``/tree-ops) when JAX is missing.
+- New ``test_no_jax`` CI job installs without JAX and verifies imports
+  plus ``BackendError`` gates; ``_no_jax_test.py`` smoke suite added.
+- CI now installs CPU-only PyTorch wheels (``--index-url
+  https://download.pytorch.org/whl/cpu``) to avoid multi-GB CUDA pulls on
+  GPU-less runners.
+- CI matrix extended to install ``cupy``/``torch``/``dask``/``ndonnx`` on
+  all platforms so the new backends are exercised in regression tests.
+- ``brainunit`` legacy package now re-exports the new backend API
+  (``BackendError``, ``is_unit_equal_math``, ``set_default_backend``,
+  ``using_backend``, backend detectors).
+- Dependency bumps: ``actions/checkout`` 4→6, ``actions/setup-python``
+  5→6, ``actions/download-artifact`` 5→8, ``appleboy/ssh-action``
+  1.2.0→1.2.5, ``appleboy/scp-action`` 0.1.7→1.0.0, ``sphinx`` ≥8.1.3,
+  ``sphinx-book-theme`` ≥1.1, ``sphinx-copybutton`` ≥0.5.2,
+  ``jupyter-sphinx`` ≥0.5.3.
 
 ## Version 0.2.1
 

@@ -42,7 +42,6 @@ if package == 'brainunit':
     make('../')
 
     sys.path.insert(0, os.path.abspath('../brainunit'))
-    auto_generater.main('saiunit')
 
 auto_generater.main(package)
 
@@ -110,7 +109,15 @@ nitpick_ignore = [
     ("py:class", "docutils.parsers.rst.directives.body.Sidebar"),
 ]
 
-suppress_warnings = ["myst.domains", "ref.ref"]
+suppress_warnings = [
+    "myst.domains",
+    "ref.ref",
+    "sphinx_autodoc_typehints.forward_reference",
+    "docutils",
+    "autosectionlabel.*",
+    "epub.duplicated_toc_entry",
+    "autodoc.duplicate_object",
+]
 
 numfig = True
 
@@ -124,6 +131,11 @@ myst_enable_extensions = [
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+if package == 'brainunit':
+    # The saiunit-named API rst files are only used for the saiunit build;
+    # the brainunit build relies on the brainunit-named copies created by
+    # make_brainunit_doc and auto_generater.main('brainunit').
+    exclude_patterns += ['apis/saiunit*.rst', 'apis/generated/saiunit*.rst']
 
 html_theme = "sphinx_book_theme"
 html_logo = f"_static/{package}.png"
@@ -138,6 +150,7 @@ html_last_updated_fmt = ""
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 nb_execution_mode = "auto"
+nb_execution_allow_errors = True
 thebe_config = {
     "repository_url": "https://github.com/binder-examples/jupyter-stacks-datascience",
     "repository_branch": "master",

@@ -29,6 +29,34 @@ Errors
 
     UnitMismatchError
     DimensionMismatchError
+    BackendError
+
+
+Backend Selection
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+
+    get_default_backend
+    set_default_backend
+    using_backend
+
+
+Backend Detectors
+-----------------
+
+.. autosummary::
+   :toctree: generated/
+   :nosignatures:
+
+    is_jax_array
+    is_numpy_array
+    is_cupy_array
+    is_torch_array
+    is_dask_array
+    is_ndonnx_array
 
 
 Constants
@@ -64,6 +92,7 @@ Getters and Checkers
     assert_quantity
     have_same_dim
     has_same_unit
+    is_unit_equal_math
     unit_scale_align_to_first
     array_with_unit
 

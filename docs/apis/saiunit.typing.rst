@@ -32,37 +32,63 @@ Core Type Aliases
 Pre-built Physical-Type Aliases
 -------------------------------
 
-.. autosummary::
-   :toctree: generated/
-   :nosignatures:
+.. data:: HAS_UNIT
 
-    HAS_UNIT
-    DIMENSIONLESS_TYPE
-    LENGTH
-    MASS
-    TIME
-    CURRENT
-    TEMPERATURE
-    SUBSTANCE
-    LUMINOSITY
-    FREQUENCY
-    FORCE
-    ENERGY
-    POWER
-    PRESSURE
-    CHARGE
-    VOLTAGE
-    RESISTANCE
-    CAPACITANCE
-    CONDUCTANCE
-    MAGNETIC_FLUX
-    MAGNETIC_FIELD
-    INDUCTANCE
-    SPEED
-    ACCELERATION
-    AREA
-    VOLUME
-    DENSITY
+   Alias for :class:`~saiunit.Quantity`. Use as a base type annotation for
+   any unit-bearing value, regardless of physical dimension.
+
+.. autodata:: DIMENSIONLESS_TYPE
+   :no-value:
+.. autodata:: LENGTH
+   :no-value:
+.. autodata:: MASS
+   :no-value:
+.. autodata:: TIME
+   :no-value:
+.. autodata:: CURRENT
+   :no-value:
+.. autodata:: TEMPERATURE
+   :no-value:
+.. autodata:: SUBSTANCE
+   :no-value:
+.. autodata:: LUMINOSITY
+   :no-value:
+.. autodata:: FREQUENCY
+   :no-value:
+.. autodata:: FORCE
+   :no-value:
+.. autodata:: ENERGY
+   :no-value:
+.. autodata:: POWER
+   :no-value:
+.. autodata:: PRESSURE
+   :no-value:
+.. autodata:: CHARGE
+   :no-value:
+.. autodata:: VOLTAGE
+   :no-value:
+.. autodata:: RESISTANCE
+   :no-value:
+.. autodata:: CAPACITANCE
+   :no-value:
+.. autodata:: CONDUCTANCE
+   :no-value:
+.. autodata:: MAGNETIC_FLUX
+   :no-value:
+.. autodata:: MAGNETIC_FIELD
+   :no-value:
+.. autodata:: INDUCTANCE
+   :no-value:
+.. autodata:: SPEED
+   :no-value:
+.. autodata:: ACCELERATION
+   :no-value:
+.. autodata:: AREA
+   :no-value:
+.. autodata:: VOLUME
+   :no-value:
+.. autodata:: DENSITY
+   :no-value:
 
 
 Runtime Validation
