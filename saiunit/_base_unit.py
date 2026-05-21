@@ -1076,6 +1076,10 @@ class Unit:
             name=self.name,
             dispname=self.dispname,
             is_fullname=self.is_fullname,
+            display_parts=(
+                list(self._display_parts)
+                if self._display_parts is not None else None
+            ),
         )
 
     def __deepcopy__(self, memodict):
@@ -1087,6 +1091,7 @@ class Unit:
             name=deepcopy(self.name),
             dispname=deepcopy(self.dispname),
             is_fullname=deepcopy(self.is_fullname),
+            display_parts=deepcopy(self._display_parts, memodict),
         )
 
     def __hash__(self):
@@ -1300,19 +1305,18 @@ class Unit:
         exponentiation, `` * `` for multiplication, and `` / `` for
         division.  The result is both human-readable and
         machine-parseable.
+
+        The standard-unit substitution is resolved eagerly at
+        construction time (in ``__mul__``/``__div__``/``__pow__``/
+        ``reverse``) and stored on ``_name``/``_dispname``, so this
+        method simply returns the stored canonical name when
+        ``is_fullname`` is set.  This keeps ``unit.name`` consistent
+        with ``str(unit)`` and survives pickle/copy.
         """
-        if self._display_parts is not None:
-            # Check if this compound unit matches a known derived unit
-            # (e.g. mA * ohm → mV, volt * amp → W)
-            _, dispname, is_fullname, _ = _find_standard_unit(
-                self.dim, self.base, self.scale, self.factor,
-                for_composition=True,
-            )
-            if is_fullname:
-                return dispname
-            return _format_display_parts(self._display_parts)
         if self.is_fullname:
             return self.dispname
+        if self._display_parts is not None:
+            return _format_display_parts(self._display_parts)
         if self.dim.is_dimensionless:
             if self.scale == 0 and self.factor == 1.:
                 return '1'
@@ -1360,11 +1364,22 @@ class Unit:
                     _get_display_parts(other),
                 )
                 parts = _normalise_display_parts(parts)
-                canonical = _format_display_parts(parts)
+                # Eagerly resolve a registered standard name for the
+                # composed quantity so that ``name``/``dispname`` stay in
+                # sync with ``str(self)``.  Falls back to the parts-based
+                # canonical string for ambiguous keys or anonymous results.
+                std_name, std_disp, std_is_full, _ = _find_standard_unit(
+                    dim, self.base, scale, factor, for_composition=True,
+                )
+                if std_is_full:
+                    name, dispname, is_fullname = std_name, std_disp, True
+                else:
+                    canonical = _format_display_parts(parts)
+                    name, dispname, is_fullname = canonical, canonical, True
                 return Unit(
                     dim, scale=scale, base=self.base, factor=factor,
-                    name=canonical, dispname=canonical,
-                    is_fullname=True,
+                    name=name, dispname=dispname,
+                    is_fullname=is_fullname,
                     display_parts=parts,
                 )
 
@@ -1419,11 +1434,18 @@ class Unit:
                     _get_display_parts(self), other_parts,
                 )
                 parts = _normalise_display_parts(parts)
-                canonical = _format_display_parts(parts)
+                std_name, std_disp, std_is_full, _ = _find_standard_unit(
+                    dim, self.base, scale, factor, for_composition=True,
+                )
+                if std_is_full:
+                    name, dispname, is_fullname = std_name, std_disp, True
+                else:
+                    canonical = _format_display_parts(parts)
+                    name, dispname, is_fullname = canonical, canonical, True
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
-                    name=canonical, dispname=canonical,
-                    is_fullname=True,
+                    name=name, dispname=dispname,
+                    is_fullname=is_fullname,
                     display_parts=parts,
                 )
 
@@ -1493,6 +1515,8 @@ class Unit:
         if self.is_fullname:
             parts = [(n, d, -e) for n, d, e in _get_display_parts(self)]
             parts = _normalise_display_parts(parts)
+            # reverse() already handles the unambiguous standard-unit
+            # case at the top; here we just render the parts.
             canonical = _format_display_parts(parts)
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
@@ -1548,11 +1572,18 @@ class Unit:
                 src_parts = _get_display_parts(self)
                 parts = [(n, d, e * other) for n, d, e in src_parts]
                 parts = _normalise_display_parts(parts)
-                canonical = _format_display_parts(parts)
+                std_name, std_disp, std_is_full, _ = _find_standard_unit(
+                    dim, self.base, scale, factor, for_composition=True,
+                )
+                if std_is_full:
+                    name, dispname, is_fullname = std_name, std_disp, True
+                else:
+                    canonical = _format_display_parts(parts)
+                    name, dispname, is_fullname = canonical, canonical, True
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
-                    name=canonical, dispname=canonical,
-                    is_fullname=True,
+                    name=name, dispname=dispname,
+                    is_fullname=is_fullname,
                     display_parts=parts,
                 )
 
@@ -1644,7 +1675,9 @@ class Unit:
         return self
 
     def __reduce__(self):
-        # For pickling
+        # For pickling.  ``display_parts`` is forwarded so that compound
+        # units (e.g. ``mS * nA / cm^2``) preserve their canonical
+        # rendering across pickle round-trips.
         return (
             _to_unit,
             (
@@ -1654,15 +1687,21 @@ class Unit:
                 self.factor,
                 self.name,
                 self.dispname,
-                self.is_fullname
+                self.is_fullname,
+                (list(self._display_parts)
+                 if self._display_parts is not None else None),
             )
         )
 
 
-def _to_unit(*args):
-    """Private pickle reconstruction shim for Unit.
-    """
-    return Unit(*args)
+def _to_unit(dim, scale, base, factor, name, dispname, is_fullname,
+             display_parts=None):
+    """Private pickle reconstruction shim for Unit."""
+    return Unit(
+        dim=dim, scale=scale, base=base, factor=factor,
+        name=name, dispname=dispname, is_fullname=is_fullname,
+        display_parts=display_parts,
+    )
 
 
 _to_unit.__module__ = 'saiunit._base_unit'

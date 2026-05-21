@@ -523,6 +523,31 @@ class TestUnitPickle:
         u2 = pickle.loads(data)
         assert u2 == UNITLESS
 
+    def test_pickle_compound_preserves_display(self):
+        """Compound units must preserve their canonical display across
+        pickle round-trips (display_parts is forwarded)."""
+        r = u.joule / u.metre ** 2 * u.second ** 2
+        assert str(r) == "kg"
+        assert r.dispname == "kg"
+        restored = pickle.loads(pickle.dumps(r))
+        assert str(restored) == "kg"
+        assert restored == r
+
+    def test_copy_compound_preserves_display(self):
+        r = u.mS * u.nA / u.cm2
+        c = r.copy()
+        assert str(c) == str(r)
+
+    def test_deepcopy_compound_preserves_display(self):
+        r = u.mS * u.nA / u.cm2
+        c = deepcopy(r)
+        assert str(c) == str(r)
+
+    def test_compound_name_dispname_match_str(self):
+        """unit.name / unit.dispname must agree with str(unit)."""
+        r = u.joule / u.metre ** 2 * u.second ** 2
+        assert r.dispname == str(r)
+
 
 # =========================================================================
 # Display-parts helpers
