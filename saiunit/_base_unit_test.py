@@ -1402,6 +1402,18 @@ class TestParseUnit:
         assert "volt" in _unit_name_registry
         assert "V" in _unit_name_registry
 
+    # --- Quantity + Unit / Unit + Quantity both rejected (#12) ---
+    def test_unit_plus_quantity_rejected(self):
+        q = Quantity(1.0, unit=u.metre)
+        with pytest.raises(TypeError):
+            u.metre + q
+        with pytest.raises(TypeError):
+            q + u.metre
+        with pytest.raises(TypeError):
+            u.metre - q
+        with pytest.raises(TypeError):
+            q - u.metre
+
     # --- parser accepts parens in numerator (#14) ---
     def test_parens_in_numerator(self):
         assert parse_unit("(m * s) / A") == parse_unit("m * s / A")
