@@ -1402,6 +1402,15 @@ class TestParseUnit:
         assert "volt" in _unit_name_registry
         assert "V" in _unit_name_registry
 
+    # --- kelvin prefix coverage (#10) ---
+    def test_kelvin_prefixes_parse(self):
+        from saiunit._unit_common import mkelvin, ukelvin, nkelvin, kkelvin, Mkelvin
+        assert parse_unit("mK") == mkelvin
+        assert parse_unit("uK") == ukelvin
+        assert parse_unit("nK") == nkelvin
+        assert parse_unit("kK") == kkelvin
+        assert parse_unit("MK") == Mkelvin
+
     # --- Unit(str, ...) rejects extra kwargs (#8) ---
     def test_string_construction_rejects_extra_args(self):
         with pytest.raises(TypeError, match="does not accept additional"):
