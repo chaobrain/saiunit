@@ -1474,3 +1474,33 @@ class TestPathologicalCompositions:
                   u.joule)
         # V * A * s / J = W * s / J = J / J = 1
         assert str(result) == "1"
+
+
+# ===================================================================
+# Section 31: Compound-exponent normalisation
+# ===================================================================
+
+
+class TestCompoundExponentNormalization:
+    """Multiplying / dividing a base-symbol unit with its pre-registered
+    power (e.g. ``metre * metre2``) must combine exponents into a single
+    ``m^3`` instead of leaving stacked ``m * m^2``.
+    """
+
+    def test_metre_times_metre2(self):
+        assert str(u.metre2 * u.metre) == "m^3"
+
+    def test_metre2_times_metre(self):
+        assert str(u.metre * u.metre2) == "m^3"
+
+    def test_cm_times_cm2(self):
+        assert str(u.cm * u.cm2) == "cm^3"
+
+    def test_metre_div_metre2(self):
+        assert str(u.metre / u.metre2) == "1 / m"
+
+    def test_mm_chain(self):
+        assert str(u.mm * u.mm2 * u.mm) == "mm^4"
+
+    def test_compound_with_cm_cm2_cancel(self):
+        assert str((u.mS * u.nA / u.cm2) * u.cm) == "mS * nA / cm"

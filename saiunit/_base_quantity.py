@@ -1940,24 +1940,39 @@ class Quantity:
         else:
             return r
 
+    @staticmethod
+    def _reject_bare_unit(oc, op: str):
+        from ._base_unit import Unit
+        if isinstance(oc, Unit):
+            raise TypeError(
+                f"Cannot {op} a Quantity with a bare Unit: addition and "
+                "subtraction are defined on quantities, not units. Attach a "
+                "mantissa first (e.g. 1*ms + 2*ms)."
+            )
+
     def __add__(self, oc):
+        self._reject_bare_unit(oc, "add")
         if isinstance(oc, SparseMatrix):
             return oc.__radd__(self)
         return self._binary_operation(oc, operator.add, fail_for_mismatch=True, operator_str="+")
 
     def __radd__(self, oc):
+        self._reject_bare_unit(oc, "add")
         return self.__add__(oc)
 
     def __iadd__(self, oc):
         # a += b
+        self._reject_bare_unit(oc, "add")
         return self._binary_operation(oc, operator.add, fail_for_mismatch=True, operator_str="+=", inplace=True)
 
     def __sub__(self, oc):
+        self._reject_bare_unit(oc, "subtract")
         if isinstance(oc, SparseMatrix):
             return oc.__rsub__(self)
         return self._binary_operation(oc, operator.sub, fail_for_mismatch=True, operator_str="-")
 
     def __rsub__(self, oc):
+        self._reject_bare_unit(oc, "subtract")
         return _to_quantity(oc).__sub__(self)
 
     def __isub__(self, oc):

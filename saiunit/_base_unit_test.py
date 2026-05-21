@@ -133,12 +133,17 @@ class TestUnitProperties:
         with pytest.raises(NotImplementedError):
             u.factor = 1.0
 
-    def test_base_property(self):
-        # Units canonicalize to base=10; a base!=10 is folded into factor.
-        u = Unit(DIMENSIONLESS, base=2.0, scale=3)
+    def test_base_property_rejects_non_10(self):
+        # Units are fixed to base=10 — non-10 bases used to be silently
+        # folded into ``factor``, which dropped information.  See #11.
+        with pytest.raises(ValueError, match="only supports base=10"):
+            Unit(DIMENSIONLESS, base=2.0, scale=3)
+
+    def test_base_property_default(self):
+        u = Unit(DIMENSIONLESS, scale=3)
         assert u.base == 10.0
-        assert u.scale == 0
-        assert u.factor == 8.0
+        assert u.scale == 3
+        assert u.factor == 1.0
 
     def test_base_setter_raises(self):
         u = Unit()
@@ -490,6 +495,18 @@ class TestUnitCopyHash:
         h2 = hash(u)
         assert h1 == h2
 
+    def test_hash_eq_invariant_spelling_aliases(self):
+        """Spelling aliases must compare equal and hash equal."""
+        pairs = [
+            (u.metre, u.meter),
+            (u.amp, u.ampere),
+            (u.kilogram, u.kilogramme),
+        ]
+        for a, b in pairs:
+            assert a == b
+            assert hash(a) == hash(b)
+            assert len({a, b}) == 1
+
     def test_factorless(self):
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         u = Unit(d, name="metre", dispname="m", scale=0, factor=2.)
@@ -522,6 +539,31 @@ class TestUnitPickle:
         data = pickle.dumps(UNITLESS)
         u2 = pickle.loads(data)
         assert u2 == UNITLESS
+
+    def test_pickle_compound_preserves_display(self):
+        """Compound units must preserve their canonical display across
+        pickle round-trips (display_parts is forwarded)."""
+        r = u.joule / u.metre ** 2 * u.second ** 2
+        assert str(r) == "kg"
+        assert r.dispname == "kg"
+        restored = pickle.loads(pickle.dumps(r))
+        assert str(restored) == "kg"
+        assert restored == r
+
+    def test_copy_compound_preserves_display(self):
+        r = u.mS * u.nA / u.cm2
+        c = r.copy()
+        assert str(c) == str(r)
+
+    def test_deepcopy_compound_preserves_display(self):
+        r = u.mS * u.nA / u.cm2
+        c = deepcopy(r)
+        assert str(c) == str(r)
+
+    def test_compound_name_dispname_match_str(self):
+        """unit.name / unit.dispname must agree with str(unit)."""
+        r = u.joule / u.metre ** 2 * u.second ** 2
+        assert r.dispname == str(r)
 
 
 # =========================================================================
@@ -1359,3 +1401,102 @@ class TestParseUnit:
         assert "mV" in _unit_name_registry
         assert "volt" in _unit_name_registry
         assert "V" in _unit_name_registry
+
+    # --- Quantity + Unit / Unit + Quantity both rejected (#12) ---
+    def test_unit_plus_quantity_rejected(self):
+        q = Quantity(1.0, unit=u.metre)
+        with pytest.raises(TypeError):
+            u.metre + q
+        with pytest.raises(TypeError):
+            q + u.metre
+        with pytest.raises(TypeError):
+            u.metre - q
+        with pytest.raises(TypeError):
+            q - u.metre
+
+    # --- parser accepts parens in numerator (#14) ---
+    def test_parens_in_numerator(self):
+        assert parse_unit("(m * s) / A") == parse_unit("m * s / A")
+
+    def test_parens_outer_group(self):
+        assert parse_unit("(m / s)") == parse_unit("m / s")
+
+    def test_parens_in_denominator(self):
+        # Already worked; sanity check that the new recursion preserves it.
+        assert parse_unit("m / (kg * s^2)") == u.metre / (u.kilogram * u.second ** 2)
+
+    # --- kelvin prefix coverage (#10) ---
+    def test_kelvin_prefixes_parse(self):
+        from saiunit._unit_common import mkelvin, ukelvin, nkelvin, kkelvin, Mkelvin
+        assert parse_unit("mK") == mkelvin
+        assert parse_unit("uK") == ukelvin
+        assert parse_unit("nK") == nkelvin
+        assert parse_unit("kK") == kkelvin
+        assert parse_unit("MK") == Mkelvin
+
+    # --- Unit(str, ...) rejects extra kwargs (#8) ---
+    def test_string_construction_rejects_extra_args(self):
+        with pytest.raises(TypeError, match="does not accept additional"):
+            Unit("mV", scale=99)
+        with pytest.raises(TypeError, match="does not accept additional"):
+            Unit("mV", factor=99.0)
+        with pytest.raises(TypeError, match="does not accept additional"):
+            Unit("mV", name="zzz")
+
+    # --- non-10 base rejected (#11) ---
+    def test_base_non_10_raises(self):
+        with pytest.raises(ValueError, match="only supports base=10"):
+            Unit(DIMENSIONLESS, base=2.0)
+
+    # --- NaN/inf factor rejected (#16) ---
+    def test_nan_factor_raises(self):
+        with pytest.raises(ValueError, match="finite real number"):
+            Unit(u.metre.dim, factor=float('nan'))
+
+    def test_inf_factor_raises(self):
+        with pytest.raises(ValueError, match="finite real number"):
+            Unit(u.metre.dim, factor=float('inf'))
+
+    # --- named-dimensionless identity preserved (#7) ---
+    def test_radian_mul_unitless_preserves_name(self):
+        assert repr(u.radian * UNITLESS) == 'Unit("rad")'
+        assert repr(UNITLESS * u.radian) == 'Unit("rad")'
+
+    def test_radian_pow_one_preserves_name(self):
+        assert repr(u.radian ** 1) == 'Unit("rad")'
+
+    def test_radian_pow_two_compound(self):
+        assert repr(u.radian ** 2) == 'Unit("rad^2")'
+
+    def test_radian_self_divide_collapses(self):
+        assert repr(u.radian / u.radian) == 'Unit("1")'
+
+    def test_radian_self_multiply_squared(self):
+        assert repr(u.radian * u.radian) == 'Unit("rad^2")'
+
+    def test_steradian_mul_unitless_preserves_name(self):
+        assert repr(u.steradian * UNITLESS) == 'Unit("sr")'
+
+    # --- user alias does not hijack canonical display (#6) ---
+    def test_user_alias_does_not_hijack_canonical(self):
+        """A user-registered alias must not displace the built-in canonical."""
+        before = repr(u.metre.factorless())
+        add_standard_unit(Unit(u.metre.dim, name="aaaa_meter", dispname="aaaa_m"))
+        after = repr(u.metre.factorless())
+        assert before == after, (
+            f"User alias hijacked canonical: {before!r} -> {after!r}"
+        )
+
+    # --- anonymous unit round-trip (#5) ---
+    def test_anonymous_unit_dispname_parser_compatible(self):
+        """An anonymous Unit's dispname must round-trip through parse_unit."""
+        anon = Unit(u.joule.dim)
+        # Round-trips back to joule (canonical) since they are math-equal.
+        parsed = parse_unit(anon.dispname)
+        assert parsed == anon
+
+    def test_anonymous_unit_with_factor_roundtrip(self):
+        """An anonymous Unit with a factor must repr-round-trip."""
+        anon = Unit(u.joule.dim, factor=4.184)
+        parsed = parse_unit(repr(anon))
+        assert parsed == anon

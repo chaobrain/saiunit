@@ -245,6 +245,26 @@ __all__ = [
     "Ecandle",
     "Zcandle",
     "Ycandle",
+    "ykelvin",
+    "zkelvin",
+    "akelvin",
+    "fkelvin",
+    "pkelvin",
+    "nkelvin",
+    "ukelvin",
+    "mkelvin",
+    "ckelvin",
+    "dkelvin",
+    "dakelvin",
+    "hkelvin",
+    "kkelvin",
+    "Mkelvin",
+    "Gkelvin",
+    "Tkelvin",
+    "Pkelvin",
+    "Ekelvin",
+    "Zkelvin",
+    "Ykelvin",
     "ygram",
     "zgram",
     "agram",
@@ -2333,6 +2353,26 @@ Pcandle = Unit.create_scaled_unit(candle, "P")
 Ecandle = Unit.create_scaled_unit(candle, "E")
 Zcandle = Unit.create_scaled_unit(candle, "Z")
 Ycandle = Unit.create_scaled_unit(candle, "Y")
+ykelvin = Unit.create_scaled_unit(kelvin, "y")
+zkelvin = Unit.create_scaled_unit(kelvin, "z")
+akelvin = Unit.create_scaled_unit(kelvin, "a")
+fkelvin = Unit.create_scaled_unit(kelvin, "f")
+pkelvin = Unit.create_scaled_unit(kelvin, "p")
+nkelvin = Unit.create_scaled_unit(kelvin, "n")
+ukelvin = Unit.create_scaled_unit(kelvin, "u")
+mkelvin = Unit.create_scaled_unit(kelvin, "m")
+ckelvin = Unit.create_scaled_unit(kelvin, "c")
+dkelvin = Unit.create_scaled_unit(kelvin, "d")
+dakelvin = Unit.create_scaled_unit(kelvin, "da")
+hkelvin = Unit.create_scaled_unit(kelvin, "h")
+kkelvin = Unit.create_scaled_unit(kelvin, "k")
+Mkelvin = Unit.create_scaled_unit(kelvin, "M")
+Gkelvin = Unit.create_scaled_unit(kelvin, "G")
+Tkelvin = Unit.create_scaled_unit(kelvin, "T")
+Pkelvin = Unit.create_scaled_unit(kelvin, "P")
+Ekelvin = Unit.create_scaled_unit(kelvin, "E")
+Zkelvin = Unit.create_scaled_unit(kelvin, "Z")
+Ykelvin = Unit.create_scaled_unit(kelvin, "Y")
 ygram = Unit.create_scaled_unit(gram, "y")
 zgram = Unit.create_scaled_unit(gram, "z")
 agram = Unit.create_scaled_unit(gram, "a")

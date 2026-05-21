@@ -116,6 +116,30 @@ def _find_standard_unit(
     return None, None, False, False
 
 
+def _format_dim_parser_compatible(dim: Dimension, python_code: bool = False) -> str:
+    """Render *dim* in parser-compatible canonical form.
+
+    ``Dimension.__str__`` emits space-separated SI factors (``"m kg s^-2"``)
+    which cannot be round-tripped through :func:`parse_unit`.  This helper
+    produces the same content with the canonical `` * `` / ``^`` / `` / ``
+    grammar used by :func:`_format_display_parts`, so anonymous Units have
+    a name/dispname that the parser can read back.
+
+    When ``python_code`` is True, the full-name SI labels (``metre``,
+    ``kilogram``, ...) are used in place of the short symbols.
+    """
+    from ._base_dimension import _ilabel, _iclass_label
+    labels = _iclass_label if python_code else _ilabel
+    dims = dim._dims
+    parts = []
+    for i in range(len(dims)):
+        if dims[i]:
+            parts.append((labels[i], labels[i], dims[i]))
+    if not parts:
+        return "1"
+    return _format_display_parts(parts)
+
+
 def _find_a_name(dim: Dimension, base, scale, factor) -> tuple[str | None, bool]:
     if dim == DIMENSIONLESS:
         u_name = f"Unit({base}^{scale})"
@@ -151,6 +175,12 @@ def _find_a_name(dim: Dimension, base, scale, factor) -> tuple[str | None, bool]
 _standard_units: 'dict[tuple, Unit]' = {}
 _standard_unit_aliases: 'dict[tuple, list[Unit]]' = {}
 _unit_name_registry: 'dict[str, Unit]' = {}
+# Monotonically-increasing registration index for each registered Unit
+# identity.  Used by :func:`_select_preferred_standard_unit` to prefer
+# units that were registered earlier (i.e. library built-ins) over
+# user-added aliases for the same physical key.
+_unit_registration_index: 'dict[int, int]' = {}
+_next_registration_index: 'list[int]' = [0]
 
 # ---------------------------------------------------------------------------
 # Ambiguous-key detection
@@ -184,14 +214,26 @@ def _standard_unit_preference_score(unit: 'Unit') -> int:
 
 
 def _select_preferred_standard_unit(units: 'list[Unit]') -> 'Unit':
-    """Pick the preferred alias – deterministic (score, then alpha)."""
-    return min(
-        units,
-        key=lambda u: (
+    """Pick the preferred alias.
+
+    Order of preference (lower is better):
+
+    1. ``_standard_unit_preference_score`` (e.g. prefer hertz over
+       becquerel for s^-1).
+    2. Registration index — library built-ins win over user
+       additions made via :func:`add_standard_unit` after import,
+       so user aliases cannot hijack canonical display.
+    3. Alphabetical, as a final deterministic tie-breaker for units
+       registered in the same call.
+    """
+    def _key(u):
+        idx = _unit_registration_index.get(id(u), float('inf'))
+        return (
             _standard_unit_preference_score(u),
+            idx,
             u.name.lower() if isinstance(u.name, str) else "",
-        ),
-    )
+        )
+    return min(units, key=_key)
 
 
 def add_standard_unit(u: 'Unit'):
@@ -237,6 +279,10 @@ def add_standard_unit(u: 'Unit'):
         # and poison the ambiguity heuristic below.
         if not any(existing is u for existing in aliases):
             aliases.append(u)
+            # Stamp a monotonic registration index so that later
+            # additions cannot hijack the canonical display.
+            _unit_registration_index[id(u)] = _next_registration_index[0]
+            _next_registration_index[0] += 1
         _standard_units[key] = _select_preferred_standard_unit(aliases)
 
         # Auto-detect ambiguity: >=2 distinct display names → ambiguous
@@ -413,8 +459,34 @@ def _parse_product(s: str):
 
 
 def _parse_term(s: str):
-    """Parse a single term like ``'cm^2'``, ``'mV'``, or ``'10^3'``."""
+    """Parse a single term like ``'cm^2'``, ``'mV'``, or ``'10^3'``.
+
+    Parenthesised sub-expressions are recursively parsed as full
+    fraction/product expressions; this lets ``parse_unit("(m * s) / A")``
+    succeed.
+    """
     s = s.strip()
+    # Strip a single outer paren wrapping the whole term and recurse.
+    if s.startswith('(') and s.endswith(')'):
+        depth = 0
+        balanced_at_zero_only_at_end = True
+        for i, ch in enumerate(s):
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+                if depth == 0 and i != len(s) - 1:
+                    balanced_at_zero_only_at_end = False
+                    break
+        if balanced_at_zero_only_at_end:
+            inner = s[1:-1].strip()
+            if not inner:
+                raise ValueError(f"Empty parenthesised group in {s!r}")
+            num_str, den_str = _split_fraction(inner)
+            numerator = _parse_product(num_str)
+            if den_str is not None:
+                return numerator / _parse_product(den_str)
+            return numerator
     caret_idx = s.rfind('^')
     if caret_idx > 0:
         atom = s[:caret_idx].strip()
@@ -426,10 +498,14 @@ def _parse_term(s: str):
         except ValueError:
             raise ValueError(f"Invalid exponent in unit string: {s!r}")
 
-        # Numeric base → dimensionless scaled unit (e.g. "10^3")
+        # Numeric base → dimensionless scaled unit (e.g. "10^3").
+        # ``Unit`` is base=10-only, so encode ``base_num ** exp`` either
+        # in ``scale`` (when base_num==10) or in ``factor``.
         try:
             base_num = float(atom)
-            return Unit(DIMENSIONLESS, scale=exp, base=base_num)
+            if base_num == 10.0:
+                return Unit(DIMENSIONLESS, scale=exp)
+            return Unit(DIMENSIONLESS, factor=float(base_num) ** exp)
         except ValueError:
             pass
 
@@ -684,6 +760,30 @@ class Unit:
     ):
         # String-based construction: Unit("mV"), Unit("J / kg"), etc.
         if isinstance(dim, str):
+            # The string form ignores every other constructor argument —
+            # silently dropping ``Unit("mV", scale=99, factor=99)`` was a
+            # source of confusing bugs.  Reject any non-default secondary
+            # argument explicitly so the caller knows.
+            extras = []
+            if scale != 0:
+                extras.append("scale")
+            if base != 10.:
+                extras.append("base")
+            if factor != 1.:
+                extras.append("factor")
+            if name is not None:
+                extras.append("name")
+            if dispname is not None:
+                extras.append("dispname")
+            if display_parts is not None:
+                extras.append("display_parts")
+            if extras:
+                raise TypeError(
+                    "Unit(str, ...) does not accept additional arguments: "
+                    + ", ".join(extras)
+                    + ". Use parse_unit() and modify the result, or construct "
+                    "the Unit from a Dimension instead."
+                )
             parsed = parse_unit(dim)
             self._base = parsed._base
             self._scale = parsed._scale
@@ -696,14 +796,23 @@ class Unit:
             self._display_parts = parsed._display_parts
             return
 
-        # All Units canonicalize to base=10; a non-10 ``base`` is folded into
-        # ``factor`` as ``base**scale`` so that ``base**scale * factor`` is
-        # preserved. This keeps arithmetic on units (mul/div) closed without
-        # needing to reconcile mismatched bases at every call site.
+        # ``base`` is fixed at 10 for now — Units canonicalize to base=10
+        # internally, and accepting other bases silently rewrote them,
+        # losing information.  Raise so callers can not be surprised.
         if base != 10.:
-            factor = factor * (base ** scale)
-            base = 10.
-            scale = 0
+            raise ValueError(
+                f"Unit currently only supports base=10; got base={base!r}. "
+                "Encode non-decimal scales in ``factor`` instead."
+            )
+
+        # Reject NaN/inf factors — these poison arithmetic downstream and
+        # cannot represent a valid physical conversion.
+        if isinstance(factor, (int, float)):
+            import math
+            if math.isnan(factor) or math.isinf(factor):
+                raise ValueError(
+                    f"Unit factor must be a finite real number; got factor={factor!r}."
+                )
 
         self._base = base
         self._scale = scale
@@ -722,8 +831,16 @@ class Unit:
             if dim == DIMENSIONLESS:
                 name = f"Unit({base}^{scale})"
             else:
-                name = dim.__repr__()
-                dispname = dim.__str__()
+                # Anonymous Units must produce parser-compatible
+                # name/dispname so that ``parse_unit(repr(u))`` round-trips.
+                # ``Dimension.__str__`` uses space separation which the
+                # parser cannot read.  ``_canonical_str`` (called by
+                # ``__repr__``/``__str__``) prefixes the factor/scale on
+                # its own for anonymous units, so we only encode the
+                # dimensional part here.
+                name = _format_dim_parser_compatible(dim, python_code=True)
+                if dispname is None:
+                    dispname = _format_dim_parser_compatible(dim, python_code=False)
         self._name = name
 
         # The display name of this unit
@@ -1076,6 +1193,10 @@ class Unit:
             name=self.name,
             dispname=self.dispname,
             is_fullname=self.is_fullname,
+            display_parts=(
+                list(self._display_parts)
+                if self._display_parts is not None else None
+            ),
         )
 
     def __deepcopy__(self, memodict):
@@ -1087,18 +1208,20 @@ class Unit:
             name=deepcopy(self.name),
             dispname=deepcopy(self.dispname),
             is_fullname=deepcopy(self.is_fullname),
+            display_parts=deepcopy(self._display_parts, memodict),
         )
 
     def __hash__(self):
         if self._hash is None:
+            # Equality is *physical*: two units that resolve to the same
+            # ``(dim, factor, base, scale)`` must hash equal regardless
+            # of name spelling (e.g. ``metre`` vs ``meter``).
             self._hash = hash(
                 (
                     self.dim,
                     self.factor,
                     self.base,
                     self.scale,
-                    self.name,
-                    self.dispname,
                 )
             )
         return self._hash
@@ -1300,19 +1423,18 @@ class Unit:
         exponentiation, `` * `` for multiplication, and `` / `` for
         division.  The result is both human-readable and
         machine-parseable.
+
+        The standard-unit substitution is resolved eagerly at
+        construction time (in ``__mul__``/``__div__``/``__pow__``/
+        ``reverse``) and stored on ``_name``/``_dispname``, so this
+        method simply returns the stored canonical name when
+        ``is_fullname`` is set.  This keeps ``unit.name`` consistent
+        with ``str(unit)`` and survives pickle/copy.
         """
-        if self._display_parts is not None:
-            # Check if this compound unit matches a known derived unit
-            # (e.g. mA * ohm → mV, volt * amp → W)
-            _, dispname, is_fullname, _ = _find_standard_unit(
-                self.dim, self.base, self.scale, self.factor,
-                for_composition=True,
-            )
-            if is_fullname:
-                return dispname
-            return _format_display_parts(self._display_parts)
         if self.is_fullname:
             return self.dispname
+        if self._display_parts is not None:
+            return _format_display_parts(self._display_parts)
         if self.dim.is_dimensionless:
             if self.scale == 0 and self.factor == 1.:
                 return '1'
@@ -1349,8 +1471,26 @@ class Unit:
             dim = self.dim * other.dim
             factor = self.factor * other.factor
 
-            # Dimensionless → no compound display
+            # Dimensionless result.  When neither operand carries a named
+            # dimensionless display (radian, steradian, ...), the result is
+            # bare ``Unit("1")`` as before.  When at least one operand is a
+            # named dimensionless unit, merge its display parts so the
+            # name survives ``radian * UNITLESS`` and compounds such as
+            # ``radian * radian`` render as ``rad^2`` rather than ``1``.
             if dim == DIMENSIONLESS:
+                self_named_dimless = self.is_fullname and self.dim.is_dimensionless
+                other_named_dimless = other.is_fullname and other.dim.is_dimensionless
+                if self_named_dimless or other_named_dimless:
+                    parts_a = _get_display_parts(self) if self_named_dimless else []
+                    parts_b = _get_display_parts(other) if other_named_dimless else []
+                    parts = _normalise_display_parts(_merge_display_parts(parts_a, parts_b))
+                    if parts:
+                        canonical = _format_display_parts(parts)
+                        return Unit(
+                            dim, scale=scale, base=self.base, factor=factor,
+                            name=canonical, dispname=canonical,
+                            is_fullname=True, display_parts=parts,
+                        )
                 return Unit(dim, scale=scale, base=self.base, factor=factor)
 
             # Both named → deterministic compound via display_parts
@@ -1359,11 +1499,23 @@ class Unit:
                     _get_display_parts(self),
                     _get_display_parts(other),
                 )
-                canonical = _format_display_parts(parts)
+                parts = _normalise_display_parts(parts)
+                # Eagerly resolve a registered standard name for the
+                # composed quantity so that ``name``/``dispname`` stay in
+                # sync with ``str(self)``.  Falls back to the parts-based
+                # canonical string for ambiguous keys or anonymous results.
+                std_name, std_disp, std_is_full, _ = _find_standard_unit(
+                    dim, self.base, scale, factor, for_composition=True,
+                )
+                if std_is_full:
+                    name, dispname, is_fullname = std_name, std_disp, True
+                else:
+                    canonical = _format_display_parts(parts)
+                    name, dispname, is_fullname = canonical, canonical, True
                 return Unit(
                     dim, scale=scale, base=self.base, factor=factor,
-                    name=canonical, dispname=canonical,
-                    is_fullname=True,
+                    name=name, dispname=dispname,
+                    is_fullname=is_fullname,
                     display_parts=parts,
                 )
 
@@ -1407,8 +1559,25 @@ class Unit:
             dim = self.dim / other.dim
             factor = self.factor / other.factor
 
-            # Dimensionless → no compound display
+            # Dimensionless result — preserve named-dimensionless display
+            # (radian, steradian, ...) so ``rad / UNITLESS`` stays ``rad``.
             if dim == DIMENSIONLESS:
+                self_named_dimless = self.is_fullname and self.dim.is_dimensionless
+                other_named_dimless = other.is_fullname and other.dim.is_dimensionless
+                if self_named_dimless or other_named_dimless:
+                    parts_a = _get_display_parts(self) if self_named_dimless else []
+                    parts_b = (
+                        [(n, d, -e) for n, d, e in _get_display_parts(other)]
+                        if other_named_dimless else []
+                    )
+                    parts = _normalise_display_parts(_merge_display_parts(parts_a, parts_b))
+                    if parts:
+                        canonical = _format_display_parts(parts)
+                        return Unit(
+                            dim, base=self.base, scale=scale, factor=factor,
+                            name=canonical, dispname=canonical,
+                            is_fullname=True, display_parts=parts,
+                        )
                 return Unit(dim, scale=scale, base=self.base, factor=factor)
 
             # Both named → deterministic compound via display_parts
@@ -1417,11 +1586,19 @@ class Unit:
                 parts = _merge_display_parts(
                     _get_display_parts(self), other_parts,
                 )
-                canonical = _format_display_parts(parts)
+                parts = _normalise_display_parts(parts)
+                std_name, std_disp, std_is_full, _ = _find_standard_unit(
+                    dim, self.base, scale, factor, for_composition=True,
+                )
+                if std_is_full:
+                    name, dispname, is_fullname = std_name, std_disp, True
+                else:
+                    canonical = _format_display_parts(parts)
+                    name, dispname, is_fullname = canonical, canonical, True
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
-                    name=canonical, dispname=canonical,
-                    is_fullname=True,
+                    name=name, dispname=dispname,
+                    is_fullname=is_fullname,
                     display_parts=parts,
                 )
 
@@ -1491,6 +1668,8 @@ class Unit:
         if self.is_fullname:
             parts = [(n, d, -e) for n, d, e in _get_display_parts(self)]
             parts = _normalise_display_parts(parts)
+            # reverse() already handles the unambiguous standard-unit
+            # case at the top; here we just render the parts.
             canonical = _format_display_parts(parts)
             return Unit(
                 dim, base=self.base, scale=scale, factor=factor,
@@ -1537,6 +1716,21 @@ class Unit:
             factor = self.factor ** other
 
             if dim == DIMENSIONLESS:
+                # Preserve a named-dimensionless display (radian, steradian)
+                # through powers: ``radian ** 1`` is ``rad``, ``rad ** 2``
+                # is ``rad^2``; ``rad ** 0`` collapses to ``1`` naturally.
+                if self.is_fullname and self.dim.is_dimensionless:
+                    src_parts = _get_display_parts(self)
+                    parts = _normalise_display_parts(
+                        [(n, d, e * other) for n, d, e in src_parts]
+                    )
+                    if parts:
+                        canonical = _format_display_parts(parts)
+                        return Unit(
+                            dim, base=self.base, scale=scale, factor=factor,
+                            name=canonical, dispname=canonical,
+                            is_fullname=True, display_parts=parts,
+                        )
                 return Unit(dim, scale=scale, base=self.base, factor=factor)
 
             # Named source → build from display_parts (multiply exponents).
@@ -1546,11 +1740,18 @@ class Unit:
                 src_parts = _get_display_parts(self)
                 parts = [(n, d, e * other) for n, d, e in src_parts]
                 parts = _normalise_display_parts(parts)
-                canonical = _format_display_parts(parts)
+                std_name, std_disp, std_is_full, _ = _find_standard_unit(
+                    dim, self.base, scale, factor, for_composition=True,
+                )
+                if std_is_full:
+                    name, dispname, is_fullname = std_name, std_disp, True
+                else:
+                    canonical = _format_display_parts(parts)
+                    name, dispname, is_fullname = canonical, canonical, True
                 return Unit(
                     dim, base=self.base, scale=scale, factor=factor,
-                    name=canonical, dispname=canonical,
-                    is_fullname=True,
+                    name=name, dispname=dispname,
+                    is_fullname=is_fullname,
                     display_parts=parts,
                 )
 
@@ -1614,25 +1815,19 @@ class Unit:
 
     def __eq__(self, other) -> bool:
         # Two Units are equal when they represent the same physical
-        # quantity (matching dim/scale/base/factor) *and* render to the
-        # same canonical display string. The canonical string already
-        # folds registry-canonical aliases (e.g. ``A * ohm`` displays as
-        # ``V``) and respects the no-intermediate-simplification rule
-        # for genuinely composed units, so this comparison naturally
-        # treats math-equivalent aliases (metre/meter, A*ohm/volt) as
-        # equal without collapsing intermediate display order.
-        # Use ``is_unit_equal_math`` for a name-agnostic, math-only
-        # equivalence test.
+        # quantity (matching dim/scale/base/factor).  Names and display
+        # strings are *not* part of equality: spelling aliases such as
+        # ``metre`` vs ``meter`` and registry-canonical compounds such
+        # as ``A * ohm`` vs ``V`` compare equal, and the corresponding
+        # hashes collide as required by the ``__hash__`` contract.
         if not isinstance(other, Unit):
             return False
-        if not (
+        return (
             (other.dim == self.dim)
             and (other.scale == self.scale)
             and (other.base == self.base)
             and (other.factor == self.factor)
-        ):
-            return False
-        return self._canonical_str() == other._canonical_str()
+        )
 
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
@@ -1642,7 +1837,9 @@ class Unit:
         return self
 
     def __reduce__(self):
-        # For pickling
+        # For pickling.  ``display_parts`` is forwarded so that compound
+        # units (e.g. ``mS * nA / cm^2``) preserve their canonical
+        # rendering across pickle round-trips.
         return (
             _to_unit,
             (
@@ -1652,15 +1849,21 @@ class Unit:
                 self.factor,
                 self.name,
                 self.dispname,
-                self.is_fullname
+                self.is_fullname,
+                (list(self._display_parts)
+                 if self._display_parts is not None else None),
             )
         )
 
 
-def _to_unit(*args):
-    """Private pickle reconstruction shim for Unit.
-    """
-    return Unit(*args)
+def _to_unit(dim, scale, base, factor, name, dispname, is_fullname,
+             display_parts=None):
+    """Private pickle reconstruction shim for Unit."""
+    return Unit(
+        dim=dim, scale=scale, base=base, factor=factor,
+        name=name, dispname=dispname, is_fullname=is_fullname,
+        display_parts=display_parts,
+    )
 
 
 _to_unit.__module__ = 'saiunit._base_unit'
