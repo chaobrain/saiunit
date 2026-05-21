@@ -99,7 +99,7 @@ Select or override the backend explicitly with `u.using_backend(...)` or
 `q.to_cupy()` / `q.to_torch()` / `q.to_dask()` / `q.to_ndonnx()`. Requesting an
 uninstalled backend raises `saiunit.BackendError` with the install command —
 not a bare `ImportError`. See the
-[Backends documentation](https://saiunit.readthedocs.io/en/latest/backends/overview.html)
+[Backends documentation](https://saiunit.readthedocs.io/backends/overview.html)
 for the full story.
 
 

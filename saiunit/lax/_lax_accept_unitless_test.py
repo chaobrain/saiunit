@@ -19,7 +19,7 @@ import jax.numpy as jnp
 import pytest
 from absl.testing import parameterized
 
-import saiunit as bu
+import saiunit as u
 import saiunit.lax as bulax
 from saiunit import meter
 from saiunit._base_getters import assert_quantity
@@ -73,10 +73,10 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
             expected = lax_fun(jnp.array(value))
             assert_quantity(result, expected)
 
-            for unit, unit2scale in [(bu.ms, bu.second),
-                                     (bu.mV, bu.volt),
-                                     (bu.mV, bu.mV),
-                                     (bu.nA, bu.amp)]:
+            for unit, unit2scale in [(u.ms, u.second),
+                                     (u.mV, u.volt),
+                                     (u.mV, u.mV),
+                                     (u.nA, u.amp)]:
                 q = value * unit
                 result = bulax_fun(q, unit_to_scale=unit2scale)
                 expected = lax_fun(q.to_decimal(unit2scale))
@@ -85,8 +85,8 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
                 with pytest.raises(TypeError):
                     result = bulax_fun(q)
 
-                with pytest.raises(bu.UnitMismatchError):
-                    result = bulax_fun(q, unit_to_scale=bu.nS)
+                with pytest.raises(u.UnitMismatchError):
+                    result = bulax_fun(q, unit_to_scale=u.nS)
 
     @parameterized.product(
         value=[[(1.0, 2.0), (3.0, 4.0), ],
@@ -106,15 +106,15 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
 
             q1 = value1 * meter
             q2 = value2 * meter
-            result = bulax_fun(q1, q2, unit_to_scale=bu.dametre)
-            expected = lax_fun(q1.to_decimal(bu.dametre), q2.to_decimal(bu.dametre))
+            result = bulax_fun(q1, q2, unit_to_scale=u.dametre)
+            expected = lax_fun(q1.to_decimal(u.dametre), q2.to_decimal(u.dametre))
             assert_quantity(result, expected)
 
             with pytest.raises(TypeError):
                 result = bulax_fun(q1, q2)
 
-            with pytest.raises(bu.UnitMismatchError):
-                result = bulax_fun(q1, q2, unit_to_scale=bu.second)
+            with pytest.raises(u.UnitMismatchError):
+                result = bulax_fun(q1, q2, unit_to_scale=u.second)
 
     @parameterized.product(
         value=[[(0, 1), (1, 1)]]
@@ -158,15 +158,15 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
         q1 = value1 * meter
         q2 = value2 * meter
         q3 = value3 * meter
-        result = bulax_fun(q1, q2, q3, unit_to_scale=bu.dametre)
-        expected = lax_fun(q1.to_decimal(bu.dametre), q2.to_decimal(bu.dametre), q3.to_decimal(bu.dametre))
+        result = bulax_fun(q1, q2, q3, unit_to_scale=u.dametre)
+        expected = lax_fun(q1.to_decimal(u.dametre), q2.to_decimal(u.dametre), q3.to_decimal(u.dametre))
         assert_quantity(result, expected)
 
         with pytest.raises(TypeError):
             result = bulax_fun(q1, q2, q3)
 
-        with pytest.raises(bu.UnitMismatchError):
-            result = bulax_fun(q1, q2, q3, unit_to_scale=bu.second)
+        with pytest.raises(u.UnitMismatchError):
+            result = bulax_fun(q1, q2, q3, unit_to_scale=u.second)
 
     @parameterized.product(
         value=[[(0, 1), 1]]
@@ -183,15 +183,15 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
         assert_quantity(result, expected)
 
         q1 = value1 * meter
-        result = bulax_fun(q1, value2, unit_to_scale=bu.dametre)
-        expected = lax_fun(q1.to_decimal(bu.dametre), value2)
+        result = bulax_fun(q1, value2, unit_to_scale=u.dametre)
+        expected = lax_fun(q1.to_decimal(u.dametre), value2)
         assert_quantity(result, expected)
 
         with pytest.raises(TypeError):
             result = bulax_fun(q1, value2)
 
-        with pytest.raises(bu.UnitMismatchError):
-            result = bulax_fun(q1, value2, unit_to_scale=bu.second)
+        with pytest.raises(u.UnitMismatchError):
+            result = bulax_fun(q1, value2, unit_to_scale=u.second)
 
 
 class TestLaxAcceptUnitlessDocstringExamples:

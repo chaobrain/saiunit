@@ -58,7 +58,7 @@ name = "brainunit"
 homepage = 'https://github.com/chaobrain/brainunit'
 repository = 'https://github.com/chaobrain/brainunit'
 "Bug Tracker" = "https://github.com/chaobrain/brainunit/issues"
-"Documentation" = "https://brainunit.readthedocs.io/"
+"Documentation" = "https://brainx.chaobrain.com/brainunit/"
 
 [project.optional-dependencies]
 testing = ["pytest", "brainstate"]

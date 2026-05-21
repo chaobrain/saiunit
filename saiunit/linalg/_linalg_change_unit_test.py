@@ -18,13 +18,13 @@ import jax
 import jax.numpy as jnp
 from absl.testing import parameterized
 
-import saiunit as bu
+import saiunit as u
 import saiunit.linalg as bulinalg
 from saiunit import meter, second
 from saiunit._base_getters import assert_quantity
 
 
-class Array(bu.CustomArray):
+class Array(u.CustomArray):
     def __init__(self, value):
         self.data = value
 
@@ -62,25 +62,25 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
             assert_quantity(result, expected)
 
             array_result = Array(result)
-            assert isinstance(array_result, bu.CustomArray)
+            assert isinstance(array_result, u.CustomArray)
             assert_quantity(array_result.data, expected)
 
             q1 = jnp.array(value1) * unit1
             q2 = jnp.array(value2) * unit2
             result = bm_fun(q1, q2)
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
-            expected_unit = bm_fun._unit_change_fun(bu.get_unit(unit1), bu.get_unit(unit2))
+            expected_unit = bm_fun._unit_change_fun(u.get_unit(unit1), u.get_unit(unit2))
             assert_quantity(result, expected, unit=expected_unit)
 
             array_result = Array(result)
-            assert isinstance(array_result, bu.CustomArray)
+            assert isinstance(array_result, u.CustomArray)
             assert_quantity(array_result.data, expected, unit=expected_unit)
 
             array_input1 = Array(q1)
             array_input2 = Array(q2)
             result = bm_fun(array_input1.data, array_input2.data)
             array_result = Array(result)
-            assert isinstance(array_result, bu.CustomArray)
+            assert isinstance(array_result, u.CustomArray)
             assert_quantity(array_result.data, expected, unit=expected_unit)
 
     @parameterized.product(
@@ -109,7 +109,7 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
             assert_quantity(result, expected)
 
             array_result = Array(result)
-            assert isinstance(array_result, bu.CustomArray)
+            assert isinstance(array_result, u.CustomArray)
             assert_quantity(array_result.data, expected)
 
             q = value * unit
@@ -119,13 +119,13 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
             assert_quantity(result, expected, unit=result_unit)
 
             array_result = Array(result)
-            assert isinstance(array_result, bu.CustomArray)
+            assert isinstance(array_result, u.CustomArray)
             assert_quantity(array_result.data, expected, unit=result_unit)
 
             array_input = Array(q)
             result = bm_fun(array_input.data)
             array_result = Array(result)
-            assert isinstance(array_result, bu.CustomArray)
+            assert isinstance(array_result, u.CustomArray)
             assert_quantity(array_result.data, expected, unit=result_unit)
 
     def test_dot_operations_with_array(self):
@@ -136,12 +136,12 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         array1 = Array(vec1)
         array2 = Array(vec2)
         
-        assert isinstance(array1, bu.CustomArray)
-        assert isinstance(array2, bu.CustomArray)
+        assert isinstance(array1, u.CustomArray)
+        assert isinstance(array2, u.CustomArray)
         
         dot_result = bulinalg.dot(array1.data, array2.data)
         dot_array = Array(dot_result)
-        assert isinstance(dot_array, bu.CustomArray)
+        assert isinstance(dot_array, u.CustomArray)
         expected = jnp.dot(jnp.array([1.0, 2.0, 3.0]), jnp.array([4.0, 5.0, 6.0]))
         assert_quantity(dot_array.data, expected, unit=meter * second)
 
@@ -153,12 +153,12 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         array1 = Array(mat1)
         array2 = Array(mat2)
         
-        assert isinstance(array1, bu.CustomArray)
-        assert isinstance(array2, bu.CustomArray)
+        assert isinstance(array1, u.CustomArray)
+        assert isinstance(array2, u.CustomArray)
         
         matmul_result = bulinalg.matmul(array1.data, array2.data)
         matmul_array = Array(matmul_result)
-        assert isinstance(matmul_array, bu.CustomArray)
+        assert isinstance(matmul_array, u.CustomArray)
         expected = jnp.matmul(jnp.array([[1.0, 2.0], [3.0, 4.0]]), jnp.array([[5.0, 6.0], [7.0, 8.0]]))
         assert_quantity(matmul_array.data, expected, unit=meter * second)
 
@@ -170,12 +170,12 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         array1 = Array(vec1)
         array2 = Array(vec2)
         
-        assert isinstance(array1, bu.CustomArray)
-        assert isinstance(array2, bu.CustomArray)
+        assert isinstance(array1, u.CustomArray)
+        assert isinstance(array2, u.CustomArray)
         
         outer_result = bulinalg.outer(array1.data, array2.data)
         outer_array = Array(outer_result)
-        assert isinstance(outer_array, bu.CustomArray)
+        assert isinstance(outer_array, u.CustomArray)
         expected = jnp.outer(jnp.array([1.0, 2.0]), jnp.array([3.0, 4.0, 5.0]))
         assert_quantity(outer_array.data, expected, unit=meter * second)
 
@@ -187,12 +187,12 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         array1 = Array(mat1)
         array2 = Array(mat2)
         
-        assert isinstance(array1, bu.CustomArray)
-        assert isinstance(array2, bu.CustomArray)
+        assert isinstance(array1, u.CustomArray)
+        assert isinstance(array2, u.CustomArray)
         
         kron_result = bulinalg.kron(array1.data, array2.data)
         kron_array = Array(kron_result)
-        assert isinstance(kron_array, bu.CustomArray)
+        assert isinstance(kron_array, u.CustomArray)
         expected = jnp.kron(jnp.array([[1.0, 2.0], [3.0, 4.0]]), jnp.array([[0.0, 5.0], [6.0, 7.0]]))
         assert_quantity(kron_array.data, expected, unit=meter * second)
 
@@ -201,11 +201,11 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         mat_2x2 = jnp.array([[2.0, 3.0], [1.0, 4.0]]) * meter
         array_2x2 = Array(mat_2x2)
         
-        assert isinstance(array_2x2, bu.CustomArray)
+        assert isinstance(array_2x2, u.CustomArray)
         
         det_result = bulinalg.det(array_2x2.data)
         det_array = Array(det_result)
-        assert isinstance(det_array, bu.CustomArray)
+        assert isinstance(det_array, u.CustomArray)
         expected = jnp.linalg.det(jnp.array([[2.0, 3.0], [1.0, 4.0]]))
         assert_quantity(det_array.data, expected, unit=meter ** 2)
         
@@ -213,11 +213,11 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         mat_3x3 = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 10.0]]) * second
         array_3x3 = Array(mat_3x3)
         
-        assert isinstance(array_3x3, bu.CustomArray)
+        assert isinstance(array_3x3, u.CustomArray)
         
         det_result = bulinalg.det(array_3x3.data)
         det_array = Array(det_result)
-        assert isinstance(det_array, bu.CustomArray)
+        assert isinstance(det_array, u.CustomArray)
         expected = jnp.linalg.det(jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 10.0]]))
         assert_quantity(det_array.data, expected, unit=second ** 3)
 
@@ -229,12 +229,12 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         array1 = Array(tensor1)
         array2 = Array(tensor2)
         
-        assert isinstance(array1, bu.CustomArray)
-        assert isinstance(array2, bu.CustomArray)
+        assert isinstance(array1, u.CustomArray)
+        assert isinstance(array2, u.CustomArray)
         
         tensordot_result = bulinalg.tensordot(array1.data, array2.data)
         tensordot_array = Array(tensordot_result)
-        assert isinstance(tensordot_array, bu.CustomArray)
+        assert isinstance(tensordot_array, u.CustomArray)
         expected = jnp.tensordot(jnp.array([[1.0, 2.0], [3.0, 4.0]]), jnp.array([[5.0, 6.0], [7.0, 8.0]]))
         assert_quantity(tensordot_array.data, expected, unit=meter * second)
 
@@ -246,29 +246,29 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         array1 = Array(vec1)
         array2 = Array(vec2)
         
-        assert isinstance(array1, bu.CustomArray)
-        assert isinstance(array2, bu.CustomArray)
+        assert isinstance(array1, u.CustomArray)
+        assert isinstance(array2, u.CustomArray)
         
         vdot_result = bulinalg.vdot(array1.data, array2.data)
         vdot_array = Array(vdot_result)
-        assert isinstance(vdot_array, bu.CustomArray)
+        assert isinstance(vdot_array, u.CustomArray)
         expected = jnp.vdot(jnp.array([1.0 + 2.0j, 3.0 + 4.0j]), jnp.array([5.0 + 6.0j, 7.0 + 8.0j]))
         assert_quantity(vdot_array.data, expected, unit=meter * second)
 
     def test_multi_dot_with_array(self):
         # Test multi_dot functionality with Array instances
         key1, key2, key3 = jax.random.split(jax.random.key(0), 3)
-        mat1 = jax.random.normal(key1, shape=(10, 5)) * bu.mA
-        mat2 = jax.random.normal(key2, shape=(5, 8)) * bu.mV
-        mat3 = jax.random.normal(key3, shape=(8, 3)) * bu.ohm
+        mat1 = jax.random.normal(key1, shape=(10, 5)) * u.mA
+        mat2 = jax.random.normal(key2, shape=(5, 8)) * u.mV
+        mat3 = jax.random.normal(key3, shape=(8, 3)) * u.ohm
         
         array1 = Array(mat1)
         array2 = Array(mat2)
         array3 = Array(mat3)
         
-        assert isinstance(array1, bu.CustomArray)
-        assert isinstance(array2, bu.CustomArray)
-        assert isinstance(array3, bu.CustomArray)
+        assert isinstance(array1, u.CustomArray)
+        assert isinstance(array2, u.CustomArray)
+        assert isinstance(array3, u.CustomArray)
         
         # Test that multi_dot works with Array values
         result1 = (array1.data @ array2.data) @ array3.data
@@ -279,14 +279,14 @@ class TestLinalgChangeUnitWithArrayCustomArray(parameterized.TestCase):
         result2_array = Array(result2)
         result3_array = Array(result3)
         
-        assert isinstance(result1_array, bu.CustomArray)
-        assert isinstance(result2_array, bu.CustomArray)
-        assert isinstance(result3_array, bu.CustomArray)
+        assert isinstance(result1_array, u.CustomArray)
+        assert isinstance(result2_array, u.CustomArray)
+        assert isinstance(result3_array, u.CustomArray)
         
         # Verify results are equivalent
-        expected_unit = bu.mA * bu.mV * bu.ohm
-        assert bu.math.allclose(result1_array.data, result3_array.data, atol=1E-4 * expected_unit)
-        assert bu.math.allclose(result2_array.data, result3_array.data, atol=1E-4 * expected_unit)
+        expected_unit = u.mA * u.mV * u.ohm
+        assert u.math.allclose(result1_array.data, result3_array.data, atol=1E-4 * expected_unit)
+        assert u.math.allclose(result2_array.data, result3_array.data, atol=1E-4 * expected_unit)
 
 
 class TestLinalgChangeUnit(parameterized.TestCase):
@@ -312,7 +312,7 @@ class TestLinalgChangeUnit(parameterized.TestCase):
             q2 = value2 * unit2
             result = bm_fun(q1, q2)
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
-            assert_quantity(result, expected, unit=bm_fun._unit_change_fun(bu.get_unit(unit1), bu.get_unit(unit2)))
+            assert_quantity(result, expected, unit=bm_fun._unit_change_fun(u.get_unit(unit1), u.get_unit(unit2)))
 
     @parameterized.product(
         value=[(
@@ -367,21 +367,21 @@ class TestLinalgChangeUnit(parameterized.TestCase):
             q2 = value2 * unit2
             result = bm_fun(q1, q2)
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
-            assert_quantity(result, expected, unit=bm_fun._unit_change_fun(bu.get_unit(unit1), bu.get_unit(unit2)))
+            assert_quantity(result, expected, unit=bm_fun._unit_change_fun(u.get_unit(unit1), u.get_unit(unit2)))
 
     def test_multi_dot(self):
         key1, key2, key3 = jax.random.split(jax.random.key(0), 3)
-        x = jax.random.normal(key1, shape=(200, 5)) * bu.mA
-        y = jax.random.normal(key2, shape=(5, 100)) * bu.mV
-        z = jax.random.normal(key3, shape=(100, 10)) * bu.ohm
+        x = jax.random.normal(key1, shape=(200, 5)) * u.mA
+        y = jax.random.normal(key2, shape=(5, 100)) * u.mV
+        z = jax.random.normal(key3, shape=(100, 10)) * u.ohm
         result1 = (x @ y) @ z
         result2 = x @ (y @ z)
-        assert bu.math.allclose(result1, result2, atol=1E-4 * result1.unit)
-        result3 = bu.linalg.multi_dot([x, y, z])
-        assert bu.math.allclose(result1, result3, atol=1E-4 * result1.unit)
+        assert u.math.allclose(result1, result2, atol=1E-4 * result1.unit)
+        result3 = u.linalg.multi_dot([x, y, z])
+        assert u.math.allclose(result1, result3, atol=1E-4 * result1.unit)
         assert jax.jit(lambda x, y, z: (x @ y) @ z).lower(x, y, z).cost_analysis()['flops'] == 600000.0
         assert jax.jit(lambda x, y, z: x @ (y @ z)).lower(x, y, z).cost_analysis()['flops'] == 30000.0
-        assert jax.jit(bu.linalg.multi_dot).lower([x, y, z]).cost_analysis()['flops'] == 30000.0
+        assert jax.jit(u.linalg.multi_dot).lower([x, y, z]).cost_analysis()['flops'] == 30000.0
 
     def test_cholesky_supports_symmetrize_input(self):
         a = jnp.array([[2.0, 1.0], [1.0, 2.0]])
