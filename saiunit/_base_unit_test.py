@@ -1397,6 +1397,16 @@ class TestParseUnit:
         assert "volt" in _unit_name_registry
         assert "V" in _unit_name_registry
 
+    # --- user alias does not hijack canonical display (#6) ---
+    def test_user_alias_does_not_hijack_canonical(self):
+        """A user-registered alias must not displace the built-in canonical."""
+        before = repr(u.metre.factorless())
+        add_standard_unit(Unit(u.metre.dim, name="aaaa_meter", dispname="aaaa_m"))
+        after = repr(u.metre.factorless())
+        assert before == after, (
+            f"User alias hijacked canonical: {before!r} -> {after!r}"
+        )
+
     # --- anonymous unit round-trip (#5) ---
     def test_anonymous_unit_dispname_parser_compatible(self):
         """An anonymous Unit's dispname must round-trip through parse_unit."""

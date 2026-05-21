@@ -175,6 +175,12 @@ def _find_a_name(dim: Dimension, base, scale, factor) -> tuple[str | None, bool]
 _standard_units: 'dict[tuple, Unit]' = {}
 _standard_unit_aliases: 'dict[tuple, list[Unit]]' = {}
 _unit_name_registry: 'dict[str, Unit]' = {}
+# Monotonically-increasing registration index for each registered Unit
+# identity.  Used by :func:`_select_preferred_standard_unit` to prefer
+# units that were registered earlier (i.e. library built-ins) over
+# user-added aliases for the same physical key.
+_unit_registration_index: 'dict[int, int]' = {}
+_next_registration_index: 'list[int]' = [0]
 
 # ---------------------------------------------------------------------------
 # Ambiguous-key detection
@@ -208,14 +214,26 @@ def _standard_unit_preference_score(unit: 'Unit') -> int:
 
 
 def _select_preferred_standard_unit(units: 'list[Unit]') -> 'Unit':
-    """Pick the preferred alias – deterministic (score, then alpha)."""
-    return min(
-        units,
-        key=lambda u: (
+    """Pick the preferred alias.
+
+    Order of preference (lower is better):
+
+    1. ``_standard_unit_preference_score`` (e.g. prefer hertz over
+       becquerel for s^-1).
+    2. Registration index — library built-ins win over user
+       additions made via :func:`add_standard_unit` after import,
+       so user aliases cannot hijack canonical display.
+    3. Alphabetical, as a final deterministic tie-breaker for units
+       registered in the same call.
+    """
+    def _key(u):
+        idx = _unit_registration_index.get(id(u), float('inf'))
+        return (
             _standard_unit_preference_score(u),
+            idx,
             u.name.lower() if isinstance(u.name, str) else "",
-        ),
-    )
+        )
+    return min(units, key=_key)
 
 
 def add_standard_unit(u: 'Unit'):
@@ -261,6 +279,10 @@ def add_standard_unit(u: 'Unit'):
         # and poison the ambiguity heuristic below.
         if not any(existing is u for existing in aliases):
             aliases.append(u)
+            # Stamp a monotonic registration index so that later
+            # additions cannot hijack the canonical display.
+            _unit_registration_index[id(u)] = _next_registration_index[0]
+            _next_registration_index[0] += 1
         _standard_units[key] = _select_preferred_standard_unit(aliases)
 
         # Auto-detect ambiguity: >=2 distinct display names → ambiguous
