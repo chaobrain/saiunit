@@ -1396,3 +1396,17 @@ class TestParseUnit:
         assert "mV" in _unit_name_registry
         assert "volt" in _unit_name_registry
         assert "V" in _unit_name_registry
+
+    # --- anonymous unit round-trip (#5) ---
+    def test_anonymous_unit_dispname_parser_compatible(self):
+        """An anonymous Unit's dispname must round-trip through parse_unit."""
+        anon = Unit(u.joule.dim)
+        # Round-trips back to joule (canonical) since they are math-equal.
+        parsed = parse_unit(anon.dispname)
+        assert parsed == anon
+
+    def test_anonymous_unit_with_factor_roundtrip(self):
+        """An anonymous Unit with a factor must repr-round-trip."""
+        anon = Unit(u.joule.dim, factor=4.184)
+        parsed = parse_unit(repr(anon))
+        assert parsed == anon

@@ -116,6 +116,30 @@ def _find_standard_unit(
     return None, None, False, False
 
 
+def _format_dim_parser_compatible(dim: Dimension, python_code: bool = False) -> str:
+    """Render *dim* in parser-compatible canonical form.
+
+    ``Dimension.__str__`` emits space-separated SI factors (``"m kg s^-2"``)
+    which cannot be round-tripped through :func:`parse_unit`.  This helper
+    produces the same content with the canonical `` * `` / ``^`` / `` / ``
+    grammar used by :func:`_format_display_parts`, so anonymous Units have
+    a name/dispname that the parser can read back.
+
+    When ``python_code`` is True, the full-name SI labels (``metre``,
+    ``kilogram``, ...) are used in place of the short symbols.
+    """
+    from ._base_dimension import _ilabel, _iclass_label
+    labels = _iclass_label if python_code else _ilabel
+    dims = dim._dims
+    parts = []
+    for i in range(len(dims)):
+        if dims[i]:
+            parts.append((labels[i], labels[i], dims[i]))
+    if not parts:
+        return "1"
+    return _format_display_parts(parts)
+
+
 def _find_a_name(dim: Dimension, base, scale, factor) -> tuple[str | None, bool]:
     if dim == DIMENSIONLESS:
         u_name = f"Unit({base}^{scale})"
@@ -722,8 +746,16 @@ class Unit:
             if dim == DIMENSIONLESS:
                 name = f"Unit({base}^{scale})"
             else:
-                name = dim.__repr__()
-                dispname = dim.__str__()
+                # Anonymous Units must produce parser-compatible
+                # name/dispname so that ``parse_unit(repr(u))`` round-trips.
+                # ``Dimension.__str__`` uses space separation which the
+                # parser cannot read.  ``_canonical_str`` (called by
+                # ``__repr__``/``__str__``) prefixes the factor/scale on
+                # its own for anonymous units, so we only encode the
+                # dimensional part here.
+                name = _format_dim_parser_compatible(dim, python_code=True)
+                if dispname is None:
+                    dispname = _format_dim_parser_compatible(dim, python_code=False)
         self._name = name
 
         # The display name of this unit
