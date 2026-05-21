@@ -490,6 +490,18 @@ class TestUnitCopyHash:
         h2 = hash(u)
         assert h1 == h2
 
+    def test_hash_eq_invariant_spelling_aliases(self):
+        """Spelling aliases must compare equal and hash equal."""
+        pairs = [
+            (u.metre, u.meter),
+            (u.amp, u.ampere),
+            (u.kilogram, u.kilogramme),
+        ]
+        for a, b in pairs:
+            assert a == b
+            assert hash(a) == hash(b)
+            assert len({a, b}) == 1
+
     def test_factorless(self):
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         u = Unit(d, name="metre", dispname="m", scale=0, factor=2.)

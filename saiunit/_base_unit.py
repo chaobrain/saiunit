@@ -1096,14 +1096,15 @@ class Unit:
 
     def __hash__(self):
         if self._hash is None:
+            # Equality is *physical*: two units that resolve to the same
+            # ``(dim, factor, base, scale)`` must hash equal regardless
+            # of name spelling (e.g. ``metre`` vs ``meter``).
             self._hash = hash(
                 (
                     self.dim,
                     self.factor,
                     self.base,
                     self.scale,
-                    self.name,
-                    self.dispname,
                 )
             )
         return self._hash
@@ -1647,25 +1648,19 @@ class Unit:
 
     def __eq__(self, other) -> bool:
         # Two Units are equal when they represent the same physical
-        # quantity (matching dim/scale/base/factor) *and* render to the
-        # same canonical display string. The canonical string already
-        # folds registry-canonical aliases (e.g. ``A * ohm`` displays as
-        # ``V``) and respects the no-intermediate-simplification rule
-        # for genuinely composed units, so this comparison naturally
-        # treats math-equivalent aliases (metre/meter, A*ohm/volt) as
-        # equal without collapsing intermediate display order.
-        # Use ``is_unit_equal_math`` for a name-agnostic, math-only
-        # equivalence test.
+        # quantity (matching dim/scale/base/factor).  Names and display
+        # strings are *not* part of equality: spelling aliases such as
+        # ``metre`` vs ``meter`` and registry-canonical compounds such
+        # as ``A * ohm`` vs ``V`` compare equal, and the corresponding
+        # hashes collide as required by the ``__hash__`` contract.
         if not isinstance(other, Unit):
             return False
-        if not (
+        return (
             (other.dim == self.dim)
             and (other.scale == self.scale)
             and (other.base == self.base)
             and (other.factor == self.factor)
-        ):
-            return False
-        return self._canonical_str() == other._canonical_str()
+        )
 
     def __ne__(self, other) -> bool:
         return not self.__eq__(other)
