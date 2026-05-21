@@ -1397,6 +1397,26 @@ class TestParseUnit:
         assert "volt" in _unit_name_registry
         assert "V" in _unit_name_registry
 
+    # --- named-dimensionless identity preserved (#7) ---
+    def test_radian_mul_unitless_preserves_name(self):
+        assert repr(u.radian * UNITLESS) == 'Unit("rad")'
+        assert repr(UNITLESS * u.radian) == 'Unit("rad")'
+
+    def test_radian_pow_one_preserves_name(self):
+        assert repr(u.radian ** 1) == 'Unit("rad")'
+
+    def test_radian_pow_two_compound(self):
+        assert repr(u.radian ** 2) == 'Unit("rad^2")'
+
+    def test_radian_self_divide_collapses(self):
+        assert repr(u.radian / u.radian) == 'Unit("1")'
+
+    def test_radian_self_multiply_squared(self):
+        assert repr(u.radian * u.radian) == 'Unit("rad^2")'
+
+    def test_steradian_mul_unitless_preserves_name(self):
+        assert repr(u.steradian * UNITLESS) == 'Unit("sr")'
+
     # --- user alias does not hijack canonical display (#6) ---
     def test_user_alias_does_not_hijack_canonical(self):
         """A user-registered alias must not displace the built-in canonical."""

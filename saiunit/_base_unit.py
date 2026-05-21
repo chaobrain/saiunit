@@ -1408,8 +1408,26 @@ class Unit:
             dim = self.dim * other.dim
             factor = self.factor * other.factor
 
-            # Dimensionless → no compound display
+            # Dimensionless result.  When neither operand carries a named
+            # dimensionless display (radian, steradian, ...), the result is
+            # bare ``Unit("1")`` as before.  When at least one operand is a
+            # named dimensionless unit, merge its display parts so the
+            # name survives ``radian * UNITLESS`` and compounds such as
+            # ``radian * radian`` render as ``rad^2`` rather than ``1``.
             if dim == DIMENSIONLESS:
+                self_named_dimless = self.is_fullname and self.dim.is_dimensionless
+                other_named_dimless = other.is_fullname and other.dim.is_dimensionless
+                if self_named_dimless or other_named_dimless:
+                    parts_a = _get_display_parts(self) if self_named_dimless else []
+                    parts_b = _get_display_parts(other) if other_named_dimless else []
+                    parts = _normalise_display_parts(_merge_display_parts(parts_a, parts_b))
+                    if parts:
+                        canonical = _format_display_parts(parts)
+                        return Unit(
+                            dim, scale=scale, base=self.base, factor=factor,
+                            name=canonical, dispname=canonical,
+                            is_fullname=True, display_parts=parts,
+                        )
                 return Unit(dim, scale=scale, base=self.base, factor=factor)
 
             # Both named → deterministic compound via display_parts
@@ -1478,8 +1496,25 @@ class Unit:
             dim = self.dim / other.dim
             factor = self.factor / other.factor
 
-            # Dimensionless → no compound display
+            # Dimensionless result — preserve named-dimensionless display
+            # (radian, steradian, ...) so ``rad / UNITLESS`` stays ``rad``.
             if dim == DIMENSIONLESS:
+                self_named_dimless = self.is_fullname and self.dim.is_dimensionless
+                other_named_dimless = other.is_fullname and other.dim.is_dimensionless
+                if self_named_dimless or other_named_dimless:
+                    parts_a = _get_display_parts(self) if self_named_dimless else []
+                    parts_b = (
+                        [(n, d, -e) for n, d, e in _get_display_parts(other)]
+                        if other_named_dimless else []
+                    )
+                    parts = _normalise_display_parts(_merge_display_parts(parts_a, parts_b))
+                    if parts:
+                        canonical = _format_display_parts(parts)
+                        return Unit(
+                            dim, base=self.base, scale=scale, factor=factor,
+                            name=canonical, dispname=canonical,
+                            is_fullname=True, display_parts=parts,
+                        )
                 return Unit(dim, scale=scale, base=self.base, factor=factor)
 
             # Both named → deterministic compound via display_parts
@@ -1618,6 +1653,21 @@ class Unit:
             factor = self.factor ** other
 
             if dim == DIMENSIONLESS:
+                # Preserve a named-dimensionless display (radian, steradian)
+                # through powers: ``radian ** 1`` is ``rad``, ``rad ** 2``
+                # is ``rad^2``; ``rad ** 0`` collapses to ``1`` naturally.
+                if self.is_fullname and self.dim.is_dimensionless:
+                    src_parts = _get_display_parts(self)
+                    parts = _normalise_display_parts(
+                        [(n, d, e * other) for n, d, e in src_parts]
+                    )
+                    if parts:
+                        canonical = _format_display_parts(parts)
+                        return Unit(
+                            dim, base=self.base, scale=scale, factor=factor,
+                            name=canonical, dispname=canonical,
+                            is_fullname=True, display_parts=parts,
+                        )
                 return Unit(dim, scale=scale, base=self.base, factor=factor)
 
             # Named source → build from display_parts (multiply exponents).
