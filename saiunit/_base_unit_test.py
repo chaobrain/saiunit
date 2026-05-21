@@ -1402,6 +1402,17 @@ class TestParseUnit:
         assert "volt" in _unit_name_registry
         assert "V" in _unit_name_registry
 
+    # --- parser accepts parens in numerator (#14) ---
+    def test_parens_in_numerator(self):
+        assert parse_unit("(m * s) / A") == parse_unit("m * s / A")
+
+    def test_parens_outer_group(self):
+        assert parse_unit("(m / s)") == parse_unit("m / s")
+
+    def test_parens_in_denominator(self):
+        # Already worked; sanity check that the new recursion preserves it.
+        assert parse_unit("m / (kg * s^2)") == u.metre / (u.kilogram * u.second ** 2)
+
     # --- kelvin prefix coverage (#10) ---
     def test_kelvin_prefixes_parse(self):
         from saiunit._unit_common import mkelvin, ukelvin, nkelvin, kkelvin, Mkelvin

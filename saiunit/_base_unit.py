@@ -459,8 +459,34 @@ def _parse_product(s: str):
 
 
 def _parse_term(s: str):
-    """Parse a single term like ``'cm^2'``, ``'mV'``, or ``'10^3'``."""
+    """Parse a single term like ``'cm^2'``, ``'mV'``, or ``'10^3'``.
+
+    Parenthesised sub-expressions are recursively parsed as full
+    fraction/product expressions; this lets ``parse_unit("(m * s) / A")``
+    succeed.
+    """
     s = s.strip()
+    # Strip a single outer paren wrapping the whole term and recurse.
+    if s.startswith('(') and s.endswith(')'):
+        depth = 0
+        balanced_at_zero_only_at_end = True
+        for i, ch in enumerate(s):
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+                if depth == 0 and i != len(s) - 1:
+                    balanced_at_zero_only_at_end = False
+                    break
+        if balanced_at_zero_only_at_end:
+            inner = s[1:-1].strip()
+            if not inner:
+                raise ValueError(f"Empty parenthesised group in {s!r}")
+            num_str, den_str = _split_fraction(inner)
+            numerator = _parse_product(num_str)
+            if den_str is not None:
+                return numerator / _parse_product(den_str)
+            return numerator
     caret_idx = s.rfind('^')
     if caret_idx > 0:
         atom = s[:caret_idx].strip()
@@ -472,10 +498,14 @@ def _parse_term(s: str):
         except ValueError:
             raise ValueError(f"Invalid exponent in unit string: {s!r}")
 
-        # Numeric base → dimensionless scaled unit (e.g. "10^3")
+        # Numeric base → dimensionless scaled unit (e.g. "10^3").
+        # ``Unit`` is base=10-only, so encode ``base_num ** exp`` either
+        # in ``scale`` (when base_num==10) or in ``factor``.
         try:
             base_num = float(atom)
-            return Unit(DIMENSIONLESS, scale=exp, base=base_num)
+            if base_num == 10.0:
+                return Unit(DIMENSIONLESS, scale=exp)
+            return Unit(DIMENSIONLESS, factor=float(base_num) ** exp)
         except ValueError:
             pass
 
