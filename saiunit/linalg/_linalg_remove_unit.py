@@ -17,8 +17,7 @@ from __future__ import annotations
 
 from typing import (Union, Optional)
 
-import jax
-import jax.numpy as jnp
+from saiunit._jax_compat import jax, jnp
 
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array

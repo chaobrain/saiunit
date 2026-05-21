@@ -25,30 +25,46 @@ Compared to existing unit libraries, such as `Quantities <https://github.com/pyt
 Installation
 ^^^^^^^^^^^^
 
-``saiunit`` always ships with the ``jax`` and ``numpy`` backends. Pick a JAX
-accelerator build, then optionally add backends for CuPy, PyTorch, Dask, or
-ndonnx. The optional backend extras are independent and can be combined.
+The core package depends only on NumPy. JAX is an optional dependency:
+install it to enable the ``saiunit.autograd``, ``saiunit.lax``, and
+``saiunit.sparse`` submodules, the custom ``exprel`` primitive, and the
+``"jax"`` backend. Without JAX, the NumPy backend is selected automatically
+and the JAX-only submodules raise :class:`saiunit.BackendError` on access.
+The CuPy, PyTorch, Dask, and ndonnx backend extras are independent and can
+be combined.
 
 .. tab-set::
 
-    .. tab-item:: CPU
+    .. tab-item:: NumPy only (no JAX)
+
+       .. code-block:: bash
+
+          pip install -U saiunit
+
+    .. tab-item:: JAX (CPU)
 
        .. code-block:: bash
 
           pip install -U saiunit[cpu]
 
-    .. tab-item:: GPU (CUDA)
+    .. tab-item:: JAX (GPU/CUDA)
 
        .. code-block:: bash
 
           pip install -U saiunit[cuda12]
           pip install -U saiunit[cuda13]
 
-    .. tab-item:: TPU
+    .. tab-item:: JAX (TPU)
 
        .. code-block:: bash
 
           pip install -U saiunit[tpu]
+
+    .. tab-item:: Plain JAX
+
+       .. code-block:: bash
+
+          pip install -U saiunit[jax]
 
     .. tab-item:: CuPy
 

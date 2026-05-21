@@ -1,4 +1,6 @@
 -r requirements.txt
+jax
+jaxlib
 brainstate
 
 # test requirements

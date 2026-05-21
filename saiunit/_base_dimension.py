@@ -16,10 +16,15 @@
 import numbers
 import threading
 
-import jax
 import numpy as np
-from jax.interpreters.partial_eval import DynamicJaxprTracer
 
+from ._jax_compat import (
+    DynamicJaxprTracer,
+    ShapeDtypeStruct as _ShapeDtypeStruct,
+    ShapedArray as _ShapedArray,
+    Tracer as _Tracer,
+    TracerArrayConversionError as _TracerArrayConversionError,
+)
 from ._misc import set_module_as
 
 __all__ = [
@@ -93,7 +98,7 @@ _iclass_label = ["metre", "kilogram", "second", "amp", "kelvin", "mole", "candle
 
 
 def _is_tracer(x):
-    return isinstance(x, (jax.ShapeDtypeStruct, jax.core.ShapedArray, DynamicJaxprTracer, jax.core.Tracer))
+    return isinstance(x, (_ShapeDtypeStruct, _ShapedArray, DynamicJaxprTracer, _Tracer))
 
 
 class Dimension:
@@ -571,7 +576,7 @@ class Dimension:
             return False
         try:
             return np.array_equal(self._dims, value._dims)
-        except (AttributeError, jax.errors.TracerArrayConversionError):
+        except (AttributeError, _TracerArrayConversionError):
             # Only compare equal to another Dimensions object
             return False
 

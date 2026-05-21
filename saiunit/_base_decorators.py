@@ -19,7 +19,7 @@ from collections.abc import Callable
 from functools import partial, wraps
 from typing import cast
 
-import jax
+from ._jax_compat import tree as _jtree
 
 from ._base_dimension import (
     DIMENSIONLESS,
@@ -241,15 +241,15 @@ def check_dims(**au):
                     expected_result = au["result"]
 
                 if (
-                    jax.tree.structure(expected_result, is_leaf=_is_quantity)
+                    _jtree.structure(expected_result, is_leaf=_is_quantity)
                     !=
-                    jax.tree.structure(result, is_leaf=_is_quantity)
+                    _jtree.structure(result, is_leaf=_is_quantity)
                 ):
                     raise TypeError(
                         f"Expected a return value of type {expected_result} but got {result}"
                     )
 
-                jax.tree.map(
+                _jtree.map(
                     partial(_check_dim, f), result, expected_result,
                     is_leaf=_is_quantity
                 )
@@ -493,15 +493,15 @@ def check_units(**au):
                     expected_result = au["result"]
 
                 if (
-                    jax.tree.structure(expected_result, is_leaf=_is_quantity)
+                    _jtree.structure(expected_result, is_leaf=_is_quantity)
                     !=
-                    jax.tree.structure(result, is_leaf=_is_quantity)
+                    _jtree.structure(result, is_leaf=_is_quantity)
                 ):
                     raise TypeError(
                         f"Expected a return value of type {expected_result} but got {result}"
                     )
 
-                jax.tree.map(
+                _jtree.map(
                     partial(_check_unit, f), result, expected_result,
                     is_leaf=_is_quantity
                 )
@@ -633,9 +633,9 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
                 specific_unit = au[n]
 
                 if (
-                    jax.tree.structure(specific_unit, is_leaf=_is_quantity)
+                    _jtree.structure(specific_unit, is_leaf=_is_quantity)
                     !=
-                    jax.tree.structure(v, is_leaf=_is_quantity)
+                    _jtree.structure(v, is_leaf=_is_quantity)
                 ):
                     raise TypeError(
                         f"For argument '{n}', we expect the input type "
@@ -643,7 +643,7 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
                         f"but we got {v}"
                     )
 
-                v = jax.tree.map(
+                v = _jtree.map(
                     partial(_remove_unit, f.__name__, n),
                     specific_unit,
                     v,
@@ -658,11 +658,11 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
             else:
                 expected_result = au["result"]
 
-            expected_pytree = jax.tree.structure(
+            expected_pytree = _jtree.structure(
                 expected_result,
                 is_leaf=lambda x: isinstance(x, Quantity) or x is None
             )
-            result_pytree = jax.tree.structure(result, is_leaf=lambda x: isinstance(x, Quantity) or x is None)
+            result_pytree = _jtree.structure(result, is_leaf=lambda x: isinstance(x, Quantity) or x is None)
             if (
                 expected_pytree
                 !=
@@ -673,7 +673,7 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
                     f"but got the pytree {result_pytree} and the value {result}"
                 )
 
-            result = jax.tree.map(
+            result = _jtree.map(
                 partial(_assign_unit, f),
                 result,
                 expected_result,
@@ -691,15 +691,15 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
                 specific_unit = au[n]
 
                 if (
-                    jax.tree.structure(specific_unit, is_leaf=_is_quantity)
+                    _jtree.structure(specific_unit, is_leaf=_is_quantity)
                     !=
-                    jax.tree.structure(v, is_leaf=_is_quantity)
+                    _jtree.structure(v, is_leaf=_is_quantity)
                 ):
                     raise TypeError(
                         f"For argument '{n}', we expect the input type {specific_unit} but got {v}"
                     )
 
-                v = jax.tree.map(
+                v = _jtree.map(
                     partial(_remove_unit, f.__name__, n),
                     specific_unit,
                     v,

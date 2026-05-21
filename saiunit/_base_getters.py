@@ -13,11 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 
+from __future__ import annotations
+
 from contextlib import contextmanager
 
-import jax
-import jax.numpy as jnp
 import numpy as np
+
+from ._jax_compat import (
+    HAS_JAX,
+    jax,
+    jnp,
+    ShapeDtypeStruct as _ShapeDtypeStruct,
+    ShapedArray as _ShapedArray,
+    Tracer as _Tracer,
+)
 
 from ._base_dimension import (
     Dimension,
@@ -92,7 +101,7 @@ def _short_str(arr):
     """
     from ._base_quantity import Quantity
     arr = arr.mantissa if isinstance(arr, Quantity) else arr
-    if not isinstance(arr, (jax.core.Tracer, jax.core.ShapedArray, jax.ShapeDtypeStruct)):
+    if not isinstance(arr, (_Tracer, _ShapedArray, _ShapeDtypeStruct)):
         arr = np.asanyarray(arr)
     with change_printoption(edgeitems=2, threshold=5):
         arr_string = str(arr)
@@ -885,7 +894,8 @@ def is_scalar_type(obj) -> bool:
     try:
         return obj.ndim == 0 and is_unitless(obj) and not _is_tracer(obj)
     except AttributeError:
-        return jnp.isscalar(obj) and not isinstance(obj, str)
+        _isscalar = jnp.isscalar if HAS_JAX else np.isscalar
+        return _isscalar(obj) and not isinstance(obj, str)
 
 
 # ---------------------------------------------------------------------------
@@ -928,15 +938,16 @@ def assert_quantity(
         >>> u.assert_quantity(u.Quantity(1, u.mV), 1, u.mV)
     """
     from ._base_quantity import Quantity
-    mantissa = jnp.asarray(mantissa)
+    _xp = jnp if HAS_JAX else np
+    mantissa = _xp.asarray(mantissa)
     if unit is None:
         if isinstance(q, Quantity):
             assert q.is_unitless, f"Expected a unitless quantity when 'unit' is not given, but got {q}"
             q = q.mantissa
-        assert jnp.allclose(q, mantissa, equal_nan=True), f"Values do not match: {q} != {mantissa}"
+        assert _xp.allclose(q, mantissa, equal_nan=True), f"Values do not match: {q} != {mantissa}"
     else:
         assert isinstance(unit, Unit), f"Expected a Unit, but got {unit}."
         q = _to_quantity(q)
         assert have_same_dim(get_dim(q), unit), f"Dimension mismatch: ({get_dim(q)}) ({get_dim(unit)})"
-        if not jnp.allclose(q.to_decimal(unit), mantissa, equal_nan=True):
+        if not _xp.allclose(q.to_decimal(unit), mantissa, equal_nan=True):
             raise AssertionError(f"Values do not match: {q.to_decimal(unit)} != {mantissa}")

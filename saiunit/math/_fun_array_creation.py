@@ -17,10 +17,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import (Union, Optional, List, Any, Tuple)
 
-import jax
-import jax.numpy as jnp
+from saiunit._jax_compat import jax, jnp, Array
 import numpy as np
-from jax import Array
 
 from saiunit._backend import get_backend, get_default_backend
 from saiunit._base_dimension import UnitMismatchError

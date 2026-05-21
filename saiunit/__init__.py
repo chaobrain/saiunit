@@ -54,15 +54,13 @@ Examples
     True
 """
 
-from . import autograd
 from ._matplotlib_compat import enable_matplotlib_support
 from . import constants
 from . import fft
-from . import lax
 from . import linalg
 from . import math
-from . import sparse
 from . import typing
+from ._jax_compat import HAS_JAX as _HAS_JAX
 from ._base_decorators import assign_units, check_dims, check_units
 from ._base_dimension import (
     DIMENSIONLESS,
@@ -221,3 +219,35 @@ __all__ = [
               'molar_mass_constant',
           ] + _common_all + _std_units_all + _constants_all
 del _common_all, _std_units_all, _constants_all
+
+# ---------------------------------------------------------------------------
+# Lazy submodule loading for JAX-only features.
+#
+# ``autograd``, ``lax`` and ``sparse`` use JAX primitives that have no NumPy
+# equivalent. Importing them eagerly would force a hard JAX dependency on
+# every ``import saiunit`` call. Instead, expose them through a module-level
+# ``__getattr__``: the first attribute access triggers the real import and,
+# if JAX is missing, raises :class:`~saiunit._exceptions.BackendError` with
+# an actionable install hint.
+# ---------------------------------------------------------------------------
+
+_JAX_ONLY_SUBMODULES = ("autograd", "lax", "sparse")
+__all__ = __all__ + ["autograd", "lax", "sparse"]
+
+
+def __getattr__(name):
+    if name in _JAX_ONLY_SUBMODULES:
+        if not _HAS_JAX:
+            from ._exceptions import BackendError
+            raise BackendError(
+                f"saiunit.{name} requires JAX. Install with: pip install saiunit[jax]"
+            )
+        import importlib
+        mod = importlib.import_module(f"saiunit.{name}")
+        globals()[name] = mod
+        return mod
+    raise AttributeError(f"module 'saiunit' has no attribute {name!r}")
+
+
+def __dir__():
+    return sorted(set(__all__) | set(globals()))

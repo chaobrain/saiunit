@@ -1,6 +1,4 @@
 numpy
-jax
-jaxlib
 typing_extensions
 array_api_compat
-
+opt_einsum

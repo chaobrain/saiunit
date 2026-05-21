@@ -36,12 +36,14 @@ from types import ModuleType
 from typing import Iterator, Literal, Optional
 
 import array_api_compat.numpy as _numpy_xp
-import jax
-import jax.numpy as _jax_xp
-import jax.numpy as jnp
 import numpy as np
 
 from saiunit._exceptions import BackendError
+from saiunit._jax_compat import HAS_JAX, jax, jnp
+
+# Local alias kept for backwards compatibility with callers that reference
+# ``_jax_xp`` directly. ``None`` when JAX is not installed.
+_jax_xp = jnp
 
 
 @functools.lru_cache(maxsize=None)
@@ -73,7 +75,7 @@ __all__ = [
 BackendName = Literal["numpy", "jax", "cupy", "torch", "dask", "ndonnx"]
 
 _default_backend: ContextVar[Optional[BackendName]] = ContextVar(
-    "saiunit_default_backend", default=None
+    "saiunit_default_backend", default=("jax" if HAS_JAX else "numpy")
 )
 
 
@@ -84,11 +86,17 @@ def is_numpy_array(x) -> bool:
     ``numpy.int32``, …) — reductions like ``np.linalg.norm([3., 4.])`` return
     a numpy scalar, and for backend-routing purposes that's NumPy too.
     """
-    return isinstance(x, (np.ndarray, np.generic)) and not isinstance(x, jax.Array)
+    if not isinstance(x, (np.ndarray, np.generic)):
+        return False
+    if HAS_JAX and isinstance(x, jax.Array):
+        return False
+    return True
 
 
 def is_jax_array(x) -> bool:
-    """Return True if ``x`` is a ``jax.Array``."""
+    """Return True if ``x`` is a ``jax.Array``. False if JAX is not installed."""
+    if not HAS_JAX:
+        return False
     return isinstance(x, jax.Array)
 
 
@@ -135,12 +143,18 @@ def set_default_backend(name: Optional[BackendName]) -> None:
     Parameters
     ----------
     name : {'numpy', 'jax', 'cupy', 'torch', None}
-        Pass ``None`` to clear the default (JAX wins on tie-breaker).
+        Pass ``None`` to clear the default. With no default, the tie-breaker
+        prefers JAX when installed and falls back to NumPy otherwise.
     """
     if name not in ("numpy", "jax", "cupy", "torch", "dask", "ndonnx", None):
         raise ValueError(
             f"default backend must be 'numpy', 'jax', 'cupy', 'torch', 'dask', "
             f"'ndonnx', or None; got {name!r}"
+        )
+    if name == "jax" and not HAS_JAX:
+        raise BackendError(
+            "jax backend requested but jax is not installed. "
+            "Install with: pip install saiunit[jax]"
         )
     _default_backend.set(name)
 
@@ -152,6 +166,11 @@ def using_backend(name: BackendName) -> Iterator[None]:
         raise ValueError(
             f"backend must be 'numpy', 'jax', 'cupy', 'torch', 'dask', or 'ndonnx'; "
             f"got {name!r}"
+        )
+    if name == "jax" and not HAS_JAX:
+        raise BackendError(
+            "jax backend requested but jax is not installed. "
+            "Install with: pip install saiunit[jax]"
         )
     token = _default_backend.set(name)
     try:
@@ -171,6 +190,11 @@ def _xp_for(name: BackendName) -> ModuleType:
     if name == "numpy":
         mod = _numpy_xp
     elif name == "jax":
+        if not HAS_JAX:
+            raise BackendError(
+                "jax backend requested but jax is not installed. "
+                "Install with: pip install saiunit[jax]"
+            )
         mod = _jax_xp
     elif name == "cupy":
         if _try_import("cupy") is None:
@@ -240,7 +264,9 @@ def get_backend(*arrays_or_quantities) -> ModuleType:
     default = _default_backend.get()
     if default is not None:
         return _xp_for(default)
-    return _xp_for("jax")
+    # Tie-breaker: prefer JAX when installed, fall back to NumPy otherwise so
+    # that the package remains usable without the [jax] extra.
+    return _xp_for("jax" if HAS_JAX else "numpy")
 
 
 _NUMPY_TO_TORCH_DTYPE = {
@@ -286,6 +312,11 @@ def to_backend(x, name: BackendName, **kwargs):
             return x.unwrap_numpy()
         return np.asarray(x)
     if name == "jax":
+        if not HAS_JAX:
+            raise BackendError(
+                "jax backend requested but jax is not installed. "
+                "Install with: pip install saiunit[jax]"
+            )
         if kwargs:
             raise TypeError(f"to_backend(name='jax') does not accept kwargs; got {sorted(kwargs)}")
         if is_jax_array(x):

@@ -28,13 +28,21 @@ So f'(0) = 1/2.
 from math import factorial
 from typing import Optional
 
-import jax.numpy as jnp
-from jax import core
-from jax.interpreters import ad
-from jax.interpreters import batching
-from jax.interpreters import mlir
+from saiunit._jax_compat import HAS_JAX, jnp, require_jax
 
-from saiunit._compatible_import import Primitive
+if HAS_JAX:
+    from jax import core
+    from jax.interpreters import ad
+    from jax.interpreters import batching
+    from jax.interpreters import mlir
+
+    from saiunit._compatible_import import Primitive
+else:
+    core = None
+    ad = None
+    batching = None
+    mlir = None
+    Primitive = None
 
 __all__ = ['exprel', 'set_exprel_order']
 
@@ -349,6 +357,7 @@ def exprel(x, /, order: int = 2):
         >>> exprel(jnp.array([0.0, 1.0, -1.0]))
         Array([1.        , 1.7182819 , 0.63212055], dtype=float32)
     """
+    require_jax("saiunit.math.exprel (custom JAX primitive)")
     x = jnp.asarray(x)
     return exprel_p.bind(x, order=order)
 
@@ -403,20 +412,23 @@ def _exprel_lowering(ctx, x, *, order):
     return mlir.lower_fun(impl_with_order, multiple_results=False)(ctx, x)
 
 
-# Define the primitive
-exprel_p = Primitive("exprel")
-exprel_p.def_impl(_exprel_impl)
-exprel_p.def_abstract_eval(_exprel_abstract_eval)
+if HAS_JAX:
+    # Define the primitive
+    exprel_p = Primitive("exprel")
+    exprel_p.def_impl(_exprel_impl)
+    exprel_p.def_abstract_eval(_exprel_abstract_eval)
 
-# Register JVP (forward-mode AD)
-ad.primitive_jvps[exprel_p] = _exprel_jvp
+    # Register JVP (forward-mode AD)
+    ad.primitive_jvps[exprel_p] = _exprel_jvp
 
-# Register transpose rule for reverse-mode AD
-# Note: For elementwise operations, the transpose of df/dx * tangent is df/dx * cotangent
-ad.primitive_transposes[exprel_p] = _exprel_transpose
+    # Register transpose rule for reverse-mode AD
+    # Note: For elementwise operations, the transpose of df/dx * tangent is df/dx * cotangent
+    ad.primitive_transposes[exprel_p] = _exprel_transpose
 
-# Register batching rule for vmap
-batching.primitive_batchers[exprel_p] = _exprel_batching
+    # Register batching rule for vmap
+    batching.primitive_batchers[exprel_p] = _exprel_batching
 
-# Register MLIR lowering for JIT compilation
-mlir.register_lowering(exprel_p, _exprel_lowering)
+    # Register MLIR lowering for JIT compilation
+    mlir.register_lowering(exprel_p, _exprel_lowering)
+else:
+    exprel_p = None

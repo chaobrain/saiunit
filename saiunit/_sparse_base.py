@@ -19,8 +19,9 @@ import math
 import numbers
 from typing import Sequence, Union
 
-import jax
 import numpy as np
+
+from ._jax_compat import Tracer as _Tracer
 
 __all__ = [
     "SparseMatrix"
@@ -37,7 +38,7 @@ def _same_sparsity_pattern(a, b) -> bool:
     """
     if a is b:
         return True
-    if isinstance(a, jax.core.Tracer) or isinstance(b, jax.core.Tracer):
+    if isinstance(a, _Tracer) or isinstance(b, _Tracer):
         return False
     a_shape = getattr(a, "shape", None)
     b_shape = getattr(b, "shape", None)

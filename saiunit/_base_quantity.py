@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+from __future__ import annotations
+
 import functools
 import numbers
 import operator
@@ -21,12 +23,22 @@ from collections.abc import Callable, Sequence
 from copy import deepcopy
 from typing import Any
 
-import jax
-import jax.numpy as jnp
 import numpy as np
-from jax.tree_util import register_pytree_node_class
 
 from ._backend import get_backend, is_jax_array, is_numpy_array
+from ._jax_compat import (
+    HAS_JAX,
+    jax,
+    jnp,
+    Array as _JaxArray,
+    ArrayLike as _JaxArrayLike,
+    DTypeLike as _JaxDTypeLike,
+    canonicalize_dtype as _canonicalize_dtype,
+    ensure_compile_time_eval as _ensure_compile_time_eval,
+    register_pytree_node_class,
+    result_type as _result_type,
+    tree as _jtree,
+)
 from ._base_dimension import Dimension, UnitMismatchError, _is_tracer
 from ._base_getters import (
     get_dim,
@@ -55,6 +67,19 @@ StaticScalar = (
 PyTree = Any
 _all_slice = slice(None, None, None)
 compat_with_equinox = False
+
+
+def _xp_attr(name: str):
+    """Return ``jnp.<name>`` if JAX is installed, else ``np.<name>``.
+
+    Used at class-body time to wrap ``Quantity`` reduction methods (``sum``,
+    ``mean``, …). Resolved once at import; the resulting callable handles
+    both NumPy- and JAX-backed mantissas correctly because both libraries
+    accept the same argument signatures for these reductions.
+    """
+    if HAS_JAX:
+        return getattr(jnp, name)
+    return getattr(np, name)
 
 
 def compatible_with_equinox(mode: bool = True):
@@ -235,9 +260,11 @@ def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
         first_unit = units[0]
         if not all(first_unit.has_same_dim(unit) for unit in units):
             raise TypeError(f"All elements must have the same units, but got {units}")
-        return jnp.asarray(_zoom_values_with_units(values, units)), first_unit
+        _asarray = jnp.asarray if HAS_JAX else np.asarray
+        return _asarray(_zoom_values_with_units(values, units)), first_unit
     else:
-        return jnp.asarray(values), UNITLESS
+        _asarray = jnp.asarray if HAS_JAX else np.asarray
+        return _asarray(values), UNITLESS
 
 
 def _process_list_with_units(value: list) -> tuple[jax.typing.ArrayLike, Unit]:
@@ -278,7 +305,7 @@ def _is_concrete_zero(mantissa) -> bool:
         return False
     if isinstance(mantissa, (int, float, complex)):
         return mantissa == 0
-    if isinstance(mantissa, (np.ndarray, jax.Array, np.generic)):
+    if isinstance(mantissa, (np.ndarray, _JaxArray, np.generic)):
         try:
             arr = np.asarray(mantissa)
         except Exception:
@@ -335,6 +362,9 @@ def _scatter(mantissa, index, value, op: str):
         else:
             raise ValueError(f"unknown scatter op: {op!r}")
         return out
+    if not HAS_JAX:
+        from saiunit._jax_compat import require_jax
+        require_jax("functional in-place updates on non-NumPy mantissas")
     arr = jnp.asarray(mantissa)
     at = arr.at[index]
     return getattr(at, op)(value)
@@ -524,7 +554,7 @@ class Quantity:
         # JIT trace it forces constant mantissas (lists, scalars, parse_unit
         # output) through eager evaluation so they are baked into the
         # traced graph rather than promoted to tracers.
-        with jax.ensure_compile_time_eval():
+        with _ensure_compile_time_eval():
 
             # String-based unit: Quantity(1.0, "mV")
             if isinstance(unit, str):
@@ -555,7 +585,7 @@ class Quantity:
                 default = get_default_backend() or "jax"
                 xp = _xp_for(default)
                 # ndonnx.asarray can't infer dtype from a JAX array; route via numpy.
-                if default == "ndonnx" and isinstance(mantissa, jax.Array):
+                if default == "ndonnx" and isinstance(mantissa, _JaxArray):
                     mantissa = np.asarray(mantissa)
                 if dtype is not None:
                     mantissa = xp.asarray(mantissa, dtype=dtype)
@@ -571,16 +601,16 @@ class Quantity:
                 mantissa = mantissa.in_unit(unit)
                 mantissa = mantissa.mantissa
 
-            elif isinstance(mantissa, (np.ndarray, jax.Array)):
+            elif isinstance(mantissa, (np.ndarray, _JaxArray)):
                 # Preserve the input backend: NumPy stays NumPy, JAX stays JAX.
                 if dtype is not None and mantissa.dtype != dtype:
-                    if isinstance(mantissa, jax.Array):
+                    if isinstance(mantissa, _JaxArray):
                         mantissa = jnp.asarray(mantissa, dtype=dtype)
                     else:
                         mantissa = mantissa.astype(dtype)
                 # skip if dtype matches or is not provided
 
-            elif isinstance(mantissa, (jnp.number, numbers.Number)):
+            elif isinstance(mantissa, ((jnp.number,) if HAS_JAX else ()) + (numbers.Number,)):
                 pass  # keep as-is; jnp.array conversion deferred to use-site
 
             else:
@@ -763,17 +793,17 @@ class Quantity:
         if is_numpy_array(self_value):
             # Coerce input into a NumPy array to match self's backend.
             mantissa = np.asarray(mantissa, dtype=self.dtype)
-        elif isinstance(mantissa, jax.Array):
+        elif isinstance(mantissa, _JaxArray):
             pass
         else:
-            mantissa = jnp.asarray(mantissa, dtype=self.dtype)
+            mantissa = jnp.asarray(mantissa, dtype=self.dtype) if HAS_JAX else np.asarray(mantissa, dtype=self.dtype)
         # check
         if mantissa.shape != self_value.shape:
             raise ValueError(f"The shape of the original data is {self_value.shape}, "
                              f"while we got {mantissa.shape}.")
         # Dtype check: use numpy-canonical comparison for numpy-backed Quantity,
         # otherwise apply jax's result-type (which may downcast under x32 mode).
-        expected_dtype = self_value.dtype if is_numpy_array(self_value) else jax.dtypes.result_type(self_value)
+        expected_dtype = self_value.dtype if is_numpy_array(self_value) else _result_type(self_value)
         if mantissa.dtype != expected_dtype:
             raise ValueError(f"The dtype of the original data is {expected_dtype}, "
                              f"while we got {mantissa.dtype}.")
@@ -1085,13 +1115,14 @@ class Quantity:
         from saiunit._backend import is_dask_array
         if is_dask_array(m):
             return repr(m)
-        if isinstance(m, (jax.Array, np.ndarray)):
+        if isinstance(m, (_JaxArray, np.ndarray)):
             value = m
         else:
             try:
                 # jnp default dtype mirrors JAX's x32 mode so scalar
-                # representations match the historical behavior.
-                value = jnp.asarray(m)
+                # representations match the historical behavior. Fall back
+                # to NumPy when JAX isn't installed.
+                value = jnp.asarray(m) if HAS_JAX else np.asarray(m)
             except TypeError:
                 value = m
 
@@ -1203,11 +1234,11 @@ class Quantity:
             if isinstance(a, bool):
                 return bool
             elif isinstance(a, int):
-                return jax.dtypes.canonicalize_dtype(int)
+                return _canonicalize_dtype(int)
             elif isinstance(a, float):
-                return jax.dtypes.canonicalize_dtype(float)
+                return _canonicalize_dtype(float)
             elif isinstance(a, complex):
-                return jax.dtypes.canonicalize_dtype(complex)
+                return _canonicalize_dtype(complex)
             else:
                 raise TypeError(f'Can not get dtype of {a}.')
 
@@ -1527,7 +1558,7 @@ class Quantity:
         value = value.in_unit(self.unit)
 
         # check index
-        index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
+        index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # update
         self_value = _scatter(self.mantissa, index, value.mantissa, "set")
@@ -1573,7 +1604,7 @@ class Quantity:
         value = value.in_unit(self.unit)
 
         # check index
-        index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
+        index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-add
         self_value = _scatter(self.mantissa, index, value.mantissa, "add")
@@ -1659,7 +1690,7 @@ class Quantity:
             )
 
         # check index
-        index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
+        index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-mul
         self_value = _scatter(self.mantissa, index, value.mantissa, "mul")
@@ -1713,7 +1744,7 @@ class Quantity:
             )
 
         # check index
-        index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
+        index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-div
         self_value = _scatter(self.mantissa, index, value.mantissa, "divide")
@@ -1760,7 +1791,7 @@ class Quantity:
         value = value.in_unit(self.unit)
 
         # check index
-        index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
+        index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-max
         self_value = _scatter(self.mantissa, index, value.mantissa, "max")
@@ -1807,7 +1838,7 @@ class Quantity:
         value = value.in_unit(self.unit)
 
         # check index
-        index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
+        index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
 
         # scatter-min
         self_value = _scatter(self.mantissa, index, value.mantissa, "min")
@@ -2223,25 +2254,25 @@ class Quantity:
     #      NumPy methods      #
     # ----------------------- #
 
-    all = _wrap_function_remove_unit(jnp.all)
-    any = _wrap_function_remove_unit(jnp.any)
-    nonzero = _wrap_function_remove_unit(jnp.nonzero)
-    argmax = _wrap_function_remove_unit(jnp.argmax)
-    argmin = _wrap_function_remove_unit(jnp.argmin)
-    argsort = _wrap_function_remove_unit(jnp.argsort)
+    all = _wrap_function_remove_unit(_xp_attr('all'))
+    any = _wrap_function_remove_unit(_xp_attr('any'))
+    nonzero = _wrap_function_remove_unit(_xp_attr('nonzero'))
+    argmax = _wrap_function_remove_unit(_xp_attr('argmax'))
+    argmin = _wrap_function_remove_unit(_xp_attr('argmin'))
+    argsort = _wrap_function_remove_unit(_xp_attr('argsort'))
 
-    var = _wrap_function_change_unit(jnp.var, lambda val, unit: unit ** 2)
+    var = _wrap_function_change_unit(_xp_attr('var'), lambda val, unit: unit ** 2)
 
-    std = _wrap_function_keep_unit(jnp.std)
-    sum = _wrap_function_keep_unit(jnp.sum)
-    trace = _wrap_function_keep_unit(jnp.trace)
-    cumsum = _wrap_function_keep_unit(jnp.cumsum)
-    diagonal = _wrap_function_keep_unit(jnp.diagonal)
-    max = _wrap_function_keep_unit(jnp.max)
-    mean = _wrap_function_keep_unit(jnp.mean)
-    min = _wrap_function_keep_unit(jnp.min)
-    ptp = _wrap_function_keep_unit(jnp.ptp)
-    ravel = _wrap_function_keep_unit(jnp.ravel)
+    std = _wrap_function_keep_unit(_xp_attr('std'))
+    sum = _wrap_function_keep_unit(_xp_attr('sum'))
+    trace = _wrap_function_keep_unit(_xp_attr('trace'))
+    cumsum = _wrap_function_keep_unit(_xp_attr('cumsum'))
+    diagonal = _wrap_function_keep_unit(_xp_attr('diagonal'))
+    max = _wrap_function_keep_unit(_xp_attr('max'))
+    mean = _wrap_function_keep_unit(_xp_attr('mean'))
+    min = _wrap_function_keep_unit(_xp_attr('min'))
+    ptp = _wrap_function_keep_unit(_xp_attr('ptp'))
+    ravel = _wrap_function_keep_unit(_xp_attr('ravel'))
 
     def __deepcopy__(self, memodict: dict):
         return Quantity(
@@ -3531,13 +3562,15 @@ class Quantity:
         return cls(*values, unit=unit)
 
     def cuda(self, device=None) -> 'Quantity':
-        device = jax.devices('cuda')[0] if device is None else device
-        self.update_mantissa(jax.device_put(self.mantissa, device))
+        from saiunit._jax_compat import device_put as _device_put, devices as _devices
+        device = _devices('cuda')[0] if device is None else device
+        self.update_mantissa(_device_put(self.mantissa, device))
         return self
 
     def cpu(self, device=None) -> 'Quantity':
-        device = jax.devices('cpu')[0] if device is None else device
-        self.update_mantissa(jax.device_put(self.mantissa, device))
+        from saiunit._jax_compat import device_put as _device_put, devices as _devices
+        device = _devices('cpu')[0] if device is None else device
+        self.update_mantissa(_device_put(self.mantissa, device))
         return self
 
     # dtype exchanging #
@@ -3592,7 +3625,7 @@ class _IndexUpdateRef:
     __slots__ = ("quantity", "index", "mantissa_at", "unit")
 
     def __init__(self, index, quantity: Quantity):
-        self.index = jax.tree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
+        self.index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
         self.quantity = quantity
         # ``.at`` indexed-update is JAX-only. For numpy-backed Quantity the user
         # must call .to_jax() first; this matches the behavior documented for

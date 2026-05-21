@@ -15,10 +15,16 @@
 
 # -*- coding: utf-8 -*-
 
+"""Cross-version JAX compatibility shims.
+
+These helpers paper over churn in the ``jax.core`` / ``jax.extend`` / ``jax.util``
+namespaces across JAX versions. When JAX is not installed, calling any of these
+symbols raises :class:`BackendError`; importing this module is still safe.
+"""
+
 from typing import TypeVar, Iterable, Callable
 
-import jax
-from jax.extend import linear_util
+from saiunit._jax_compat import HAS_JAX, jax, require_jax
 
 __all__ = [
     'safe_map',
@@ -33,63 +39,91 @@ T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
 
-if jax.__version_info__ < (0, 4, 38):
-    from jax.core import Primitive
-else:
-    from jax.extend.core import Primitive
 
-# concrete_or_error: still lives in jax.core for now; provide a shim if removed.
-try:
-    from jax.core import concrete_or_error
-except ImportError:
-    def concrete_or_error(typ, val, context=""):
-        """Minimal shim used when jax.core.concrete_or_error is unavailable.
+if HAS_JAX:
+    from jax.extend import linear_util
 
-        Raises TypeError for traced/abstract values so callers don't silently
-        receive a tracer where they expected a static Python value.
-        """
-        from jax.core import Tracer
-        if isinstance(val, Tracer):
-            raise TypeError(
-                f"Expected a concrete value but got a JAX tracer ({val!r}). {context}"
-            )
-        if typ is None:
-            return val
-        return typ(val)
-
-
-def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):
-    if jax.__version_info__ < (0, 6, 0):
-        f = linear_util.wrap_init(fun, kwargs)
+    if jax.__version_info__ < (0, 4, 38):
+        from jax.core import Primitive
     else:
-        from jax.api_util import debug_info
-        f = linear_util.wrap_init(fun, kwargs, debug_info=debug_info(name, fun, args, kwargs))
-    return f
+        from jax.extend.core import Primitive
+
+    # concrete_or_error: still lives in jax.core for now; provide a shim if removed.
+    try:
+        from jax.core import concrete_or_error
+    except ImportError:
+        def concrete_or_error(typ, val, context=""):
+            """Minimal shim used when jax.core.concrete_or_error is unavailable.
+
+            Raises TypeError for traced/abstract values so callers don't silently
+            receive a tracer where they expected a static Python value.
+            """
+            from jax.core import Tracer
+            if isinstance(val, Tracer):
+                raise TypeError(
+                    f"Expected a concrete value but got a JAX tracer ({val!r}). {context}"
+                )
+            if typ is None:
+                return val
+            return typ(val)
 
 
-if jax.__version_info__ < (0, 6, 0):
-    from jax.util import safe_map, unzip2
+    def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):
+        if jax.__version_info__ < (0, 6, 0):
+            f = linear_util.wrap_init(fun, kwargs)
+        else:
+            from jax.api_util import debug_info
+            f = linear_util.wrap_init(fun, kwargs, debug_info=debug_info(name, fun, args, kwargs))
+        return f
+
+
+    if jax.__version_info__ < (0, 6, 0):
+        from jax.util import safe_map, unzip2
+
+    else:
+
+        def safe_map(f, *args):
+            args = list(map(list, args))
+            n = len(args[0])
+            for arg in args[1:]:
+                if len(arg) != n:
+                    raise ValueError(f'safe_map: length mismatch: {list(map(len, args))}')
+            return list(map(f, *args))
+
+
+        def unzip2(xys: Iterable[tuple[T1, T2]]) -> tuple[tuple[T1, ...], tuple[T2, ...]]:
+            """
+            Unzip sequence of length-2 tuples into two tuples.
+            """
+            # Note: we deliberately don't use zip(*xys) because it is lazily evaluated,
+            # is too permissive about inputs, and does not guarantee a length-2 output.
+            xs: list[T1] = []
+            ys: list[T2] = []
+            for x, y in xys:
+                xs.append(x)
+                ys.append(y)
+            return tuple(xs), tuple(ys)
 
 else:
+    # No-JAX fallbacks: this module is only imported by JAX-using subpackages
+    # (autograd, lax, sparse), so reaching these stubs at runtime means the
+    # caller went past the import-time gate in saiunit/__init__.py — give the
+    # same actionable install hint.
 
-    def safe_map(f, *args):
-        args = list(map(list, args))
-        n = len(args[0])
-        for arg in args[1:]:
-            if len(arg) != n:
-                raise ValueError(f'safe_map: length mismatch: {list(map(len, args))}')
-        return list(map(f, *args))
+    class Primitive:  # type: ignore[no-redef]
+        """Placeholder for ``jax.extend.core.Primitive`` (raises on construction)."""
 
+        def __init__(self, *args, **kwargs):
+            require_jax("jax primitives")
 
-    def unzip2(xys: Iterable[tuple[T1, T2]]) -> tuple[tuple[T1, ...], tuple[T2, ...]]:
-        """
-        Unzip sequence of length-2 tuples into two tuples.
-        """
-        # Note: we deliberately don't use zip(*xys) because it is lazily evaluated,
-        # is too permissive about inputs, and does not guarantee a length-2 output.
-        xs: list[T1] = []
-        ys: list[T2] = []
-        for x, y in xys:
-            xs.append(x)
-            ys.append(y)
-        return tuple(xs), tuple(ys)
+    def concrete_or_error(typ, val, context=""):  # type: ignore[no-redef]
+        require_jax("concrete_or_error")
+
+    def wrap_init(fun, args, kwargs, name):  # type: ignore[no-redef]
+        require_jax("wrap_init")
+
+    def safe_map(f, *args):  # type: ignore[no-redef]
+        require_jax("safe_map")
+
+    def unzip2(xys):  # type: ignore[no-redef]
+        require_jax("unzip2")

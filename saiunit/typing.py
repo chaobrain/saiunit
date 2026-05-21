@@ -92,8 +92,9 @@ import functools
 import inspect
 from typing import Annotated, Any, Union, get_type_hints, get_origin
 
-import jax
 import numpy as np
+
+from ._jax_compat import Array as _JaxArray
 
 from ._base_dimension import UnitMismatchError, DimensionMismatchError
 from ._base_dimension import get_or_create_dimension
@@ -393,7 +394,7 @@ QuantityLike = Union[
     complex,
     np.number,
     np.ndarray,
-    jax.Array,
+    _JaxArray,
     "Quantity",
 ]
 

@@ -87,8 +87,8 @@ in one library end-to-end or convert with a single method call.
 
 | Backend  | Mantissa            | Install                  | When to use                                 |
 |----------|---------------------|--------------------------|---------------------------------------------|
-| `jax`    | `jax.Array`         | core (always installed)  | default; autograd, JIT, vmap, accelerators  |
 | `numpy`  | `numpy.ndarray`     | core (always installed)  | eager CPU, scipy/pandas/sklearn interop     |
+| `jax`    | `jax.Array`         | `saiunit[jax]` (or `[cpu]`/`[cuda12]`/`[cuda13]`/`[tpu]`) | autograd, JIT, vmap, accelerators           |
 | `cupy`   | `cupy.ndarray`      | `saiunit[cupy]`          | NVIDIA GPU arrays                           |
 | `torch`  | `torch.Tensor`      | `saiunit[torch]`         | PyTorch models, torch autograd              |
 | `dask`   | `dask.array.Array`  | `saiunit[dask]`          | out-of-core / parallel, lazy compute        |
@@ -105,18 +105,22 @@ for the full story.
 
 ## Installation
 
-``saiunit`` has been well tested on ``python>=3.10`` + ``jax>=0.4.30``
-environments, and can be installed on Windows, Linux, and MacOS.
+``saiunit`` has been well tested on ``python>=3.10`` and can be installed on
+Windows, Linux, and MacOS. The core package depends only on NumPy. JAX is
+optional — install it to enable the ``saiunit.autograd``, ``saiunit.lax``,
+and ``saiunit.sparse`` submodules, the custom ``exprel`` primitive, and the
+``"jax"`` backend.
 
-The core install includes both JAX and NumPy backends:
+Install the NumPy-only core:
 
 ```bash
 pip install saiunit --upgrade
 ```
 
-Pick the JAX accelerator build that matches your hardware:
+Or pull in JAX with the accelerator build that matches your hardware:
 
 ```bash
+pip install -U saiunit[jax]      # plain JAX
 pip install -U saiunit[cpu]      # pinned JAX CPU wheels
 pip install -U saiunit[cuda12]   # JAX on CUDA 12
 pip install -U saiunit[cuda13]   # JAX on CUDA 13
@@ -130,10 +134,13 @@ pip install -U saiunit[cupy]     # CuPy (NVIDIA GPU)
 pip install -U saiunit[torch]    # PyTorch
 pip install -U saiunit[dask]     # Dask
 pip install -U saiunit[ndonnx]   # ndonnx
-pip install -U saiunit[all]      # cupy + torch + dask + ndonnx
+pip install -U saiunit[all]      # jax + cupy + torch + dask + ndonnx
 ```
 
-The four optional extras are independent and can be combined freely.
+Without JAX, the NumPy backend is auto-selected and any access to a
+JAX-only submodule (``saiunit.autograd``, ``saiunit.lax``, ``saiunit.sparse``)
+raises ``saiunit.BackendError`` with an install hint. The optional extras are
+independent and can be combined freely.
 
 To install the latest version from source:
 

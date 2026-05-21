@@ -22,8 +22,7 @@ import operator
 from collections import OrderedDict
 from typing import Set, Tuple, List, Dict, Union, Callable, Optional, Sequence, TypeVar
 
-import jax
-import jax.numpy as jnp
+from saiunit._jax_compat import jax, jnp, ArrayLike as _ArrayLike
 import numpy as np
 import opt_einsum
 
@@ -46,7 +45,7 @@ __all__ = [
     'einsum',
 ]
 
-ReductionCallable = Callable[[jax.typing.ArrayLike, Tuple[int, ...]], jax.typing.ArrayLike]
+ReductionCallable = Callable[[_ArrayLike, Tuple[int, ...]], _ArrayLike]
 Reduction = Union[str, ReductionCallable]
 
 _reductions = ("min", "max", "sum", "mean", "prod", "any", "all")

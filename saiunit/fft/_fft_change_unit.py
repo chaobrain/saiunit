@@ -16,11 +16,15 @@ from __future__ import annotations
 
 from typing import Callable, Union, Sequence
 
-import jax
-import jax.numpy as jnp
+from saiunit._jax_compat import HAS_JAX, jax, jnp
 import numpy as np
-from jax.numpy import fft as jnpfft
-from jaxlib import xla_client
+
+if HAS_JAX:
+    from jax.numpy import fft as jnpfft
+    from jaxlib import xla_client
+else:
+    import numpy.fft as jnpfft  # type: ignore[assignment]
+    xla_client = None  # type: ignore[assignment]
 
 from saiunit import _unit_common as uc
 from saiunit._base_dimension import get_or_create_dimension
