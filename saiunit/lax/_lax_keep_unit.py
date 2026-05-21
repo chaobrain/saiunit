@@ -236,7 +236,7 @@ def gather(
 
     :func:`gather` is a low-level operator with complicated semantics, and most JAX
     users will never need to call it directly. Instead, you should prefer using
-    `Numpy-style indexing`_, and/or :func:`jax.numpy.ndarray.at`, perhaps in combination
+    NumPy-style indexing, and/or :func:`jax.numpy.ndarray.at`, perhaps in combination
     with :func:`jax.vmap`.
 
     Args:

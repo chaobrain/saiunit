@@ -96,6 +96,7 @@ from ._base_getters import (
     have_same_dim,
     is_dimensionless,
     is_scalar_type,
+    is_unit_equal_math,
     is_unitless,
     maybe_decimal,
     split_mantissa_unit,
@@ -186,6 +187,7 @@ __all__ = [
               'assert_quantity',
               'have_same_dim',
               'has_same_unit',
+              'is_unit_equal_math',
               'unit_scale_align_to_first',
               'array_with_unit',
 
