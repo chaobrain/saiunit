@@ -30,6 +30,8 @@ install it to enable the ``saiunit.autograd``, ``saiunit.lax``, and
 ``saiunit.sparse`` submodules, the custom ``exprel`` primitive, and the
 ``"jax"`` backend. Without JAX, the NumPy backend is selected automatically
 and the JAX-only submodules raise :class:`saiunit.BackendError` on access.
+The CuPy, PyTorch, Dask, and ndonnx backend extras are independent and can
+be combined.
 
 .. tab-set::
 
@@ -63,6 +65,38 @@ and the JAX-only submodules raise :class:`saiunit.BackendError` on access.
        .. code-block:: bash
 
           pip install -U saiunit[jax]
+
+    .. tab-item:: CuPy
+
+       .. code-block:: bash
+
+          pip install -U saiunit[cupy]
+
+    .. tab-item:: PyTorch
+
+       .. code-block:: bash
+
+          pip install -U saiunit[torch]
+
+    .. tab-item:: Dask
+
+       .. code-block:: bash
+
+          pip install -U saiunit[dask]
+
+    .. tab-item:: ndonnx
+
+       .. code-block:: bash
+
+          pip install -U saiunit[ndonnx]
+
+    .. tab-item:: All optional backends
+
+       .. code-block:: bash
+
+          pip install -U saiunit[all]
+
+See :doc:`backends/overview` for the full backend matrix and selection rules.
 
 ----
 
@@ -178,7 +212,20 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    :caption: Getting Started
 
    getting_started/quickstart.ipynb
-   getting_started/numpy_backend.md
+
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+   :caption: Backends
+
+   backends/overview.ipynb
+   backends/jax.ipynb
+   backends/numpy.ipynb
+   backends/cupy.ipynb
+   backends/torch.ipynb
+   backends/dask.ipynb
+   backends/ndonnx.ipynb
 
 
 .. toctree::

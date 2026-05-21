@@ -78,6 +78,31 @@ jax.vmap(f)(u.math.arange(0. * u.mV, 10. * u.mV, 1. * u.mV))
 
 
 
+## Multiple-backend support
+
+`saiunit` is **backend-agnostic**: a `Quantity` pairs a unit with an array
+mantissa, and that mantissa can live on any of the supported array libraries.
+Every unit-aware operation dispatches to the matching backend, so you can stay
+in one library end-to-end or convert with a single method call.
+
+| Backend  | Mantissa            | Install                  | When to use                                 |
+|----------|---------------------|--------------------------|---------------------------------------------|
+| `numpy`  | `numpy.ndarray`     | core (always installed)  | eager CPU, scipy/pandas/sklearn interop     |
+| `jax`    | `jax.Array`         | `saiunit[jax]` (or `[cpu]`/`[cuda12]`/`[cuda13]`/`[tpu]`) | autograd, JIT, vmap, accelerators           |
+| `cupy`   | `cupy.ndarray`      | `saiunit[cupy]`          | NVIDIA GPU arrays                           |
+| `torch`  | `torch.Tensor`      | `saiunit[torch]`         | PyTorch models, torch autograd              |
+| `dask`   | `dask.array.Array`  | `saiunit[dask]`          | out-of-core / parallel, lazy compute        |
+| `ndonnx` | `ndonnx.Array`      | `saiunit[ndonnx]`        | symbolic graph for ONNX export              |
+
+Select or override the backend explicitly with `u.using_backend(...)` or
+`u.set_default_backend(...)`; convert with `q.to_jax()` / `q.to_numpy()` /
+`q.to_cupy()` / `q.to_torch()` / `q.to_dask()` / `q.to_ndonnx()`. Requesting an
+uninstalled backend raises `saiunit.BackendError` with the install command —
+not a bare `ImportError`. See the
+[Backends documentation](https://saiunit.readthedocs.io/en/latest/backends/overview.html)
+for the full story.
+
+
 ## Installation
 
 ``saiunit`` has been well tested on ``python>=3.10`` and can be installed on
@@ -92,19 +117,30 @@ Install the NumPy-only core:
 pip install saiunit --upgrade
 ```
 
-Or pull in JAX as well (pick the variant matching your accelerator):
+Or pull in JAX with the accelerator build that matches your hardware:
 
 ```bash
-pip install -U "saiunit[jax]"     # plain JAX
-pip install -U "saiunit[cpu]"     # JAX with CPU XLA
-pip install -U "saiunit[cuda12]"  # JAX with CUDA 12
-pip install -U "saiunit[cuda13]"  # JAX with CUDA 13
-pip install -U "saiunit[tpu]"     # JAX with TPU
+pip install -U saiunit[jax]      # plain JAX
+pip install -U saiunit[cpu]      # pinned JAX CPU wheels
+pip install -U saiunit[cuda12]   # JAX on CUDA 12
+pip install -U saiunit[cuda13]   # JAX on CUDA 13
+pip install -U saiunit[tpu]      # JAX on TPU
+```
+
+Opt into additional array backends with the matching extra:
+
+```bash
+pip install -U saiunit[cupy]     # CuPy (NVIDIA GPU)
+pip install -U saiunit[torch]    # PyTorch
+pip install -U saiunit[dask]     # Dask
+pip install -U saiunit[ndonnx]   # ndonnx
+pip install -U saiunit[all]      # jax + cupy + torch + dask + ndonnx
 ```
 
 Without JAX, the NumPy backend is auto-selected and any access to a
 JAX-only submodule (``saiunit.autograd``, ``saiunit.lax``, ``saiunit.sparse``)
-raises ``saiunit.BackendError`` with an install hint.
+raises ``saiunit.BackendError`` with an install hint. The optional extras are
+independent and can be combined freely.
 
 To install the latest version from source:
 
