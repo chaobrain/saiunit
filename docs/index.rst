@@ -25,78 +25,13 @@ Compared to existing unit libraries, such as `Quantities <https://github.com/pyt
 Installation
 ^^^^^^^^^^^^
 
-The core package depends only on NumPy. JAX is an optional dependency:
-install it to enable the ``saiunit.autograd``, ``saiunit.lax``, and
-``saiunit.sparse`` submodules, the custom ``exprel`` primitive, and the
-``"jax"`` backend. Without JAX, the NumPy backend is selected automatically
-and the JAX-only submodules raise :class:`saiunit.BackendError` on access.
-The CuPy, PyTorch, Dask, and ndonnx backend extras are independent and can
-be combined.
+.. code-block:: bash
 
-.. tab-set::
+    pip install -U saiunit          # core, NumPy backend only
+    pip install -U saiunit[cpu]     # + JAX (CPU)
 
-    .. tab-item:: NumPy only (no JAX)
-
-       .. code-block:: bash
-
-          pip install -U saiunit
-
-    .. tab-item:: JAX (CPU)
-
-       .. code-block:: bash
-
-          pip install -U saiunit[cpu]
-
-    .. tab-item:: JAX (GPU/CUDA)
-
-       .. code-block:: bash
-
-          pip install -U saiunit[cuda12]
-          pip install -U saiunit[cuda13]
-
-    .. tab-item:: JAX (TPU)
-
-       .. code-block:: bash
-
-          pip install -U saiunit[tpu]
-
-    .. tab-item:: Plain JAX
-
-       .. code-block:: bash
-
-          pip install -U saiunit[jax]
-
-    .. tab-item:: CuPy
-
-       .. code-block:: bash
-
-          pip install -U saiunit[cupy]
-
-    .. tab-item:: PyTorch
-
-       .. code-block:: bash
-
-          pip install -U saiunit[torch]
-
-    .. tab-item:: Dask
-
-       .. code-block:: bash
-
-          pip install -U saiunit[dask]
-
-    .. tab-item:: ndonnx
-
-       .. code-block:: bash
-
-          pip install -U saiunit[ndonnx]
-
-    .. tab-item:: All optional backends
-
-       .. code-block:: bash
-
-          pip install -U saiunit[all]
-
-See :doc:`backends/overview` for the full backend matrix and selection rules.
+For GPU / TPU and other array backends (CuPy, PyTorch, Dask, ndonnx),
+see :doc:`getting_started/installation`.
 
 ----
 
@@ -211,6 +146,7 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    :maxdepth: 1
    :caption: Getting Started
 
+   getting_started/installation
    getting_started/quickstart.ipynb
 
 
