@@ -235,9 +235,11 @@ class CustomArray:
         if isinstance(data, np.ndarray):
             data = math.asarray(data)
 
-        # update
-        self_data = math.asarray(self.data)
-        self.data = self_data.at[index].set(data)
+        # Route through the unified scatter dispatcher so this works across
+        # every supported backend (numpy/jax/cupy/torch/dask) rather than
+        # assuming JAX-style ``.at[...]``.
+        from saiunit._scatter import scatter as _scatter_dispatch
+        self.data = _scatter_dispatch(self.data, index, data, "set")
 
     # ---------- #
     # operations #

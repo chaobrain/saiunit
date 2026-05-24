@@ -1,5 +1,97 @@
 # Release Notes
 
+## Version 0.3.0
+
+### Highlights
+
+``Quantity.at`` now works on every supported backend. Previously, indexed
+functional updates (``x.at[idx].set(...)``, ``.add(...)``, etc.) required a
+JAX-backed mantissa and raised ``BackendError`` for NumPy and the other
+backends, forcing users to call ``.to_jax()`` first. As of this release the
+same expression works directly on ``numpy``, ``jax``, ``cupy``, ``torch``, and
+``dask`` arrays, with documented scope limits for ``dask`` and a clean
+``BackendError`` for ``ndonnx``.
+
+### New features
+
+- **Multi-backend ``Quantity.at``.** All nine ``.at[idx].<op>(...)``
+  operations — ``get``, ``set``, ``add``, ``multiply``/``mul``,
+  ``divide``/``div``, ``power``, ``min``, ``max``, ``apply`` — work across
+  every supported backend. The unit-tracking semantics are unchanged: the
+  same dimension/magnitude checks fire regardless of backend, and the result
+  preserves the original mantissa backend (a torch-backed Quantity stays
+  torch, a dask-backed Quantity stays dask).
+- **Unified scatter dispatch (``saiunit._scatter``).** ``Quantity.at`` and
+  ``Quantity.__setitem__`` / ``scatter_add`` / ``scatter_mul`` /
+  ``scatter_div`` / ``scatter_max`` / ``scatter_min`` now all route through
+  one backend-aware module. This fixes a latent bug where the old in-line
+  ``_scatter`` helper silently called ``jnp.asarray`` on cupy, torch, dask,
+  and ndonnx mantissas.
+- **Emulated ``mode`` and ``fill_value`` on non-JAX backends.** JAX's
+  ``mode`` (``'promise_in_bounds'``/``'clip'``/``'drop'``/``'fill'``) and
+  ``fill_value`` arguments are emulated on ``numpy``/``cupy``/``torch`` for
+  scalar-int and 1D-integer-array indices, so the same code that uses
+  ``x.at[20].get(mode='fill', fill_value=-1 * u.mV)`` on JAX now runs
+  unchanged on NumPy. For more complex index expressions (slices, boolean
+  masks, multi-axis tuples) the native backend semantics apply — these
+  indices don't have an out-of-bounds notion to honor.
+
+### Backend-specific notes
+
+- **NumPy / CuPy:** repeated-index updates use ``np.<op>.at`` /
+  ``cupy.<op>.at`` so the JAX "all-updates-applied" semantics carry over.
+- **PyTorch:** ``add`` uses ``index_put_(accumulate=True)`` and matches JAX
+  for repeated indices. ``multiply``/``divide``/``min``/``max``/``apply`` use
+  gather + op + scatter and follow last-write-wins semantics for repeated
+  indices (one of the rare places torch's native semantics differ from JAX).
+- **Dask:** updates are expressed via ``da.where`` over a positional boolean
+  mask, so the task graph stays lazy and chunked. Supported index types:
+  scalar int, 1D integer array, slice, ellipsis, and same-shape boolean
+  mask. Multi-dim fancy integer indexing raises ``NotImplementedError`` —
+  call ``.to_numpy()`` first for those cases.
+- **ndonnx:** raises ``BackendError`` on every ``.at[...].set/get/...``
+  call. ndonnx builds a symbolic ONNX graph; it can't represent a functional
+  in-place update cleanly. Call ``.to_numpy()`` to materialize first.
+
+### Known limitations
+
+- ``mode`` emulation is best-effort on non-JAX backends for scalar-int and
+  1D-integer-array indices only. Slice/boolean/ellipsis indices ignore
+  ``mode`` because they cannot go out of bounds against a same-shape source.
+- ``dask`` does not yet support multi-dim fancy integer indexing under
+  ``.at``; use ``.to_numpy()`` for those patterns.
+
+### Backend-compatibility fixes
+
+A focused sweep through the rest of the dispatcher closed several silent
+JAX-coercion paths and replaced raw ``AttributeError`` failure modes with
+``BackendError``:
+
+- ``CustomArray.__setitem__`` no longer assumes JAX-style ``.at[idx].set(...)``;
+  it routes through the unified ``saiunit._scatter`` dispatcher so subclasses
+  with numpy / cupy / torch / dask mantissas work without a JAX install.
+- ``Quantity(mantissa, dtype=...)`` now honors ``dtype`` for cupy / torch /
+  dask / ndonnx mantissas. Previously the dtype kwarg was silently ignored
+  for those backends.
+- ``Quantity.mantissa`` setter coerces the new value to the *existing*
+  backend of the Quantity rather than silently lifting torch / cupy / dask /
+  ndonnx arrays to JAX.
+- ``_check_units_and_collect_values`` (the helper behind
+  ``Quantity([q1, q2, ...])``) honors ``set_default_backend()`` /
+  ``using_backend()`` instead of always landing on JAX when JAX is installed.
+- ``Quantity.strides`` / ``.flat`` / ``.T`` / ``.mT`` raise ``BackendError``
+  on lazy mantissas (dask, ndonnx) instead of silently calling
+  ``.compute()`` / ``.unwrap_numpy()`` on them.
+- ``saiunit.fft.fftn`` / ``ifftn`` / ``rfftn`` / ``irfftn`` no longer force
+  Python-scalar / list inputs through ``jnp.asarray`` for the input-ndim
+  probe.
+- ``saiunit.math`` activation functions (``relu``, ``sigmoid``, ``softplus``,
+  ``gelu``, …) now guard with ``require_jax_backend`` and raise a clean
+  ``BackendError`` on non-JAX inputs, instead of crashing with
+  ``AttributeError: 'NoneType' object has no attribute 'relu'`` when JAX
+  isn't installed or when called on a torch / cupy / dask mantissa.
+  ``leaky_relu`` is implemented via ``where`` and remains backend-agnostic.
+
 ## Version 0.2.2
 
 ### Highlights

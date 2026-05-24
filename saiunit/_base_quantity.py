@@ -48,6 +48,7 @@ from ._base_getters import (
     unit_scale_align_to_first,
 )
 from ._base_unit import Unit, UNITLESS
+from ._exceptions import BackendError
 from ._misc import maybe_custom_array_tree
 from ._sparse_base import SparseMatrix
 
@@ -253,6 +254,13 @@ def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
             values.append(item)
             units.append(None)
 
+    # Respect the active default backend rather than always falling to
+    # ``jnp.asarray`` when JAX is installed — otherwise a user inside
+    # ``using_backend("torch")`` would still get a JAX array out of
+    # ``Quantity([1*mV, 2*mV])``.
+    from saiunit._backend import _xp_for, get_default_backend
+    _xp = _xp_for(get_default_backend() or ("jax" if HAS_JAX else "numpy"))
+
     if len(units):
         # Normalize None (plain scalars) to UNITLESS so they are
         # compatible with explicitly unitless Quantity values.
@@ -260,11 +268,9 @@ def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
         first_unit = units[0]
         if not all(first_unit.has_same_dim(unit) for unit in units):
             raise TypeError(f"All elements must have the same units, but got {units}")
-        _asarray = jnp.asarray if HAS_JAX else np.asarray
-        return _asarray(_zoom_values_with_units(values, units)), first_unit
+        return _xp.asarray(_zoom_values_with_units(values, units)), first_unit
     else:
-        _asarray = jnp.asarray if HAS_JAX else np.asarray
-        return _asarray(values), UNITLESS
+        return _xp.asarray(values), UNITLESS
 
 
 def _process_list_with_units(value: list) -> tuple[jax.typing.ArrayLike, Unit]:
@@ -329,45 +335,46 @@ def _quantity_with_unit(mantissa, unit):
 _quantity_with_unit.__module__ = 'saiunit._base_quantity'
 
 
+def _reject_lazy_materialization(m, attr_name: str) -> None:
+    """Raise :class:`BackendError` if accessing ``attr_name`` would force
+    materialisation of a lazy / symbolic mantissa.
+
+    Used by property fallbacks (``Quantity.strides``, ``.flat``, ``.T`` …)
+    that would otherwise silently call ``.compute()`` on a dask graph or
+    ``.unwrap_numpy()`` on an ndonnx symbolic array.
+    """
+    from saiunit._backend import is_dask_array, is_ndonnx_array
+    if is_dask_array(m):
+        raise BackendError(
+            f"{attr_name} requires materializing a lazy dask array. "
+            f"Call .compute() on the mantissa explicitly first."
+        )
+    if is_ndonnx_array(m):
+        raise BackendError(
+            f"{attr_name} is not supported for ndonnx symbolic arrays."
+        )
+
+
 # ---------------------------------------------------------------------------
 # Scatter helper (backend-aware ``arr.at[idx].<op>(value)`` equivalent)
 # ---------------------------------------------------------------------------
 
+# Map legacy op names used by Quantity.__setitem__ / scatter_* to the
+# canonical names exported by saiunit._scatter.
+_LEGACY_SCATTER_OP_ALIASES = {"mul": "multiply"}
+
+
 def _scatter(mantissa, index, value, op: str):
     """Return a new array with ``op`` applied at ``index``.
 
-    Works for both NumPy and JAX backends.
-
-    Parameters
-    ----------
-    mantissa : array
-    index : index expression
-    value : scalar or array
-    op : {'set', 'add', 'mul', 'divide', 'max', 'min'}
+    Thin wrapper around :func:`saiunit._scatter.scatter` that translates the
+    legacy op names used internally (``"mul"``) into the canonical ones
+    (``"multiply"``). All supported backends (numpy, jax, cupy, torch, dask,
+    ndonnx) are routed through the unified dispatch.
     """
-    if is_numpy_array(mantissa):
-        out = mantissa.copy()
-        if op == "set":
-            out[index] = value
-        elif op == "add":
-            np.add.at(out, index, value)
-        elif op == "mul":
-            np.multiply.at(out, index, value)
-        elif op == "divide":
-            np.divide.at(out, index, value)
-        elif op == "max":
-            np.maximum.at(out, index, value)
-        elif op == "min":
-            np.minimum.at(out, index, value)
-        else:
-            raise ValueError(f"unknown scatter op: {op!r}")
-        return out
-    if not HAS_JAX:
-        from saiunit._jax_compat import require_jax
-        require_jax("functional in-place updates on non-NumPy mantissas")
-    arr = jnp.asarray(mantissa)
-    at = arr.at[index]
-    return getattr(at, op)(value)
+    from saiunit._scatter import scatter as _scatter_dispatch
+    canonical = _LEGACY_SCATTER_OP_ALIASES.get(op, op)
+    return _scatter_dispatch(mantissa, index, value, canonical)
 
 
 # ---------------------------------------------------------------------------
@@ -614,7 +621,23 @@ class Quantity:
                 pass  # keep as-is; jnp.array conversion deferred to use-site
 
             else:
-                pass  # keep as-is for other pytree types
+                # cupy / torch / dask / ndonnx mantissas: preserve the input's
+                # native backend, honouring ``dtype`` when requested.
+                from saiunit._backend import (
+                    get_backend as _gb,
+                    is_cupy_array, is_torch_array, is_dask_array,
+                    is_ndonnx_array,
+                )
+                if (
+                    is_cupy_array(mantissa)
+                    or is_torch_array(mantissa)
+                    or is_dask_array(mantissa)
+                    or is_ndonnx_array(mantissa)
+                ):
+                    if dtype is not None and getattr(mantissa, "dtype", None) != dtype:
+                        xp = _gb(mantissa)
+                        mantissa = xp.asarray(mantissa, dtype=dtype)
+                # else: keep as-is for arbitrary pytree leaves
 
         # mantissa
         self._mantissa = mantissa
@@ -650,14 +673,40 @@ class Quantity:
         a modified copy of ``x``. However, inside a :py:func:`~jax.jit` compiled function,
         expressions like :code:`x = x.at[idx].set(y)` are guaranteed to be applied in-place.
 
-        Unlike NumPy in-place operations such as :code:`x[idx] += y`, if multiple
-        indices refer to the same location, all updates will be applied (NumPy would
-        only apply the last update, rather than applying all updates.) The order
-        in which conflicting updates are applied is implementation-defined and may be
-        nondeterministic (e.g., due to concurrency on some hardware platforms).
+        ``Quantity.at`` is multi-backend: it works for ``numpy``, ``jax``, ``cupy``,
+        ``torch``, and ``dask`` mantissas. The ``ndonnx`` backend cannot represent
+        functional in-place updates in its symbolic graph and raises
+        :class:`saiunit.BackendError` — call ``.to_numpy()`` first. On ``dask`` the
+        update is expressed via ``da.where`` so the task graph stays lazy; only
+        slice / scalar-int / 1-D integer / boolean-mask indices are supported on
+        dask (multi-dim fancy-integer indexing raises ``NotImplementedError`` —
+        use ``.to_numpy()`` for that case).
 
-        By default, JAX assumes that all indices are in-bounds. Alternative out-of-bound
-        index semantics can be specified via the ``mode`` parameter (see below).
+        Repeated-index semantics differ across backends. When multiple indices
+        refer to the same location, JAX applies *all* updates (NumPy in-place
+        ``x[idx] += y`` would apply only the last). The summary:
+
+        ============  ========================  =========================
+        Backend       ``add``                   ``multiply / divide /
+                                                min / max / apply``
+        ============  ========================  =========================
+        ``jax``       accumulates               accumulates
+        ``numpy``     accumulates (np.add.at)   accumulates (np.<op>.at)
+        ``cupy``      accumulates               accumulates
+        ``torch``     accumulates               last-write-wins
+                      (index_put_(accumulate))
+        ``dask``      last-write-wins via mask  last-write-wins via mask
+        ``ndonnx``    raises BackendError       raises BackendError
+        ============  ========================  =========================
+
+        By default, JAX assumes that all indices are in-bounds. Alternative
+        out-of-bound semantics can be specified via the ``mode`` parameter
+        (see below). On non-JAX backends ``mode`` and ``fill_value`` are
+        emulated for scalar-int and 1-D integer-array indices; for slice /
+        boolean / ellipsis / tuple indices the kwarg is silently ignored
+        because out-of-bounds cannot occur for same-shape sources.
+        ``indices_are_sorted`` and ``unique_indices`` are hints only —
+        silently ignored outside JAX.
 
         Arguments
         ---------
@@ -796,7 +845,12 @@ class Quantity:
         elif isinstance(mantissa, _JaxArray):
             pass
         else:
-            mantissa = jnp.asarray(mantissa, dtype=self.dtype) if HAS_JAX else np.asarray(mantissa, dtype=self.dtype)
+            # Coerce ``mantissa`` to whatever backend ``self`` already lives on
+            # rather than silently lifting torch / cupy / dask / ndonnx mantissas
+            # to JAX.
+            from saiunit._backend import get_backend as _gb
+            xp = _gb(self_value)
+            mantissa = xp.asarray(mantissa, dtype=self.dtype)
         # check
         if mantissa.shape != self_value.shape:
             raise ValueError(f"The shape of the original data is {self_value.shape}, "
@@ -1117,14 +1171,21 @@ class Quantity:
             return repr(m)
         if isinstance(m, (_JaxArray, np.ndarray)):
             value = m
-        else:
+        elif isinstance(m, (numbers.Number, list, tuple)):
+            # Python scalars / sequences — promote so we get a printable array.
+            # Prefer ``jnp.asarray`` when JAX is installed so the precision
+            # matches JAX's x32 default (test fixtures key off this); fall
+            # back to NumPy when JAX is unavailable.
             try:
-                # jnp default dtype mirrors JAX's x32 mode so scalar
-                # representations match the historical behavior. Fall back
-                # to NumPy when JAX isn't installed.
                 value = jnp.asarray(m) if HAS_JAX else np.asarray(m)
             except TypeError:
                 value = m
+        else:
+            # cupy / torch / dask / ndonnx arrays: don't lift to JAX (that
+            # would silently move the data between backends). Let the outer
+            # try/except at the bottom of this function fall back to
+            # ``str(value)`` if numpy printing can't handle it.
+            value = m
 
         if _is_tracer(value):
             return str(value)
@@ -1377,31 +1438,53 @@ class Quantity:
     def nbytes(self) -> int:
         """Total bytes consumed by the mantissa array."""
         m = self._mantissa
-        return m.nbytes if hasattr(m, "nbytes") else np.asarray(m).nbytes
+        if hasattr(m, "nbytes"):
+            return m.nbytes
+        _reject_lazy_materialization(m, "Quantity.nbytes")
+        return np.asarray(m).nbytes
 
     @property
     def itemsize(self) -> int:
         """Length (in bytes) of one array element."""
         m = self._mantissa
-        return m.itemsize if hasattr(m, "itemsize") else np.asarray(m).itemsize
+        if hasattr(m, "itemsize"):
+            return m.itemsize
+        _reject_lazy_materialization(m, "Quantity.itemsize")
+        return np.asarray(m).itemsize
 
     @property
     def strides(self):
         """Tuple of byte-steps in each dimension (mirrors numpy.ndarray.strides)."""
-        return np.asarray(self.mantissa).strides
+        m = self._mantissa
+        if hasattr(m, "strides"):
+            # numpy / cupy expose ``.strides`` natively; for torch this is a
+            # method, so we still fall through to the materialise path.
+            strides = m.strides
+            if not callable(strides):
+                return strides
+        _reject_lazy_materialization(m, "Quantity.strides")
+        return np.asarray(m).strides
 
     @property
     def flat(self):
         """1-D iterator over the mantissa elements, unit preserved."""
         m = self._mantissa
-        flat = m.flat if hasattr(m, "flat") else np.asarray(m).flat
+        if hasattr(m, "flat"):
+            flat = m.flat
+        else:
+            _reject_lazy_materialization(m, "Quantity.flat")
+            flat = np.asarray(m).flat
         for v in flat:
             yield Quantity(v, unit=self.unit)
 
     @property
     def T(self) -> 'Quantity':
         m = self._mantissa
-        t = m.T if hasattr(m, "T") else np.asarray(m).T
+        if hasattr(m, "T"):
+            t = m.T
+        else:
+            _reject_lazy_materialization(m, "Quantity.T")
+            t = np.asarray(m).T
         return Quantity(t, unit=self.unit)
 
     @property
@@ -1427,7 +1510,11 @@ class Quantity:
             (2, 2)
         """
         m = self._mantissa
-        mt = m.mT if hasattr(m, "mT") else np.asarray(m).mT
+        if hasattr(m, "mT"):
+            mt = m.mT
+        else:
+            _reject_lazy_materialization(m, "Quantity.mT")
+            mt = np.asarray(m).mT
         return Quantity(mt, unit=self.unit)
 
     @property
@@ -3618,36 +3705,46 @@ class _IndexUpdateRef:
     """
     Helper object to call indexed update functions for an (advanced) index.
 
-    This object references a source array and a specific indexer into that array.
-    Methods on this object return copies of the source array that have been
-    modified at the positions specified by the indexer.
+    This object references a source array and a specific indexer into that
+    array. Methods on this object return copies of the source array that have
+    been modified at the positions specified by the indexer. Updates are
+    dispatched through :func:`saiunit._scatter.scatter`, which supports every
+    backend saiunit ships with: ``numpy``, ``jax``, ``cupy``, ``torch``,
+    ``dask``, and ``ndonnx`` (ndonnx raises a :class:`BackendError` because
+    its symbolic graph cannot represent in-place updates — call
+    ``.to_numpy()`` first).
     """
-    __slots__ = ("quantity", "index", "mantissa_at", "unit")
+    __slots__ = ("quantity", "index", "unit")
 
     def __init__(self, index, quantity: Quantity):
         self.index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
         self.quantity = quantity
-        # ``.at`` indexed-update is JAX-only. For numpy-backed Quantity the user
-        # must call .to_jax() first; this matches the behavior documented for
-        # the lax/autograd/sparse modules.
-        from saiunit._exceptions import BackendError
-        if is_numpy_array(quantity.mantissa):
-            raise BackendError(
-                "Quantity.at indexed-update requires the jax backend; got "
-                "numpy-backed Quantity. Call .to_jax() on the input first."
-            )
-        self.mantissa_at = jnp.asarray(quantity.mantissa).at
         self.unit = quantity.unit
 
     def __repr__(self) -> str:
         return f"_IndexUpdateRef({self.quantity}, {self.index!r})"
+
+    def _scatter(self, op: str, value, *, indices_are_sorted, unique_indices,
+                 mode, fill_value=None):
+        """Internal: dispatch ``op`` on the underlying mantissa."""
+        from saiunit._scatter import scatter as _scatter_dispatch
+        return _scatter_dispatch(
+            self.quantity.mantissa,
+            self.index,
+            value,
+            op,
+            indices_are_sorted=indices_are_sorted,
+            unique_indices=unique_indices,
+            mode=mode,
+            fill_value=fill_value,
+        )
 
     def get(
         self,
         indices_are_sorted: bool = False,
         unique_indices: bool = False,
         mode: str | None = None,
-        fill_value: StaticScalar | None = None
+        fill_value: StaticScalar | Quantity | None = None
     ) -> Quantity:
         """Equivalent to ``x[idx]``.
 
@@ -3659,13 +3756,15 @@ class _IndexUpdateRef:
         if fill_value is not None:
             fill_value = Quantity(fill_value).in_unit(self.unit).mantissa
         return Quantity(
-            self.mantissa_at[self.index].get(
+            self._scatter(
+                "get",
+                None,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
                 mode=mode,
-                fill_value=fill_value
+                fill_value=fill_value,
             ),
-            unit=self.unit
+            unit=self.unit,
         )
 
     def set(
@@ -3682,13 +3781,13 @@ class _IndexUpdateRef:
         """
         values = Quantity(values).in_unit(self.unit).mantissa
         return Quantity(
-            self.mantissa_at[self.index].set(
-                values,
+            self._scatter(
+                "set", values,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
                 mode=mode,
             ),
-            unit=self.unit
+            unit=self.unit,
         )
 
     def add(
@@ -3706,13 +3805,13 @@ class _IndexUpdateRef:
         """
         values = Quantity(values).in_unit(self.unit).mantissa
         return Quantity(
-            self.mantissa_at[self.index].add(
-                values,
+            self._scatter(
+                "add", values,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
-                mode=mode
+                mode=mode,
             ),
-            unit=self.unit
+            unit=self.unit,
         )
 
     def multiply(
@@ -3730,13 +3829,13 @@ class _IndexUpdateRef:
         """
         values = Quantity(values)
         return Quantity(
-            self.mantissa_at[self.index].multiply(
-                values.mantissa,
+            self._scatter(
+                "multiply", values.mantissa,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
-                mode=mode
+                mode=mode,
             ),
-            unit=self.unit * values.unit
+            unit=self.unit * values.unit,
         )
 
     mul = multiply
@@ -3756,13 +3855,13 @@ class _IndexUpdateRef:
         """
         values = Quantity(values)
         return Quantity(
-            self.mantissa_at[self.index].divide(
-                values.mantissa,
+            self._scatter(
+                "divide", values.mantissa,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
-                mode=mode
+                mode=mode,
             ),
-            unit=self.unit / values.unit
+            unit=self.unit / values.unit,
         )
 
     div = divide
@@ -3783,13 +3882,13 @@ class _IndexUpdateRef:
         if not isinstance(values, int):
             raise TypeError(f"values must be an integer, but got {values}")
         return Quantity(
-            self.mantissa_at[self.index].power(
-                values,
+            self._scatter(
+                "power", values,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
-                mode=mode
+                mode=mode,
             ),
-            unit=self.unit ** values
+            unit=self.unit ** values,
         )
 
     def min(
@@ -3808,13 +3907,13 @@ class _IndexUpdateRef:
         """
         values = Quantity(values).in_unit(self.unit).mantissa
         return Quantity(
-            self.mantissa_at[self.index].min(
-                values,
+            self._scatter(
+                "min", values,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
-                mode=mode
+                mode=mode,
             ),
-            unit=self.unit
+            unit=self.unit,
         )
 
     def max(
@@ -3833,13 +3932,13 @@ class _IndexUpdateRef:
         """
         values = Quantity(values).in_unit(self.unit).mantissa
         return Quantity(
-            self.mantissa_at[self.index].max(
-                values,
+            self._scatter(
+                "max", values,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
-                mode=mode
+                mode=mode,
             ),
-            unit=self.unit
+            unit=self.unit,
         )
 
     def apply(
@@ -3871,13 +3970,13 @@ class _IndexUpdateRef:
         """
         result_unit = unit_fun(self.unit) if unit_fun is not None else self.unit
         return Quantity(
-            self.mantissa_at[self.index].apply(
-                mantissa_fun,
+            self._scatter(
+                "apply", mantissa_fun,
                 indices_are_sorted=indices_are_sorted,
                 unique_indices=unique_indices,
-                mode=mode
+                mode=mode,
             ),
-            unit=result_unit
+            unit=result_unit,
         )
 
 
