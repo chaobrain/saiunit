@@ -16,7 +16,8 @@ from __future__ import annotations
 
 from typing import Callable, Union, Sequence
 
-from saiunit._jax_compat import HAS_JAX, jax, jnp, ArrayLike
+from saiunit._jax_compat import HAS_JAX, jax, jnp
+from saiunit._typing import ArrayLike, DTypeLike, Shape
 import numpy as np
 
 if HAS_JAX:
@@ -56,9 +57,6 @@ def unit_change(
         return set_module_as('saiunit.fft')(func)
 
     return actual_decorator
-
-
-Shape = Sequence[int]
 
 
 # return original unit * time unit
@@ -786,7 +784,7 @@ def fftfreq(
     n: int,
     d: Union[Quantity, ArrayLike] = 1.0,  # type: ignore[assignment]
     *,
-    dtype: jax.typing.DTypeLike | None = None,
+    dtype: DTypeLike | None = None,
     device: xla_client.Device | jax.sharding.Sharding | None = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:
@@ -847,7 +845,7 @@ def rfftfreq(
     n: int,
     d: Union[Quantity, ArrayLike] = 1.0,  # type: ignore[assignment]
     *,
-    dtype: jax.typing.DTypeLike | None = None,
+    dtype: DTypeLike | None = None,
     device: xla_client.Device | jax.sharding.Sharding | None = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:

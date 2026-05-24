@@ -20,7 +20,7 @@ from typing import Any, Union, Sequence, Callable, Optional
 import jax
 import numpy as np
 from jax import lax
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import Array, ArrayLike, DTypeLike
 
 # Mirror of ``jax._src.typing.Shape`` (which has no public alias).
 # Used purely for type-hint clarity in this module.
@@ -73,7 +73,7 @@ def slice(
     limit_indices: Sequence[int],
     strides: Sequence[int] | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Wraps XLA's `Slice
     <https://www.tensorflow.org/xla/operation_semantics#slice>`_
     operator.
@@ -126,7 +126,7 @@ def dynamic_slice(
     start_indices: ArrayLike | Sequence[ArrayLike],
     slice_sizes: Shape,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Wraps XLA's `DynamicSlice
     <https://www.tensorflow.org/xla/operation_semantics#dynamicslice>`_
     operator.
@@ -174,7 +174,7 @@ def dynamic_update_slice(
     update: Union[Quantity, ArrayLike],
     start_indices: ArrayLike | Sequence[ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Wraps XLA's `DynamicUpdateSlice
     <https://www.tensorflow.org/xla/operation_semantics#dynamicupdateslice>`_
     operator.
@@ -229,7 +229,7 @@ def gather(
     mode: str | jax.lax.GatherScatterMode | None = None,
     fill_value: Optional[Union[Quantity, ArrayLike]] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Gather operator.
 
     Wraps `XLA's Gather operator
@@ -331,7 +331,7 @@ def index_take(
     idxs: ArrayLike,
     axes: Sequence[int],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Take elements from an array at the given indices along the given axes.
 
     Parameters
@@ -345,7 +345,7 @@ def index_take(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The gathered elements. If ``src`` is a ``Quantity``, the result
         preserves the same unit.
 
@@ -375,7 +375,7 @@ def slice_in_dim(
     stride: int = 1,
     axis: int = 0,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Convenience wrapper around :func:`lax.slice` applying to only one dimension.
 
     This is effectively equivalent to ``operand[..., start_index:limit_index:stride]``
@@ -428,7 +428,7 @@ def index_in_dim(
     axis: int = 0,
     keepdims: bool = True,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Convenience wrapper around :func:`lax.slice` to perform int indexing.
 
     This is effectively equivalent to ``operand[..., start_index:limit_index:stride]``
@@ -479,7 +479,7 @@ def dynamic_slice_ind_dim(
     slice_size: int,
     axis: int = 0,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Convenience wrapper around :func:`lax.dynamic_slice` applied to one dimension.
 
     This is roughly equivalent to the following Python indexing syntax applied
@@ -530,7 +530,7 @@ def dynamic_index_in_dim(
     index: int | ArrayLike,
     axis: int = 0, keepdims: bool = True,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Convenience wrapper around dynamic_slice to perform int indexing.
 
     This is roughly equivalent to the following Python indexing syntax applied
@@ -577,7 +577,7 @@ def dynamic_update_slice_in_dim(
     update: Union[Quantity, ArrayLike],
     start_index: ArrayLike, axis: int,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Convenience wrapper around :func:`dynamic_update_slice` to update
     a slice in a single ``axis``.
 
@@ -636,7 +636,7 @@ def dynamic_update_index_in_dim(
     index: ArrayLike,
     axis: int,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Convenience wrapper around :func:`dynamic_update_slice` to update a slice
     of size 1 in a single ``axis``.
 
@@ -696,7 +696,7 @@ def sort(
     dimension: int = -1,
     is_stable: bool = True, num_keys: int = 1,
     **kwargs,
-) -> Union[Quantity, jax.Array] | Sequence[Union[Quantity, jax.Array]]:
+) -> Union[Quantity, Array] | Sequence[Union[Quantity, Array]]:
     """Wraps XLA's `Sort
     <https://www.tensorflow.org/xla/operation_semantics#sort>`_ operator.
 
@@ -757,7 +757,7 @@ def sort_key_val(
     dimension: int = -1,
     is_stable: bool = True,
     **kwargs,
-) -> tuple[Union[Quantity, jax.Array], Union[Quantity, jax.Array]]:
+) -> tuple[Union[Quantity, Array], Union[Quantity, Array]]:
     """Sort ``keys`` along ``dimension`` and apply the same permutation to ``values``.
 
     Parameters
@@ -773,9 +773,9 @@ def sort_key_val(
 
     Returns
     -------
-    sorted_keys : jax.Array or Quantity
+    sorted_keys : Array or Quantity
         The sorted keys. Preserves the unit of ``keys``.
-    sorted_values : jax.Array or Quantity
+    sorted_values : Array or Quantity
         The values permuted to match the sorted order of ``keys``.
         Preserves the unit of ``values``.
 
@@ -814,7 +814,7 @@ def sort_key_val(
 def neg(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Elementwise negation: :math:`-x`.
 
     Parameters
@@ -824,7 +824,7 @@ def neg(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The negated array. If ``x`` is a ``Quantity``, the result
         preserves the same unit.
 
@@ -852,7 +852,7 @@ def cummax(
     axis: int = 0,
     reverse: bool = False,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Compute a cumulative maximum along ``axis``.
 
     Parameters
@@ -868,7 +868,7 @@ def cummax(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The cumulative maximum array. Preserves the unit of ``operand``.
 
     Examples
@@ -893,7 +893,7 @@ def cummin(
     axis: int = 0,
     reverse: bool = False,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Compute a cumulative minimum along ``axis``.
 
     Parameters
@@ -909,7 +909,7 @@ def cummin(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The cumulative minimum array. Preserves the unit of ``operand``.
 
     Examples
@@ -934,7 +934,7 @@ def cumsum(
     axis: int = 0,
     reverse: bool = False,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Compute a cumulative sum along ``axis``.
 
     Parameters
@@ -950,7 +950,7 @@ def cumsum(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The cumulative sum array. Preserves the unit of ``operand``.
 
     Examples
@@ -978,7 +978,7 @@ def _fun_lax_scatter(
     indices_are_sorted,
     unique_indices,
     mode
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     fun_name = getattr(fun, "__name__", "scatter")
     require_jax_backend(f"saiunit.lax.{fun_name}", operand, updates)
     operand = maybe_custom_array(operand)
@@ -1013,7 +1013,7 @@ def scatter(
     unique_indices: bool = False,
     mode: str | jax.lax.GatherScatterMode | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Scatter-update operator.
 
     Wraps `XLA's Scatter operator
@@ -1098,7 +1098,7 @@ def scatter_add(
     unique_indices: bool = False,
     mode: str | jax.lax.GatherScatterMode | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Scatter-add operator.
 
     Wraps `XLA's Scatter operator
@@ -1148,7 +1148,7 @@ def scatter_sub(
     unique_indices: bool = False,
     mode: str | jax.lax.GatherScatterMode | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Scatter-sub operator.
 
     Wraps `XLA's Scatter operator
@@ -1198,7 +1198,7 @@ def scatter_mul(
     unique_indices: bool = False,
     mode: str | jax.lax.GatherScatterMode | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Scatter-multiply operator.
 
     Wraps `XLA's Scatter operator
@@ -1248,7 +1248,7 @@ def scatter_min(
     unique_indices: bool = False,
     mode: str | jax.lax.GatherScatterMode | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Scatter-min operator.
 
     Wraps `XLA's Scatter operator
@@ -1298,7 +1298,7 @@ def scatter_max(
     unique_indices: bool = False,
     mode: str | jax.lax.GatherScatterMode | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Scatter-max operator.
 
     Wraps `XLA's Scatter operator
@@ -1349,7 +1349,7 @@ def scatter_apply(
     unique_indices: bool = False,
     mode: str | jax.lax.GatherScatterMode | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Scatter-apply operator.
 
     Wraps `XLA's Scatter operator
@@ -1411,7 +1411,7 @@ def complex(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Elementwise make complex number: :math:`x + jy`.
 
     Build a complex number from real and imaginary parts.
@@ -1425,7 +1425,7 @@ def complex(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The complex array. If inputs are ``Quantity``, the result
         preserves the same unit.
 
@@ -1452,7 +1452,7 @@ def pad(
     padding_value: Union[Quantity, ArrayLike],
     padding_config: Sequence[tuple[int, int, int]],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Applies low, high, and/or interior padding to an array.
 
     Wraps XLA's `Pad
@@ -1480,7 +1480,7 @@ def sub(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Elementwise subtraction: :math:`x - y`.
 
     Parameters
@@ -1492,7 +1492,7 @@ def sub(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The difference. Preserves the unit of the inputs.
 
     Examples
@@ -1516,9 +1516,9 @@ def sub(
 @set_module_as('saiunit.math')
 def convert_element_type(
     operand: Union[Quantity, ArrayLike],
-    new_dtype: jax.typing.DTypeLike,
+    new_dtype: DTypeLike,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Elementwise cast.
 
     Wraps XLA's `ConvertElementType
@@ -1539,9 +1539,9 @@ def convert_element_type(
 @set_module_as('saiunit.math')
 def bitcast_convert_type(
     operand: Union[Quantity, ArrayLike],
-    new_dtype: jax.typing.DTypeLike,
+    new_dtype: DTypeLike,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Elementwise bitcast.
 
     Wraps XLA's `BitcastConvertType
@@ -1567,7 +1567,7 @@ def bitcast_convert_type(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         An array of shape ``output_shape`` (see above) and type ``new_dtype``,
         constructed from the same bits as ``operand``.
     """
@@ -1581,7 +1581,7 @@ def clamp(
     x: Union[Quantity, ArrayLike],
     max: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Elementwise clamp.
 
     Returns :math:`\mathrm{clamp}(x) = \begin{cases}
@@ -1597,7 +1597,7 @@ def clamp(
     if all(isinstance(i, Quantity) for i in (min, x, max)):
         unit = min.unit  # type: ignore[union-attr]
         return maybe_decimal(Quantity(lax.clamp(min.mantissa, x.to_decimal(unit), max.to_decimal(unit), **kwargs), unit=unit))  # type: ignore[union-attr]
-    elif all(isinstance(i, (jax.Array, np.ndarray, np.bool_, np.number, bool, int, float, builtins.complex)) for i in
+    elif all(isinstance(i, (Array, np.ndarray, np.bool_, np.number, bool, int, float, builtins.complex)) for i in
              (min, x, max)):
         return lax.clamp(min, x, max, **kwargs)  # type: ignore[arg-type]
     else:
@@ -1614,7 +1614,7 @@ def approx_max_k(
     reduction_input_size_override: int = -1,
     aggregate_to_topk: bool = True,
     **kwargs,
-) -> tuple[Union[Quantity, jax.Array], ArrayLike]:
+) -> tuple[Union[Quantity, Array], ArrayLike]:
     """Returns max ``k`` values and their indices of the ``operand`` in an approximate manner.
 
     See https://arxiv.org/abs/2206.14286 for the algorithm details.
@@ -1677,7 +1677,7 @@ def approx_min_k(
     reduction_input_size_override: int = -1,
     aggregate_to_topk: bool = True,
     **kwargs,
-) -> tuple[Union[Quantity, jax.Array], ArrayLike]:
+) -> tuple[Union[Quantity, Array], ArrayLike]:
     """Returns min ``k`` values and their indices of the ``operand`` in an approximate manner.
 
     See https://arxiv.org/abs/2206.14286 for the algorithm details.
@@ -1740,7 +1740,7 @@ def top_k(
     operand: Union[Quantity, ArrayLike],
     k: int,
     **kwargs,
-) -> tuple[Union[Quantity, jax.Array], ArrayLike]:
+) -> tuple[Union[Quantity, Array], ArrayLike]:
     """Returns top ``k`` values and their indices along the last axis of ``operand``.
 
     Args:
@@ -1775,7 +1775,7 @@ def top_k(
 def broadcast(
     operand: Union[Quantity, ArrayLike],
     sizes: Sequence[int]
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Broadcast an array by adding new leading dimensions.
 
     Parameters
@@ -1787,7 +1787,7 @@ def broadcast(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The broadcasted array. Preserves the unit of ``operand``.
 
     Examples
@@ -1812,7 +1812,7 @@ def broadcast_in_dim(
     operand: Union[Quantity, ArrayLike],
     shape: Shape,
     broadcast_dimensions: Sequence[int]
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Broadcast an array into a target shape (XLA BroadcastInDim).
 
     Parameters
@@ -1828,7 +1828,7 @@ def broadcast_in_dim(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The broadcasted array. Preserves the unit of ``operand``.
 
     Examples
@@ -1850,7 +1850,7 @@ def broadcast_in_dim(
 def broadcast_to_rank(
     x: Union[Quantity, ArrayLike],
     rank: int
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Add leading dimensions of size 1 to give ``x`` rank ``rank``.
 
     Parameters
@@ -1862,7 +1862,7 @@ def broadcast_to_rank(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The array with added leading dimensions. Preserves the unit of ``x``.
 
     Examples

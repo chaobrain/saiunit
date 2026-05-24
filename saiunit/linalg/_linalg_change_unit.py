@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import Union
 
-from saiunit._jax_compat import jax, jnp, ArrayLike
+from saiunit._jax_compat import jax, jnp
+from saiunit._typing import Array, ArrayLike
 
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import maybe_decimal
@@ -56,7 +57,7 @@ def cholesky(
     upper: bool = False,
     symmetrize_input: bool = True,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Compute the Cholesky decomposition of a matrix.
 
@@ -253,7 +254,7 @@ def lstsq(
     *,
     numpy_resid: bool = False,
     **kwargs,
-) -> tuple[Union[ArrayLike, Quantity], jax.Array, jax.Array, jax.Array]:
+) -> tuple[Union[ArrayLike, Quantity], Array, Array, Array]:
     """
     Return the least-squares solution to a linear equation.
 

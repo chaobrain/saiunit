@@ -30,14 +30,17 @@ from ._jax_compat import (
     HAS_JAX,
     jax,
     jnp,
-    ArrayLike,
-    Array as _JaxArray,
-    DTypeLike as _JaxDTypeLike,
     canonicalize_dtype as _canonicalize_dtype,
     ensure_compile_time_eval as _ensure_compile_time_eval,
     register_pytree_node_class,
     result_type as _result_type,
     tree as _jtree,
+)
+from ._typing import (
+    Array,
+    ArrayLike,
+    Array as _JaxArray,
+    DTypeLike,
 )
 from ._base_dimension import Dimension, UnitMismatchError, _is_tracer
 from ._base_getters import (
@@ -554,7 +557,7 @@ class Quantity:
         self,
         mantissa: PyTree | Unit,
         unit: 'Unit | str | None' = UNITLESS,
-        dtype: jax.typing.DTypeLike | None = None,
+        dtype: DTypeLike | None = None,
     ):
 
         # ``ensure_compile_time_eval`` is a no-op outside tracing; inside a
@@ -1339,7 +1342,7 @@ class Quantity:
         return Quantity(to_backend(self._mantissa, "numpy"), unit=self.unit)
 
     def to_jax(self) -> 'Quantity':
-        """Return a new Quantity with mantissa converted to ``jax.Array``.
+        """Return a new Quantity with mantissa converted to ``Array``.
 
         No-op (returns ``self``) if the mantissa is already a JAX array.
         """
@@ -1522,7 +1525,7 @@ class Quantity:
         return Quantity(mt, unit=self.unit)
 
     @property
-    def isreal(self) -> jax.Array:
+    def isreal(self) -> Array:
         xp = get_backend(self)
         # array_api_compat.numpy lacks isreal; fall back to imag == 0.
         if hasattr(xp, "isreal"):
@@ -1534,19 +1537,19 @@ class Quantity:
         return self.ndim == 0
 
     @property
-    def isfinite(self) -> jax.Array:
+    def isfinite(self) -> Array:
         return get_backend(self).isfinite(self.mantissa)
 
     @property
-    def isinfinite(self) -> jax.Array:
+    def isinfinite(self) -> Array:
         return get_backend(self).isinf(self.mantissa)
 
     @property
-    def isinf(self) -> jax.Array:
+    def isinf(self) -> Array:
         return get_backend(self).isinf(self.mantissa)
 
     @property
-    def isnan(self) -> jax.Array:
+    def isnan(self) -> Array:
         return get_backend(self).isnan(self.mantissa)
 
     # ----------------------- #
@@ -2402,7 +2405,7 @@ class Quantity:
 
     def astype(
         self,
-        dtype: jax.typing.DTypeLike
+        dtype: DTypeLike
     ) -> 'Quantity':
         """
         Return a copy of this quantity with the mantissa cast to *dtype*.
@@ -2692,7 +2695,7 @@ class Quantity:
         r = Quantity(result_mantissa, unit=result_unit)  # type: ignore[arg-type]
         return maybe_decimal(r)
 
-    def searchsorted(self, v, side: str = 'left', sorter=None) -> jax.Array:
+    def searchsorted(self, v, side: str = 'left', sorter=None) -> Array:
         """Find indices where elements should be inserted to maintain order."""
         if isinstance(v, Quantity):
             v = v.in_unit(self.unit).mantissa
@@ -3459,7 +3462,7 @@ class Quantity:
 
         return saiunit_fn(*inputs, **kwargs)
 
-    def __array__(self, dtype: jax.typing.DTypeLike | None = None) -> np.ndarray:
+    def __array__(self, dtype: DTypeLike | None = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions.
 
         Only dimensionless quantities are coercible — converting a unit-bearing

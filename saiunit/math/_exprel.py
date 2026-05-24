@@ -29,6 +29,7 @@ from math import factorial
 from typing import Optional
 
 from saiunit._jax_compat import HAS_JAX, jnp, require_jax
+from saiunit._typing import Array
 
 if HAS_JAX:
     from jax import core
@@ -337,7 +338,7 @@ def exprel(x, /, order: int = 2):
 
     Returns
     -------
-    y : jax.Array
+    y : Array
         ``(exp(x) - 1) / x``, with the singularity at ``x = 0``
         handled correctly (returns 1).
 

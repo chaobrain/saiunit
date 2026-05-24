@@ -25,7 +25,7 @@ from saiunit._base_getters import fail_for_unit_mismatch, maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from saiunit.math._fun_change_unit import _fun_change_unit_unary
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import Array, ArrayLike
 
 __all__ = [
     # linear algebra unary
@@ -65,7 +65,7 @@ def cholesky(
 
     Returns
     -------
-    L : jax.Array or Quantity
+    L : Array or Quantity
         The lower-triangular Cholesky factor with shape ``[..., n, n]``.
         If ``x`` carries a unit ``u``, the result has unit ``u ** 0.5``.
         If decomposition fails, the result is filled with NaNs.
@@ -115,12 +115,12 @@ def eig(
 
     Returns
     -------
-    w : jax.Array or Quantity
+    w : Array or Quantity
         The eigenvalues.  If ``x`` has a unit, ``w`` preserves that unit.
-    vl : jax.Array, optional
+    vl : Array, optional
         The left eigenvectors (unitless).  Only returned when
         ``compute_left_eigenvectors`` is ``True``.
-    vr : jax.Array, optional
+    vr : Array, optional
         The right eigenvectors (unitless).  Only returned when
         ``compute_right_eigenvectors`` is ``True``.
 
@@ -184,7 +184,7 @@ def eigh(
     symmetrize_input: bool = True,
     sort_eigenvalues: bool = True,
     subset_by_index: tuple[int, int] | None = None,
-) -> tuple[Quantity | jax.Array, jax.Array]:
+) -> tuple[Quantity | Array, Array]:
     r"""Eigendecomposition of a Hermitian matrix.
 
     Compute the eigenvectors and eigenvalues of a complex Hermitian or
@@ -210,10 +210,10 @@ def eigh(
 
     Returns
     -------
-    v : jax.Array
+    v : Array
         Eigenvectors (unitless).  ``v[..., :, i]`` is the normalised
         eigenvector for eigenvalue ``w[..., i]``.
-    w : jax.Array or Quantity
+    w : Array or Quantity
         Eigenvalues in ascending order.  If ``x`` has a unit, ``w``
         preserves that unit.
 
@@ -242,7 +242,7 @@ def eigh(
 @set_module_as('saiunit.lax')
 def hessenberg(
     x: Union[Quantity, ArrayLike],
-) -> tuple[Quantity | jax.Array, jax.Array]:
+) -> tuple[Quantity | Array, Array]:
     """Reduce a square matrix to upper Hessenberg form.
 
     Currently implemented on CPU only.
@@ -255,12 +255,12 @@ def hessenberg(
 
     Returns
     -------
-    h : jax.Array or Quantity
+    h : Array or Quantity
         The upper Hessenberg form.  The upper triangle and first
         sub-diagonal contain the Hessenberg matrix; elements below the
         first sub-diagonal hold the Householder reflectors.  If ``x``
         has a unit, ``h`` preserves that unit.
-    taus : jax.Array
+    taus : Array
         Scalar factors of the elementary Householder reflectors (unitless).
 
     See Also
@@ -290,7 +290,7 @@ def hessenberg(
 @set_module_as('saiunit.lax')
 def lu(
     x: Union[Quantity, ArrayLike],
-) -> tuple[Quantity | jax.Array, jax.Array, jax.Array]:
+) -> tuple[Quantity | Array, Array, Array]:
     r"""LU decomposition with partial pivoting.
 
     Compute the matrix decomposition :math:`P \cdot A = L \cdot U` where
@@ -304,14 +304,14 @@ def lu(
 
     Returns
     -------
-    lu : jax.Array or Quantity
+    lu : Array or Quantity
         A matrix containing :math:`L` in its lower triangle and :math:`U`
         in its upper triangle (the unit diagonal of :math:`L` is implicit).
         If ``x`` has a unit, ``lu`` preserves that unit.
-    pivots : jax.Array
+    pivots : Array
         An ``int32`` array with shape ``[..., min(m, n)]`` encoding row
         swaps.
-    permutation : jax.Array
+    permutation : Array
         An ``int32`` array with shape ``[..., m]`` representing the row
         permutation.
 
@@ -339,7 +339,7 @@ def lu(
 def householder_product(
     a: Union[Quantity, ArrayLike],
     taus: Union[Quantity, ArrayLike],
-) -> jax.Array:
+) -> Array:
     """Product of elementary Householder reflectors.
 
     Reconstruct the orthogonal (unitary) matrix :math:`Q` from a set of
@@ -357,7 +357,7 @@ def householder_product(
 
     Returns
     -------
-    Q : jax.Array
+    Q : Array
         The orthogonal (unitary) matrix with the same shape as ``a``
         (always unitless).
 
@@ -394,7 +394,7 @@ def householder_product(
 @set_module_as('saiunit.lax')
 def qdwh(
     x: Union[Quantity, ArrayLike],
-) -> tuple[jax.Array, Quantity | jax.Array, int, bool]:
+) -> tuple[Array, Quantity | Array, int, bool]:
     r"""Polar decomposition via QR-based dynamically weighted Halley iteration.
 
     Compute the polar decomposition :math:`x = U \cdot H` where :math:`U`
@@ -407,9 +407,9 @@ def qdwh(
 
     Returns
     -------
-    u : jax.Array
+    u : Array
         The unitary factor (unitless).
-    h : jax.Array or Quantity
+    h : Array or Quantity
         The Hermitian positive semi-definite factor.  If ``x`` has a unit,
         ``h`` preserves that unit.
     num_iters : int
@@ -441,7 +441,7 @@ def qdwh(
 @set_module_as('saiunit.lax')
 def qr(
     x: Union[Quantity, ArrayLike],
-) -> tuple[jax.Array, Quantity | jax.Array]:
+) -> tuple[Array, Quantity | Array]:
     r"""QR decomposition.
 
     Compute the QR decomposition :math:`A = Q \cdot R` where :math:`Q` is
@@ -454,9 +454,9 @@ def qr(
 
     Returns
     -------
-    q : jax.Array
+    q : Array
         The unitary factor (unitless) with shape ``[..., m, min(m, n)]``.
-    r : jax.Array or Quantity
+    r : Array or Quantity
         The upper-triangular factor with shape ``[..., min(m, n), n]``.
         If ``x`` has a unit, ``r`` preserves that unit.
 
@@ -486,7 +486,7 @@ def schur(
     compute_schur_vectors: bool = True,
     sort_eig_vals: bool = False,
     select_callable: Callable[..., Any] | None = None
-) -> tuple[jax.Array, Quantity | jax.Array]:
+) -> tuple[Array, Quantity | Array]:
     r"""Schur decomposition.
 
     Compute the Schur decomposition :math:`A = Q \cdot T \cdot Q^H` where
@@ -507,9 +507,9 @@ def schur(
 
     Returns
     -------
-    t : jax.Array
+    t : Array
         The Schur form (unitless).
-    q : jax.Array or Quantity
+    q : Array or Quantity
         The Schur vectors.  If ``x`` has a unit, ``q`` preserves that unit.
 
     Examples
@@ -542,7 +542,7 @@ def svd(
     compute_uv: bool = True,
     subset_by_index: tuple[int, int] | None = None,
     algorithm: jax.lax.linalg.SvdAlgorithm | None = None,
-) -> Union[Quantity, ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
+) -> Union[Quantity, ArrayLike] | tuple[Array, Quantity | Array, Array]:
     """Singular value decomposition.
 
     Compute the SVD of a matrix.  When ``compute_uv`` is ``True``, return
@@ -566,12 +566,12 @@ def svd(
 
     Returns
     -------
-    u : jax.Array
+    u : Array
         Left singular vectors (unitless).  Only returned when
         ``compute_uv=True``.
-    s : jax.Array or Quantity
+    s : Array or Quantity
         Singular values.  If ``x`` has a unit, ``s`` preserves that unit.
-    vh : jax.Array
+    vh : Array
         Right singular vectors (unitless).  Only returned when
         ``compute_uv=True``.
 
@@ -609,7 +609,7 @@ def triangular_solve(
     left_side: bool = False, lower: bool = False,
     transpose_a: bool = False, conjugate_a: bool = False,
     unit_diagonal: bool = False,
-) -> Quantity | jax.Array:
+) -> Quantity | Array:
     r"""Triangular solve.
 
     Solve the matrix equation :math:`\mathit{op}(A) \cdot X = B` (when
@@ -638,7 +638,7 @@ def triangular_solve(
 
     Returns
     -------
-    X : jax.Array or Quantity
+    X : Array or Quantity
         The solution with the same shape and dtype as ``b``.  If ``b``
         carries a unit, ``X`` preserves that unit.
 
@@ -681,7 +681,7 @@ def triangular_solve(
 def tridiagonal(
     a: Union[Quantity, ArrayLike],
     lower: bool = True,
-) -> tuple[Quantity | jax.Array, Quantity | jax.Array, Quantity | jax.Array, jax.Array]:
+) -> tuple[Quantity | Array, Quantity | Array, Quantity | Array, Array]:
     """Reduce a symmetric/Hermitian matrix to tridiagonal form.
 
     Currently implemented on CPU and GPU only.
@@ -696,18 +696,18 @@ def tridiagonal(
 
     Returns
     -------
-    a_out : jax.Array or Quantity
+    a_out : Array or Quantity
         The matrix with the tridiagonal representation stored in its
         diagonal and first sub/super-diagonal; remaining elements hold the
         Householder reflectors.  If ``a`` has a unit, ``a_out`` preserves
         that unit.
-    d : jax.Array or Quantity
+    d : Array or Quantity
         The diagonal of the tridiagonal matrix.  Preserves the unit of ``a``
         if present.
-    e : jax.Array or Quantity
+    e : Array or Quantity
         The first sub-diagonal (``lower=True``) or super-diagonal
         (``lower=False``).  Preserves the unit of ``a`` if present.
-    taus : jax.Array
+    taus : Array
         Scalar factors of the elementary Householder reflectors (unitless).
 
     Examples
@@ -737,7 +737,7 @@ def tridiagonal_solve(
     d: Union[Quantity, ArrayLike],
     du: Union[Quantity, ArrayLike],
     b: Union[Quantity, ArrayLike],
-) -> Quantity | jax.Array:
+) -> Quantity | Array:
     r"""Solve a tridiagonal linear system.
 
     Compute the solution :math:`X` of the tridiagonal system
@@ -762,7 +762,7 @@ def tridiagonal_solve(
 
     Returns
     -------
-    X : jax.Array or Quantity
+    X : Array or Quantity
         The solution of the tridiagonal system.  If ``b`` has a unit, ``X``
         preserves that unit.
 

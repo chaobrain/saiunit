@@ -40,6 +40,7 @@ import numpy as np
 
 from saiunit._exceptions import BackendError
 from saiunit._jax_compat import HAS_JAX, jax, jnp
+from saiunit._typing import Array
 
 # Local alias kept for backwards compatibility with callers that reference
 # ``_jax_xp`` directly. ``None`` when JAX is not installed.
@@ -88,16 +89,16 @@ def is_numpy_array(x) -> bool:
     """
     if not isinstance(x, (np.ndarray, np.generic)):
         return False
-    if HAS_JAX and isinstance(x, jax.Array):
+    if HAS_JAX and isinstance(x, Array):
         return False
     return True
 
 
 def is_jax_array(x) -> bool:
-    """Return True if ``x`` is a ``jax.Array``. False if JAX is not installed."""
+    """Return True if ``x`` is an ``Array``. False if JAX is not installed."""
     if not HAS_JAX:
         return False
-    return isinstance(x, jax.Array)
+    return isinstance(x, Array)
 
 
 def is_cupy_array(x) -> bool:
