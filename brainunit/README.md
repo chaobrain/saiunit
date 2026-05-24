@@ -22,7 +22,7 @@
 
 [BrainUnit](https://github.com/chaobrain/brainunit) provides physical units and unit-aware mathematical system in JAX for brain dynamics modeling. It introduces rigoirous physical units into high-performance AI-driven abstract numerical computing. 
 
-BrainUnit is initially designed to enable unit-aware computations in brain dynamics modeling (see our [BDP ecosystem](https://ecosystem-for-brain-dynamics.readthedocs.io/)). However, its features and capacities can be applied to general domains in scientific computing and AI4Science. Starting in 2025/02, BrainUnit has been fully integrated into [SAIUnit](https://github.com/chaobrain/saiunit) (the **Unit** system for **S**cientific **AI**). 
+BrainUnit is initially designed to enable unit-aware computations in brain dynamics modeling (see our [BDP ecosystem](https://brainx.chaobrain.com/)). However, its features and capacities can be applied to general domains in scientific computing and AI4Science. Starting in 2025/02, BrainUnit has been fully integrated into [SAIUnit](https://github.com/chaobrain/saiunit) (the **Unit** system for **S**cientific **AI**). 
 
 Functionalities are the same for both ``brainunit`` and ``saiunit``, and their functions and data structures are interoperable, sharing the same set of APIs, and eliminating any potential conflicts. This meas that 
 
@@ -42,13 +42,13 @@ For users primarily engaged in general scientific computing, `saiunit` is likely
 
 ## Documentation
 
-The official documentation of BrainUnit is hosted on Read the Docs: [https://brainunit.readthedocs.io](https://brainunit.readthedocs.io)
+The official documentation of BrainUnit is hosted on Read the Docs: [https://brainx.chaobrain.com/brainunit](https://brainx.chaobrain.com/brainunit)
 
 
 
 ## Features
 
-`brainunit` can be seamlessly integrated into every aspect of our [brain modeling ecosystem](https://brainmodeling.readthedocs.io/), such as, the checkpointing of [braintools](https://github.com/chaobrain/braintools), the event-driven operators in [brainevent](https://github.com/chaobrain/brainevent), the state-based JIT compilation in [brainstate](https://github.com/chaobrain/brainstate), online learning rules in [brainscale](https://github.com/chaobrain/brainscale), or event more. 
+`brainunit` can be seamlessly integrated into every aspect of our [brain modeling ecosystem](https://brainx.chaobrain.com/), such as, the checkpointing of [braintools](https://github.com/chaobrain/braintools), the event-driven operators in [brainevent](https://github.com/chaobrain/brainevent), the state-based JIT compilation in [brainstate](https://github.com/chaobrain/brainstate), online learning rules in [brainscale](https://github.com/chaobrain/brainscale), or event more. 
 
 A quick example for this kind of integration:
 
@@ -130,4 +130,4 @@ If you use `brainunit` in your research, please consider citing the following pa
 
 ## See also the ecosystem
 
-``brainunit`` is one part of our [brain modeling ecosystem](https://brainmodeling.readthedocs.io/). 
+``brainunit`` is one part of our [brain modeling ecosystem](https://brainx.chaobrain.com/). 
