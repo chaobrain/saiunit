@@ -398,6 +398,66 @@ class TestQuantityConstantValues:
 # Cross-check quantity constants against scipy.constants
 # ===========================================================================
 
+# ``parametrize`` evaluates its argument list at class-body time, so
+# referencing ``sc.<name>`` directly would crash collection on installs
+# without scipy (e.g., the per-backend CI jobs). Build the list under the
+# HAS_SCIPY guard and fall back to an empty list — the class-level skipif
+# then has nothing to skip, which is the intended outcome.
+_SCIPY_QUANTITY_PAIRS = [
+    ("grain", sc.grain),
+    ("pound", sc.pound),
+    ("ounce", sc.oz),
+    ("stone", sc.stone),
+    ("long_ton", sc.long_ton),
+    ("short_ton", sc.short_ton),
+    ("troy_ounce", sc.troy_ounce),
+    ("troy_pound", sc.troy_pound),
+    ("carat", sc.carat),
+    ("atomic_mass", sc.atomic_mass),
+    ("minute", sc.minute),
+    ("hour", sc.hour),
+    ("day", sc.day),
+    ("week", sc.week),
+    ("julian_year", sc.Julian_year),
+    ("inch", sc.inch),
+    ("foot", sc.foot),
+    ("yard", sc.yard),
+    ("mile", sc.mile),
+    ("mil", sc.mil),
+    ("nautical_mile", sc.nautical_mile),
+    ("angstrom", sc.angstrom),
+    ("au", sc.au),
+    ("light_year", sc.light_year),
+    ("parsec", sc.parsec),
+    ("atm", sc.atm),
+    ("bar", sc.bar),
+    ("torr", sc.torr),
+    ("psi", sc.psi),
+    ("hectare", sc.hectare),
+    ("acre", sc.acre),
+    ("gallon", sc.gallon),
+    ("gallon_imp", sc.gallon_imp),
+    ("fluid_ounce", sc.fluid_ounce),
+    ("fluid_ounce_imp", sc.fluid_ounce_imp),
+    ("bbl", sc.bbl),
+    ("kmh", sc.kmh),
+    ("mph", sc.mph),
+    ("mach", sc.mach),
+    ("knot", sc.knot),
+    ("eV", sc.eV),
+    ("calorie", sc.calorie),
+    ("calorie_IT", sc.calorie_IT),
+    ("erg", sc.erg),
+    ("Btu", sc.Btu),
+    ("Btu_th", sc.Btu_th),
+    ("ton_TNT", sc.ton_TNT),
+    ("hp", sc.hp),
+    ("dyn", sc.dyn),
+    ("lbf", sc.lbf),
+    ("kgf", sc.kgf),
+] if HAS_SCIPY else []
+
+
 @pytest.mark.skipif(not HAS_SCIPY, reason="scipy not installed")
 class TestQuantityConstantsAgainstScipy:
     """Verify quantity constants match scipy.constants values."""
@@ -407,59 +467,7 @@ class TestQuantityConstantsAgainstScipy:
         val = float(getattr(c, name).mantissa)
         np.testing.assert_allclose(val, scipy_val, rtol=rtol, err_msg=f"{name}")
 
-    @pytest.mark.parametrize("name, scipy_val", [
-        ("grain", sc.grain),
-        ("pound", sc.pound),
-        ("ounce", sc.oz),
-        ("stone", sc.stone),
-        ("long_ton", sc.long_ton),
-        ("short_ton", sc.short_ton),
-        ("troy_ounce", sc.troy_ounce),
-        ("troy_pound", sc.troy_pound),
-        ("carat", sc.carat),
-        ("atomic_mass", sc.atomic_mass),
-        ("minute", sc.minute),
-        ("hour", sc.hour),
-        ("day", sc.day),
-        ("week", sc.week),
-        ("julian_year", sc.Julian_year),
-        ("inch", sc.inch),
-        ("foot", sc.foot),
-        ("yard", sc.yard),
-        ("mile", sc.mile),
-        ("mil", sc.mil),
-        ("nautical_mile", sc.nautical_mile),
-        ("angstrom", sc.angstrom),
-        ("au", sc.au),
-        ("light_year", sc.light_year),
-        ("parsec", sc.parsec),
-        ("atm", sc.atm),
-        ("bar", sc.bar),
-        ("torr", sc.torr),
-        ("psi", sc.psi),
-        ("hectare", sc.hectare),
-        ("acre", sc.acre),
-        ("gallon", sc.gallon),
-        ("gallon_imp", sc.gallon_imp),
-        ("fluid_ounce", sc.fluid_ounce),
-        ("fluid_ounce_imp", sc.fluid_ounce_imp),
-        ("bbl", sc.bbl),
-        ("kmh", sc.kmh),
-        ("mph", sc.mph),
-        ("mach", sc.mach),
-        ("knot", sc.knot),
-        ("eV", sc.eV),
-        ("calorie", sc.calorie),
-        ("calorie_IT", sc.calorie_IT),
-        ("erg", sc.erg),
-        ("Btu", sc.Btu),
-        ("Btu_th", sc.Btu_th),
-        ("ton_TNT", sc.ton_TNT),
-        ("hp", sc.hp),
-        ("dyn", sc.dyn),
-        ("lbf", sc.lbf),
-        ("kgf", sc.kgf),
-    ])
+    @pytest.mark.parametrize("name, scipy_val", _SCIPY_QUANTITY_PAIRS)
     def test_matches_scipy(self, name, scipy_val):
         self._check(name, scipy_val)
 

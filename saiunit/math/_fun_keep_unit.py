@@ -18,7 +18,7 @@ from __future__ import annotations
 import functools
 from typing import (Union, Sequence, Tuple, Optional)
 
-from saiunit._jax_compat import jax, jnp, ArrayLike
+from saiunit._jax_compat import jax, jnp, tree, ArrayLike
 import numpy as np
 
 from saiunit._backend import get_backend
@@ -169,7 +169,10 @@ def _fun_keep_unit_sequence(
     **kwargs
 ):
     args = maybe_custom_array_tree(args)
-    leaves, treedef = jax.tree.flatten(args, is_leaf=lambda x: isinstance(x, Quantity))
+    # Use the ``tree`` namespace from ``_jax_compat`` rather than ``jax.tree``
+    # directly so this works under pure-numpy/torch/dask/ndonnx where ``jax``
+    # is None and pytree registration is unavailable.
+    leaves, treedef = tree.flatten(args, is_leaf=lambda x: isinstance(x, Quantity))
     # leaves = jax.tree.map(
     #     lambda x: x.factorless() if isinstance(x, Quantity) else x,
     #     leaves,
@@ -1989,8 +1992,6 @@ def sum(
     keepdims: bool = False,
     initial: Union[ArrayLike, Quantity, None] = None,
     where: Union[ArrayLike, None] = None,
-    promote_integers: bool = True,
-    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the sum of the array elements.
@@ -2028,8 +2029,6 @@ def sum(
       Starting value for the sum. See `~numpy.ufunc.reduce` for details.
     where : array_like of bool, optional
       Elements to include in the sum. See `~numpy.ufunc.reduce` for details.
-    promote_integers : bool, optional
-      If True, and if the accumulator is an integer type, then the
 
     Returns
     -------
@@ -2046,14 +2045,14 @@ def sum(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary('sum',
-                                x,
-                                axis=axis,
-                                dtype=dtype,
-                                keepdims=keepdims,
-                                initial=initial,
-                                where=where,
-                                promote_integers=promote_integers, **kwargs)
+    # numpy.sum treats an explicit ``where=None`` / ``initial=None`` as
+    # "kwarg supplied" rather than "use default", and then complains that
+    # ``where`` requires ``initial``. JAX is more forgiving. To keep both
+    # paths happy, only forward kwargs whose value is non-None.
+    extra = {k: v for k, v in
+             (("dtype", dtype), ("initial", initial), ("where", where))
+             if v is not None}
+    return _fun_keep_unit_unary('sum', x, axis=axis, keepdims=keepdims, **extra)
 
 
 @set_module_as('saiunit.math')

@@ -12,6 +12,17 @@ same expression works directly on ``numpy``, ``jax``, ``cupy``, ``torch``, and
 ``dask`` arrays, with documented scope limits for ``dask`` and a clean
 ``BackendError`` for ``ndonnx``.
 
+### Breaking changes
+
+- **Removed the ``promote_integers`` keyword from ``saiunit.math.sum`` and
+  ``saiunit.math.prod``.** This argument was only accepted by ``jax.numpy``;
+  forwarding it to the active backend caused ``TypeError`` on every
+  non-JAX backend (numpy, torch, dask, ndonnx). Callers that need JAX's
+  integer-promotion behavior should call ``jax.numpy.sum`` /
+  ``jax.numpy.prod`` directly. Passing ``promote_integers=...`` to
+  ``saiunit.math.sum`` / ``saiunit.math.prod`` now raises
+  ``TypeError: unexpected keyword argument`` immediately.
+
 ### New features
 
 - **Multi-backend ``Quantity.at``.** All nine ``.at[idx].<op>(...)``
@@ -91,6 +102,18 @@ JAX-coercion paths and replaced raw ``AttributeError`` failure modes with
   ``AttributeError: 'NoneType' object has no attribute 'relu'`` when JAX
   isn't installed or when called on a torch / cupy / dask mantissa.
   ``leaky_relu`` is implemented via ``where`` and remains backend-agnostic.
+
+### CI
+
+- Added five per-backend CI jobs (``test_pure_numpy``, ``test_pure_jax``,
+  ``test_pure_torch``, ``test_pure_dask``, ``test_pure_ndonnx``) to
+  ``CI.yml``. Each job installs exactly one array backend and runs the
+  full test suite with that backend set as the saiunit default via the
+  ``SAIUNIT_DEFAULT_BACKEND`` env var (read in ``conftest.py``). This
+  catches accidental JAX-only kwargs leaking through the public API and
+  proves that ``pip install saiunit[<backend>]`` works end-to-end on
+  every PR. ``cupy`` is intentionally excluded — GitHub free runners have
+  no GPU.
 
 ## Version 0.2.2
 

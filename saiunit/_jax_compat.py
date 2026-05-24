@@ -61,6 +61,7 @@ __all__ = [
     "canonicalize_dtype",
     "tree_map",
     "tree_structure",
+    "tree_flatten",
     "tree",
     "device_put",
     "devices",
@@ -113,6 +114,7 @@ if HAS_JAX:
     tree = _jax.tree
     tree_map = _jax.tree.map
     tree_structure = _jax.tree.structure
+    tree_flatten = _jax.tree.flatten
     device_put = _jax.device_put
     devices = _jax.devices
 else:
@@ -186,7 +188,12 @@ else:
     # honour the caller's ``is_leaf`` predicate.
 
     class _TreeDef:
-        """Opaque structure record returned by :func:`tree_structure`."""
+        """Opaque structure record returned by :func:`tree_structure`.
+
+        Mirrors the surface of ``jax.tree_util.PyTreeDef`` used by saiunit:
+        equality / hash / repr, plus ``unflatten(leaves)`` for round-tripping
+        through :func:`tree_flatten` -> mutate-leaves -> rebuild.
+        """
 
         __slots__ = ("kind", "keys", "children")
 
@@ -209,6 +216,19 @@ else:
 
         def __repr__(self):
             return f"PyTreeDef({self.kind}, keys={self.keys}, children={self.children})"
+
+        def unflatten(self, leaves):
+            """Rebuild the original pytree from ``leaves``, mirroring ``PyTreeDef.unflatten``."""
+            leaves_iter = iter(leaves)
+            result = _unflatten(self, leaves_iter)
+            # Match jax behaviour: refuse extra leaves.
+            extra = list(leaves_iter)
+            if extra:
+                raise ValueError(
+                    f"unflatten: too many leaves for treedef {self!r}; "
+                    f"{len(extra)} unused"
+                )
+            return result
 
     def _flatten(x, is_leaf):
         if is_leaf is not None and is_leaf(x):
@@ -272,11 +292,16 @@ else:
         _, treedef = _flatten(tree_obj, is_leaf)
         return treedef
 
+    def tree_flatten(tree_obj, is_leaf: Callable | None = None):  # type: ignore[no-redef, misc]
+        """Fallback ``jax.tree.flatten`` returning ``(leaves, treedef)``."""
+        return _flatten(tree_obj, is_leaf)
+
     class _TreeNamespace:
-        """Namespace object that mimics ``jax.tree``'s ``map`` / ``structure``."""
+        """Namespace object that mimics ``jax.tree``'s ``map`` / ``structure`` / ``flatten``."""
 
         map = staticmethod(tree_map)
         structure = staticmethod(tree_structure)
+        flatten = staticmethod(tree_flatten)
 
     tree = _TreeNamespace()  # type: ignore[assignment]
 

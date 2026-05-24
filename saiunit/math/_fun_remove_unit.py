@@ -16,7 +16,9 @@ from __future__ import annotations
 
 from typing import (Union, Optional, Sequence)
 
-from saiunit._jax_compat import jax, jnp, ArrayLike
+import numpy as np
+
+from saiunit._jax_compat import HAS_JAX, jax, jnp, tree, ArrayLike
 
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
@@ -74,7 +76,14 @@ def get_promote_dtypes(
         dtype('float32')
     """
     args = maybe_custom_array_tree(args)
-    return jnp.promote_types(*jax.tree.leaves(args), **kwargs)  # type: ignore[return-value]
+    # ``tree.flatten`` from ``_jax_compat`` replaces ``jax.tree.leaves`` so
+    # this works without JAX installed. Use ``np.result_type`` as the
+    # backend-neutral dtype-promotion fallback — it accepts any number of
+    # dtype-like inputs (unlike ``np.promote_types`` which is binary).
+    leaves, _ = tree.flatten(args)
+    if HAS_JAX:
+        return jnp.promote_types(*leaves, **kwargs)  # type: ignore[return-value]
+    return np.result_type(*leaves, **kwargs)  # type: ignore[return-value]
 
 
 def _fun_remove_unit_unary(func, x, *args, **kwargs):
@@ -283,7 +292,14 @@ def bincount(
         >>> u.math.bincount(jnp.array([0, 1, 1, 2, 2, 2]))
         Array([1, 2, 3], dtype=int32)
     """
-    return _fun_remove_unit_unary('bincount', x, weights=weights, minlength=minlength, length=length, **kwargs)
+    # ``length=`` is JAX-only (it pads/truncates the output for jit-friendly
+    # static shapes). NumPy / Torch / Dask / ndonnx all raise ``TypeError`` on
+    # unknown kwargs, so only forward it when the caller actually set it — and
+    # let the underlying backend reject it if it doesn't support the kwarg.
+    extra = dict(kwargs)
+    if length is not None:
+        extra['length'] = length
+    return _fun_remove_unit_unary('bincount', x, weights=weights, minlength=minlength, **extra)
 
 
 @set_module_as('saiunit.math')
@@ -985,7 +1001,8 @@ def allclose(
         atol = 1e-8 * unit
     rtol = Quantity(rtol).in_unit(unit).mantissa  # type: ignore[assignment]
     atol = Quantity(atol).in_unit(unit).mantissa  # type: ignore[assignment]
-    return jnp.allclose(x_val, y_val, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)  # type: ignore[arg-type]
+    xp = get_backend(x_val, y_val)
+    return xp.allclose(x_val, y_val, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)  # type: ignore[arg-type]
 
 
 @set_module_as('saiunit.math')

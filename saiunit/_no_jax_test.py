@@ -73,8 +73,19 @@ class TestQuantityWithNumpy:
 
 class TestBackendSelection:
     def test_numpy_default_when_no_jax(self):
-        if not HAS_JAX:
-            assert u.get_default_backend() == "numpy"
+        if HAS_JAX:
+            return
+        # The per-backend CI jobs (e.g. test_pure_ndonnx) deliberately
+        # override the default via SAIUNIT_DEFAULT_BACKEND. This test asks the
+        # narrower question "does saiunit pick numpy when nothing else is
+        # specified", so honour the env-var if the operator set one.
+        import os
+        if os.environ.get("SAIUNIT_DEFAULT_BACKEND") not in (None, "", "numpy"):
+            pytest.skip(
+                "SAIUNIT_DEFAULT_BACKEND is set; test_numpy_default_when_no_jax "
+                "tests the auto-default, not the env-var override path"
+            )
+        assert u.get_default_backend() == "numpy"
 
     def test_using_numpy_backend_context(self):
         with u.using_backend("numpy"):
