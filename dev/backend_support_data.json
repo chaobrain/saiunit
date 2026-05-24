@@ -70,8 +70,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: fft_fft2() got an unexpected keyword argument 'axes'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.fft.fftfreq": {
@@ -180,8 +180,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: fft_ifft2() got an unexpected keyword argument 'axes'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.fft.ifftn": {
@@ -268,8 +268,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: fft_irfft2() got an unexpected keyword argument 'axes'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.fft.irfftn": {
@@ -334,8 +334,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: fft_rfft2() got an unexpected keyword argument 'axes'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.fft.rfftfreq": {
@@ -384,8 +384,8 @@
     },
     "saiunit.linalg.cholesky": {
       "dask": {
-        "detail": "TypeError: cholesky() got an unexpected keyword argument 'symmetrize_input'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -396,12 +396,12 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: cholesky() got an unexpected keyword argument 'symmetrize_input'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: linalg_cholesky() got an unexpected keyword argument 'symmetrize_input'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.linalg.cond": {
@@ -444,8 +444,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cross() got an unexpected keyword argument 'axisa'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.linalg.det": {
@@ -488,8 +488,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: diagonal() received an invalid combination of arguments - got (Tensor, offset=int, axis2=int, axis1=int), but expected one of:\n * (Tensor input, *, name outdim, name dim1, name dim2, int offset = 0)\n * (Tensor input, int offset = 0, int dim1 = 0, int dim2 = 1)\n      didn't match because some of the keywords were incorrect: offset, axis2, axis1\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.linalg.dot": {
@@ -1082,8 +1082,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: trace() got an unexpected keyword argument 'axis1'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.linalg.vdot": {
@@ -1742,8 +1742,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: split() got an unexpected keyword argument 'axis'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.as_numpy": {
@@ -1814,23 +1814,23 @@
     },
     "saiunit.math.astype": {
       "dask": {
-        "detail": "TypeError: astype() missing 1 required positional argument: 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
-        "detail": "TypeError: astype() missing 1 required positional argument: 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: astype() missing 1 required positional argument: 'dtype'",
+        "detail": "AttributeError: type object 'numpy.float32' has no attribute '__ndx_cast_from__'",
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: astype() missing 1 required positional argument: 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: astype() missing 1 required positional argument: 'dtype'",
+        "detail": "TypeError: to() received an invalid combination of arguments - got (copy=bool, dtype=type, ), but expected one of:\n * (torch.device device = None, torch.dtype dtype = None, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n * (torch.dtype dtype, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n * (Tensor tensor, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n",
         "status": "skip"
       }
     },
@@ -2342,8 +2342,8 @@
     },
     "saiunit.math.choose": {
       "dask": {
-        "detail": "TypeError: choose() got an unexpected keyword argument 'mode'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -2622,8 +2622,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: corrcoef() got an unexpected keyword argument 'rowvar'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.correlate": {
@@ -2640,8 +2640,8 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: correlate() got an unexpected keyword argument 'precision'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.torch' has no operation 'correlate'",
@@ -2732,8 +2732,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cov() got an unexpected keyword argument 'bias'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.cross": {
@@ -2754,8 +2754,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cross() got an unexpected keyword argument 'axisa'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.csingle": {
@@ -2798,8 +2798,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cumprod() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, name dim, *, torch.dtype dtype = None, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.cumproduct": {
@@ -2820,8 +2820,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cumprod() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, name dim, *, torch.dtype dtype = None, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.cumsum": {
@@ -2842,8 +2842,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cumsum() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, name dim, *, torch.dtype dtype = None, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.deg2rad": {
@@ -2908,8 +2908,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: diag() got an unexpected keyword argument 'k'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.diag_indices_from": {
@@ -2952,8 +2952,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: diagflat() got an unexpected keyword argument 'k'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.diagonal": {
@@ -2974,8 +2974,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: diagonal() received an invalid combination of arguments - got (Tensor, offset=int, axis2=int, axis1=int), but expected one of:\n * (Tensor input, *, name outdim, name dim1, name dim2, int offset = 0)\n * (Tensor input, int offset = 0, int dim1 = 0, int dim2 = 1)\n      didn't match because some of the keywords were incorrect: offset, axis2, axis1\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.diff": {
@@ -3238,7 +3238,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: transpose() received an invalid combination of arguments - got (Tensor, axes=list), but expected one of:\n * (Tensor input, int dim0, int dim1)\n * (Tensor input, name dim0, name dim1)\n",
+        "detail": "TypeError: transpose() received an invalid combination of arguments - got (Tensor, list), but expected one of:\n * (Tensor input, int dim0, int dim1)\n * (Tensor input, name dim0, name dim1)\n",
         "status": "skip"
       }
     },
@@ -3274,16 +3274,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: tile() got an unexpected keyword argument 'reps'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: tile() missing 1 required positional arguments: \"dims\"",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.einshape": {
@@ -3310,7 +3310,7 @@
     },
     "saiunit.math.einsum": {
       "dask": {
-        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/jiggly-moseying-moon/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
+        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/scalable-discovering-key/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
         "status": "skip"
       },
       "jax": {
@@ -3322,7 +3322,7 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/jiggly-moseying-moon/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
+        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/scalable-discovering-key/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
         "status": "skip"
       },
       "torch": {
@@ -3384,16 +3384,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: empty_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: empty_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.equal": {
@@ -3652,8 +3652,8 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: fill_diagonal() got an unexpected keyword argument 'inplace'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
         "detail": "AttributeError: module 'array_api_compat.torch' has no attribute 'fill_diagonal'",
@@ -4102,46 +4102,46 @@
     },
     "saiunit.math.full_like": {
       "dask": {
-        "detail": "TypeError: full_like() missing 1 required positional argument: 'fill_value'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
-        "detail": "TypeError: full_like() missing 1 required positional argument: 'fill_value'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: full_like() missing 1 required positional argument: 'fill_value'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "TypeError: full_like() missing 1 required positional argument: 'fill_value'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: full_like() missing 1 required positional argument: 'fill_value'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.gather": {
       "dask": {
-        "detail": "TypeError: gather() missing 1 required positional argument: 'index'",
-        "status": "skip"
+        "detail": "NotImplementedError: Don't yet support nd fancy indexing",
+        "status": "fail"
       },
       "jax": {
-        "detail": "TypeError: gather() missing 1 required positional argument: 'index'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: gather() missing 1 required positional argument: 'index'",
+        "detail": "AttributeError: 'Array' object has no attribute 'reshape'",
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: gather() missing 1 required positional argument: 'index'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: gather() missing 1 required positional argument: 'index'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.gcd": {
@@ -4602,8 +4602,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: histogram() received an invalid combination of arguments - got (Tensor, int, density=NoneType, weights=NoneType, range=NoneType), but expected one of:\n * (Tensor input, Tensor bins, *, Tensor weight = None, bool density = False, tuple of Tensors out = None)\n * (Tensor input, int bins = 100, *, tuple of floats range = None, Tensor weight = None, bool density = False, tuple of Tensors out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.hsplit": {
@@ -5474,16 +5474,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: linspace() got an unexpected keyword argument 'retstep'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: linspace() received an invalid combination of arguments - got (float, float, int, retstep=bool, device=NoneType, dtype=NoneType), but expected one of:\n * (Tensor start, Tensor end, int steps, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Number start, Tensor end, int steps, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Tensor start, Number end, int steps, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Number start, Number end, int steps, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.log": {
@@ -5746,7 +5746,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: logspace() received an invalid combination of arguments - got (float, float, dtype=NoneType, base=float, endpoint=bool, num=int), but expected one of:\n * (Tensor start, Tensor end, int steps, float base = 10.0, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Number start, Tensor end, int steps, float base = 10.0, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Tensor start, Number end, int steps, float base = 10.0, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Number start, Number end, int steps, float base = 10.0, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n",
+        "detail": "TypeError: logspace() received an invalid combination of arguments - got (float, float), but expected one of:\n * (Tensor start, Tensor end, int steps, float base = 10.0, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Number start, Tensor end, int steps, float base = 10.0, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Tensor start, Number end, int steps, float base = 10.0, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n * (Number start, Number end, int steps, float base = 10.0, *, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)\n",
         "status": "skip"
       }
     },
@@ -5884,8 +5884,8 @@
     },
     "saiunit.math.median": {
       "dask": {
-        "detail": "TypeError: median() got an unexpected keyword argument 'overwrite_input'",
-        "status": "skip"
+        "detail": "NotImplementedError: The da.median function only works along an axis.  The full algorithm is difficult to do in parallel",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
@@ -5900,8 +5900,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: median() received an invalid combination of arguments - got (Tensor, overwrite_input=bool, keepdims=bool), but expected one of:\n * (Tensor input)\n * (Tensor input, int dim, bool keepdim = False, *, tuple of Tensors out = None)\n * (Tensor input, name dim, bool keepdim = False, *, tuple of Tensors out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.meshgrid": {
@@ -6170,8 +6170,8 @@
     },
     "saiunit.math.nancumprod": {
       "dask": {
-        "detail": "TypeError: nancumprod() missing 1 required positional argument: 'axis'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6192,8 +6192,8 @@
     },
     "saiunit.math.nancumsum": {
       "dask": {
-        "detail": "TypeError: nancumsum() missing 1 required positional argument: 'axis'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6258,8 +6258,8 @@
     },
     "saiunit.math.nanmedian": {
       "dask": {
-        "detail": "TypeError: nanmedian() got an unexpected keyword argument 'overwrite_input'",
-        "status": "skip"
+        "detail": "NotImplementedError: The da.nanmedian function only works along an axis or a subset of axes.  The full algorithm is difficult to do in parallel",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
@@ -6274,8 +6274,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: nanmedian() received an invalid combination of arguments - got (Tensor, overwrite_input=bool, keepdims=bool), but expected one of:\n * (Tensor input)\n * (Tensor input, int dim, bool keepdim = False, *, tuple of Tensors out = None)\n * (Tensor input, name dim, bool keepdim = False, *, tuple of Tensors out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.nanmin": {
@@ -6362,7 +6362,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: nanquantile() received an invalid combination of arguments - got (Tensor, q=float, method=str, keepdims=bool), but expected one of:\n * (Tensor input, Tensor q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n * (Tensor input, float q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n",
+        "detail": "TypeError: nanquantile() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, Tensor q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n * (Tensor input, float q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n",
         "status": "skip"
       }
     },
@@ -6574,16 +6574,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: ones_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: ones_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.outer": {
@@ -6610,8 +6610,8 @@
     },
     "saiunit.math.percentile": {
       "dask": {
-        "detail": "TypeError: percentile() got an unexpected keyword argument dict_keys(['keepdims'])",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6742,8 +6742,8 @@
     },
     "saiunit.math.ptp": {
       "dask": {
-        "detail": "TypeError: ptp() got an unexpected keyword argument 'keepdims'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6780,7 +6780,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: quantile() received an invalid combination of arguments - got (Tensor, q=float, method=str, keepdims=bool), but expected one of:\n * (Tensor input, Tensor q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n * (Tensor input, float q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n",
+        "detail": "TypeError: quantile() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, Tensor q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n * (Tensor input, float q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n",
         "status": "skip"
       }
     },
@@ -6830,8 +6830,8 @@
     },
     "saiunit.math.ravel": {
       "dask": {
-        "detail": "TypeError: ravel() got an unexpected keyword argument 'order'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6846,8 +6846,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: ravel() got an unexpected keyword argument 'order'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.real": {
@@ -7006,24 +7006,24 @@
     },
     "saiunit.math.reshape": {
       "dask": {
-        "detail": "TypeError: reshape() got an unexpected keyword argument 'order'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: reshape() got an unexpected keyword argument 'order'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: reshape() got an unexpected keyword argument 'order'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.result_type": {
@@ -7132,8 +7132,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: rot90() got an unexpected keyword argument 'axes'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.round": {
@@ -7146,8 +7146,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: round() got an unexpected keyword argument 'decimals'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
@@ -7220,7 +7220,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: select() received an invalid combination of arguments - got (list, list, default=int), but expected one of:\n * (Tensor input, name dim, int index)\n      didn't match because some of the keywords were incorrect: default\n * (Tensor input, int dim, int index)\n      didn't match because some of the keywords were incorrect: default\n",
+        "detail": "TypeError: select() received an invalid combination of arguments - got (list, list), but expected one of:\n * (Tensor input, name dim, int index)\n * (Tensor input, int dim, int index)\n",
         "status": "skip"
       }
     },
@@ -7638,8 +7638,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: split() got an unexpected keyword argument 'axis'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.sqrt": {
@@ -7836,8 +7836,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: swapaxes() missing 2 required positional argument: \"axis0\", \"axis1\"",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.swish": {
@@ -7864,24 +7864,24 @@
     },
     "saiunit.math.take": {
       "dask": {
-        "detail": "TypeError: take() got an unexpected keyword argument 'mode'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: take() got an unexpected keyword argument 'mode'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "TypeError: take() got an unexpected keyword argument 'unique_indices'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: index_select() received an invalid combination of arguments - got (Tensor, int, Tensor, fill_value=NoneType, indices_are_sorted=bool, unique_indices=bool, mode=NoneType), but expected one of:\n * (Tensor input, int dim, Tensor index, *, Tensor out = None)\n * (Tensor input, name dim, Tensor index, *, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.tan": {
@@ -7960,16 +7960,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: tile() got an unexpected keyword argument 'reps'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: tile() missing 1 required positional arguments: \"dims\"",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.trace": {
@@ -7990,8 +7990,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: trace() got an unexpected keyword argument 'axis1'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.transpose": {
@@ -8026,16 +8026,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: ones_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: ones_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.tree_zeros_like": {
@@ -8048,16 +8048,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: zeros_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: zeros_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.tri": {
@@ -8106,24 +8106,24 @@
     },
     "saiunit.math.tril_indices": {
       "dask": {
-        "detail": "TypeError: tril_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
-        "detail": "TypeError: tril_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: tril_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
+        "detail": "AttributeError: module 'ndonnx' has no attribute `tril_indices`",
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: tril_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: tril_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.tril_indices_from": {
@@ -8172,24 +8172,24 @@
     },
     "saiunit.math.triu_indices": {
       "dask": {
-        "detail": "TypeError: triu_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
-        "detail": "TypeError: triu_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: triu_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
+        "detail": "AttributeError: module 'ndonnx' has no attribute `triu_indices`",
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: triu_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: triu_indices() got an unexpected keyword argument 'M'. Did you mean 'm'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.triu_indices_from": {
@@ -8436,8 +8436,8 @@
     },
     "saiunit.math.unique": {
       "dask": {
-        "detail": "TypeError: unique() got an unexpected keyword argument 'axis'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -8452,8 +8452,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: _return_output() got an unexpected keyword argument 'return_index'. Did you mean 'return_inverse'?",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.vander": {
@@ -8642,16 +8642,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: zeros_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: zeros_like() got an unexpected keyword argument 'shape'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     }
   },
@@ -9349,8 +9349,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: expand_dims() takes 1 positional argument but 2 were given",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
@@ -9811,16 +9811,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: repeat() got some positional-only arguments passed as keyword arguments: 'repeats'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: repeat() got some positional-only arguments passed as keyword arguments: 'repeats'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.repr_in_unit": {
@@ -9899,16 +9899,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: round() takes 1 positional argument but 2 were given",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: round() received an invalid combination of arguments - got (Tensor, int), but expected one of:\n * (Tensor input, *, Tensor out = None)\n * (Tensor input, *, int decimals, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.scatter_add": {
@@ -10537,8 +10537,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: expand_dims() takes 1 positional argument but 2 were given",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",

@@ -31,6 +31,13 @@ from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_a
 import array_api_compat.numpy as _numpy_xp
 
 
+def _safe_call_xp(fn, args, kwargs):
+    """Local mirror of :func:`_fun_keep_unit._dispatch_call` for direct ``xp.fn(...)``
+    call sites in this module. Imported lazily to avoid a circular import."""
+    from ._fun_keep_unit import _dispatch_call
+    return _dispatch_call(fn, args, kwargs)
+
+
 def _default_xp():
     """Return the backend namespace selected by the current default backend.
 
@@ -468,7 +475,7 @@ def full_like(
         if isinstance(a, Quantity):
             fill_value = fill_value.in_unit(a.unit)
             return Quantity(
-                xp.full_like(a.mantissa, fill_value.mantissa, dtype=dtype, shape=shape),
+                _safe_call_xp(xp.full_like, (a.mantissa, fill_value.mantissa), dict(dtype=dtype, shape=shape)),
                 unit=a.unit
             )
         else:
@@ -479,7 +486,7 @@ def full_like(
                     f'Either pass a plain number as fill_value or wrap "a" as a Quantity.'
                 )
             return Quantity(
-                xp.full_like(a, fill_value.mantissa, dtype=dtype, shape=shape),
+                _safe_call_xp(xp.full_like, (a, fill_value.mantissa), dict(dtype=dtype, shape=shape)),
                 unit=fill_value.unit
             )
     else:
@@ -490,9 +497,9 @@ def full_like(
                     f'but got a with unit={a.unit}. '
                     f'Either pass a Quantity as fill_value or use a plain array for "a".'
                 )
-            return xp.full_like(a.mantissa, fill_value, dtype=dtype, shape=shape)
+            return _safe_call_xp(xp.full_like, (a.mantissa, fill_value), dict(dtype=dtype, shape=shape))
         else:
-            return xp.full_like(a, fill_value, dtype=dtype, shape=shape)
+            return _safe_call_xp(xp.full_like, (a, fill_value), dict(dtype=dtype, shape=shape))
 
 
 @set_module_as('saiunit.math')
@@ -546,12 +553,12 @@ def diag(
     if isinstance(v, Quantity):
         if not unit.is_unitless:
             v = v.in_unit(unit)
-        return Quantity(xp.diag(v.mantissa, k=k), unit=v.unit)
+        return Quantity(_safe_call_xp(xp.diag, (v.mantissa,), dict(k=k)), unit=v.unit)
     else:
         if not unit.is_unitless:
-            return xp.diag(v, k=k) * unit
+            return _safe_call_xp(xp.diag, (v,), dict(k=k)) * unit
         else:
-            return xp.diag(v, k=k)
+            return _safe_call_xp(xp.diag, (v,), dict(k=k))
 
 
 @set_module_as('saiunit.math')
@@ -712,12 +719,15 @@ def empty_like(
     if isinstance(prototype, Quantity):
         if not unit.is_unitless:
             prototype = prototype.in_unit(unit)
-        return Quantity(xp.empty_like(prototype.mantissa, dtype=dtype), unit=prototype.unit)
+        return Quantity(
+            _safe_call_xp(xp.empty_like, (prototype.mantissa,), dict(dtype=dtype)),
+            unit=prototype.unit,
+        )
     else:
         if not unit.is_unitless:
-            return xp.empty_like(prototype, dtype=dtype, shape=shape) * unit
+            return _safe_call_xp(xp.empty_like, (prototype,), dict(dtype=dtype, shape=shape)) * unit
         else:
-            return xp.empty_like(prototype, dtype=dtype, shape=shape)
+            return _safe_call_xp(xp.empty_like, (prototype,), dict(dtype=dtype, shape=shape))
 
 
 @set_module_as('saiunit.math')
@@ -766,12 +776,15 @@ def ones_like(
     if isinstance(a, Quantity):
         if not unit.is_unitless:
             a = a.in_unit(unit)
-        return Quantity(xp.ones_like(a.mantissa, dtype=dtype, shape=shape), unit=a.unit)
+        return Quantity(
+            _safe_call_xp(xp.ones_like, (a.mantissa,), dict(dtype=dtype, shape=shape)),
+            unit=a.unit,
+        )
     else:
         if not unit.is_unitless:
-            return xp.ones_like(a, dtype=dtype, shape=shape) * unit
+            return _safe_call_xp(xp.ones_like, (a,), dict(dtype=dtype, shape=shape)) * unit
         else:
-            return xp.ones_like(a, dtype=dtype, shape=shape)
+            return _safe_call_xp(xp.ones_like, (a,), dict(dtype=dtype, shape=shape))
 
 
 @set_module_as('saiunit.math')
@@ -820,12 +833,15 @@ def zeros_like(
     if isinstance(a, Quantity):
         if not unit.is_unitless:
             a = a.in_unit(unit)
-        return Quantity(xp.zeros_like(a.mantissa, dtype=dtype, shape=shape), unit=a.unit)
+        return Quantity(
+            _safe_call_xp(xp.zeros_like, (a.mantissa,), dict(dtype=dtype, shape=shape)),
+            unit=a.unit,
+        )
     else:
         if not unit.is_unitless:
-            return xp.zeros_like(a, dtype=dtype, shape=shape) * unit
+            return _safe_call_xp(xp.zeros_like, (a,), dict(dtype=dtype, shape=shape)) * unit
         else:
-            return xp.zeros_like(a, dtype=dtype, shape=shape)
+            return _safe_call_xp(xp.zeros_like, (a,), dict(dtype=dtype, shape=shape))
 
 
 @set_module_as('saiunit.math')
@@ -1066,7 +1082,11 @@ def linspace(
     start = start.in_unit(unit).mantissa if isinstance(start, Quantity) else start
     stop = stop.in_unit(unit).mantissa if isinstance(stop, Quantity) else stop
     with jax.ensure_compile_time_eval():
-        result = _default_xp().linspace(start, stop, num=num, endpoint=endpoint, retstep=retstep, dtype=dtype)
+        xp = _default_xp()
+        result = _safe_call_xp(
+            xp.linspace, (start, stop),
+            dict(num=num, endpoint=endpoint, retstep=retstep, dtype=dtype),
+        )
     return result if unit.is_unitless else Quantity(result, unit=unit)
 
 
@@ -1137,7 +1157,11 @@ def logspace(
     start = start.mantissa if isinstance(start, Quantity) else start
     stop = stop.mantissa if isinstance(stop, Quantity) else stop
     with jax.ensure_compile_time_eval():
-        return _default_xp().logspace(start, stop, num=num, endpoint=endpoint, base=base, dtype=dtype)
+        xp = _default_xp()
+        return _safe_call_xp(
+            xp.logspace, (start, stop),
+            dict(num=num, endpoint=endpoint, base=base, dtype=dtype),
+        )
 
 
 @set_module_as('saiunit.math')
@@ -1189,14 +1213,23 @@ def fill_diagonal(
     if isinstance(val, Quantity):
         if isinstance(a, Quantity):
             val = val.in_unit(a.unit)
-            return Quantity(xp.fill_diagonal(a.mantissa, val.mantissa, wrap, inplace=inplace), unit=a.unit)
+            return Quantity(
+                _safe_call_xp(xp.fill_diagonal, (a.mantissa, val.mantissa, wrap), dict(inplace=inplace)),
+                unit=a.unit,
+            )
         else:
-            return Quantity(xp.fill_diagonal(a, val.mantissa, wrap, inplace=inplace), unit=val.unit)
+            return Quantity(
+                _safe_call_xp(xp.fill_diagonal, (a, val.mantissa, wrap), dict(inplace=inplace)),
+                unit=val.unit,
+            )
     else:
         if isinstance(a, Quantity):
-            return Quantity(xp.fill_diagonal(a.mantissa, val, wrap, inplace=inplace), unit=a.unit)
+            return Quantity(
+                _safe_call_xp(xp.fill_diagonal, (a.mantissa, val, wrap), dict(inplace=inplace)),
+                unit=a.unit,
+            )
         else:
-            return xp.fill_diagonal(a, val, wrap, inplace=inplace)
+            return _safe_call_xp(xp.fill_diagonal, (a, val, wrap), dict(inplace=inplace))
 
 
 @set_module_as('saiunit.math')
@@ -1345,7 +1378,12 @@ def vander(
 # --------------
 
 def tril_indices(n, k=0, m=None):
-    return _default_xp().tril_indices(n, k=k, m=m)
+    xp = _default_xp()
+    # torch's binding spells the signature ``tril_indices(row, col, offset)``;
+    # array-API / numpy / jax / dask spell it ``(n, k=0, m=None)``.
+    if 'torch' in getattr(xp, '__name__', ''):
+        return xp.tril_indices(n, n if m is None else m, offset=k)
+    return _safe_call_xp(xp.tril_indices, (n,), {'k': k, 'm': m})
 
 
 @set_module_as('saiunit.math')
@@ -1385,7 +1423,10 @@ def tril_indices_from(
 
 
 def triu_indices(n, k=0, m=None):
-    return _default_xp().triu_indices(n, k=k, m=m)
+    xp = _default_xp()
+    if 'torch' in getattr(xp, '__name__', ''):
+        return xp.triu_indices(n, n if m is None else m, offset=k)
+    return _safe_call_xp(xp.triu_indices, (n,), {'k': k, 'm': m})
 
 
 @set_module_as('saiunit.math')

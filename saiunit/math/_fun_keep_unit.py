@@ -16,6 +16,8 @@
 from __future__ import annotations
 
 import functools
+import inspect
+import re
 from typing import (Any, Union, Sequence, Tuple, Optional)
 
 from saiunit._jax_compat import jax, jnp, tree
@@ -163,6 +165,118 @@ def _strip_none_kwargs(kwargs):
     return {k: v for k, v in kwargs.items() if v is not None}
 
 
+@functools.lru_cache(maxsize=4096)
+def _accepted_kwargs(fn) -> Optional[frozenset]:
+    """Return ``frozenset`` of kwarg names accepted by ``fn``.
+
+    Returns ``None`` when introspection fails (C-extensions) or when
+    ``fn`` accepts ``**kwargs`` — in both cases the caller must not
+    silently drop kwargs.
+    """
+    try:
+        sig = inspect.signature(fn)
+    except (ValueError, TypeError):
+        return None
+    params = sig.parameters
+    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+        return None
+    return frozenset(params)
+
+
+def _filter_unsupported_kwargs(fn, kwargs):
+    """Drop kwargs the backend ``fn`` doesn't accept.
+
+    Best-effort: returns ``kwargs`` unchanged when ``fn``'s signature
+    can't be introspected (C-extensions such as torch's bindings). Pair
+    with :func:`_safe_call` to also handle the un-introspectable case.
+    """
+    accepted = _accepted_kwargs(fn)
+    if accepted is None:
+        return kwargs
+    return {k: v for k, v in kwargs.items() if k in accepted}
+
+
+_UNEXPECTED_KW_RE = re.compile(
+    r"unexpected keyword argument (?:[\"']([A-Za-z_]\w*)[\"']|dict_keys\(\[[\"']([A-Za-z_]\w*)[\"']\]\))"
+)
+_POSITIONAL_ONLY_RE = re.compile(r"positional-only arguments? passed as keyword arguments?: ['\"]([A-Za-z_]\w*)['\"]")
+_INVALID_COMBO_RE = re.compile(r"received an invalid combination of arguments")
+_INVALID_COMBO_GOT_RE = re.compile(r"got \(([^)]*)\)")
+_KWARG_TOKEN_RE = re.compile(r"([A-Za-z_]\w*)\s*=")
+
+
+def _safe_call(fn, args, kwargs):
+    """Invoke ``fn(*args, **kwargs)`` tolerating backend-rejected kwargs.
+
+    Strategy: try the call as-is; on :class:`TypeError` complaining
+    about an unexpected keyword argument, drop the offending key and
+    retry. Also handles:
+
+    - "positional-only arguments passed as keyword arguments" by
+      promoting the named kwarg into a leading positional.
+    - torch's "received an invalid combination of arguments" by
+      parsing the "got (...)" preview, extracting the kwarg names
+      torch saw, and dropping any that are present in ``kwargs``. This
+      catches the case where saiunit forwards kwargs (often at default
+      values) that the torch C binding refuses to accept.
+
+    This is the last-resort fallback for backends whose function
+    signatures cannot be introspected (e.g. torch C bindings);
+    :func:`_filter_unsupported_kwargs` handles the introspectable
+    cases up-front.
+    """
+    args = list(args)
+    while True:
+        try:
+            return fn(*args, **kwargs)
+        except TypeError as e:
+            msg = str(e)
+            m = _UNEXPECTED_KW_RE.search(msg)
+            if m:
+                bad = m.group(1) or m.group(2)
+                if bad in kwargs:
+                    kwargs = {k: v for k, v in kwargs.items() if k != bad}
+                    continue
+            m = _POSITIONAL_ONLY_RE.search(msg)
+            if m and m.group(1) in kwargs:
+                key = m.group(1)
+                args.append(kwargs[key])
+                kwargs = {k: v for k, v in kwargs.items() if k != key}
+                continue
+            if _INVALID_COMBO_RE.search(msg) and kwargs:
+                got = _INVALID_COMBO_GOT_RE.search(msg)
+                if got:
+                    seen = set(_KWARG_TOKEN_RE.findall(got.group(1)))
+                    to_drop = seen & set(kwargs)
+                    if to_drop:
+                        kwargs = {k: v for k, v in kwargs.items() if k not in to_drop}
+                        continue
+                # Fallback: clear all kwargs and try positionally.
+                kwargs = {}
+                continue
+            raise
+
+
+def _dispatch_call(fn, args, kwargs):
+    """Apply both kwarg-filter layers, then invoke ``fn``."""
+    kwargs = _filter_unsupported_kwargs(fn, kwargs)
+    return _safe_call(fn, args, kwargs)
+
+
+def _maybe_flatten(x):
+    """Return a 1-D view of ``x`` (Quantity or array) preserving the unit.
+
+    Used to emulate numpy's ``axis=None`` semantics on backends whose
+    cumulative ops (notably torch's ``cumsum`` / ``cumprod``) require
+    an explicit ``axis``.
+    """
+    if isinstance(x, Quantity):
+        xp = get_backend(x.mantissa)
+        return Quantity(xp.reshape(x.mantissa, (-1,)), unit=x.unit)
+    xp = get_backend(x)
+    return xp.reshape(x, (-1,))
+
+
 def _looks_like_numpy_namespace(module: str) -> bool:
     """Heuristic: is ``module`` part of a ``numpy``-style array-API namespace?"""
     if not module:
@@ -200,7 +314,7 @@ def _fun_keep_unit_sequence(
     xp = get_backend(*leaves)
     func = _resolve_op(func, xp)
     args = treedef.unflatten(leaves)
-    r = func(*args, **kwargs)
+    r = _dispatch_call(func, args, kwargs)
     if unit.is_unitless:
         return r
     return Quantity(r, unit=unit)
@@ -511,11 +625,11 @@ def _fun_keep_unit_return_sequence(
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
         func = _resolve_op(func, xp)
-        r = func(x.mantissa, *args, **kwargs)
+        r = _dispatch_call(func, (x.mantissa, *args), kwargs)
         return [maybe_decimal(Quantity(rr, unit=x.unit)) for rr in r]
     xp = get_backend(x)
     func = _resolve_op(func, xp)
-    return func(x, *args, **kwargs)
+    return _dispatch_call(func, (x, *args), kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -558,7 +672,7 @@ def split(
       >>> a = jnp.arange(9.0) * u.second
       >>> u.math.split(a, 3)
     """
-    return _fun_keep_unit_return_sequence('split', a, indices_or_sections=indices_or_sections, axis=axis, **kwargs)
+    return _fun_keep_unit_return_sequence('split', a, indices_or_sections, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -596,7 +710,7 @@ def array_split(
       >>> a = jnp.arange(9.0) * u.second
       >>> u.math.array_split(a, 3)
     """
-    return _fun_keep_unit_return_sequence('split', ary, indices_or_sections=indices_or_sections, axis=axis, **kwargs)
+    return _fun_keep_unit_return_sequence('split', ary, indices_or_sections, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1057,7 +1171,12 @@ def transpose(
       >>> u.math.transpose(a).shape
       (3, 2)
     """
-    return _fun_keep_unit_unary('transpose', a, axes=axes, **kwargs)
+    # Pass ``axes`` positionally to maximize backend portability:
+    # numpy / jax / dask take ``transpose(a, axes)``; torch's array-API
+    # wrapper takes ``permute_dims(a, axes)`` and rejects ``axes=`` as kw.
+    if axes is None:
+        return _fun_keep_unit_unary('transpose', a, **kwargs)
+    return _fun_keep_unit_unary('transpose', a, axes, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1094,7 +1213,9 @@ def swapaxes(
       >>> u.math.swapaxes(a, 0, 2).shape
       (5, 4, 3)
     """
-    return _fun_keep_unit_unary('swapaxes', a, axis1=axis1, axis2=axis2, **kwargs)
+    # ``swapaxes`` is positional on every backend that exposes it. torch's
+    # array-API wrapper raises if these come through as kwargs.
+    return _fun_keep_unit_unary('swapaxes', a, axis1, axis2, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1126,7 +1247,12 @@ def tile(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.tile(a, 2)
     """
-    return _fun_keep_unit_unary('tile', A, reps=reps, **kwargs)
+    # numpy / jax / dask call it ``reps``; torch uses ``dims``; ndonnx
+    # uses ``repetitions``. Pass positionally so each backend treats it
+    # as its own positional parameter.
+    if isinstance(reps, int):
+        reps = (reps,)
+    return _fun_keep_unit_unary('tile', A, reps, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1326,6 +1452,8 @@ def expand_dims(
       >>> u.math.expand_dims(a, axis=0).shape
       (1, 3)
     """
+    # ndonnx's ``expand_dims`` rejects ``axis`` as a positional argument;
+    # numpy/jax/torch/dask all accept the keyword form.
     return _fun_keep_unit_unary('expand_dims', a, axis=axis, **kwargs)
 
 
@@ -1360,7 +1488,11 @@ def squeeze(
       >>> u.math.squeeze(a).shape
       (3,)
     """
-    return _fun_keep_unit_unary('squeeze', a, axis=axis, **kwargs)
+    # torch's array-API wrapper and ndonnx require ``axis`` positionally —
+    # numpy / jax accept either spelling.
+    if axis is None:
+        return _fun_keep_unit_unary('squeeze', a, **kwargs)
+    return _fun_keep_unit_unary('squeeze', a, axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1813,11 +1945,11 @@ def _fun_keep_unit_unary(func, x, *args, **kwargs):
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
         func = _resolve_op(func, xp)
-        return Quantity(func(x.mantissa, *args, **kwargs), unit=x.unit)
+        return Quantity(_dispatch_call(func, (x.mantissa, *args), kwargs), unit=x.unit)
     else:
         xp = get_backend(x)
         func = _resolve_op(func, xp)
-        return func(x, *args, **kwargs)
+        return _dispatch_call(func, (x, *args), kwargs)
 
 
 def astype(
@@ -2142,6 +2274,9 @@ def nancumsum(
       >>> a = [1.0, jnp.nan, 3.0] * u.meter
       >>> u.math.nancumsum(a)
     """
+    if axis is None:
+        x = _maybe_flatten(x)
+        axis = 0
     return _fun_keep_unit_unary('nancumsum', x, axis=axis, dtype=dtype, **kwargs)
 
 
@@ -2245,6 +2380,12 @@ def cumsum(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.cumsum(a)
     """
+    # numpy / jax interpret ``axis=None`` as "flatten then cum". torch's
+    # array-API binding refuses to accept a missing dim, so emulate the
+    # flatten step explicitly when no axis was provided.
+    if axis is None:
+        x = _maybe_flatten(x)
+        axis = 0
     return _fun_keep_unit_unary('cumsum', x, axis=axis, dtype=dtype, **kwargs)
 
 
@@ -3515,10 +3656,14 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
     x1 = maybe_custom_array(x1)
     x2 = maybe_custom_array(x2)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
+    kwargs = _strip_none_kwargs(kwargs)
     if isinstance(x1, Quantity) and isinstance(x2, Quantity):
         xp = get_backend(x1.mantissa, x2.mantissa)
         func = _resolve_op(func, xp)
-        return Quantity(func(x1.mantissa, x2.in_unit(x1.unit).mantissa, *args, **kwargs), unit=x1.unit)
+        return Quantity(
+            _dispatch_call(func, (x1.mantissa, x2.in_unit(x1.unit).mantissa, *args), kwargs),
+            unit=x1.unit,
+        )
     elif isinstance(x1, Quantity):
         if not x1.is_unitless:
             raise TypeError(
@@ -3528,7 +3673,7 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
             )
         xp = get_backend(x1.mantissa, x2)
         func = _resolve_op(func, xp)
-        return func(x1.mantissa, x2, *args, **kwargs)
+        return _dispatch_call(func, (x1.mantissa, x2, *args), kwargs)
     elif isinstance(x2, Quantity):
         if not x2.is_unitless:
             raise TypeError(
@@ -3538,11 +3683,11 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
             )
         xp = get_backend(x1, x2.mantissa)
         func = _resolve_op(func, xp)
-        return func(x1, x2.mantissa, *args, **kwargs)
+        return _dispatch_call(func, (x1, x2.mantissa, *args), kwargs)
     else:
         xp = get_backend(x1, x2)
         func = _resolve_op(func, xp)
-        return func(x1, x2, *args, **kwargs)
+        return _dispatch_call(func, (x1, x2, *args), kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4161,7 +4306,8 @@ def histogram(
         x_min = float(backend.asarray(x).min().compute())  # type: ignore[union-attr]
         x_max = float(backend.asarray(x).max().compute())  # type: ignore[union-attr]
         range = (x_min, x_max)  # type: ignore[assignment]
-    hist, bin_edges = _resolve_op('histogram', backend)(x, bins, range=range, weights=weights, density=density, **kwargs)  # type: ignore[arg-type]
+    hist_kwargs = _strip_none_kwargs(dict(range=range, weights=weights, density=density, **kwargs))
+    hist, bin_edges = _dispatch_call(_resolve_op('histogram', backend), (x, bins), hist_kwargs)
     if unit.is_unitless:
         return hist, bin_edges
     return hist, Quantity(bin_edges, unit=unit)
@@ -4396,8 +4542,12 @@ def take(
                       indices_are_sorted=indices_are_sorted, fill_value=fill_value)
     else:
         xp = get_backend(a)
-        return _resolve_op('take', xp)(a, indices, axis=axis, mode=mode, unique_indices=unique_indices,  # type: ignore[arg-type]
-                                       indices_are_sorted=indices_are_sorted, fill_value=fill_value, **kwargs)  # type: ignore[arg-type]
+        take_kwargs = _strip_none_kwargs(dict(
+            axis=axis, mode=mode, unique_indices=unique_indices,
+            indices_are_sorted=indices_are_sorted, fill_value=fill_value,
+            **kwargs,
+        ))
+        return _dispatch_call(_resolve_op('take', xp), (a, indices), take_kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4454,7 +4604,11 @@ def select(
     mantissas = [x.mantissa for x in leaves]
     xp = get_backend(*mantissas)
     new_choicelist = treedef.unflatten(mantissas)  # type: ignore[attr-defined]
-    r = _resolve_op('select', xp)(condlist, new_choicelist, default=default, **kwargs)
+    r = _dispatch_call(
+        _resolve_op('select', xp),
+        (condlist, new_choicelist),
+        _strip_none_kwargs(dict(default=default, **kwargs)),
+    )
     if unit.is_unitless:
         return r
     return Quantity(r, unit=unit)
@@ -4628,13 +4782,16 @@ def unique(
             extra['size'] = size
         if fill_value is not None:
             extra['fill_value'] = fill_value
-    result = _resolve_op('unique', xp)(mantissa,
-                                       return_index=return_index,
-                                       return_inverse=return_inverse,
-                                       return_counts=return_counts,
-                                       axis=axis,
-                                       equal_nan=equal_nan,
-                                       **extra, **kwargs)
+    unique_kwargs = _strip_none_kwargs(dict(
+        return_index=return_index,
+        return_inverse=return_inverse,
+        return_counts=return_counts,
+        axis=axis,
+        equal_nan=equal_nan,
+        **extra,
+        **kwargs,
+    ))
+    result = _dispatch_call(_resolve_op('unique', xp), (mantissa,), unique_kwargs)
     if isinstance(a, Quantity):
         if isinstance(result, tuple):
             output = [Quantity(result[0], unit=a_unit)]
