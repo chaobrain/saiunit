@@ -459,12 +459,14 @@ def nanprod(
                          initial=initial,
                          where=where)
     else:
-        return jnp.nanprod(x,
-                           axis=axis,
-                           dtype=dtype,
-                           keepdims=keepdims,
-                           initial=initial,  # type: ignore[arg-type]
-                           where=where, **kwargs)  # type: ignore[arg-type]
+        xp = get_backend(x)
+        nanprod = _resolve_op('nanprod', xp)
+        return nanprod(x,
+                       axis=axis,
+                       dtype=dtype,
+                       keepdims=keepdims,
+                       initial=initial,  # type: ignore[arg-type]
+                       where=where, **kwargs)  # type: ignore[arg-type]
 
 
 product = prod
@@ -513,7 +515,8 @@ def cumprod(
     if isinstance(x, Quantity):
         return x.cumprod(axis=axis, dtype=dtype)
     else:
-        return jnp.cumprod(x, axis=axis, dtype=dtype, **kwargs)
+        xp = get_backend(x)
+        return _resolve_op('cumprod', xp)(x, axis=axis, dtype=dtype, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -559,7 +562,8 @@ def nancumprod(
     if isinstance(x, Quantity):
         return x.nancumprod(axis=axis, dtype=dtype)
     else:
-        return jnp.nancumprod(x, axis=axis, dtype=dtype, **kwargs)
+        xp = get_backend(x)
+        return _resolve_op('nancumprod', xp)(x, axis=axis, dtype=dtype, **kwargs)
 
 
 cumproduct = cumprod
@@ -809,16 +813,20 @@ def divmod(
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
-        r = jnp.divmod(x.mantissa, y.mantissa, **kwargs)
+        xp = get_backend(x.mantissa, y.mantissa)
+        r = _resolve_op('divmod', xp)(x.mantissa, y.mantissa, **kwargs)
         return Quantity(r[0], unit=x.unit / y.unit), Quantity(r[1], unit=x.unit)
     elif isinstance(x, Quantity):
-        r = jnp.divmod(x.mantissa, y, **kwargs)  # type: ignore[arg-type]
+        xp = get_backend(x.mantissa, y)
+        r = _resolve_op('divmod', xp)(x.mantissa, y, **kwargs)  # type: ignore[arg-type]
         return Quantity(r[0], unit=x.unit / UNITLESS), Quantity(r[1], unit=x.unit)
     elif isinstance(y, Quantity):
-        r = jnp.divmod(x, y.mantissa, **kwargs)
+        xp = get_backend(x, y.mantissa)
+        r = _resolve_op('divmod', xp)(x, y.mantissa, **kwargs)
         return Quantity(r[0], unit=UNITLESS / y.unit), Quantity(r[1], unit=UNITLESS)
     else:
-        return jnp.divmod(x, y, **kwargs)
+        xp = get_backend(x, y)
+        return _resolve_op('divmod', xp)(x, y, **kwargs)
 
 
 @unit_change(lambda ux, uy: ux * uy)
@@ -935,7 +943,8 @@ def power(
                     f'Strip the unit from y before raising a Quantity to a power.'
                 )
             y = y.mantissa
-        return maybe_decimal(Quantity(jnp.power(x.mantissa, y, **kwargs), unit=x.unit ** y))
+        xp = get_backend(x.mantissa, y)
+        return maybe_decimal(Quantity(_resolve_op('power', xp)(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(
@@ -944,9 +953,11 @@ def power(
                 f'Strip the unit from y before raising a value to a power.'
             )
         y = y.mantissa
-        return maybe_decimal(Quantity(jnp.power(x, y, **kwargs), unit=x ** y))  # type: ignore[arg-type]
+        xp = get_backend(x, y)
+        return maybe_decimal(Quantity(_resolve_op('power', xp)(x, y, **kwargs), unit=x ** y))  # type: ignore[arg-type]
     else:
-        return jnp.power(x, y, **kwargs)
+        xp = get_backend(x, y)
+        return _resolve_op('power', xp)(x, y, **kwargs)
 
 
 @unit_change(lambda ux, uy: ux / uy)
@@ -1039,7 +1050,8 @@ def float_power(
                     f'Strip the unit from y before raising a Quantity to a power.'
                 )
             y = y.mantissa
-        return maybe_decimal(Quantity(jnp.float_power(x.mantissa, y, **kwargs), unit=x.unit ** y))
+        xp = get_backend(x.mantissa, y)
+        return maybe_decimal(Quantity(_resolve_op('float_power', xp)(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(
@@ -1048,9 +1060,11 @@ def float_power(
                 f'Strip the unit from y before raising a value to a power.'
             )
         y = y.mantissa
-        return maybe_decimal(Quantity(jnp.float_power(x, y, **kwargs), unit=x ** y))
+        xp = get_backend(x, y)
+        return maybe_decimal(Quantity(_resolve_op('float_power', xp)(x, y, **kwargs), unit=x ** y))
     else:
-        return jnp.float_power(x, y, **kwargs)
+        xp = get_backend(x, y)
+        return _resolve_op('float_power', xp)(x, y, **kwargs)
 
 
 # linear algebra
@@ -1571,9 +1585,11 @@ def matrix_power(
     """
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
-        return maybe_decimal(Quantity(jnp.linalg.matrix_power(a.mantissa, n, **kwargs), unit=a.unit ** n))
+        xp = get_backend(a.mantissa)
+        return maybe_decimal(Quantity(_resolve_op('linalg.matrix_power', xp)(a.mantissa, n, **kwargs), unit=a.unit ** n))
     else:
-        return jnp.linalg.matrix_power(a, n, **kwargs)
+        xp = get_backend(a)
+        return _resolve_op('linalg.matrix_power', xp)(a, n, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1618,6 +1634,8 @@ def det(
         else:
             msg = "Argument to _det() must have shape [..., n, n], got {}"
             raise ValueError(msg.format(a_shape))
-        return Quantity(jnp.linalg.det(a.mantissa, **kwargs), unit=new_unit)
+        xp = get_backend(a.mantissa)
+        return Quantity(_resolve_op('linalg.det', xp)(a.mantissa, **kwargs), unit=new_unit)
     else:
-        return jnp.linalg.det(a, **kwargs)
+        xp = get_backend(a)
+        return _resolve_op('linalg.det', xp)(a, **kwargs)

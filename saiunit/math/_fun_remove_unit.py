@@ -375,7 +375,8 @@ def digitize(
                 f'Either pass a Quantity for x with matching units, or strip the unit from bins.'
             )
         bins = bins.mantissa
-    return jnp.digitize(x, bins, right=right, **kwargs)  # type: ignore[arg-type]
+    xp = get_backend(x, bins)
+    return _resolve_op('digitize', xp)(x, bins, right=right, **kwargs)  # type: ignore[arg-type]
 
 
 def _name_of(func) -> str:
@@ -1572,7 +1573,12 @@ def searchsorted(
     a_unit = get_unit(a)
     v = Quantity(v).in_unit(a_unit).mantissa
     a = Quantity(a).mantissa
-    r = jnp.searchsorted(a, v, side=side, sorter=sorter, method=method, **kwargs)  # type: ignore[arg-type]
+    xp = get_backend(a, v)
+    # ``method`` is JAX-only; suppress it for non-JAX backends.
+    extra = {}
+    if xp is jnp:
+        extra['method'] = method
+    r = _resolve_op('searchsorted', xp)(a, v, side=side, sorter=sorter, **extra, **kwargs)  # type: ignore[arg-type]
     return r
 
 

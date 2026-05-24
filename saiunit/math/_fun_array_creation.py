@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import (Union, Optional, List, Any, Tuple)
 
-from saiunit._jax_compat import jax, jnp, Array, ArrayLike
+from saiunit._jax_compat import jax, jnp, tree as _tree, Array, ArrayLike
 import numpy as np
 
 from saiunit._backend import get_backend, get_default_backend
@@ -871,7 +871,7 @@ def asarray(
         )
 
     # get leaves
-    leaves, treedef = jax.tree.flatten(a, is_leaf=lambda x: isinstance(x, Quantity))
+    leaves, treedef = _tree.flatten(a, is_leaf=lambda x: isinstance(x, Quantity))
     leaves = unit_scale_align_to_first(*leaves)
     leaf_unit = leaves[0].unit
 
@@ -1232,9 +1232,18 @@ def meshgrid(
         args[0], args[1] = args[1], args[0]
     shape = [1 if sparse else a.shape[0] for a in args]
     f_shape = lambda i, a: [*shape[:i], a.shape[0], *shape[i + 1:]] if sparse else shape
-    # use jax.tree.map to compatible with Quantity
+
+    def _broadcast_in_dim(x, target_shape, i):
+        xp = get_backend(x)
+        reshape_shape = [1] * len(args)
+        reshape_shape[i] = x.shape[0]
+        return xp.broadcast_to(xp.reshape(x, reshape_shape), target_shape)
+
+    # use ``_tree.map`` to be Quantity-aware (Quantity is a registered pytree
+    # when JAX is installed; the fallback ``_tree`` only descends standard
+    # containers so plain arrays are passed straight through).
     output = [
-        jax.tree.map(lambda x: jax.lax.broadcast_in_dim(x, f_shape(i, x), (i,)), a)
+        _tree.map(lambda x: _broadcast_in_dim(x, f_shape(i, x), i), a)
         for i, a, in enumerate(args)
     ]
     if indexing == "xy" and len(args) >= 2:
@@ -1489,7 +1498,7 @@ def tree_zeros_like(tree):
         {'a': Array([0., 0.], dtype=float32), 'b': Array([0.], dtype=float32)}
     """
     tree = maybe_custom_array_tree(tree)
-    return jax.tree.map(zeros_like, tree)
+    return _tree.map(zeros_like, tree)
 
 
 @set_module_as('saiunit.math')
@@ -1521,4 +1530,4 @@ def tree_ones_like(tree):
         {'a': Array([1., 1.], dtype=float32), 'b': Array([1.], dtype=float32)}
     """
     tree = maybe_custom_array_tree(tree)
-    return jax.tree.map(ones_like, tree)
+    return _tree.map(ones_like, tree)

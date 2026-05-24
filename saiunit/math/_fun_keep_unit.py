@@ -25,15 +25,16 @@ from saiunit._backend import get_backend
 
 
 def _promote_dtypes(*arrays):
-    """Cast a sequence of arrays to a common dtype via the public JAX API.
+    """Cast a sequence of arrays to a common dtype via the public array-API.
 
     Avoids depending on the private ``jax._src.numpy.util.promote_dtypes``
     helper, which can move or change shape between JAX releases.
     """
     if not arrays:
         return []
-    dtype = jnp.result_type(*arrays)
-    return [jnp.asarray(a, dtype=dtype) for a in arrays]
+    xp = get_backend(*arrays)
+    dtype = xp.result_type(*arrays)
+    return [xp.asarray(a, dtype=dtype) for a in arrays]
 
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import (
@@ -688,7 +689,7 @@ def vsplit(
 
 def _broadcast_fun(func, *args, **kwargs):
     args = [asarray(x) for x in args]
-    args, treedef = jax.tree.flatten(args)
+    args, treedef = tree.flatten(args)
     xp = get_backend(*args)
     func = _resolve_op(func, xp)
     r = func(*args, **kwargs)
@@ -732,7 +733,7 @@ def broadcast_arrays(
       >>> b = [[4], [5]] * u.second
       >>> u.math.broadcast_arrays(a, b)
     """
-    return _broadcast_fun(jnp.broadcast_arrays, *args, **kwargs)
+    return _broadcast_fun('broadcast_arrays', *args, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -832,7 +833,7 @@ def atleast_1d(
       >>> import saiunit as u
       >>> u.math.atleast_1d(0 * u.second)
     """
-    return _broadcast_fun(jnp.atleast_1d, *arys, **kwargs)
+    return _broadcast_fun('atleast_1d', *arys, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -861,7 +862,7 @@ def atleast_2d(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.atleast_2d(a)
     """
-    return _broadcast_fun(jnp.atleast_2d, *arys, **kwargs)
+    return _broadcast_fun('atleast_2d', *arys, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -890,7 +891,7 @@ def atleast_3d(
       >>> a = [[1, 2], [3, 4]] * u.meter
       >>> u.math.atleast_3d(a)
     """
-    return _broadcast_fun(jnp.atleast_3d, *arys, **kwargs)
+    return _broadcast_fun('atleast_3d', *arys, **kwargs)
 
 
 # array manipulation
@@ -1672,8 +1673,9 @@ def remove_diag(x: ArrayLike | Quantity, **kwargs) -> jax.Array | Quantity:
 
     if x.ndim != 2:
         raise ValueError(f'Only support 2D matrix, while we got a {x.ndim}D array.')
-    eyes = jnp.fill_diagonal(jnp.ones(x.shape, dtype=bool, **kwargs), False, **kwargs)
-    x = jnp.reshape(x[eyes], (x.shape[0], x.shape[1] - 1), **kwargs)  # type: ignore[index]
+    xp = get_backend(x)
+    mask = ~xp.eye(x.shape[0], x.shape[1], dtype=bool)
+    x = xp.reshape(x[mask], (x.shape[0], x.shape[1] - 1), **kwargs)  # type: ignore[index]
     if unit.is_unitless:
         return x
     return Quantity(x, unit=unit)
@@ -2997,7 +2999,8 @@ def intersect1d(
         unit = ar1.unit
     ar1 = ar1.in_unit(unit).mantissa if isinstance(ar1, Quantity) else ar1
     ar2 = ar2.in_unit(unit).mantissa if isinstance(ar2, Quantity) else ar2
-    result = jnp.intersect1d(ar1, ar2, assume_unique=assume_unique, return_indices=return_indices, **kwargs)
+    xp = get_backend(ar1, ar2)
+    result = _resolve_op('intersect1d', xp)(ar1, ar2, assume_unique=assume_unique, return_indices=return_indices, **kwargs)
     if return_indices:
         if unit.is_unitless:
             return result
@@ -3076,11 +3079,13 @@ def nan_to_num(
             posinf = Quantity(posinf).in_unit(x_unit).mantissa  # type: ignore[assignment]
         if neginf is not None:
             neginf = Quantity(neginf).in_unit(x_unit).mantissa  # type: ignore[assignment]
-        r = jnp.nan_to_num(x.mantissa, nan=nan, posinf=posinf, neginf=neginf, **kwargs)  # type: ignore[arg-type]
+        xp = get_backend(x.mantissa)
+        r = _resolve_op('nan_to_num', xp)(x.mantissa, nan=nan, posinf=posinf, neginf=neginf, **kwargs)  # type: ignore[arg-type]
         return r if x_unit.is_unitless else Quantity(r, unit=x_unit)
     else:
         nan = 0.0 if nan is None else nan
-        return jnp.nan_to_num(x, nan=nan, posinf=posinf, neginf=neginf, **kwargs)  # type: ignore[arg-type]
+        xp = get_backend(x)
+        return _resolve_op('nan_to_num', xp)(x, nan=nan, posinf=posinf, neginf=neginf, **kwargs)  # type: ignore[arg-type]
 
 
 @set_module_as('saiunit.math')
@@ -3961,7 +3966,8 @@ def interp(
         Quantity(right).in_unit(x_unit).mantissa if right is not None else right,
         Quantity(period).in_unit(x_unit).mantissa if period is not None else period
     )
-    r = jnp.interp(x, xp=xp, fp=fp, left=left, right=right, period=period, **kwargs)  # type: ignore[arg-type]
+    backend = get_backend(x, xp, fp)
+    r = _resolve_op('interp', backend)(x, xp=xp, fp=fp, left=left, right=right, period=period, **kwargs)  # type: ignore[arg-type]
     return maybe_decimal(Quantity(r, unit=y_unit))
 
 
@@ -4076,7 +4082,8 @@ def histogram(
             Quantity(range[0]).in_unit(unit).mantissa,
             Quantity(range[1]).in_unit(unit).mantissa
         )
-    hist, bin_edges = jnp.histogram(x, bins, range=range, weights=weights, density=density, **kwargs)  # type: ignore[arg-type]
+    backend = get_backend(x)
+    hist, bin_edges = _resolve_op('histogram', backend)(x, bins, range=range, weights=weights, density=density, **kwargs)  # type: ignore[arg-type]
     if unit.is_unitless:
         return hist, bin_edges
     return hist, Quantity(bin_edges, unit=unit)
@@ -4138,8 +4145,27 @@ def compress(
         fill_value = Quantity(fill_value).in_unit(a_unit).mantissa
     else:
         fill_value = 0  # type: ignore[assignment]
-    return _fun_keep_unit_unary(functools.partial(jnp.compress, condition),
-                                a, axis=axis, size=size, fill_value=fill_value, **kwargs)
+    a = maybe_custom_array(a)
+    if isinstance(a, Quantity):
+        xp = get_backend(a.mantissa)
+        mantissa = a.mantissa
+    else:
+        xp = get_backend(a)
+        mantissa = a
+    # ``size`` and ``fill_value`` are JAX-only; pass only on JAX or when set.
+    extra = {}
+    if xp is jnp:
+        extra['size'] = size
+        extra['fill_value'] = fill_value
+    else:
+        if size is not None:
+            extra['size'] = size
+        if fill_value is not None and fill_value != 0:
+            extra['fill_value'] = fill_value
+    r = _resolve_op('compress', xp)(condition, mantissa, axis=axis, **extra, **kwargs)
+    if isinstance(a, Quantity):
+        return Quantity(r, unit=a.unit)
+    return r
 
 
 @set_module_as('saiunit.math')
@@ -4193,8 +4219,27 @@ def extract(
         fill_value = Quantity(fill_value).in_unit(a_unit).mantissa
     else:
         fill_value = 0  # type: ignore[assignment]
-    return _fun_keep_unit_unary(functools.partial(jnp.extract, condition),
-                                arr, size=size, fill_value=fill_value, **kwargs)
+    arr = maybe_custom_array(arr)
+    if isinstance(arr, Quantity):
+        xp = get_backend(arr.mantissa)
+        mantissa = arr.mantissa
+    else:
+        xp = get_backend(arr)
+        mantissa = arr
+    # ``size`` and ``fill_value`` are JAX-only; pass only on JAX or when set.
+    extra = {}
+    if xp is jnp:
+        extra['size'] = size
+        extra['fill_value'] = fill_value
+    else:
+        if size is not None:
+            extra['size'] = size
+        if fill_value is not None and fill_value != 0:
+            extra['fill_value'] = fill_value
+    r = _resolve_op('extract', xp)(condition, mantissa, **extra, **kwargs)
+    if isinstance(arr, Quantity):
+        return Quantity(r, unit=arr.unit)
+    return r
 
 
 @set_module_as('saiunit.math')
@@ -4272,8 +4317,9 @@ def take(
         return a.take(indices, axis=axis, mode=mode, unique_indices=unique_indices,
                       indices_are_sorted=indices_are_sorted, fill_value=fill_value)
     else:
-        return jnp.take(a, indices, axis=axis, mode=mode, unique_indices=unique_indices,  # type: ignore[arg-type]
-                        indices_are_sorted=indices_are_sorted, fill_value=fill_value, **kwargs)  # type: ignore[arg-type]
+        xp = get_backend(a)
+        return _resolve_op('take', xp)(a, indices, axis=axis, mode=mode, unique_indices=unique_indices,  # type: ignore[arg-type]
+                                       indices_are_sorted=indices_are_sorted, fill_value=fill_value, **kwargs)  # type: ignore[arg-type]
 
 
 @set_module_as('saiunit.math')
@@ -4322,7 +4368,18 @@ def select(
                 f'but got a Quantity with unit={cond.unit}. '
                 f'Strip units from all condition arrays before passing them to select.'
             )
-    return _fun_keep_unit_sequence(functools.partial(jnp.select, condlist), choicelist, default=default, **kwargs)
+    # Inline dispatch so we can route ``select`` to the active backend.
+    choicelist = maybe_custom_array_tree(list(choicelist))
+    leaves, treedef = tree.flatten(choicelist, is_leaf=lambda x: isinstance(x, Quantity))
+    leaves = unit_scale_align_to_first(*leaves)
+    unit = leaves[0].unit
+    mantissas = [x.mantissa for x in leaves]
+    xp = get_backend(*mantissas)
+    new_choicelist = treedef.unflatten(mantissas)
+    r = _resolve_op('select', xp)(condlist, new_choicelist, default=default, **kwargs)
+    if unit.is_unitless:
+        return r
+    return Quantity(r, unit=unit)
 
 
 @set_module_as('saiunit.math')
@@ -4380,7 +4437,20 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None, **kwargs)
                 f'where requires "fill_value" to be a plain scalar when x and y are not provided, '
                 f'but got fill_value with unit={fill_value.unit}.'
             )
-        return jnp.where(condition, size=size, fill_value=fill_value, **kwargs)
+        xp = get_backend(condition)
+        # ``size`` and ``fill_value`` are JAX-only for the 1-arg ``where``
+        # (which is an alias for ``nonzero``). Suppress them on backends
+        # whose ``where`` doesn't accept them.
+        extra = {}
+        if xp is jnp:
+            extra['size'] = size
+            extra['fill_value'] = fill_value
+        else:
+            if size is not None:
+                extra['size'] = size
+            if fill_value is not None:
+                extra['fill_value'] = fill_value
+        return _resolve_op('where', xp)(condition, **extra, **kwargs)
 
     if size is not None or fill_value is not None:
         raise ValueError(
@@ -4389,7 +4459,8 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None, **kwargs)
         )
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         y = y.in_unit(x.unit)
-        return Quantity(jnp.where(condition, x.mantissa, y.mantissa, **kwargs), unit=x.unit)
+        xp = get_backend(condition, x.mantissa, y.mantissa)
+        return Quantity(_resolve_op('where', xp)(condition, x.mantissa, y.mantissa, **kwargs), unit=x.unit)
     elif isinstance(x, Quantity):
         if not x.is_unitless:
             raise TypeError(
@@ -4406,7 +4477,8 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None, **kwargs)
                 f'Either pass a Quantity for x with matching units, or strip the unit from y.'
             )
         y = y.mantissa
-    return jnp.where(condition, x, y, **kwargs)
+    xp = get_backend(condition, x, y)
+    return _resolve_op('where', xp)(condition, x, y, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4462,31 +4534,37 @@ def unique(
     if fill_value is not None:
         fill_value = Quantity(fill_value).in_unit(a_unit).mantissa
     if isinstance(a, Quantity):
-        result = jnp.unique(a.mantissa,
-                            return_index=return_index,
-                            return_inverse=return_inverse,
-                            return_counts=return_counts,
-                            axis=axis,
-                            equal_nan=equal_nan,
-                            size=size,
-                            fill_value=fill_value, **kwargs)
+        xp = get_backend(a.mantissa)
+        mantissa = a.mantissa
+    else:
+        xp = get_backend(a)
+        mantissa = a
+    # ``size`` and ``fill_value`` are JAX-only; suppress them on other backends
+    # when they are at their defaults so we don't break ``numpy.unique`` etc.
+    extra = {}
+    if xp is jnp:
+        extra['size'] = size
+        extra['fill_value'] = fill_value
+    else:
+        if size is not None:
+            extra['size'] = size
+        if fill_value is not None:
+            extra['fill_value'] = fill_value
+    result = _resolve_op('unique', xp)(mantissa,
+                                       return_index=return_index,
+                                       return_inverse=return_inverse,
+                                       return_counts=return_counts,
+                                       axis=axis,
+                                       equal_nan=equal_nan,
+                                       **extra, **kwargs)
+    if isinstance(a, Quantity):
         if isinstance(result, tuple):
-            output = []
-            output.append(Quantity(result[0], unit=a_unit))
+            output = [Quantity(result[0], unit=a_unit)]
             for r in result[1:]:
                 output.append(r)
             return tuple(output)
-        else:
-            return Quantity(result, unit=a_unit)
-    else:
-        return jnp.unique(a,
-                          return_index=return_index,
-                          return_inverse=return_inverse,
-                          return_counts=return_counts,
-                          axis=axis,
-                          equal_nan=equal_nan,
-                          size=size,
-                          fill_value=fill_value, **kwargs)
+        return Quantity(result, unit=a_unit)
+    return result
 
 
 @set_module_as('saiunit.math')
@@ -4724,8 +4802,10 @@ def modf(
       >>> frac, intg = u.math.modf(a)
     """
     if isinstance(x, Quantity):
-        return jax.tree.map(lambda y: Quantity(y, unit=x.unit), jnp.modf(x.mantissa, **kwargs))
-    return jnp.modf(x, **kwargs)
+        xp = get_backend(x.mantissa)
+        return tree.map(lambda y: Quantity(y, unit=x.unit), _resolve_op('modf', xp)(x.mantissa, **kwargs))
+    xp = get_backend(x)
+    return _resolve_op('modf', xp)(x, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4773,6 +4853,7 @@ def gather(input: jax.Array | Quantity, dim: int, index: jax.Array, **kwargs):
     # Create index arrays for all dimensions
     idx_shape = index.shape
     indices = []
+    xp = get_backend(input, index)
 
     for i in range(ndim):
         if i == dim:
@@ -4782,12 +4863,12 @@ def gather(input: jax.Array | Quantity, dim: int, index: jax.Array, **kwargs):
             # Create meshgrid indices for other dimensions
             shape = [1] * ndim
             shape[i] = idx_shape[i] if i < len(idx_shape) else input.shape[i]
-            idx = jnp.arange(input.shape[i], **kwargs).reshape(shape)
+            idx = xp.arange(input.shape[i], **kwargs).reshape(shape)
             # Broadcast to match index shape
             broadcast_shape = list(idx_shape)
             if i < len(idx_shape):
                 broadcast_shape[i] = input.shape[i]
-            indices.append(jnp.broadcast_to(idx, idx_shape, **kwargs))
+            indices.append(xp.broadcast_to(idx, idx_shape, **kwargs))
 
     result = input[tuple(indices)]
     if unit.is_unitless:

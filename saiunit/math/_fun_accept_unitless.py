@@ -1413,9 +1413,10 @@ def ldexp(
     x, y = maybe_custom_array_tree((x, y))
     if isinstance(x, Quantity):
         if not x.dim.is_dimensionless:
-            raise TypeError(_dimensionless_required_message(jnp.ldexp, x, arg_name='x'))
+            raise TypeError(_dimensionless_required_message('ldexp', x, arg_name='x'))
         x = x.mantissa
-    return jnp.ldexp(x, y, **kwargs)
+    xp = get_backend(x, y)
+    return _resolve_op('ldexp', xp)(x, y, **kwargs)
 
 
 # Elementwise bit operations (unary)
