@@ -19,6 +19,7 @@ from typing import Union
 
 from saiunit._jax_compat import jax, jnp, ArrayLike
 
+from saiunit._backend import get_backend
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
@@ -310,17 +311,18 @@ def lstsq(
     """
     a = maybe_custom_array(a)
     b = maybe_custom_array(b)
+    a_mantissa = a.mantissa if isinstance(a, Quantity) else a
+    b_mantissa = b.mantissa if isinstance(b, Quantity) else b
+    xp = get_backend(a_mantissa, b_mantissa)
+    extra = {'numpy_resid': numpy_resid} if xp is jnp else {}
+    r = xp.linalg.lstsq(a_mantissa, b_mantissa, rcond=rcond, **extra, **kwargs)
     if isinstance(a, Quantity) and isinstance(b, Quantity):
-        r = jnp.linalg.lstsq(a.mantissa, b.mantissa, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
         return maybe_decimal(Quantity(r[0], unit=b.unit / a.unit)), r[1], r[2], r[3]
-    elif isinstance(a, Quantity):
-        r = jnp.linalg.lstsq(a.mantissa, b, rcond=rcond, numpy_resid=numpy_resid, **kwargs)  # type: ignore[arg-type]
+    if isinstance(a, Quantity):
         return maybe_decimal(Quantity(r[0], unit=UNITLESS / a.unit)), r[1], r[2], r[3]
-    elif isinstance(b, Quantity):
-        r = jnp.linalg.lstsq(a, b.mantissa, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
+    if isinstance(b, Quantity):
         return maybe_decimal(Quantity(r[0], unit=b.unit)), r[1], r[2], r[3]
-    else:
-        return jnp.linalg.lstsq(a, b, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
+    return r
 
 
 @unit_change(lambda u: u ** -1)

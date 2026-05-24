@@ -15,11 +15,11 @@
 
 from __future__ import annotations
 
-from typing import (Union, Optional)
+from typing import Union, Optional
 
-from saiunit._jax_compat import jax, jnp, ArrayLike
-
+from saiunit._backend import get_backend
 from saiunit._base_quantity import Quantity
+from saiunit._jax_compat import jax, jnp, ArrayLike
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit.math._fun_remove_unit import _fun_remove_unit_unary
 
@@ -177,8 +177,6 @@ def matrix_rank(
 @set_module_as('saiunit.linalg')
 def slogdet(
     a: Union[ArrayLike, Quantity],
-    *,
-    method: str | None = None,
     **kwargs,
 ) -> tuple[jax.Array, jax.Array]:
     """Compute the sign and (natural) logarithm of the absolute determinant.
@@ -197,11 +195,6 @@ def slogdet(
         Square input of shape ``(..., M, M)`` for which to compute the
         sign and log-determinant.  If *a* carries a unit, the unit is
         removed before computation.
-    method : {'lu', 'qr'} or None, optional
-        Decomposition method used internally.
-
-        - ``'lu'`` (default) -- use the LU decomposition.
-        - ``'qr'`` -- use the QR decomposition.
 
     Returns
     -------
@@ -238,6 +231,6 @@ def slogdet(
         Array(2., dtype=float32)
     """
     a = maybe_custom_array(a)
-    if isinstance(a, Quantity):
-        return jnp.linalg.slogdet(a.mantissa, method=method, **kwargs)
-    return jnp.linalg.slogdet(a, method=method, **kwargs)
+    mantissa = a.mantissa if isinstance(a, Quantity) else a
+    xp = get_backend(mantissa)
+    return xp.linalg.slogdet(mantissa, **kwargs)
