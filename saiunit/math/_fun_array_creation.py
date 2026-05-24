@@ -170,10 +170,11 @@ def eye(
     """
     if not isinstance(unit, Unit):
         raise TypeError(f'eye requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
+    # ``k`` is keyword-only under the array-API spec (e.g. ``array_api_compat.numpy.eye``).
+    arr = _default_xp().eye(N, M, k=k, dtype=dtype)
     if not unit.is_unitless:
-        return _default_xp().eye(N, M, k, dtype=dtype) * unit
-    else:
-        return _default_xp().eye(N, M, k, dtype=dtype)
+        return arr * unit
+    return arr
 
 
 @set_module_as('saiunit.math')
@@ -273,10 +274,15 @@ def tri(
     """
     if not isinstance(unit, Unit):
         raise TypeError(f'tri requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
+    xp = _default_xp()
+    # ``dask.array.tri`` rejects ``dtype=None`` ("dtype must be known for auto-chunking"),
+    # while numpy/jax default to ``float``. Materialize the default explicitly for portability.
+    if dtype is None:
+        dtype = xp.float64 if hasattr(xp, "float64") else float
+    arr = xp.tri(N, M, k, dtype=dtype)
     if not unit.is_unitless:
-        return _default_xp().tri(N, M, k, dtype=dtype) * unit
-    else:
-        return _default_xp().tri(N, M, k, dtype=dtype)
+        return arr * unit
+    return arr
 
 
 @set_module_as('saiunit.math')

@@ -24,7 +24,7 @@ from saiunit._typing import Array, ArrayLike
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
 from saiunit._base_quantity import Quantity
-from ._fun_keep_unit import _resolve_op
+from ._fun_keep_unit import _resolve_op, _strip_none_kwargs
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
@@ -90,6 +90,7 @@ def get_promote_dtypes(
 def _fun_remove_unit_unary(func, x, *args, **kwargs):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
+    kwargs = _strip_none_kwargs(kwargs)
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
         func = _resolve_op(func, xp)
@@ -388,6 +389,7 @@ def _name_of(func) -> str:
 
 def _fun_logic_unary(func, x, *args, **kwargs):
     x = maybe_custom_array(x)
+    kwargs = _strip_none_kwargs(kwargs)
     if isinstance(x, Quantity):
         if not x.is_unitless:
             name = _name_of(func)
@@ -445,7 +447,9 @@ def all(
         >>> u.math.all(jnp.array([[True, False], [True, True]]), axis=1)
         Array([False,  True], dtype=bool)
     """
-    return _fun_logic_unary('all', x, axis=axis, keepdims=keepdims, where=where, **kwargs)
+    return _fun_logic_unary(
+        'all', x, axis=axis, keepdims=keepdims, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -490,7 +494,9 @@ def any(
         >>> u.math.any(jnp.array([False, False, False]))
         Array(False, dtype=bool)
     """
-    return _fun_logic_unary('any', x, axis=axis, keepdims=keepdims, where=where, **kwargs)
+    return _fun_logic_unary(
+        'any', x, axis=axis, keepdims=keepdims, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')

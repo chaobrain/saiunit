@@ -74,16 +74,25 @@ compat_with_equinox = False
 
 
 def _xp_attr(name: str):
-    """Return ``jnp.<name>`` if JAX is installed, else ``np.<name>``.
+    """Return a callable that resolves ``<name>`` on the input's backend.
 
     Used at class-body time to wrap ``Quantity`` reduction methods (``sum``,
-    ``mean``, …). Resolved once at import; the resulting callable handles
-    both NumPy- and JAX-backed mantissas correctly because both libraries
-    accept the same argument signatures for these reductions.
+    ``mean``, …).  Backend resolution is deferred until call time so that a
+    ``Quantity`` over a torch / dask / ndonnx mantissa dispatches into that
+    backend instead of unconditionally hitting JAX/NumPy.
     """
-    if HAS_JAX:
-        return getattr(jnp, name)
-    return getattr(np, name)
+    def _resolved(x, *args, **kwargs):
+        from saiunit._backend import get_backend
+        xp = get_backend(x)
+        op = getattr(xp, name, None)
+        if op is None:
+            backend = getattr(xp, "__name__", repr(xp))
+            raise AttributeError(
+                f"saiunit: backend {backend!r} has no operation {name!r}"
+            )
+        return op(x, *args, **kwargs)
+    _resolved.__name__ = name
+    return _resolved
 
 
 def compatible_with_equinox(mode: bool = True):
@@ -1423,7 +1432,8 @@ class Quantity:
             >>> q.shape
             (2, 2)
         """
-        return get_backend(self).shape(self.mantissa)
+        m = self.mantissa
+        return tuple(m.shape) if hasattr(m, "shape") else get_backend(self).shape(m)
 
     @property
     def ndim(self) -> int:
@@ -2811,8 +2821,12 @@ class Quantity:
         self = self.factorless()
 
         xp = get_backend(self)
-        # nanprod isn't always in array_api_compat; fall back to numpy/jnp.
-        prod_res = (xp.nanprod if hasattr(xp, "nanprod") else jnp.nanprod)(self.mantissa, *args, **kwds)
+        if not hasattr(xp, "nanprod"):
+            backend = getattr(xp, "__name__", repr(xp))
+            raise AttributeError(
+                f"saiunit: backend {backend!r} has no operation 'nanprod'"
+            )
+        prod_res = xp.nanprod(self.mantissa, *args, **kwds)
 
         if self.is_unitless:
             return maybe_decimal(Quantity(prod_res, unit=self.unit))
@@ -3167,18 +3181,22 @@ class Quantity:
             # NumPy ``take`` has a different signature; emulate the saiunit semantics.
             taken = np.take(self.mantissa, indices, axis=axis, mode=mode if mode else 'raise')
             return Quantity(taken, unit=self.unit)
-        return Quantity(
-            jnp.take(
-                self.mantissa,
-                indices=indices,
-                axis=axis,
-                mode=mode,
-                unique_indices=unique_indices,
-                indices_are_sorted=indices_are_sorted,
-                fill_value=fill_value
-            ),
-            unit=self.unit
-        )
+        if is_jax_array(self._mantissa):
+            return Quantity(
+                jnp.take(
+                    self.mantissa,
+                    indices=indices,
+                    axis=axis,
+                    mode=mode,
+                    unique_indices=unique_indices,
+                    indices_are_sorted=indices_are_sorted,
+                    fill_value=fill_value,
+                ),
+                unit=self.unit,
+            )
+        # Other backends: dispatch via the array-API ``take`` op.
+        xp = get_backend(self)
+        return Quantity(xp.take(self.mantissa, indices, axis=axis), unit=self.unit)
 
     def tolist(self):
         """

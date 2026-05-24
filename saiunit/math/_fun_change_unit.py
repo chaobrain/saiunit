@@ -26,7 +26,7 @@ from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ._fun_array_creation import asarray
-from ._fun_keep_unit import _resolve_op
+from ._fun_keep_unit import _resolve_op, _strip_none_kwargs
 
 __all__ = [
 
@@ -51,6 +51,7 @@ __all__ = [
 def _fun_change_unit_unary(val_fun, unit_fun, x, *args, **kwargs):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
+    kwargs = _strip_none_kwargs(kwargs)
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
         val_fun = _resolve_op(val_fun, xp)
@@ -162,14 +163,12 @@ def var(
         >>> q = u.math.array([1.0, 2.0, 3.0]) * u.meter
         >>> u.math.var(q)  # unit becomes meter ** 2
     """
-    return _fun_change_unit_unary('var',
-                                  lambda u: u ** 2,
-                                  a,
-                                  axis=axis,
-                                  dtype=dtype,
-                                  ddof=ddof,
-                                  keepdims=keepdims,
-                                  where=where, **kwargs)
+    # ``correction=ddof`` (not ``ddof=ddof``): ``array_api_compat.numpy.var`` raises a duplicate-kwarg error when both are forwarded.
+    return _fun_change_unit_unary(
+        'var', lambda u: u ** 2, a,
+        axis=axis, keepdims=keepdims, correction=ddof,
+        dtype=dtype, where=where, **kwargs,
+    )
 
 
 @unit_change(lambda u: u ** 2)
@@ -226,14 +225,11 @@ def nanvar(
         >>> q = u.math.array([1.0, jnp.nan, 3.0]) * u.meter
         >>> u.math.nanvar(q)  # unit becomes meter ** 2
     """
-    return _fun_change_unit_unary('nanvar',
-                                  lambda u: u ** 2,
-                                  x,
-                                  axis=axis,
-                                  dtype=dtype,
-                                  ddof=ddof,
-                                  keepdims=keepdims,
-                                  where=where, **kwargs)
+    return _fun_change_unit_unary(
+        'nanvar', lambda u: u ** 2, x,
+        axis=axis, keepdims=keepdims, ddof=ddof,
+        dtype=dtype, where=where, **kwargs,
+    )
 
 
 @unit_change(lambda u: u ** 0.5)
@@ -388,13 +384,7 @@ def prod(
         >>> u.math.prod(q)  # product is 6.0, unit is meter ** 2
     """
     x = maybe_custom_array(x)
-    # numpy.prod treats an explicit ``where=None`` / ``initial=None`` as
-    # "kwarg supplied" rather than "use default", and then complains that
-    # ``where`` requires ``initial``. JAX is more forgiving. To keep both
-    # paths happy, only forward kwargs whose value is non-None.
-    extra = {k: v for k, v in
-             (("dtype", dtype), ("initial", initial), ("where", where))
-             if v is not None}
+    extra = _strip_none_kwargs(dict(dtype=dtype, initial=initial, where=where))
     if isinstance(x, Quantity):
         return x.prod(axis=axis, keepdims=keepdims, **extra)
     else:
@@ -453,21 +443,13 @@ def nanprod(
         >>> u.math.nanprod(q)  # NaN treated as 1, result is 6.0
     """
     x = maybe_custom_array(x)
+    extra = _strip_none_kwargs(dict(dtype=dtype, initial=initial, where=where))
     if isinstance(x, Quantity):
-        return x.nanprod(axis=axis,
-                         dtype=dtype,
-                         keepdims=keepdims,
-                         initial=initial,
-                         where=where)
+        return x.nanprod(axis=axis, keepdims=keepdims, **extra)
     else:
         xp = get_backend(x)
         nanprod = _resolve_op('nanprod', xp)
-        return nanprod(x,
-                       axis=axis,
-                       dtype=dtype,
-                       keepdims=keepdims,
-                       initial=initial,  # type: ignore[arg-type]
-                       where=where, **kwargs)  # type: ignore[arg-type]
+        return nanprod(x, axis=axis, keepdims=keepdims, **extra, **kwargs)
 
 
 product = prod
@@ -517,7 +499,8 @@ def cumprod(
         return x.cumprod(axis=axis, dtype=dtype)
     else:
         xp = get_backend(x)
-        return _resolve_op('cumprod', xp)(x, axis=axis, dtype=dtype, **kwargs)
+        extra = _strip_none_kwargs(dict(axis=axis, dtype=dtype))
+        return _resolve_op('cumprod', xp)(x, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -564,7 +547,8 @@ def nancumprod(
         return x.nancumprod(axis=axis, dtype=dtype)
     else:
         xp = get_backend(x)
-        return _resolve_op('nancumprod', xp)(x, axis=axis, dtype=dtype, **kwargs)
+        extra = _strip_none_kwargs(dict(axis=axis, dtype=dtype))
+        return _resolve_op('nancumprod', xp)(x, **extra, **kwargs)
 
 
 cumproduct = cumprod
@@ -578,6 +562,7 @@ def _fun_change_unit_binary(val_fun, unit_fun, x, y, *args, **kwargs):
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
+    kwargs = _strip_none_kwargs(kwargs)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         xp = get_backend(x.mantissa, y.mantissa)
         val_fun = _resolve_op(val_fun, xp)

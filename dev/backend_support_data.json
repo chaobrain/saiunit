@@ -444,7 +444,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cross() got an unexpected keyword argument 'axis'",
+        "detail": "TypeError: cross() got an unexpected keyword argument 'axisa'",
         "status": "skip"
       }
     },
@@ -758,7 +758,7 @@
     },
     "saiunit.linalg.matrix_rank": {
       "dask": {
-        "detail": "TypeError: svdvals() got an unexpected keyword argument 'tol'",
+        "detail": "TypeError: svd() got an unexpected keyword argument 'compute_uv'",
         "status": "skip"
       },
       "jax": {
@@ -770,12 +770,12 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: svdvals() got an unexpected keyword argument 'tol'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: linalg_matrix_rank() received an invalid combination of arguments - got (Tensor, tol=NoneType, rtol=NoneType), but expected one of:\n * (Tensor input, *, Tensor atol = None, Tensor rtol = None, bool hermitian = False, Tensor out = None)\n * (Tensor input, *, float atol = None, float rtol = None, bool hermitian = False, Tensor out = None)\n * (Tensor input, Tensor tol, bool hermitian = False, *, Tensor out = None)\n * (Tensor input, float tol, bool hermitian = False, *, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.linalg.matrix_transpose": {
@@ -846,8 +846,8 @@
     },
     "saiunit.linalg.outer": {
       "dask": {
-        "detail": "TypeError: outer() got an unexpected keyword argument 'out'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -880,12 +880,12 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: numpy.linalg.pinv() got multiple values for keyword argument 'rcond'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: linalg_pinv() received an invalid combination of arguments - got (Tensor, rtol=NoneType, rcond=NoneType, hermitian=bool), but expected one of:\n * (Tensor input, *, Tensor atol = None, Tensor rtol = None, bool hermitian = False, Tensor out = None)\n * (Tensor input, *, float atol = None, float rtol = None, bool hermitian = False, Tensor out = None)\n * (Tensor input, Tensor rcond, bool hermitian = False, *, Tensor out = None)\n * (Tensor input, float rcond, bool hermitian = False, *, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.linalg.qr": {
@@ -1060,8 +1060,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: linalg_tensorsolve() got an unexpected keyword argument 'axes'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.linalg.trace": {
@@ -1220,24 +1220,24 @@
     },
     "saiunit.math.all": {
       "dask": {
-        "detail": "TypeError: all() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: all() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: all() received an invalid combination of arguments - got (Tensor, where=NoneType), but expected one of:\n * (Tensor input, *, Tensor out = None)\n * (Tensor input, tuple of ints dim = None, bool keepdim = False, *, Tensor out = None)\n * (Tensor input, int dim, bool keepdim = False, *, Tensor out = None)\n * (Tensor input, name dim, bool keepdim = False, *, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.allclose": {
@@ -1264,68 +1264,68 @@
     },
     "saiunit.math.alltrue": {
       "dask": {
-        "detail": "TypeError: all() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: all() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: all() received an invalid combination of arguments - got (Tensor, where=NoneType), but expected one of:\n * (Tensor input, *, Tensor out = None)\n * (Tensor input, tuple of ints dim = None, bool keepdim = False, *, Tensor out = None)\n * (Tensor input, int dim, bool keepdim = False, *, Tensor out = None)\n * (Tensor input, name dim, bool keepdim = False, *, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.amax": {
       "dask": {
-        "detail": "TypeError: max() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: max() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "ValueError: reduction operation 'maximum' does not have an identity, so to use a where mask one has to specify 'initial'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: max() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.amin": {
       "dask": {
-        "detail": "TypeError: min() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: min() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "ValueError: reduction operation 'minimum' does not have an identity, so to use a where mask one has to specify 'initial'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: min() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.angle": {
@@ -1352,24 +1352,24 @@
     },
     "saiunit.math.any": {
       "dask": {
-        "detail": "TypeError: any() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: any() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: any() received an invalid combination of arguments - got (Tensor, where=NoneType), but expected one of:\n * (Tensor input, *, Tensor out = None)\n * (Tensor input, tuple of ints dim = None, bool keepdim = False, *, Tensor out = None)\n * (Tensor input, int dim, bool keepdim = False, *, Tensor out = None)\n * (Tensor input, name dim, bool keepdim = False, *, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.append": {
@@ -1602,38 +1602,38 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Unable to instantiate `AttrInt64` with value of type `NoneType`.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: argmin(): argument 'keepdim' must be bool, not NoneType",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.argsort": {
       "dask": {
-        "detail": "TypeError: argsort() got an unexpected keyword argument 'kind'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: argsort() got an unexpected keyword argument 'kind'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: argsort() received an invalid combination of arguments - got (Tensor, order=NoneType, kind=NoneType, stable=bool, descending=bool, dim=int), but expected one of:\n * (Tensor input, *, bool stable, int dim = -1, bool descending = False, Tensor out = None)\n      didn't match because some of the keywords were incorrect: order, kind, descending, dim\n * (Tensor input, int dim = -1, bool descending = False)\n * (Tensor input, name dim, bool descending = False)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.argwhere": {
@@ -2277,7 +2277,7 @@
     "saiunit.math.celu": {
       "dask": {
         "detail": "BackendError: saiunit.math.celu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -2285,7 +2285,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.celu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -2293,7 +2293,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.celu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.check_dims": {
@@ -2622,8 +2622,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: corrcoef() takes 1 positional argument but 2 were given",
-        "status": "fail"
+        "detail": "TypeError: corrcoef() got an unexpected keyword argument 'rowvar'",
+        "status": "skip"
       }
     },
     "saiunit.math.correlate": {
@@ -2702,8 +2702,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Unable to instantiate `AttrInt64` with value of type `NoneType`.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
@@ -2732,8 +2732,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cov() takes 1 positional argument but 2 were given",
-        "status": "fail"
+        "detail": "TypeError: cov() got an unexpected keyword argument 'bias'",
+        "status": "skip"
       }
     },
     "saiunit.math.cross": {
@@ -2754,7 +2754,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cross() got an unexpected keyword argument 'axis'",
+        "detail": "TypeError: cross() got an unexpected keyword argument 'axisa'",
         "status": "skip"
       }
     },
@@ -2798,8 +2798,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "RuntimeError: Please look up dimensions by name, got: name = None.",
-        "status": "fail"
+        "detail": "TypeError: cumprod() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, name dim, *, torch.dtype dtype = None, Tensor out = None)\n",
+        "status": "skip"
       }
     },
     "saiunit.math.cumproduct": {
@@ -2820,8 +2820,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "RuntimeError: Please look up dimensions by name, got: name = None.",
-        "status": "fail"
+        "detail": "TypeError: cumprod() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, name dim, *, torch.dtype dtype = None, Tensor out = None)\n",
+        "status": "skip"
       }
     },
     "saiunit.math.cumsum": {
@@ -2842,8 +2842,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "RuntimeError: Please look up dimensions by name, got: name = None.",
-        "status": "fail"
+        "detail": "TypeError: cumsum() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, name dim, *, torch.dtype dtype = None, Tensor out = None)\n",
+        "status": "skip"
       }
     },
     "saiunit.math.deg2rad": {
@@ -2992,8 +2992,8 @@
         "status": "pass"
       },
       "numpy": {
-        "detail": "TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
         "detail": "",
@@ -3156,8 +3156,8 @@
     },
     "saiunit.math.dstack": {
       "dask": {
-        "detail": "TypeError: dstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -3168,12 +3168,12 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TypeError: dstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: dstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.dtype": {
@@ -3310,7 +3310,7 @@
     },
     "saiunit.math.einsum": {
       "dask": {
-        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/lively-hopping-kahn/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
+        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/jiggly-moseying-moon/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
         "status": "skip"
       },
       "jax": {
@@ -3322,7 +3322,7 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/lively-hopping-kahn/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
+        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/jiggly-moseying-moon/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
         "status": "skip"
       },
       "torch": {
@@ -3333,7 +3333,7 @@
     "saiunit.math.elu": {
       "dask": {
         "detail": "BackendError: saiunit.math.elu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -3341,7 +3341,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.elu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -3349,7 +3349,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.elu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.empty": {
@@ -3508,24 +3508,24 @@
     },
     "saiunit.math.exprel": {
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "BackendError: saiunit.math.exprel requires the jax backend; got dask array. Convert to a JAX array first.",
+        "status": "guard"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Value 'array(data: [1.0, 2.0, 3.0], dtype=float64)' with dtype object is not a valid JAX array type. Only arrays of numeric types are supported by JAX.",
-        "status": "fail"
+        "detail": "BackendError: saiunit.math.exprel requires the jax backend; got ndonnx array. Convert to a JAX array first.",
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "BackendError: saiunit.math.exprel requires the jax backend; got torch tensor. Convert to a JAX array first.",
+        "status": "guard"
       }
     },
     "saiunit.math.extract": {
@@ -3552,24 +3552,24 @@
     },
     "saiunit.math.eye": {
       "dask": {
-        "detail": "TypeError: eye() takes from 1 to 2 positional arguments but 3 positional arguments (and 2 keyword-only arguments) were given",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: eye() takes from 1 to 2 positional arguments but 3 positional arguments (and 1 keyword-only argument) were given",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "TypeError: eye() takes from 1 to 2 positional arguments but 3 positional arguments (and 2 keyword-only arguments) were given",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: eye() takes from 1 to 2 positional arguments but 3 positional arguments (and 1 keyword-only argument) were given",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.fabs": {
@@ -4169,7 +4169,7 @@
     "saiunit.math.gelu": {
       "dask": {
         "detail": "BackendError: saiunit.math.gelu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -4177,7 +4177,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.gelu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -4185,7 +4185,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.gelu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.get_dim": {
@@ -4345,7 +4345,7 @@
     "saiunit.math.glu": {
       "dask": {
         "detail": "BackendError: saiunit.math.glu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -4353,7 +4353,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.glu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -4361,20 +4361,20 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.glu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.gradient": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(4,), dtype=float64, chunksize=(4,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function gradient at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path f.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "AttributeError: module 'ndonnx' has no attribute `gradient`",
         "status": "skip"
       },
       "numpy": {
@@ -4382,8 +4382,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function gradient at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path f.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.greater": {
@@ -4477,7 +4477,7 @@
     "saiunit.math.hard_sigmoid": {
       "dask": {
         "detail": "BackendError: saiunit.math.hard_sigmoid requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -4485,7 +4485,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.hard_sigmoid requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -4493,13 +4493,13 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.hard_sigmoid requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.hard_silu": {
       "dask": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -4507,7 +4507,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -4515,13 +4515,13 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.hard_swish": {
       "dask": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -4529,7 +4529,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -4537,13 +4537,13 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.hard_tanh": {
       "dask": {
         "detail": "BackendError: saiunit.math.hard_tanh requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -4551,7 +4551,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.hard_tanh requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -4559,7 +4559,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.hard_tanh requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.heaviside": {
@@ -4586,8 +4586,8 @@
     },
     "saiunit.math.histogram": {
       "dask": {
-        "detail": "ValueError: dask.array.histogram requires either specifying bins as an iterable or specifying both a range and the number of bins",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -4630,8 +4630,8 @@
     },
     "saiunit.math.hstack": {
       "dask": {
-        "detail": "TypeError: hstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -4646,8 +4646,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: hstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.hypot": {
@@ -5158,81 +5158,81 @@
     },
     "saiunit.math.isfinite": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function isfinite at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function isfinite at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.isinf": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function isinf at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function isinf at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.isnan": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function isnan at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function isnan at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.isreal": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function isreal at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "AttributeError: module 'ndonnx' has no attribute `isreal`",
         "status": "skip"
       },
       "numpy": {
@@ -5240,8 +5240,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function isreal at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.isscalar": {
@@ -5577,7 +5577,7 @@
     "saiunit.math.log_sigmoid": {
       "dask": {
         "detail": "BackendError: saiunit.math.log_sigmoid requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -5585,7 +5585,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.log_sigmoid requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -5593,7 +5593,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.log_sigmoid requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.logaddexp": {
@@ -5796,24 +5796,24 @@
     },
     "saiunit.math.max": {
       "dask": {
-        "detail": "TypeError: max() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: max() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "ValueError: reduction operation 'maximum' does not have an identity, so to use a where mask one has to specify 'initial'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: max() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.maximum": {
@@ -5862,24 +5862,24 @@
     },
     "saiunit.math.mean": {
       "dask": {
-        "detail": "TypeError: mean() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: mean() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: mean() received an invalid combination of arguments - got (Tensor, where=NoneType, dtype=NoneType), but expected one of:\n * (Tensor input, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, tuple of ints dim, bool keepdim = False, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, tuple of names dim, bool keepdim = False, *, torch.dtype dtype = None, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.median": {
@@ -5900,7 +5900,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: median() received an invalid combination of arguments - got (Tensor, overwrite_input=bool, keepdims=bool, axis=NoneType), but expected one of:\n * (Tensor input)\n * (Tensor input, int dim, bool keepdim = False, *, tuple of Tensors out = None)\n * (Tensor input, name dim, bool keepdim = False, *, tuple of Tensors out = None)\n",
+        "detail": "TypeError: median() received an invalid combination of arguments - got (Tensor, overwrite_input=bool, keepdims=bool), but expected one of:\n * (Tensor input)\n * (Tensor input, int dim, bool keepdim = False, *, tuple of Tensors out = None)\n * (Tensor input, name dim, bool keepdim = False, *, tuple of Tensors out = None)\n",
         "status": "skip"
       }
     },
@@ -5928,24 +5928,24 @@
     },
     "saiunit.math.min": {
       "dask": {
-        "detail": "TypeError: min() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: min() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "ValueError: reduction operation 'minimum' does not have an identity, so to use a where mask one has to specify 'initial'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: min() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.minimum": {
@@ -5973,7 +5973,7 @@
     "saiunit.math.mish": {
       "dask": {
         "detail": "BackendError: saiunit.math.mish requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -5981,7 +5981,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.mish requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -5989,7 +5989,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.mish requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.mod": {
@@ -6046,8 +6046,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: moveaxis() got some positional-only arguments passed as keyword arguments: 'source, destination'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
@@ -6104,8 +6104,8 @@
     },
     "saiunit.math.nan_to_num": {
       "dask": {
-        "detail": "TypeError: nan_to_num does not take the following keyword arguments ['nan', 'neginf', 'posinf']",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6170,8 +6170,8 @@
     },
     "saiunit.math.nancumprod": {
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: nancumprod() missing 1 required positional argument: 'axis'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -6192,8 +6192,8 @@
     },
     "saiunit.math.nancumsum": {
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: nancumsum() missing 1 required positional argument: 'axis'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -6214,8 +6214,8 @@
     },
     "saiunit.math.nanmax": {
       "dask": {
-        "detail": "TypeError: nanmax() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6226,8 +6226,8 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "ValueError: reduction operation 'fmax' does not have an identity, so to use a where mask one has to specify 'initial'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.torch' has no operation 'nanmax'",
@@ -6236,8 +6236,8 @@
     },
     "saiunit.math.nanmean": {
       "dask": {
-        "detail": "TypeError: nanmean() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6252,8 +6252,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: nanmean() got an unexpected keyword argument 'axis'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.nanmedian": {
@@ -6274,14 +6274,14 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: nanmedian() received an invalid combination of arguments - got (Tensor, overwrite_input=bool, keepdims=bool, axis=NoneType), but expected one of:\n * (Tensor input)\n * (Tensor input, int dim, bool keepdim = False, *, tuple of Tensors out = None)\n * (Tensor input, name dim, bool keepdim = False, *, tuple of Tensors out = None)\n",
+        "detail": "TypeError: nanmedian() received an invalid combination of arguments - got (Tensor, overwrite_input=bool, keepdims=bool), but expected one of:\n * (Tensor input)\n * (Tensor input, int dim, bool keepdim = False, *, tuple of Tensors out = None)\n * (Tensor input, name dim, bool keepdim = False, *, tuple of Tensors out = None)\n",
         "status": "skip"
       }
     },
     "saiunit.math.nanmin": {
       "dask": {
-        "detail": "TypeError: nanmin() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6292,8 +6292,8 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "ValueError: reduction operation 'fmin' does not have an identity, so to use a where mask one has to specify 'initial'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.torch' has no operation 'nanmin'",
@@ -6324,8 +6324,8 @@
     },
     "saiunit.math.nanprod": {
       "dask": {
-        "detail": "TypeError: nanprod() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6336,8 +6336,8 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "ValueError: reduction operation 'multiply' does not have an identity, so to use a where mask one has to specify 'initial'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.torch' has no operation 'nanprod'",
@@ -6362,14 +6362,14 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: nanquantile() received an invalid combination of arguments - got (Tensor, q=float, method=str, keepdims=bool, axis=NoneType), but expected one of:\n * (Tensor input, Tensor q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n * (Tensor input, float q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n",
+        "detail": "TypeError: nanquantile() received an invalid combination of arguments - got (Tensor, q=float, method=str, keepdims=bool), but expected one of:\n * (Tensor input, Tensor q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n * (Tensor input, float q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n",
         "status": "skip"
       }
     },
     "saiunit.math.nanstd": {
       "dask": {
-        "detail": "TypeError: nanstd() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6390,8 +6390,8 @@
     },
     "saiunit.math.nansum": {
       "dask": {
-        "detail": "TypeError: nansum() got an unexpected keyword argument 'initial'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6402,18 +6402,18 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "ValueError: reduction operation 'add' does not have an identity, so to use a where mask one has to specify 'initial'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: nansum() got an unexpected keyword argument 'axis'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.nanvar": {
       "dask": {
-        "detail": "TypeError: nanvar() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6588,8 +6588,8 @@
     },
     "saiunit.math.outer": {
       "dask": {
-        "detail": "TypeError: outer() got an unexpected keyword argument 'out'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6610,7 +6610,7 @@
     },
     "saiunit.math.percentile": {
       "dask": {
-        "detail": "TypeError: percentile() got an unexpected keyword argument dict_keys(['axis', 'keepdims'])",
+        "detail": "TypeError: percentile() got an unexpected keyword argument dict_keys(['keepdims'])",
         "status": "skip"
       },
       "jax": {
@@ -6780,7 +6780,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: quantile() received an invalid combination of arguments - got (Tensor, q=float, method=str, keepdims=bool, axis=NoneType), but expected one of:\n * (Tensor input, Tensor q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n * (Tensor input, float q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n",
+        "detail": "TypeError: quantile() received an invalid combination of arguments - got (Tensor, q=float, method=str, keepdims=bool), but expected one of:\n * (Tensor input, Tensor q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n * (Tensor input, float q, int dim = None, bool keepdim = False, *, str interpolation = \"linear\", Tensor out = None)\n",
         "status": "skip"
       }
     },
@@ -6897,7 +6897,7 @@
     "saiunit.math.relu": {
       "dask": {
         "detail": "BackendError: saiunit.math.relu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -6905,7 +6905,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.relu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -6913,13 +6913,13 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.relu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.relu6": {
       "dask": {
         "detail": "BackendError: saiunit.math.relu6 requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -6927,7 +6927,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.relu6 requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -6935,7 +6935,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.relu6 requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.remainder": {
@@ -6962,8 +6962,8 @@
     },
     "saiunit.math.remove_diag": {
       "dask": {
-        "detail": "ValueError: Array chunk size or shape is unknown. shape: (nan,)\n\nPossible solution with x.compute_chunk_sizes()",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -6984,24 +6984,24 @@
     },
     "saiunit.math.repeat": {
       "dask": {
-        "detail": "TypeError: repeat() got an unexpected keyword argument 'total_repeat_length'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: repeat() got some positional-only arguments passed as keyword arguments: 'repeats'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "TypeError: repeat() got an unexpected keyword argument 'total_repeat_length'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: repeat() got some positional-only arguments passed as keyword arguments: 'repeats'",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.reshape": {
@@ -7160,8 +7160,8 @@
     },
     "saiunit.math.row_stack": {
       "dask": {
-        "detail": "TypeError: vstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -7176,8 +7176,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: vstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.searchsorted": {
@@ -7227,7 +7227,7 @@
     "saiunit.math.selu": {
       "dask": {
         "detail": "BackendError: saiunit.math.selu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7235,7 +7235,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.selu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7243,7 +7243,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.selu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.set_exprel_order": {
@@ -7293,7 +7293,7 @@
     "saiunit.math.sigmoid": {
       "dask": {
         "detail": "BackendError: saiunit.math.sigmoid requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7301,7 +7301,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.sigmoid requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7309,7 +7309,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.sigmoid requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.sign": {
@@ -7359,7 +7359,7 @@
     "saiunit.math.silu": {
       "dask": {
         "detail": "BackendError: saiunit.math.silu requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7367,7 +7367,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.silu requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7375,7 +7375,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.silu requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.sin": {
@@ -7491,7 +7491,7 @@
     "saiunit.math.soft_sign": {
       "dask": {
         "detail": "BackendError: saiunit.math.soft_sign requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7499,7 +7499,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.soft_sign requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7507,13 +7507,13 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.soft_sign requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.softplus": {
       "dask": {
         "detail": "BackendError: saiunit.math.softplus requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7521,7 +7521,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.softplus requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7529,57 +7529,57 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.softplus requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.sometrue": {
       "dask": {
-        "detail": "TypeError: any() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: any() got an unexpected keyword argument 'where'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: any() received an invalid combination of arguments - got (Tensor, where=NoneType), but expected one of:\n * (Tensor input, *, Tensor out = None)\n * (Tensor input, tuple of ints dim = None, bool keepdim = False, *, Tensor out = None)\n * (Tensor input, int dim, bool keepdim = False, *, Tensor out = None)\n * (Tensor input, name dim, bool keepdim = False, *, Tensor out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.sort": {
       "dask": {
-        "detail": "TypeError: sort() got an unexpected keyword argument 'kind'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: sort() got an unexpected keyword argument 'kind'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: sort() received an invalid combination of arguments - got (Tensor, order=NoneType, kind=NoneType, stable=bool, descending=bool, dim=int), but expected one of:\n * (Tensor input, *, bool stable, int dim = -1, bool descending = False, tuple of Tensors out = None)\n      didn't match because some of the keywords were incorrect: order, kind, descending, dim\n * (Tensor input, int dim = -1, bool descending = False, *, tuple of Tensors out = None)\n * (Tensor input, *, bool stable, name dim, bool descending = False, tuple of Tensors out = None)\n      didn't match because some of the keywords were incorrect: order, kind, descending\n * (Tensor input, name dim, bool descending = False, *, tuple of Tensors out = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.sparse_plus": {
       "dask": {
         "detail": "BackendError: saiunit.math.sparse_plus requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7587,7 +7587,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.sparse_plus requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7595,13 +7595,13 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.sparse_plus requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.sparse_sigmoid": {
       "dask": {
         "detail": "BackendError: saiunit.math.sparse_sigmoid requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7609,7 +7609,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.sparse_sigmoid requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7617,7 +7617,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.sparse_sigmoid requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.split": {
@@ -7689,7 +7689,7 @@
     "saiunit.math.squareplus": {
       "dask": {
         "detail": "BackendError: saiunit.math.squareplus requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7697,7 +7697,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.squareplus requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7705,7 +7705,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.squareplus requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.squeeze": {
@@ -7718,60 +7718,60 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
-        "status": "fail"
+        "detail": "TypeError: squeeze() missing 1 required positional argument: 'axis'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: 'NoneType' object is not iterable",
-        "status": "fail"
+        "detail": "TypeError: squeeze() missing 1 required positional argument: 'axis'",
+        "status": "skip"
       }
     },
     "saiunit.math.stack": {
       "dask": {
-        "detail": "TypeError: stack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: stack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: stack() got an unexpected keyword argument 'axis'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.std": {
       "dask": {
-        "detail": "TypeError: dask.array.reductions.std() got multiple values for keyword argument 'ddof'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: std() got an unexpected keyword argument 'ddof'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "TypeError: numpy.std() got multiple values for keyword argument 'ddof'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: std() received an invalid combination of arguments - got (Tensor, tuple, where=NoneType, dtype=NoneType, ddof=int, correction=int), but expected one of:\n * (Tensor input, tuple of ints dim, bool unbiased = True, bool keepdim = False, *, Tensor out = None)\n      didn't match because some of the keywords were incorrect: where, dtype, ddof, correction\n * (Tensor input, tuple of ints dim = None, *, Number correction = None, bool keepdim = False, Tensor out = None)\n      didn't match because some of the keywords were incorrect: where, dtype, ddof, correction\n * (Tensor input, bool unbiased = True)\n * (Tensor input, tuple of names dim, bool unbiased = True, bool keepdim = False, *, Tensor out = None)\n      didn't match because some of the keywords were incorrect: where, dtype, ddof, correction\n * (Tensor input, tuple of names dim, *, Number correction = None, bool keepdim = False, Tensor out = None)\n      didn't match because some of the keywords were incorrect: where, dtype, ddof, correction\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.subtract": {
@@ -7843,7 +7843,7 @@
     "saiunit.math.swish": {
       "dask": {
         "detail": "BackendError: saiunit.math.swish requires the jax backend; got dask array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "jax": {
         "detail": "",
@@ -7851,7 +7851,7 @@
       },
       "ndonnx": {
         "detail": "BackendError: saiunit.math.swish requires the jax backend; got ndonnx array. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       },
       "numpy": {
         "detail": "",
@@ -7859,7 +7859,7 @@
       },
       "torch": {
         "detail": "BackendError: saiunit.math.swish requires the jax backend; got torch tensor. Convert to a JAX array first.",
-        "status": "fail"
+        "status": "guard"
       }
     },
     "saiunit.math.take": {
@@ -8012,7 +8012,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: transpose() received an invalid combination of arguments - got (Tensor, axes=NoneType), but expected one of:\n * (Tensor input, int dim0, int dim1)\n * (Tensor input, name dim0, name dim1)\n",
+        "detail": "TypeError: transpose() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim0, int dim1)\n * (Tensor input, name dim0, name dim1)\n",
         "status": "skip"
       }
     },
@@ -8062,8 +8062,8 @@
     },
     "saiunit.math.tri": {
       "dask": {
-        "detail": "TypeError: dtype must be known for auto-chunking",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -8480,24 +8480,24 @@
     },
     "saiunit.math.var": {
       "dask": {
-        "detail": "TypeError: dask.array.reductions.var() got multiple values for keyword argument 'ddof'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: var() got an unexpected keyword argument 'ddof'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
-        "detail": "TypeError: numpy.var() got multiple values for keyword argument 'ddof'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: var() received an invalid combination of arguments - got (Tensor, tuple, where=NoneType, dtype=NoneType, ddof=int, correction=float), but expected one of:\n * (Tensor input, tuple of ints dim, bool unbiased = True, bool keepdim = False, *, Tensor out = None)\n      didn't match because some of the keywords were incorrect: where, dtype, ddof, correction\n * (Tensor input, tuple of ints dim = None, *, Number correction = None, bool keepdim = False, Tensor out = None)\n      didn't match because some of the keywords were incorrect: where, dtype, ddof, correction\n * (Tensor input, bool unbiased = True)\n * (Tensor input, tuple of names dim, bool unbiased = True, bool keepdim = False, *, Tensor out = None)\n      didn't match because some of the keywords were incorrect: where, dtype, ddof, correction\n * (Tensor input, tuple of names dim, *, Number correction = None, bool keepdim = False, Tensor out = None)\n      didn't match because some of the keywords were incorrect: where, dtype, ddof, correction\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.vdot": {
@@ -8568,8 +8568,8 @@
     },
     "saiunit.math.vstack": {
       "dask": {
-        "detail": "TypeError: vstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
@@ -8584,8 +8584,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: vstack() got an unexpected keyword argument 'dtype'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.where": {
@@ -8901,112 +8901,112 @@
   "quantity_results": {
     "Quantity.all": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_all at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_all at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.any": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_any at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_any at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.argmax": {
       "dask": {
-        "detail": "TypeError: argmax requires ndarray or scalar arguments, got <class 'dask.array.core.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: argmax requires ndarray or scalar arguments, got <class 'ndonnx._array.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: argmax requires ndarray or scalar arguments, got <class 'torch.Tensor'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.argmin": {
       "dask": {
-        "detail": "TypeError: argmin requires ndarray or scalar arguments, got <class 'dask.array.core.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: argmin requires ndarray or scalar arguments, got <class 'ndonnx._array.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: argmin requires ndarray or scalar arguments, got <class 'torch.Tensor'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.argsort": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function argsort at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function argsort at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.astype": {
@@ -9231,15 +9231,15 @@
     },
     "Quantity.cumsum": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function cumsum at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'cumsum'",
         "status": "skip"
       },
       "numpy": {
@@ -9247,7 +9247,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function cumsum at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: cumsum() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, name dim, *, torch.dtype dtype = None, Tensor out = None)\n",
         "status": "skip"
       }
     },
@@ -9539,68 +9539,68 @@
     },
     "Quantity.max": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_max at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_max at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.mean": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _mean at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _mean at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.min": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_min at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_min at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.nancumprod": {
@@ -9635,7 +9635,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function nanprod at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'nanprod'",
         "status": "skip"
       },
       "numpy": {
@@ -9643,30 +9643,30 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function nanprod at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "AttributeError: saiunit: backend 'array_api_compat.torch' has no operation 'nanprod'",
         "status": "skip"
       }
     },
     "Quantity.nonzero": {
       "dask": {
-        "detail": "TypeError: nonzero requires ndarray or scalar arguments, got <class 'dask.array.core.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: nonzero requires ndarray or scalar arguments, got <class 'ndonnx._array.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: nonzero requires ndarray or scalar arguments, got <class 'torch.Tensor'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.outer": {
@@ -9737,30 +9737,30 @@
     },
     "Quantity.ptp": {
       "dask": {
-        "detail": "TypeError: ptp requires ndarray or scalar arguments, got <class 'dask.array.core.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: ptp requires ndarray or scalar arguments, got <class 'ndonnx._array.Array'> at position 0.",
-        "status": "fail"
+        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'ptp'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: ptp requires ndarray or scalar arguments, got <class 'torch.Tensor'> at position 0.",
-        "status": "fail"
+        "detail": "AttributeError: saiunit: backend 'array_api_compat.torch' has no operation 'ptp'",
+        "status": "skip"
       }
     },
     "Quantity.put": {
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'set'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
-        "status": "fail"
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -9781,15 +9781,15 @@
     },
     "Quantity.ravel": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function ravel at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'ravel'",
         "status": "skip"
       },
       "numpy": {
@@ -9797,8 +9797,8 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function ravel at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.repeat": {
@@ -9914,7 +9914,7 @@
     "Quantity.scatter_add": {
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'add'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
-        "status": "fail"
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -9936,7 +9936,7 @@
     "Quantity.scatter_div": {
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'divide'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
-        "status": "fail"
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -9958,7 +9958,7 @@
     "Quantity.scatter_max": {
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'max'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
-        "status": "fail"
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -9980,7 +9980,7 @@
     "Quantity.scatter_min": {
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'min'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
-        "status": "fail"
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -10002,7 +10002,7 @@
     "Quantity.scatter_mul": {
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'multiply'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
-        "status": "fail"
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -10024,7 +10024,7 @@
     "Quantity.scatter_sub": {
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'add'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
-        "status": "fail"
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -10133,46 +10133,46 @@
     },
     "Quantity.std": {
       "dask": {
-        "detail": "TypeError: std requires ndarray or scalar arguments, got <class 'dask.array.core.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: std requires ndarray or scalar arguments, got <class 'ndonnx._array.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: std requires ndarray or scalar arguments, got <class 'torch.Tensor'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.sum": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_sum at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_sum at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.swapaxes": {
@@ -10199,7 +10199,7 @@
     },
     "Quantity.take": {
       "dask": {
-        "detail": "TypeError: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
+        "detail": "TypeError: Axis value must be an integer, got None",
         "status": "fail"
       },
       "jax": {
@@ -10207,16 +10207,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _take at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _take at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.tile": {
@@ -10573,24 +10573,24 @@
     },
     "Quantity.var": {
       "dask": {
-        "detail": "TypeError: var requires ndarray or scalar arguments, got <class 'dask.array.core.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: var requires ndarray or scalar arguments, got <class 'ndonnx._array.Array'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: var requires ndarray or scalar arguments, got <class 'torch.Tensor'> at position 0.",
-        "status": "fail"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.view": {

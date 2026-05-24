@@ -143,7 +143,10 @@ def exprel(
       Use ``saiunit.math.set_exprel_order(n)`` to control the Taylor series order (default: 5).
       Higher values provide better accuracy near x=0 but require more computation.
     """
+    from saiunit._jax_guard import require_jax_backend
     x = maybe_custom_array(x)
+    # ``_exprel_impl`` uses ``jax.custom_jvp`` and a JAX-only Taylor branch.
+    require_jax_backend("saiunit.math.exprel", x)
     return _fun_accept_unitless_unary(_exprel_impl, x, **kwargs)
 
 
@@ -1251,6 +1254,10 @@ def corrcoef(
     R : ndarray
       The correlation coefficient matrix of the variables.
     """
+    # ``y=None`` differs across backends: numpy/jax accept it, torch raises on
+    # the extra positional arg. Route through the unary helper when no ``y``.
+    if y is None:
+        return _fun_accept_unitless_unary('corrcoef', x, unit_to_scale=unit_to_scale, rowvar=rowvar, **kwargs)
     return _fun_accept_unitless_binary('corrcoef', x, y, rowvar=rowvar, unit_to_scale=unit_to_scale, **kwargs)  # type: ignore[arg-type]
 
 
@@ -1374,6 +1381,14 @@ def cov(
     out : ndarray
       The covariance matrix of the variables.
     """
+    # ``y=None`` differs across backends: numpy/jax accept it, torch raises on
+    # the extra positional arg. Route through the unary helper when no ``y``.
+    if y is None:
+        return _fun_accept_unitless_unary(
+            'cov', m, unit_to_scale=unit_to_scale,
+            rowvar=rowvar, bias=bias, ddof=ddof, fweights=fweights,
+            aweights=aweights, **kwargs,
+        )
     return _fun_accept_unitless_binary(
         'cov', m, y,  # type: ignore[arg-type]
         rowvar=rowvar, bias=bias, ddof=ddof, fweights=fweights,

@@ -1185,6 +1185,10 @@ def _classify_outcome(
     except BackendError as exc:
         if expect_backend_error:
             return {"status": "warn", "detail": f"BackendError (expected): {exc}"}
+        # ``require_jax_backend`` on JAX-only ops (e.g. saiunit.math.relu) fires
+        # this exact phrase. Treat it as a JAX-only guard hit rather than a bug.
+        if "requires the jax backend" in str(exc):
+            return {"status": "guard", "detail": f"BackendError: {exc}"}
         return {"status": "fail", "detail": f"BackendError: {exc}"}
     except (AttributeError, TypeError, NotImplementedError, ValueError, RuntimeError) as exc:
         msg = str(exc)
@@ -1196,7 +1200,7 @@ def _classify_outcome(
             "has no attribute", "no attribute",
             "no operation",                                # saiunit's own "backend X has no operation Y"
             "not implement", "is not implemented",
-            "not supported", "is not supported", "unsupported",
+            "not supported", "is not supported", "unsupported", "does not support",
             "missing", "no torch dtype mapping",
             "module 'array_api_compat",
             # kwarg-not-accepted patterns: saiunit forwards JAX-flavored kwargs

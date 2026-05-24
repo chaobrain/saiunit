@@ -150,6 +150,19 @@ def _resolve_op(func_or_name, xp):
     return _resolve_for_backend(func_or_name, xp)
 
 
+def _strip_none_kwargs(kwargs):
+    """Filter ``None``-valued kwargs.
+
+    Many array-API backends reject ``axis=None`` / ``where=None`` /
+    ``initial=None`` / ``dtype=None`` — numpy treats a present-but-``None``
+    kwarg as a real value (e.g. ``where=None`` triggers the no-identity
+    error). Stripping ``None`` lets each backend fall back to its own
+    default. Backend-specific overrides should be passed explicitly with
+    a non-``None`` value to opt into them.
+    """
+    return {k: v for k, v in kwargs.items() if v is not None}
+
+
 def _looks_like_numpy_namespace(module: str) -> bool:
     """Heuristic: is ``module`` part of a ``numpy``-style array-API namespace?"""
     if not module:
@@ -171,6 +184,7 @@ def _fun_keep_unit_sequence(
     **kwargs
 ):
     args = maybe_custom_array_tree(args)
+    kwargs = _strip_none_kwargs(kwargs)
     # Use the ``tree`` namespace from ``_jax_compat`` rather than ``jax.tree``
     # directly so this works under pure-numpy/torch/dask/ndonnx where ``jax``
     # is None and pytree registration is unavailable.
@@ -269,7 +283,9 @@ def stack(
       >>> b = [4, 5, 6] * u.second
       >>> u.math.stack([a, b])
     """
-    return _fun_keep_unit_sequence('stack', arrays, axis=axis, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence(
+        'stack', arrays, axis=axis, dtype=dtype, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -303,7 +319,9 @@ def vstack(
       >>> b = [4, 5, 6] * u.meter
       >>> u.math.vstack([a, b])
     """
-    return _fun_keep_unit_sequence('vstack', tup, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence(
+        'vstack', tup, dtype=dtype, **kwargs,
+    )
 
 
 row_stack = vstack
@@ -340,7 +358,9 @@ def hstack(
       >>> b = [4, 5, 6] * u.meter
       >>> u.math.hstack([a, b])
     """
-    return _fun_keep_unit_sequence('hstack', arrays, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence(
+        'hstack', arrays, dtype=dtype, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -374,7 +394,9 @@ def dstack(
       >>> b = [[4], [5], [6]] * u.meter
       >>> u.math.dstack([a, b])
     """
-    return _fun_keep_unit_sequence('dstack', arrays, dtype=dtype, **kwargs)
+    return _fun_keep_unit_sequence(
+        'dstack', arrays, dtype=dtype, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -485,6 +507,7 @@ def _fun_keep_unit_return_sequence(
 ):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
+    kwargs = _strip_none_kwargs(kwargs)
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
         func = _resolve_op(func, xp)
@@ -998,7 +1021,7 @@ def moveaxis(
       >>> u.math.moveaxis(a, 0, -1).shape
       (4, 5, 3)
     """
-    return _fun_keep_unit_unary('moveaxis', a, source=source, destination=destination, **kwargs)
+    return _fun_keep_unit_unary('moveaxis', a, source, destination, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1142,7 +1165,7 @@ def repeat(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.repeat(a, 2)
     """
-    return _fun_keep_unit_unary('repeat', a, repeats=repeats, axis=axis, total_repeat_length=total_repeat_length, **kwargs)
+    return _fun_keep_unit_unary('repeat', a, repeats, axis=axis, total_repeat_length=total_repeat_length, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1429,7 +1452,10 @@ def max(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.max(a)
     """
-    return _fun_keep_unit_unary('max', a, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
+    return _fun_keep_unit_unary(
+        'max', a, axis=axis, keepdims=keepdims,
+        initial=initial, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -1474,7 +1500,10 @@ def min(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.min(a)
     """
-    return _fun_keep_unit_unary('min', a, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
+    return _fun_keep_unit_unary(
+        'min', a, axis=axis, keepdims=keepdims,
+        initial=initial, where=where, **kwargs,
+    )
 
 
 amax = max
@@ -1688,7 +1717,11 @@ def remove_diag(x: ArrayLike | Quantity, **kwargs) -> Array | Quantity:
         raise ValueError(f'Only support 2D matrix, while we got a {x.ndim}D array.')
     xp = get_backend(x)
     mask = ~xp.eye(x.shape[0], x.shape[1], dtype=bool)
-    x = xp.reshape(x[mask], (x.shape[0], x.shape[1] - 1), **kwargs)  # type: ignore[index]
+    masked = x[mask]  # type: ignore[index]
+    # Dask boolean indexing produces unknown chunk sizes; resolve them before reshape.
+    if hasattr(masked, "compute_chunk_sizes"):
+        masked = masked.compute_chunk_sizes()
+    x = xp.reshape(masked, (x.shape[0], x.shape[1] - 1), **kwargs)
     if unit.is_unitless:
         return x  # type: ignore[return-value]
     return Quantity(x, unit=unit)
@@ -1776,6 +1809,7 @@ def diagflat(
 def _fun_keep_unit_unary(func, x, *args, **kwargs):
     x = maybe_custom_array(x)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
+    kwargs = _strip_none_kwargs(kwargs)
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
         func = _resolve_op(func, xp)
@@ -2168,13 +2202,10 @@ def nansum(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary('nansum',
-                                x,
-                                axis=axis,
-                                dtype=dtype,
-                                keepdims=keepdims,
-                                initial=initial,
-                                where=where, **kwargs)
+    return _fun_keep_unit_unary(
+        'nansum', x, axis=axis, keepdims=keepdims,
+        dtype=dtype, initial=initial, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -2408,7 +2439,10 @@ def nanmin(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary('nanmin', x, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
+    return _fun_keep_unit_unary(
+        'nanmin', x, axis=axis, keepdims=keepdims,
+        initial=initial, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -2462,7 +2496,10 @@ def nanmax(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary('nanmax', x, axis=axis, keepdims=keepdims, initial=initial, where=where, **kwargs)
+    return _fun_keep_unit_unary(
+        'nanmax', x, axis=axis, keepdims=keepdims,
+        initial=initial, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -2628,7 +2665,10 @@ def mean(
       >>> a = [1.0, 2.0, 3.0] * u.second
       >>> u.math.mean(a)
     """
-    return _fun_keep_unit_unary('mean', x, axis=axis, dtype=dtype, keepdims=keepdims, where=where, **kwargs)
+    return _fun_keep_unit_unary(
+        'mean', x, axis=axis, keepdims=keepdims,
+        dtype=dtype, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -2689,7 +2729,11 @@ def std(
       >>> a = [1.0, 2.0, 3.0] * u.meter
       >>> u.math.std(a)
     """
-    return _fun_keep_unit_unary('std', x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims, where=where, **kwargs)
+    # ``correction=ddof`` (not ``ddof=ddof``): ``array_api_compat.numpy.std`` raises a duplicate-kwarg error when both are forwarded.
+    return _fun_keep_unit_unary(
+        'std', x, axis=axis, keepdims=keepdims, correction=ddof,
+        dtype=dtype, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -2800,7 +2844,10 @@ def nanmean(
       >>> a = [1.0, jnp.nan, 3.0] * u.meter
       >>> u.math.nanmean(a)
     """
-    return _fun_keep_unit_unary('nanmean', x, axis=axis, dtype=dtype, keepdims=keepdims, where=where, **kwargs)
+    return _fun_keep_unit_unary(
+        'nanmean', x, axis=axis, keepdims=keepdims,
+        dtype=dtype, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -2862,8 +2909,10 @@ def nanstd(
       >>> a = [1.0, jnp.nan, 3.0] * u.meter
       >>> u.math.nanstd(a)
     """
-    return _fun_keep_unit_unary('nanstd', x, axis=axis, dtype=dtype, ddof=ddof, keepdims=keepdims,
-                                where=where, **kwargs)
+    return _fun_keep_unit_unary(
+        'nanstd', x, axis=axis, keepdims=keepdims, ddof=ddof,
+        dtype=dtype, where=where, **kwargs,
+    )
 
 
 @set_module_as('saiunit.math')
@@ -3082,23 +3131,31 @@ def nan_to_num(
       >>> a = [1.0, jnp.nan, jnp.inf] * u.meter
       >>> u.math.nan_to_num(a)
     """
+    def _call(arr, xp):
+        # ``dask.array.nan_to_num`` rejects ``nan/posinf/neginf`` kwargs; route
+        # through ``map_blocks`` so each chunk uses NumPy's implementation.
+        if "dask" in getattr(xp, "__name__", ""):
+            import numpy as _np
+            return arr.map_blocks(
+                lambda b: _np.nan_to_num(b, nan=nan_v, posinf=posinf_v, neginf=neginf_v),
+                dtype=arr.dtype,
+            )
+        return _resolve_op('nan_to_num', xp)(arr, nan=nan_v, posinf=posinf_v, neginf=neginf_v, **kwargs)  # type: ignore[arg-type]
+
     x_unit = get_unit(x)
     if isinstance(x, Quantity):
-        if nan is not None:
-            nan = Quantity(nan).in_unit(x_unit).mantissa  # type: ignore[assignment]
-        else:
-            nan = 0.0
-        if posinf is not None:
-            posinf = Quantity(posinf).in_unit(x_unit).mantissa  # type: ignore[assignment]
-        if neginf is not None:
-            neginf = Quantity(neginf).in_unit(x_unit).mantissa  # type: ignore[assignment]
+        nan_v = 0.0 if nan is None else Quantity(nan).in_unit(x_unit).mantissa
+        posinf_v = None if posinf is None else Quantity(posinf).in_unit(x_unit).mantissa
+        neginf_v = None if neginf is None else Quantity(neginf).in_unit(x_unit).mantissa
         xp = get_backend(x.mantissa)
-        r = _resolve_op('nan_to_num', xp)(x.mantissa, nan=nan, posinf=posinf, neginf=neginf, **kwargs)  # type: ignore[arg-type]
+        r = _call(x.mantissa, xp)
         return r if x_unit.is_unitless else Quantity(r, unit=x_unit)
     else:
-        nan = 0.0 if nan is None else nan
+        nan_v = 0.0 if nan is None else nan
+        posinf_v = posinf
+        neginf_v = neginf
         xp = get_backend(x)
-        return _resolve_op('nan_to_num', xp)(x, nan=nan, posinf=posinf, neginf=neginf, **kwargs)  # type: ignore[arg-type]
+        return _call(x, xp)
 
 
 @set_module_as('saiunit.math')
@@ -4096,6 +4153,11 @@ def histogram(
             Quantity(range[1]).in_unit(unit).mantissa
         )
     backend = get_backend(x)
+    # ``dask.array.histogram`` requires ``range`` when ``bins`` is an int; numpy/jax derive it.
+    if range is None and "dask" in getattr(backend, "__name__", "") and not hasattr(bins, "__len__"):
+        x_min = float(backend.asarray(x).min().compute())  # type: ignore[union-attr]
+        x_max = float(backend.asarray(x).max().compute())  # type: ignore[union-attr]
+        range = (x_min, x_max)
     hist, bin_edges = _resolve_op('histogram', backend)(x, bins, range=range, weights=weights, density=density, **kwargs)  # type: ignore[arg-type]
     if unit.is_unitless:
         return hist, bin_edges
