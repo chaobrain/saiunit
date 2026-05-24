@@ -12,10 +12,14 @@ exclude = [
     "build*",
     "dist*",
     "dev*",
+    "brainunit*",
     "saiunit.egg-info*",
     "saiunit/__pycache__*",
     "saiunit/__init__.py"
 ]
+
+[tool.setuptools.package-data]
+saiunit = ["py.typed"]
 
 
 [project]

@@ -14,6 +14,9 @@ exclude = [
     "brainunit/__init__.py"
 ]
 
+[tool.setuptools.package-data]
+brainunit = ["py.typed"]
+
 [project]
 name = "brainunit"
 version = &
