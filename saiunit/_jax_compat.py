@@ -48,6 +48,7 @@ __all__ = [
     "jnp",
     "Array",
     "ArrayLike",
+    "ScalarOrArrayLike",
     "DTypeLike",
     "Tracer",
     "ShapedArray",
@@ -81,8 +82,8 @@ try:
 
     HAS_JAX = True
 except ImportError:  # pragma: no cover - exercised only in no-jax CI job
-    _jax = None
-    _jnp = None
+    _jax = None  # type: ignore[assignment]
+    _jnp = None  # type: ignore[assignment]
     HAS_JAX = False
 
 
@@ -90,7 +91,15 @@ if HAS_JAX:
     jax = _jax
     jnp = _jnp
     Array = _jax.Array
-    ArrayLike = _jax.typing.ArrayLike
+    # Narrow array-like alias: types that genuinely support ``.shape`` /
+    # ``.ndim`` / ``.dtype``. Excludes bare Python scalars (``bool``, ``int``,
+    # ``float``, ``complex``) so that mypy/pyright don't emit ``union-attr``
+    # false positives when downstream code reads those attributes. Callers
+    # that want to accept Python scalars too should use :data:`ScalarOrArrayLike`.
+    ArrayLike = _jax.Array | np.ndarray | np.number | np.bool_
+    # Wide alias: everything :data:`jax.typing.ArrayLike` accepts, including
+    # bare Python scalars. Use sparingly — prefer :data:`ArrayLike`.
+    ScalarOrArrayLike = ArrayLike | bool | int | float | complex
     DTypeLike = _jax.typing.DTypeLike
     Tracer = _jax.core.Tracer
     ShapedArray = _jax.core.ShapedArray
@@ -131,7 +140,8 @@ else:
     ShapedArray = type("ShapedArray", (_JaxSentinel,), {})  # type: ignore[misc, assignment]
     ShapeDtypeStruct = type("ShapeDtypeStruct", (_JaxSentinel,), {})  # type: ignore[misc, assignment]
     DynamicJaxprTracer = type("DynamicJaxprTracer", (_JaxSentinel,), {})  # type: ignore[misc, assignment]
-    ArrayLike = Any  # type: ignore[assignment, misc]
+    ArrayLike = np.ndarray | np.number | np.bool_  # type: ignore[misc, assignment]
+    ScalarOrArrayLike = ArrayLike | bool | int | float | complex  # type: ignore[misc]
     DTypeLike = Any  # type: ignore[assignment, misc]
 
     class TracerArrayConversionError(Exception):  # type: ignore[no-redef]
@@ -159,11 +169,11 @@ else:
         """
         yield
 
-    def result_type(*args):  # type: ignore[no-redef]
+    def result_type(*args):  # type: ignore[no-redef, misc]
         """Fallback for ``jax.dtypes.result_type`` via :func:`numpy.result_type`."""
         return np.result_type(*args)
 
-    def canonicalize_dtype(dtype):  # type: ignore[no-redef]
+    def canonicalize_dtype(dtype):  # type: ignore[no-redef, misc]
         """Fallback for ``jax.dtypes.canonicalize_dtype`` via :class:`numpy.dtype`."""
         return np.dtype(dtype)
 
@@ -245,7 +255,7 @@ else:
             return {k: _unflatten(c, leaves_iter) for k, c in zip(treedef.keys, treedef.children)}
         raise RuntimeError(f"Unknown TreeDef kind: {treedef.kind!r}")
 
-    def tree_map(f: Callable, tree_obj, *rest, is_leaf: Callable | None = None):  # type: ignore[no-redef]
+    def tree_map(f: Callable, tree_obj, *rest, is_leaf: Callable | None = None):  # type: ignore[no-redef, misc]
         """Fallback ``jax.tree.map`` over list/tuple/dict/None containers."""
         leaves, treedef = _flatten(tree_obj, is_leaf)
         rest_leaves = [_flatten(t, is_leaf)[0] for t in rest]
@@ -257,7 +267,7 @@ else:
         mapped = [f(*([leaves[i]] + [rl[i] for rl in rest_leaves])) for i in range(len(leaves))]
         return _unflatten(treedef, iter(mapped))
 
-    def tree_structure(tree_obj, is_leaf: Callable | None = None):  # type: ignore[no-redef]
+    def tree_structure(tree_obj, is_leaf: Callable | None = None):  # type: ignore[no-redef, misc]
         """Fallback ``jax.tree.structure`` returning an opaque :class:`_TreeDef`."""
         _, treedef = _flatten(tree_obj, is_leaf)
         return treedef
@@ -270,7 +280,7 @@ else:
 
     tree = _TreeNamespace()  # type: ignore[assignment]
 
-    def device_put(x, device=None):  # type: ignore[no-redef]
+    def device_put(x, device=None):  # type: ignore[no-redef, misc]
         """Reject ``jax.device_put`` calls with a clear install hint."""
         require_jax("jax.device_put")
 

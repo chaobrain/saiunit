@@ -19,6 +19,7 @@ from __future__ import annotations
 from ._base_quantity import Quantity
 from ._misc import maybe_custom_array
 from ._unit_common import kelvin
+from saiunit._jax_compat import ArrayLike
 
 __all__ = [
     "celsius2kelvin",
@@ -28,13 +29,13 @@ __all__ = [
 ]
 
 
-def celsius2kelvin(celsius: jax.typing.ArrayLike) -> Quantity:
+def celsius2kelvin(celsius: ArrayLike) -> Quantity:
     """
     Convert a Celsius value to a kelvin :class:`~saiunit.Quantity`.
 
     Parameters
     ----------
-    celsius : jax.typing.ArrayLike
+    celsius : ArrayLike
         The temperature in degrees Celsius. Must not be a
         :class:`~saiunit.Quantity`.
 
@@ -64,10 +65,10 @@ def celsius2kelvin(celsius: jax.typing.ArrayLike) -> Quantity:
     celsius = maybe_custom_array(celsius)
     if isinstance(celsius, Quantity):
         raise TypeError("The input value should be not be a Quantity.")
-    return (celsius + 273.15) * kelvin
+    return (celsius + 273.15) * kelvin  # type: ignore[return-value]
 
 
-def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
+def kelvin2celsius(value: Quantity) -> ArrayLike:
     """
     Convert a kelvin :class:`~saiunit.Quantity` to a Celsius value.
 
@@ -79,7 +80,7 @@ def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
 
     Returns
     -------
-    jax.typing.ArrayLike
+    ArrayLike
         The temperature in degrees Celsius (unitless scalar or array).
 
     Raises
@@ -111,13 +112,13 @@ def kelvin2celsius(value: Quantity) -> jax.typing.ArrayLike:
     return value.to_decimal(kelvin) - 273.15
 
 
-def fahrenheit2kelvin(fahrenheit: jax.typing.ArrayLike) -> Quantity:
+def fahrenheit2kelvin(fahrenheit: ArrayLike) -> Quantity:
     """
     Convert a Fahrenheit value to a kelvin :class:`~saiunit.Quantity`.
 
     Parameters
     ----------
-    fahrenheit : jax.typing.ArrayLike
+    fahrenheit : ArrayLike
         The temperature in degrees Fahrenheit. Must not be a
         :class:`~saiunit.Quantity`.
 
@@ -139,10 +140,10 @@ def fahrenheit2kelvin(fahrenheit: jax.typing.ArrayLike) -> Quantity:
     fahrenheit = maybe_custom_array(fahrenheit)
     if isinstance(fahrenheit, Quantity):
         raise TypeError("The input value should be not be a Quantity.")
-    return ((fahrenheit - 32.0) * (5.0 / 9.0) + 273.15) * kelvin
+    return ((fahrenheit - 32.0) * (5.0 / 9.0) + 273.15) * kelvin  # type: ignore[return-value]
 
 
-def kelvin2fahrenheit(value: Quantity) -> jax.typing.ArrayLike:
+def kelvin2fahrenheit(value: Quantity) -> ArrayLike:
     """
     Convert a kelvin :class:`~saiunit.Quantity` to a Fahrenheit value.
 
@@ -154,7 +155,7 @@ def kelvin2fahrenheit(value: Quantity) -> jax.typing.ArrayLike:
 
     Returns
     -------
-    jax.typing.ArrayLike
+    ArrayLike
         The temperature in degrees Fahrenheit (unitless scalar or array).
 
     Examples

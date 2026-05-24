@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-import brainstate
+import brainstate  # type: ignore[import-untyped]
 import jax.numpy as jnp
 import numpy as np
 from scipy.special import exprel

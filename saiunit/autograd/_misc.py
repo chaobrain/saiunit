@@ -59,14 +59,14 @@ def _argnums_partial(
         normalized_argnums: int | tuple[int, ...] = _normalize_index(argnums)
         argnums_tuple = (normalized_argnums,)
     else:
-        argnums_tuple = tuple(_normalize_index(i) for i in argnums)
+        argnums_tuple = tuple(_normalize_index(i) for i in argnums)  # type: ignore[assignment]
         if len(argnums_tuple) == 0:
             raise ValueError('argnums must be non-empty.')
         if len(set(argnums_tuple)) != len(argnums_tuple):
             raise ValueError(f'argnums must not contain duplicate entries, got {argnums}.')
-        normalized_argnums = argnums_tuple
+        normalized_argnums = argnums_tuple  # type: ignore[assignment]
 
-    dynamic_args = tuple(args[i] for i in argnums_tuple)
+    dynamic_args = tuple(args[i] for i in argnums_tuple)  # type: ignore[index]
     static_args = list(args)
 
     def partial_fun(*dyn_args):

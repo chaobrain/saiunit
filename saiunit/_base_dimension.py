@@ -465,7 +465,7 @@ class Dimension:
             raise TypeError("Too many exponents")
         return get_or_create_dimension(self._dims * value)
 
-    def __imul__(self, value):
+    def __imul__(self, value):  # type: ignore[misc]
         """
         In-place multiplication operation for Dimension objects.
 
@@ -505,7 +505,7 @@ class Dimension:
         """
         raise NotImplementedError("Dimension object is immutable")
 
-    def __itruediv__(self, value):
+    def __itruediv__(self, value):  # type: ignore[misc]
         """
         In-place true division operation for Dimension objects.
 
@@ -525,7 +525,7 @@ class Dimension:
         """
         raise NotImplementedError("Dimension object is immutable")
 
-    def __ipow__(self, value):
+    def __ipow__(self, value):  # type: ignore[misc]
         """
         In-place power operation for Dimension objects.
 
@@ -546,7 +546,7 @@ class Dimension:
         raise NotImplementedError("Dimension object is immutable")
 
     # ---- COMPARISON ---- #
-    def __eq__(self, value: 'Dimension') -> bool:
+    def __eq__(self, value: 'Dimension') -> bool:  # type: ignore[override]
         """
         Compare this Dimension object with another for equality.
 

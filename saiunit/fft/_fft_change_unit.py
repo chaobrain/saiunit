@@ -16,14 +16,14 @@ from __future__ import annotations
 
 from typing import Callable, Union, Sequence
 
-from saiunit._jax_compat import HAS_JAX, jax, jnp
+from saiunit._jax_compat import HAS_JAX, jax, jnp, ArrayLike
 import numpy as np
 
 if HAS_JAX:
     from jax.numpy import fft as jnpfft
     from jaxlib import xla_client
 else:
-    import numpy.fft as jnpfft  # type: ignore[assignment]
+    import numpy.fft as jnpfft  # type: ignore[no-redef]
     xla_client = None  # type: ignore[assignment]
 
 from saiunit import _unit_common as uc
@@ -78,12 +78,12 @@ def _calculate_fftn_dimension(
 
 @unit_change(lambda u: u * second)
 def fft(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     n: int | None = None,
     axis: int = -1,
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     r"""Compute a one-dimensional discrete Fourier transform along a given axis.
 
     Unit-aware implementation of :func:`numpy.fft.fft`.  The output unit
@@ -131,12 +131,12 @@ def fft(
 
 @unit_change(lambda u: u * second)
 def rfft(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     n: int | None = None,
     axis: int = -1,
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     r"""Compute a one-dimensional DFT of a real-valued array.
 
     Unit-aware implementation of :func:`numpy.fft.rfft`.  Only the
@@ -194,12 +194,12 @@ def rfft(
 
 @unit_change(lambda u: u / second)
 def ifft(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     n: int | None = None,
     axis: int = -1,
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     r"""Compute a one-dimensional inverse discrete Fourier transform.
 
     Unit-aware implementation of :func:`numpy.fft.ifft`.  The output
@@ -252,12 +252,12 @@ def ifft(
 
 @unit_change(lambda u: u / second)
 def irfft(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     n: int | None = None,
     axis: int = -1,
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Compute a real-valued one-dimensional inverse DFT.
 
     Unit-aware implementation of :func:`numpy.fft.irfft`.  The output
@@ -306,12 +306,12 @@ def irfft(
 
 @unit_change(lambda u: u * (second ** 2))
 def fft2(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] = (-2, -1),
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Compute a two-dimensional discrete Fourier transform along given axes.
 
     Unit-aware implementation of :func:`numpy.fft.fft2`.  The output
@@ -356,12 +356,12 @@ def fft2(
 
 @unit_change(lambda u: u * (second ** 2))
 def rfft2(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] = (-2, -1),
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Compute a two-dimensional DFT of a real-valued array.
 
     Unit-aware implementation of :func:`numpy.fft.rfft2`.  Only the
@@ -406,12 +406,12 @@ def rfft2(
 
 @set_module_as('saiunit.fft')
 def fftn(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] | None = None,
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     r"""Compute a multidimensional discrete Fourier transform.
 
     Unit-aware implementation of :func:`numpy.fft.fftn`.  The output
@@ -462,12 +462,12 @@ def fftn(
 
 @set_module_as('saiunit.fft')
 def rfftn(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] | None = None,
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Compute a multidimensional DFT of a real-valued array.
 
     Unit-aware implementation of :func:`numpy.fft.rfftn`.  The output
@@ -519,12 +519,12 @@ def rfftn(
 
 @unit_change(lambda u: u / (second ** 2))
 def ifft2(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] = (-2, -1),
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Compute a two-dimensional inverse discrete Fourier transform.
 
     Unit-aware implementation of :func:`numpy.fft.ifft2`.  The output
@@ -569,12 +569,12 @@ def ifft2(
 
 @unit_change(lambda u: u / (second ** 2))
 def irfft2(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] = (-2, -1),
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Compute a real-valued two-dimensional inverse DFT.
 
     Unit-aware implementation of :func:`numpy.fft.irfft2`.  The output
@@ -619,12 +619,12 @@ def irfft2(
 
 @set_module_as('saiunit.fft')
 def ifftn(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] | None = None,
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     r"""Compute a multidimensional inverse discrete Fourier transform.
 
     Unit-aware implementation of :func:`numpy.fft.ifftn`.  The output
@@ -675,12 +675,12 @@ def ifftn(
 
 @set_module_as('saiunit.fft')
 def irfftn(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     s: Shape | None = None,
     axes: Sequence[int] | None = None,
     norm: str | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Compute a real-valued multidimensional inverse DFT.
 
     Unit-aware implementation of :func:`numpy.fft.irfftn`.  The output
@@ -784,12 +784,12 @@ def _validate_time_spacing(d: Quantity) -> None:
 @set_module_as('saiunit.fft')
 def fftfreq(
     n: int,
-    d: Union[Quantity, jax.typing.ArrayLike] = 1.0,
+    d: Union[Quantity, ArrayLike] = 1.0,  # type: ignore[assignment]
     *,
     dtype: jax.typing.DTypeLike | None = None,
     device: xla_client.Device | jax.sharding.Sharding | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Return sample frequencies for the discrete Fourier transform.
 
     Unit-aware implementation of :func:`numpy.fft.fftfreq`.  When *d*
@@ -845,12 +845,12 @@ def fftfreq(
 @set_module_as('saiunit.fft')
 def rfftfreq(
     n: int,
-    d: Union[Quantity, jax.typing.ArrayLike] = 1.0,
+    d: Union[Quantity, ArrayLike] = 1.0,  # type: ignore[assignment]
     *,
     dtype: jax.typing.DTypeLike | None = None,
     device: xla_client.Device | jax.sharding.Sharding | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Return sample frequencies for the real discrete Fourier transform.
 
     Unit-aware implementation of :func:`numpy.fft.rfftfreq`.  Only the

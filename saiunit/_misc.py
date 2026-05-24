@@ -14,6 +14,8 @@
 # ==============================================================================
 
 
+from typing import Callable
+
 from saiunit._jax_compat import tree as _jtree
 
 CustomArray = None
@@ -53,7 +55,7 @@ def set_module_as(module: str):
     'saiunit.public'
     """
 
-    def wrapper(fun: callable):
+    def wrapper(fun: Callable):
         fun.__module__ = module
         return fun
 

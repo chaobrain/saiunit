@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import (Union, TypeVar, Any)
 
-from saiunit._jax_compat import jax, jnp
+from saiunit._jax_compat import jax, jnp, ArrayLike
 import numpy as np
 
 from saiunit._base_unit import Unit
@@ -188,7 +188,7 @@ def issubdtype(a: T, b: T) -> bool:
         >>> sumath.issubdtype(jnp.int32, jnp.floating)
         False
     """
-    return jnp.issubdtype(a, b)
+    return jnp.issubdtype(a, b)  # type: ignore[arg-type]
 
 
 @set_module_as('saiunit.math')
@@ -219,7 +219,7 @@ def result_type(*args):
 
 
 @set_module_as('saiunit.math')
-def ndim(a: Union[Quantity, jax.typing.ArrayLike]) -> int:
+def ndim(a: Union[Quantity, ArrayLike]) -> int:
     """Return the number of dimensions of an array or ``Quantity``.
 
     Parameters
@@ -252,7 +252,7 @@ def ndim(a: Union[Quantity, jax.typing.ArrayLike]) -> int:
 
 
 @set_module_as('saiunit.math')
-def isreal(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
+def isreal(a: Union[Quantity, ArrayLike]) -> jax.Array:
     """Test element-wise whether each element is real (has zero imaginary part).
 
     Parameters
@@ -282,7 +282,7 @@ def isreal(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
 
 
 @set_module_as('saiunit.math')
-def isscalar(a: Union[Quantity, jax.typing.ArrayLike]) -> bool:
+def isscalar(a: Union[Quantity, ArrayLike]) -> bool:
     """Return ``True`` if the input is a scalar (zero-dimensional).
 
     Parameters
@@ -314,7 +314,7 @@ def isscalar(a: Union[Quantity, jax.typing.ArrayLike]) -> bool:
 
 
 @set_module_as('saiunit.math')
-def isfinite(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
+def isfinite(a: Union[Quantity, ArrayLike]) -> jax.Array:
     """Test element-wise for finiteness (not inf and not NaN).
 
     Parameters
@@ -344,7 +344,7 @@ def isfinite(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
 
 
 @set_module_as('saiunit.math')
-def isinf(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
+def isinf(a: Union[Quantity, ArrayLike]) -> jax.Array:
     """Test element-wise for positive or negative infinity.
 
     Parameters
@@ -374,7 +374,7 @@ def isinf(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
 
 
 @set_module_as('saiunit.math')
-def isnan(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
+def isnan(a: Union[Quantity, ArrayLike]) -> jax.Array:
     """Test element-wise for NaN.
 
     Parameters
@@ -404,7 +404,7 @@ def isnan(a: Union[Quantity, jax.typing.ArrayLike]) -> jax.Array:
 
 
 @set_module_as('saiunit.math')
-def shape(a: Union[Quantity, jax.typing.ArrayLike]) -> tuple[int, ...]:
+def shape(a: Union[Quantity, ArrayLike]) -> tuple[int, ...]:
     """
     Return the shape of an array.
 
@@ -445,7 +445,7 @@ def shape(a: Union[Quantity, jax.typing.ArrayLike]) -> tuple[int, ...]:
 
 
 @set_module_as('saiunit.math')
-def size(a: Union[Quantity, jax.typing.ArrayLike], axis: int = None) -> int:
+def size(a: Union[Quantity, ArrayLike], axis: int | None = None) -> int:
     """
     Return the number of elements along a given axis.
 
@@ -489,7 +489,7 @@ def size(a: Union[Quantity, jax.typing.ArrayLike], axis: int = None) -> int:
 
 
 @set_module_as('saiunit.math')
-def finfo(a: Union[Quantity, jax.typing.ArrayLike]) -> jnp.finfo:
+def finfo(a: Union[Quantity, ArrayLike]) -> jnp.finfo:
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return jnp.finfo(a.mantissa)
@@ -498,7 +498,7 @@ def finfo(a: Union[Quantity, jax.typing.ArrayLike]) -> jnp.finfo:
 
 
 @set_module_as('saiunit.math')
-def iinfo(a: Union[Quantity, jax.typing.ArrayLike]) -> jnp.iinfo:
+def iinfo(a: Union[Quantity, ArrayLike]) -> jnp.iinfo:
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return jnp.iinfo(a.mantissa)
@@ -566,7 +566,7 @@ def get_dtype(a):
             return bool
         elif isinstance(a, int):
             if environ is None:
-                from brainstate import environ
+                from brainstate import environ  # type: ignore[import-untyped]
             return environ.ditype()
         elif isinstance(a, float):
             if environ is None:
@@ -640,8 +640,8 @@ def is_int(array):
 
 @set_module_as('saiunit.math')
 def gradient(
-    f: Union[jax.typing.ArrayLike, Quantity],
-    *varargs: Union[jax.typing.ArrayLike, Quantity],
+    f: Union[ArrayLike, Quantity],
+    *varargs: Union[ArrayLike, Quantity],
     axis: Union[int, Sequence[int], None] = None,
     edge_order: Union[int, None] = None,
 ) -> Union[jax.Array, list[jax.Array], Quantity, list[Quantity]]:
@@ -707,18 +707,18 @@ def gradient(
         if isinstance(f, Quantity) and not is_unitless(f):
             return Quantity(jnp.gradient(f.mantissa, axis=axis), unit=f.unit)
         else:
-            return jnp.gradient(f)
+            return jnp.gradient(f)  # type: ignore[arg-type]
     elif len(varargs) == 1:
         unit = get_unit(f) / get_unit(varargs[0])
         if isinstance(unit, Unit) and unit.is_unitless:
-            return jnp.gradient(f, varargs[0], axis=axis)
+            return jnp.gradient(f, varargs[0], axis=axis)  # type: ignore[arg-type]
         else:
-            return [Quantity(r, unit=unit) for r in jnp.gradient(f.mantissa, Quantity(varargs[0]).mantissa, axis=axis)]
+            return [Quantity(r, unit=unit) for r in jnp.gradient(f.mantissa, Quantity(varargs[0]).mantissa, axis=axis)]  # type: ignore[union-attr]
     else:
         unit_list = [get_unit(f) / get_unit(v) for v in varargs]
         f = f.mantissa if isinstance(f, Quantity) else f
-        varargs = [v.mantissa if isinstance(v, Quantity) else v for v in varargs]
-        result_list = jnp.gradient(f, *varargs, axis=axis)
+        varargs = [v.mantissa if isinstance(v, Quantity) else v for v in varargs]  # type: ignore[assignment]
+        result_list = jnp.gradient(f, *varargs, axis=axis)  # type: ignore[arg-type]
         return [(Quantity(r, unit=unit) if unit is not None else r) for r, unit in zip(result_list, unit_list)]
 
 

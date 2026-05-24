@@ -313,7 +313,7 @@ class TestValidateUnits:
 
     def test_physical_type_annotation(self):
         @validate_units
-        def f(x: u.Quantity["length"]):
+        def f(x: u.Quantity["length"]):  # type: ignore[name-defined]
             return x
 
         result = f(1.0 * u.meter)
@@ -332,7 +332,7 @@ class TestValidateUnits:
 
     def test_none_value_skipped(self):
         @validate_units
-        def f(x: u.Quantity[u.meter] = None):
+        def f(x: u.Quantity[u.meter] = None):  # type: ignore[assignment]
             return x
 
         result = f(None)
@@ -381,8 +381,8 @@ class TestIntegration:
         @validate_units
         def kinetic_energy(
             m: u.Quantity[u.kilogram],
-            v: u.Quantity["speed"],
-        ) -> u.Quantity["energy"]:
+            v: u.Quantity["speed"],  # type: ignore[name-defined]
+        ) -> u.Quantity["energy"]:  # type: ignore[name-defined]
             return 0.5 * m * v ** 2
 
         mass = 10.0 * u.kilogram
@@ -394,7 +394,7 @@ class TestIntegration:
     def test_isinstance_and_validate_together(self):
         """isinstance check + validate_units on same function."""
         @validate_units
-        def f(x: u.Quantity["length"]):
+        def f(x: u.Quantity["length"]):  # type: ignore[name-defined]
             return x
 
         q_length = 5.0 * u.meter

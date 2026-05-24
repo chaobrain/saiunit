@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import (Union, Optional, Sequence)
 
-from saiunit._jax_compat import jax, jnp
+from saiunit._jax_compat import jax, jnp, ArrayLike
 
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
@@ -48,7 +48,7 @@ __all__ = [
 
 @set_module_as('saiunit.math')
 def get_promote_dtypes(
-    *args: Union[Quantity, jax.typing.ArrayLike],
+    *args: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
     """
@@ -74,7 +74,7 @@ def get_promote_dtypes(
         dtype('float32')
     """
     args = maybe_custom_array_tree(args)
-    return jnp.promote_types(*jax.tree.leaves(args), **kwargs)
+    return jnp.promote_types(*jax.tree.leaves(args), **kwargs)  # type: ignore[return-value]
 
 
 def _fun_remove_unit_unary(func, x, *args, **kwargs):
@@ -92,7 +92,7 @@ def _fun_remove_unit_unary(func, x, *args, **kwargs):
 
 @set_module_as('saiunit.math')
 def iscomplexobj(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     **kwargs,
 ) -> bool:
     """
@@ -127,7 +127,7 @@ def iscomplexobj(
 @set_module_as('saiunit.math')
 def heaviside(
     x1: Union[Quantity, jax.Array],
-    x2: Union[Quantity, jax.typing.ArrayLike],
+    x2: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
@@ -162,7 +162,7 @@ def heaviside(
     """
     x1 = maybe_custom_array(x1)
     x2 = maybe_custom_array(x2)
-    x1 = x1.mantissa if isinstance(x1, Quantity) else x1
+    x1 = x1.mantissa if isinstance(x1, Quantity) else x1  # type: ignore[assignment]
     if isinstance(x2, Quantity):
         if not x2.is_unitless:
             raise TypeError(
@@ -174,7 +174,7 @@ def heaviside(
 
 
 @set_module_as('saiunit.math')
-def signbit(x: Union[jax.typing.ArrayLike, Quantity], **kwargs) -> jax.Array:
+def signbit(x: Union[ArrayLike, Quantity], **kwargs) -> jax.Array:
     """
     Return element-wise True where the sign bit is set (less than zero).
 
@@ -206,7 +206,7 @@ def signbit(x: Union[jax.typing.ArrayLike, Quantity], **kwargs) -> jax.Array:
 
 
 @set_module_as('saiunit.math')
-def sign(x: Union[jax.typing.ArrayLike, Quantity], **kwargs) -> jax.Array:
+def sign(x: Union[ArrayLike, Quantity], **kwargs) -> jax.Array:
     """
     Return the sign of each element in the input array.
 
@@ -240,8 +240,8 @@ def sign(x: Union[jax.typing.ArrayLike, Quantity], **kwargs) -> jax.Array:
 
 @set_module_as('saiunit.math')
 def bincount(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    weights: Optional[jax.typing.ArrayLike] = None,
+    x: Union[ArrayLike, Quantity],
+    weights: Optional[ArrayLike] = None,
     minlength: int = 0,
     *,
     length: Optional[int] = None,
@@ -288,8 +288,8 @@ def bincount(
 
 @set_module_as('saiunit.math')
 def digitize(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    bins: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    bins: Union[ArrayLike, Quantity],
     right: bool = False,
     **kwargs,
 ) -> jax.Array:
@@ -359,7 +359,7 @@ def digitize(
                 f'Either pass a Quantity for x with matching units, or strip the unit from bins.'
             )
         bins = bins.mantissa
-    return jnp.digitize(x, bins, right=right, **kwargs)
+    return jnp.digitize(x, bins, right=right, **kwargs)  # type: ignore[arg-type]
 
 
 def _name_of(func) -> str:
@@ -385,7 +385,7 @@ def _fun_logic_unary(func, x, *args, **kwargs):
 
 @set_module_as('saiunit.math')
 def all(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     axis: Optional[int] = None,
     keepdims: bool = False,
     where: Optional[jax.Array] = None,
@@ -432,7 +432,7 @@ def all(
 
 @set_module_as('saiunit.math')
 def any(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     axis: Optional[int] = None,
     keepdims: bool = False,
     where: Optional[jax.Array] = None,
@@ -477,7 +477,7 @@ def any(
 
 @set_module_as('saiunit.math')
 def logical_not(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> Union[bool, jax.Array]:
     """
@@ -553,8 +553,8 @@ def _fun_logic_binary(func, x, y, *args, **kwargs):
 
 @set_module_as('saiunit.math')
 def equal(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[bool, jax.Array]:
@@ -595,8 +595,8 @@ def equal(
 
 @set_module_as('saiunit.math')
 def not_equal(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[bool, jax.Array]:
@@ -632,8 +632,8 @@ def not_equal(
 
 @set_module_as('saiunit.math')
 def greater(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[bool, jax.Array]:
@@ -673,8 +673,8 @@ def greater(
 
 @set_module_as('saiunit.math')
 def greater_equal(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[
@@ -711,8 +711,8 @@ def greater_equal(
 
 @set_module_as('saiunit.math')
 def less(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[bool, jax.Array]:
@@ -748,8 +748,8 @@ def less(
 
 @set_module_as('saiunit.math')
 def less_equal(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[
@@ -786,8 +786,8 @@ def less_equal(
 
 @set_module_as('saiunit.math')
 def array_equal(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[
@@ -826,10 +826,10 @@ def array_equal(
 
 @set_module_as('saiunit.math')
 def isclose(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
-    rtol: float | Quantity = None,
-    atol: float | Quantity = None,
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
+    rtol: float | Quantity | None = None,
+    atol: float | Quantity | None = None,
     equal_nan: bool = False,
     **kwargs,
 ) -> Union[bool, jax.Array]:
@@ -896,17 +896,17 @@ def isclose(
         rtol = 1e-5 * unit
     if atol is None:
         atol = 1e-8 * unit
-    atol = Quantity(atol).in_unit(unit).mantissa
-    rtol = Quantity(rtol).in_unit(unit).mantissa
+    atol = Quantity(atol).in_unit(unit).mantissa  # type: ignore[assignment]
+    rtol = Quantity(rtol).in_unit(unit).mantissa  # type: ignore[assignment]
     return _fun_logic_binary('isclose', x, y, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def allclose(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
-    rtol: float | Quantity = None,
-    atol: float | Quantity = None,
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
+    rtol: float | Quantity | None = None,
+    atol: float | Quantity | None = None,
     equal_nan: bool = False,
     **kwargs,
 ) -> Union[bool, jax.Array]:
@@ -966,7 +966,7 @@ def allclose(
                 f'Either pass a Quantity for y with matching units, or strip the unit from x.'
             )
         x_val = x.mantissa
-        y_val = y
+        y_val = y  # type: ignore[assignment]
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(
@@ -983,15 +983,15 @@ def allclose(
         rtol = 1e-5 * unit
     if atol is None:
         atol = 1e-8 * unit
-    rtol = Quantity(rtol).in_unit(unit).mantissa
-    atol = Quantity(atol).in_unit(unit).mantissa
-    return jnp.allclose(x_val, y_val, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)
+    rtol = Quantity(rtol).in_unit(unit).mantissa  # type: ignore[assignment]
+    atol = Quantity(atol).in_unit(unit).mantissa  # type: ignore[assignment]
+    return jnp.allclose(x_val, y_val, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)  # type: ignore[arg-type]
 
 
 @set_module_as('saiunit.math')
 def logical_and(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[bool, jax.Array]:
@@ -1028,8 +1028,8 @@ def logical_and(
 
 @set_module_as('saiunit.math')
 def logical_or(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[bool, jax.Array]:
@@ -1066,8 +1066,8 @@ def logical_or(
 
 @set_module_as('saiunit.math')
 def logical_xor(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
 ) -> Union[bool, jax.Array]:
@@ -1109,7 +1109,7 @@ def logical_xor(
 
 @set_module_as('saiunit.math')
 def argsort(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     axis: Optional[int] = -1,
     *,
     kind: None = None,
@@ -1167,7 +1167,7 @@ def argsort(
 
 @set_module_as('saiunit.math')
 def argmax(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     axis: Optional[int] = None,
     **kwargs,
 ) -> jax.Array:
@@ -1206,7 +1206,7 @@ def argmax(
 
 @set_module_as('saiunit.math')
 def argmin(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     axis: Optional[int] = None,
     keepdims: Optional[bool] = None,
     **kwargs,
@@ -1245,8 +1245,8 @@ def argmin(
 
 @set_module_as('saiunit.math')
 def nanargmax(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    axis: int = None,
+    a: Union[ArrayLike, Quantity],
+    axis: int | None = None,
     keepdims: bool = False,
     **kwargs,
 ) -> jax.Array:
@@ -1287,8 +1287,8 @@ def nanargmax(
 
 @set_module_as('saiunit.math')
 def nanargmin(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    axis: int = None,
+    a: Union[ArrayLike, Quantity],
+    axis: int | None = None,
     keepdims: bool = False,
     **kwargs,
 ) -> jax.Array:
@@ -1329,10 +1329,10 @@ def nanargmin(
 
 @set_module_as('saiunit.math')
 def argwhere(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     *,
     size: Optional[int] = None,
-    fill_value: Optional[jax.typing.ArrayLike] = None,
+    fill_value: Optional[ArrayLike] = None,
     **kwargs,
 ) -> jax.Array:
     """
@@ -1370,16 +1370,16 @@ def argwhere(
     if size is not None:
         extra['size'] = size
     if fill_value is not None:
-        extra['fill_value'] = fill_value
+        extra['fill_value'] = fill_value  # type: ignore[assignment]
     return _fun_remove_unit_unary('argwhere', a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def nonzero(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     *,
     size: Optional[int] = None,
-    fill_value: Optional[jax.typing.ArrayLike] = None,
+    fill_value: Optional[ArrayLike] = None,
     **kwargs,
 ) -> Sequence[jax.Array]:
     """
@@ -1416,16 +1416,16 @@ def nonzero(
     if size is not None:
         extra['size'] = size
     if fill_value is not None:
-        extra['fill_value'] = fill_value
+        extra['fill_value'] = fill_value  # type: ignore[assignment]
     return _fun_remove_unit_unary('nonzero', a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def flatnonzero(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     *,
     size: Optional[int] = None,
-    fill_value: Optional[jax.typing.ArrayLike] = None,
+    fill_value: Optional[ArrayLike] = None,
     **kwargs,
 ) -> jax.Array:
     """
@@ -1464,13 +1464,13 @@ def flatnonzero(
     if size is not None:
         extra['size'] = size
     if fill_value is not None:
-        extra['fill_value'] = Quantity(fill_value).in_unit(a_unit).mantissa
+        extra['fill_value'] = Quantity(fill_value).in_unit(a_unit).mantissa  # type: ignore[assignment]
     return _fun_remove_unit_unary('flatnonzero', a, **extra, **kwargs)
 
 
 @set_module_as('saiunit.math')
 def count_nonzero(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     axis: Optional[int] = None,
     keepdims: Optional[bool] = None,
     **kwargs,
@@ -1508,8 +1508,8 @@ def count_nonzero(
 
 @set_module_as('saiunit.math')
 def searchsorted(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    v: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
+    v: Union[ArrayLike, Quantity],
     side: str = 'left',
     sorter: Optional[jax.Array] = None,
     *,
@@ -1555,13 +1555,13 @@ def searchsorted(
     a_unit = get_unit(a)
     v = Quantity(v).in_unit(a_unit).mantissa
     a = Quantity(a).mantissa
-    r = jnp.searchsorted(a, v, side=side, sorter=sorter, method=method, **kwargs)
+    r = jnp.searchsorted(a, v, side=side, sorter=sorter, method=method, **kwargs)  # type: ignore[arg-type]
     return r
 
 
 @set_module_as('saiunit.math')
 def diag_indices_from(
-    arr: Union[jax.typing.ArrayLike, Quantity],
+    arr: Union[ArrayLike, Quantity],
     **kwargs,
 ) -> tuple[jax.Array, ...]:
     """

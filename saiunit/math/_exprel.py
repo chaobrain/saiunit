@@ -38,10 +38,10 @@ if HAS_JAX:
 
     from saiunit._compatible_import import Primitive
 else:
-    core = None
-    ad = None
-    batching = None
-    mlir = None
+    core = None  # type: ignore[assignment]
+    ad = None  # type: ignore[assignment]
+    batching = None  # type: ignore[assignment]
+    mlir = None  # type: ignore[assignment]
     Primitive = None
 
 __all__ = ['exprel', 'set_exprel_order']

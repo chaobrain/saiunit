@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import (Union, Optional, List, Any, Tuple)
 
-from saiunit._jax_compat import jax, jnp, Array
+from saiunit._jax_compat import jax, jnp, Array, ArrayLike
 import numpy as np
 
 from saiunit._backend import get_backend, get_default_backend
@@ -397,10 +397,10 @@ def zeros(
 
 @set_module_as('saiunit.math')
 def full_like(
-    a: Union[Quantity, jax.typing.ArrayLike],
-    fill_value: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
+    fill_value: Union[Quantity, ArrayLike],
     dtype: Optional[jax.typing.DTypeLike] = None,
-    shape: Shape = None
+    shape: Shape | None = None
 ) -> Union[Quantity, jax.Array]:
     """
     Return a new quantity or array with the same shape and type as a given array, filled with ``fill_value``.
@@ -478,7 +478,7 @@ def full_like(
 
 @set_module_as('saiunit.math')
 def diag(
-    v: Union[Quantity, jax.typing.ArrayLike],
+    v: Union[Quantity, ArrayLike],
     k: int = 0,
     unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
@@ -537,7 +537,7 @@ def diag(
 
 @set_module_as('saiunit.math')
 def tril(
-    m: Union[Quantity, jax.typing.ArrayLike],
+    m: Union[Quantity, ArrayLike],
     k: int = 0,
     unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
@@ -591,7 +591,7 @@ def tril(
 
 @set_module_as('saiunit.math')
 def triu(
-    m: Union[Quantity, jax.typing.ArrayLike],
+    m: Union[Quantity, ArrayLike],
     k: int = 0,
     unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
@@ -649,9 +649,9 @@ def triu(
 
 @set_module_as('saiunit.math')
 def empty_like(
-    prototype: Union[Quantity, jax.typing.ArrayLike],
+    prototype: Union[Quantity, ArrayLike],
     dtype: Optional[jax.typing.DTypeLike] = None,
-    shape: Shape = None,
+    shape: Shape | None = None,
     unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
@@ -703,9 +703,9 @@ def empty_like(
 
 @set_module_as('saiunit.math')
 def ones_like(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     dtype: Optional[jax.typing.DTypeLike] = None,
-    shape: Shape = None,
+    shape: Shape | None = None,
     unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
@@ -757,9 +757,9 @@ def ones_like(
 
 @set_module_as('saiunit.math')
 def zeros_like(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     dtype: Optional[jax.typing.DTypeLike] = None,
-    shape: Shape = None,
+    shape: Shape | None = None,
     unit: Unit = UNITLESS
 ) -> Union[Quantity, jax.Array]:
     """
@@ -884,7 +884,7 @@ def asarray(
         unit = leaf_unit
 
     # reconstruct mantissa
-    a = treedef.unflatten([leaf.mantissa for leaf in leaves])
+    a = treedef.unflatten([leaf.mantissa for leaf in leaves])  # type: ignore[attr-defined]
     a = _default_xp().asarray(a, dtype=dtype, order=order)
 
     # returns
@@ -898,9 +898,9 @@ array = asarray
 
 @set_module_as('saiunit.math')
 def arange(
-    start: Union[Quantity, jax.typing.ArrayLike] = None,
-    stop: Optional[Union[Quantity, jax.typing.ArrayLike]] = None,
-    step: Optional[Union[Quantity, jax.typing.ArrayLike]] = None,
+    start: Optional[Union[Quantity, ArrayLike]] = None,
+    stop: Optional[Union[Quantity, ArrayLike]] = None,
+    step: Optional[Union[Quantity, ArrayLike]] = None,
     dtype: Optional[jax.typing.DTypeLike] = None
 ) -> Union[Quantity, jax.Array]:
     """
@@ -975,8 +975,8 @@ def arange(
 
 @set_module_as('saiunit.math')
 def linspace(
-    start: Union[Quantity, jax.typing.ArrayLike],
-    stop: Union[Quantity, jax.typing.ArrayLike],
+    start: Union[Quantity, ArrayLike],
+    stop: Union[Quantity, ArrayLike],
     num: int = 50,
     endpoint: Optional[bool] = True,
     retstep: Optional[bool] = False,
@@ -1047,8 +1047,8 @@ def linspace(
 
 @set_module_as('saiunit.math')
 def logspace(
-    start: jax.typing.ArrayLike,
-    stop: jax.typing.ArrayLike,
+    start: ArrayLike,
+    stop: ArrayLike,
     num: Optional[int] = 50,
     endpoint: Optional[bool] = True,
     base: Optional[float] = 10.0,
@@ -1117,8 +1117,8 @@ def logspace(
 
 @set_module_as('saiunit.math')
 def fill_diagonal(
-    a: Union[Quantity, jax.typing.ArrayLike],
-    val: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
+    val: Union[Quantity, ArrayLike],
     wrap: Optional[bool] = False,
     inplace: Optional[bool] = False
 ) -> Union[Quantity, jax.Array]:
@@ -1176,7 +1176,7 @@ def fill_diagonal(
 
 @set_module_as('saiunit.math')
 def meshgrid(
-    *xi: Union[Quantity, jax.typing.ArrayLike],
+    *xi: Union[Quantity, ArrayLike],
     copy: Optional[bool] = True,
     sparse: Optional[bool] = False,
     indexing: Optional[str] = 'xy'
@@ -1244,7 +1244,7 @@ def meshgrid(
 
 @set_module_as('saiunit.math')
 def vander(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     N: Optional[bool] = None,
     increasing: Optional[bool] = False,
     unit: Unit = UNITLESS
@@ -1316,7 +1316,7 @@ def tril_indices(n, k=0, m=None):
 
 @set_module_as('saiunit.math')
 def tril_indices_from(
-    arr: Union[Quantity, jax.typing.ArrayLike],
+    arr: Union[Quantity, ArrayLike],
     k: Optional[int] = 0
 ) -> Tuple[jax.Array, jax.Array]:
     """
@@ -1356,7 +1356,7 @@ def triu_indices(n, k=0, m=None):
 
 @set_module_as('saiunit.math')
 def triu_indices_from(
-    arr: Union[Quantity, jax.typing.ArrayLike],
+    arr: Union[Quantity, ArrayLike],
     k: Optional[int] = 0
 ) -> Tuple[jax.Array, jax.Array]:
     """

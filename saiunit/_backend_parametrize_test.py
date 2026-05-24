@@ -49,7 +49,7 @@ def test_math_function_default_backend(backend):
         import jax
         assert isinstance(r, jax.Array)
     elif backend == "cupy":
-        import cupy
+        import cupy  # type: ignore[import-not-found]
         assert isinstance(r, cupy.ndarray)
     elif backend == "torch":
         import torch

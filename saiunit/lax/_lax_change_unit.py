@@ -24,6 +24,7 @@ from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit.math._fun_change_unit import _fun_change_unit_unary, _fun_change_unit_binary
+from saiunit._jax_compat import ArrayLike
 
 __all__ = [
     # math funcs change unit (unary)
@@ -53,7 +54,7 @@ def unit_change(
 # math funcs change unit (unary)
 @unit_change(lambda u: u ** -0.5)
 def rsqrt(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise reciprocal square root: :math:`1 \over \sqrt{x}`.
@@ -89,8 +90,8 @@ def rsqrt(
 # math funcs change unit (binary)
 @unit_change(lambda x, y: x * y)
 def conv(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     window_strides: Sequence[int],
     padding: str,
     precision: lax.PrecisionLike = None,
@@ -128,8 +129,8 @@ def conv(
 
 @unit_change(lambda x, y: x * y)
 def conv_transpose(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     strides: Sequence[int],
     padding: str | Sequence[tuple[int, int]],
     rhs_dilation: Sequence[int] | None = None,
@@ -182,8 +183,8 @@ def conv_transpose(
 
 @unit_change(lambda x, y: x / y)
 def div(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise division: :math:`x \over y`.
@@ -223,8 +224,8 @@ def div(
 
 @unit_change(lambda x, y: x * y)
 def dot_general(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     dimension_numbers: jax.lax.DotDimensionNumbers,
     precision: jax.lax.PrecisionLike = None,
     preferred_element_type: jax.typing.DTypeLike | None = None,
@@ -290,8 +291,8 @@ def dot_general(
 
 @set_module_as('saiunit.lax')
 def pow(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise power: :math:`x^y`.
@@ -336,17 +337,17 @@ def pow(
         return maybe_decimal(Quantity(jax.lax.pow(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
         if not y.is_unitless:
-            raise TypeError(f'{jax.lax.power.__name__} only supports scalar exponent')
+            raise TypeError(f'{jax.lax.power.__name__} only supports scalar exponent')  # type: ignore[attr-defined]
         y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.pow(x, y, **kwargs), unit=x ** y))
+        return maybe_decimal(Quantity(jax.lax.pow(x, y, **kwargs), unit=x ** y))  # type: ignore[arg-type]
     else:
         return jax.lax.pow(x, y, **kwargs)
 
 
 @set_module_as('saiunit.lax')
 def integer_pow(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> Union[Quantity, jax.Array]:
     r"""Elementwise integer power: :math:`x^y`, where :math:`y` is a fixed integer.
@@ -388,22 +389,22 @@ def integer_pow(
             if not y.is_unitless:
                 raise TypeError(f'{jax.lax.integer_pow.__name__} only supports scalar exponent')
             y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.integer_pow(x.mantissa, y, **kwargs), unit=x.unit ** y))
+        return maybe_decimal(Quantity(jax.lax.integer_pow(x.mantissa, y, **kwargs), unit=x.unit ** y))  # type: ignore[arg-type]
     elif isinstance(y, Quantity):
         if not y.is_unitless:
-            raise TypeError(f'{jax.lax.integer_power.__name__} only supports scalar exponent')
+            raise TypeError(f'{jax.lax.integer_power.__name__} only supports scalar exponent')  # type: ignore[attr-defined]
         y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.integer_pow(x, y, **kwargs), unit=x ** y))
+        return maybe_decimal(Quantity(jax.lax.integer_pow(x, y, **kwargs), unit=x ** y))  # type: ignore[arg-type]
     else:
-        return jax.lax.integer_pow(x, y, **kwargs)
+        return jax.lax.integer_pow(x, y, **kwargs)  # type: ignore[arg-type]
 
 
 @unit_change(lambda x, y: x * y)
 def mul(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     r"""Elementwise multiplication: :math:`x \times y`.
 
     Parameters
@@ -438,10 +439,10 @@ def mul(
 
 @set_module_as('saiunit.lax')
 def rem(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     r"""Elementwise remainder: :math:`x \bmod y`.
 
     The sign of the result is taken from the dividend,
@@ -457,7 +458,7 @@ def rem(
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         return maybe_decimal(Quantity(lax.rem(x.mantissa, y.mantissa, **kwargs), unit=x.unit))
     elif isinstance(x, Quantity):
-        return maybe_decimal(Quantity(lax.rem(x.mantissa, y, **kwargs), unit=x.unit))
+        return maybe_decimal(Quantity(lax.rem(x.mantissa, y, **kwargs), unit=x.unit))  # type: ignore[arg-type]
     elif isinstance(y, Quantity):
         return maybe_decimal(Quantity(lax.rem(x, y.mantissa, **kwargs), unit=UNITLESS))
     else:
@@ -466,11 +467,11 @@ def rem(
 
 @unit_change(lambda x, y: x * y)
 def batch_matmul(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     precision: jax.lax.PrecisionLike = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Batch matrix multiplication.
 
     Parameters

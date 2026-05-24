@@ -17,11 +17,15 @@ from __future__ import annotations
 
 import math
 import numbers
-from typing import Sequence, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Union
 
 import numpy as np
 
 from ._jax_compat import Tracer as _Tracer
+
+if TYPE_CHECKING:
+    import jax
+    from ._base_quantity import Quantity
 
 __all__ = [
     "SparseMatrix"
@@ -87,7 +91,7 @@ class SparseMatrix:
     nse: property
     dtype: property
 
-    __hash__ = None
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(
         self,
@@ -181,7 +185,7 @@ class SparseMatrix:
         """
         raise NotImplementedError(f"{self.__class__}.assign_data")
 
-    def sum(self, axis: Union[int, Sequence[int]] = None):
+    def sum(self, axis: Optional[Union[int, Sequence[int]]] = None):
         """
         Sum of the elements of the sparse matrix.
 

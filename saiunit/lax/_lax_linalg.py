@@ -25,6 +25,7 @@ from saiunit._base_getters import fail_for_unit_mismatch, maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from saiunit.math._fun_change_unit import _fun_change_unit_unary
+from saiunit._jax_compat import ArrayLike
 
 __all__ = [
     # linear algebra unary
@@ -43,9 +44,9 @@ __all__ = [
 # linear algebra
 @unit_change(lambda x: x ** 0.5)
 def cholesky(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     symmetrize_input: bool = True,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     r"""Cholesky decomposition.
 
     Compute the Cholesky decomposition :math:`A = L \cdot L^H` of square
@@ -93,7 +94,7 @@ def cholesky(
 
 @set_module_as('saiunit.lax')
 def eig(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     compute_left_eigenvectors: bool = True,
     compute_right_eigenvectors: bool = True
 ) -> tuple[Array | Quantity, Array, Array] | list[Array] | tuple[Array | Quantity, Array] | tuple[Array | Quantity]:
@@ -168,7 +169,7 @@ def eig(
                                   compute_right_eigenvectors=compute_right_eigenvectors)
     else:
         if isinstance(x, Quantity):
-            w = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
+            w = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,  # type: ignore[assignment]
                                compute_right_eigenvectors=compute_right_eigenvectors)
             return (maybe_decimal(Quantity(w, unit=x.unit)),)
         else:
@@ -178,7 +179,7 @@ def eig(
 
 @set_module_as('saiunit.lax')
 def eigh(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     lower: bool = True,
     symmetrize_input: bool = True,
     sort_eigenvalues: bool = True,
@@ -230,17 +231,17 @@ def eigh(
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
-        v, w = lax.linalg.eigh(x.mantissa, lower=lower, symmetrize_input=symmetrize_input,
+        v, w = lax.linalg.eigh(x.mantissa, lower=lower, symmetrize_input=symmetrize_input,  # type: ignore[arg-type]
                                sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index)
         return v, maybe_decimal(Quantity(w, unit=x.unit))
     else:
-        return lax.linalg.eigh(x, lower=lower, symmetrize_input=symmetrize_input,
+        return lax.linalg.eigh(x, lower=lower, symmetrize_input=symmetrize_input,  # type: ignore[arg-type]
                                sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index)
 
 
 @set_module_as('saiunit.lax')
 def hessenberg(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
 ) -> tuple[Quantity | jax.Array, jax.Array]:
     """Reduce a square matrix to upper Hessenberg form.
 
@@ -288,7 +289,7 @@ def hessenberg(
 
 @set_module_as('saiunit.lax')
 def lu(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
 ) -> tuple[Quantity | jax.Array, jax.Array, jax.Array]:
     r"""LU decomposition with partial pivoting.
 
@@ -336,8 +337,8 @@ def lu(
 
 @set_module_as('saiunit.lax')
 def householder_product(
-    a: Union[Quantity, jax.typing.ArrayLike],
-    taus: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
+    taus: Union[Quantity, ArrayLike],
 ) -> jax.Array:
     """Product of elementary Householder reflectors.
 
@@ -383,7 +384,7 @@ def householder_product(
     if isinstance(a, Quantity) and isinstance(taus, Quantity):
         return lax.linalg.householder_product(a.mantissa, taus.mantissa)
     elif isinstance(a, Quantity):
-        return lax.linalg.householder_product(a.mantissa, taus)
+        return lax.linalg.householder_product(a.mantissa, taus)  # type: ignore[arg-type]
     elif isinstance(taus, Quantity):
         return lax.linalg.householder_product(a, taus.mantissa)
     else:
@@ -392,7 +393,7 @@ def householder_product(
 
 @set_module_as('saiunit.lax')
 def qdwh(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
 ) -> tuple[jax.Array, Quantity | jax.Array, int, bool]:
     r"""Polar decomposition via QR-based dynamically weighted Halley iteration.
 
@@ -439,7 +440,7 @@ def qdwh(
 
 @set_module_as('saiunit.lax')
 def qr(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
 ) -> tuple[jax.Array, Quantity | jax.Array]:
     r"""QR decomposition.
 
@@ -481,7 +482,7 @@ def qr(
 
 @set_module_as('saiunit.lax')
 def schur(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     compute_schur_vectors: bool = True,
     sort_eig_vals: bool = False,
     select_callable: Callable[..., Any] | None = None
@@ -535,13 +536,13 @@ def schur(
 
 @set_module_as('saiunit.lax')
 def svd(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     *,
     full_matrices: bool = True,
     compute_uv: bool = True,
     subset_by_index: tuple[int, int] | None = None,
     algorithm: jax.lax.linalg.SvdAlgorithm | None = None,
-) -> Union[Quantity, jax.typing.ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
+) -> Union[Quantity, ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
     """Singular value decomposition.
 
     Compute the SVD of a matrix.  When ``compute_uv`` is ``True``, return
@@ -603,8 +604,8 @@ def svd(
 
 @set_module_as('saiunit.lax')
 def triangular_solve(
-    a: Union[Quantity, jax.typing.ArrayLike],
-    b: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
+    b: Union[Quantity, ArrayLike],
     left_side: bool = False, lower: bool = False,
     transpose_a: bool = False, conjugate_a: bool = False,
     unit_diagonal: bool = False,
@@ -662,7 +663,7 @@ def triangular_solve(
                                                                   conjugate_a=conjugate_a,
                                                                   unit_diagonal=unit_diagonal), unit=b.unit))
     elif isinstance(a, Quantity):
-        return lax.linalg.triangular_solve(a.mantissa, b, left_side=left_side,
+        return lax.linalg.triangular_solve(a.mantissa, b, left_side=left_side,  # type: ignore[arg-type]
                                            lower=lower, transpose_a=transpose_a, conjugate_a=conjugate_a,
                                            unit_diagonal=unit_diagonal)
     elif isinstance(b, Quantity):
@@ -678,7 +679,7 @@ def triangular_solve(
 
 @set_module_as('saiunit.lax')
 def tridiagonal(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     lower: bool = True,
 ) -> tuple[Quantity | jax.Array, Quantity | jax.Array, Quantity | jax.Array, jax.Array]:
     """Reduce a symmetric/Hermitian matrix to tridiagonal form.
@@ -732,10 +733,10 @@ def tridiagonal(
 
 @set_module_as('saiunit.lax')
 def tridiagonal_solve(
-    dl: Union[Quantity, jax.typing.ArrayLike],
-    d: Union[Quantity, jax.typing.ArrayLike],
-    du: Union[Quantity, jax.typing.ArrayLike],
-    b: Union[Quantity, jax.typing.ArrayLike],
+    dl: Union[Quantity, ArrayLike],
+    d: Union[Quantity, ArrayLike],
+    du: Union[Quantity, ArrayLike],
+    b: Union[Quantity, ArrayLike],
 ) -> Quantity | jax.Array:
     r"""Solve a tridiagonal linear system.
 
@@ -794,11 +795,11 @@ def tridiagonal_solve(
     if isinstance(b, Quantity):
         try:
             return maybe_decimal(
-                Quantity(lax.linalg.tridiagonal_solve(dl.mantissa, d.mantissa, du.mantissa, b.mantissa), unit=b.unit))
+                Quantity(lax.linalg.tridiagonal_solve(dl.mantissa, d.mantissa, du.mantissa, b.mantissa), unit=b.unit))  # type: ignore[arg-type,union-attr]
         except:
-            return Quantity(lax.linalg.tridiagonal_solve(dl, d, du, b.mantissa), unit=b.unit)
+            return Quantity(lax.linalg.tridiagonal_solve(dl, d, du, b.mantissa), unit=b.unit)  # type: ignore[arg-type]
     else:
         try:
-            return lax.linalg.tridiagonal_solve(dl.mantissa, d.mantissa, du.mantissa, b)
+            return lax.linalg.tridiagonal_solve(dl.mantissa, d.mantissa, du.mantissa, b)  # type: ignore[arg-type,union-attr]
         except:
-            return lax.linalg.tridiagonal_solve(dl, d, du, b)
+            return lax.linalg.tridiagonal_solve(dl, d, du, b)  # type: ignore[arg-type]

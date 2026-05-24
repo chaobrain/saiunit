@@ -18,5 +18,5 @@ from saiunit.linalg import *
 from saiunit.linalg import __all__ as __all__
 
 if __name__ == '__main__':
-    eigh
+    eigh  # type: ignore[name-defined] # noqa: F821
     __all__
