@@ -12,6 +12,7 @@ exclude = [
     "build*",
     "dist*",
     "dev*",
+    "brainunit*",
     "saiunit.egg-info*",
     "saiunit/__pycache__*",
     "saiunit/__init__.py"
