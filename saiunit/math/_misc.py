@@ -121,7 +121,7 @@ def _removechars(s, chars):
 
 # constants
 # ---------
-e = np.e
+e = np.e  # type: ignore[misc]
 pi = np.pi
 inf = np.inf
 nan = np.nan
