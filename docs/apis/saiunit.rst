@@ -146,13 +146,3 @@ These customized arrays can seamlessly interact with the unit-aware mathematical
    :template: classtemplate.rst
 
     CustomArray
-
-
-Equinox Compatibility
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :nosignatures:
-
-    compatible_with_equinox
