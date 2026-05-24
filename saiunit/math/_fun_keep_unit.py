@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import functools
-from typing import (Union, Sequence, Tuple, Optional)
+from typing import (Any, Union, Sequence, Tuple, Optional)
 
 from saiunit._jax_compat import jax, jnp, tree
 from saiunit._typing import Array, ArrayLike, DTypeLike
@@ -3143,6 +3143,9 @@ def nan_to_num(
         return _resolve_op('nan_to_num', xp)(arr, nan=nan_v, posinf=posinf_v, neginf=neginf_v, **kwargs)  # type: ignore[arg-type]
 
     x_unit = get_unit(x)
+    nan_v: Any
+    posinf_v: Any
+    neginf_v: Any
     if isinstance(x, Quantity):
         nan_v = 0.0 if nan is None else Quantity(nan).in_unit(x_unit).mantissa
         posinf_v = None if posinf is None else Quantity(posinf).in_unit(x_unit).mantissa
@@ -4157,7 +4160,7 @@ def histogram(
     if range is None and "dask" in getattr(backend, "__name__", "") and not hasattr(bins, "__len__"):
         x_min = float(backend.asarray(x).min().compute())  # type: ignore[union-attr]
         x_max = float(backend.asarray(x).max().compute())  # type: ignore[union-attr]
-        range = (x_min, x_max)
+        range = (x_min, x_max)  # type: ignore[assignment]
     hist, bin_edges = _resolve_op('histogram', backend)(x, bins, range=range, weights=weights, density=density, **kwargs)  # type: ignore[arg-type]
     if unit.is_unitless:
         return hist, bin_edges
