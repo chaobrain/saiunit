@@ -156,6 +156,7 @@ To create a dimensionless quantity, directly use the ``Quantity`` constructor:
    :caption: Backends
 
    backends/overview.ipynb
+   backends/feature_support_matrix.rst
    backends/jax.ipynb
    backends/numpy.ipynb
    backends/cupy.ipynb
