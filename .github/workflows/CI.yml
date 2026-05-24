@@ -255,6 +255,10 @@ jobs:
           python -m pip install -r requirements.txt --no-cache-dir
           python -m pip install pytest --no-cache-dir
           python -m pip install jax --no-cache-dir
+          # Test-only deps used by the JAX-touching test files (absl-py +
+          # brainstate). Both are dev-only — they don't pull in any other
+          # array backend.
+          python -m pip install absl-py brainstate --no-cache-dir
           pip install . --no-cache-dir
       - name: Verify only jax backend is installed
         run: |
