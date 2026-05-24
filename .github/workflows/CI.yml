@@ -182,6 +182,11 @@ jobs:
           # another array backend.
           python -m pip install absl-py brainstate --no-cache-dir
           pip install . --no-cache-dir
+          # Replace the brainstate-pulled PyPI brainunit with the local one,
+          # so it tracks the in-tree saiunit (PyPI brainunit may import names
+          # this PR has removed).
+          python make_brainunit_setup.py
+          pip install ./brainunit --force-reinstall --no-deps --no-cache-dir
       - name: Verify only jax backend is installed
         run: |
           python -c "import importlib.util as u
