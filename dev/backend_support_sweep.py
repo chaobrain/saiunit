@@ -37,6 +37,7 @@ import importlib
 import inspect
 import json
 import os
+import re
 import sys
 import traceback
 from pathlib import Path
@@ -66,6 +67,26 @@ from saiunit._jax_compat import HAS_JAX
 ALL_BACKENDS: tuple[BackendName, ...] = ("numpy", "jax", "cupy", "torch", "dask", "ndonnx")
 
 OUTPUT_PATH = Path(__file__).parent / "backend_support_data.json"
+
+_ADDR_RE = re.compile(r"0x[0-9a-fA-F]{6,}")
+
+
+def _scrub_addresses(obj: Any) -> None:
+    """In-place recursive scrub of pointer-style hex addresses inside JSON-able
+    structures. Keeps the output reproducible across runs (Python ``repr()`` of
+    function objects inside JAX error messages embeds the live ``id(fn)``)."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if isinstance(v, str):
+                obj[k] = _ADDR_RE.sub("0x...", v)
+            else:
+                _scrub_addresses(v)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            if isinstance(v, str):
+                obj[i] = _ADDR_RE.sub("0x...", v)
+            else:
+                _scrub_addresses(v)
 
 
 def _detect_installed() -> dict[str, bool]:
@@ -1430,6 +1451,10 @@ def main() -> None:
         },
         "non_dispatched_math": sorted(NON_DISPATCHED_MATH),
     }
+
+    # Scrub memory addresses (e.g. "0x76cfd68159e0" in JAX repr-style errors) so
+    # the JSON snapshot is byte-deterministic across runs.
+    _scrub_addresses(out)
 
     OUTPUT_PATH.write_text(json.dumps(out, indent=2, sort_keys=True))
     print(f"\nwrote {OUTPUT_PATH}", file=sys.stderr)

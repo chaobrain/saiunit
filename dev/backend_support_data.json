@@ -3318,7 +3318,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _einsum at 0x76cfd68159e0> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path operands[0].\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _einsum at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path operands[0].\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -3326,7 +3326,7 @@
         "status": "skip"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _einsum at 0x76cfd68159e0> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path operands[0].\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _einsum at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path operands[0].\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -4374,7 +4374,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function gradient at 0x76cfd838eb60> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path f.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function gradient at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path f.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -4382,7 +4382,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function gradient at 0x76cfd838eb60> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path f.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function gradient at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path f.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -5166,7 +5166,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function isfinite at 0x76cfd835aac0> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function isfinite at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -5174,7 +5174,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function isfinite at 0x76cfd835aac0> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function isfinite at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -5188,7 +5188,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function isinf at 0x76cfd835aa20> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function isinf at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -5196,7 +5196,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function isinf at 0x76cfd835aa20> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function isinf at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -5210,7 +5210,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function isnan at 0x76cfd835b060> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function isnan at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -5218,7 +5218,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function isnan at 0x76cfd835b060> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function isnan at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -5232,7 +5232,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function isreal at 0x76cfd838e340> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function isreal at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -5240,7 +5240,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function isreal at 0x76cfd838e340> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function isreal at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path x.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -8909,7 +8909,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_all at 0x76cfd82d0680> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_all at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -8917,7 +8917,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_all at 0x76cfd82d0680> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_all at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -8931,7 +8931,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_any at 0x76cfd82d0900> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_any at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -8939,7 +8939,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_any at 0x76cfd82d0900> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_any at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -8997,7 +8997,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function argsort at 0x76cfd837bec0> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function argsort at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9005,7 +9005,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function argsort at 0x76cfd837bec0> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function argsort at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -9239,7 +9239,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function cumsum at 0x76cfd82d3f60> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function cumsum at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9247,7 +9247,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function cumsum at 0x76cfd82d3f60> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function cumsum at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -9283,7 +9283,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function dot at 0x76cfd837a7a0> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function dot at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9547,7 +9547,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_max at 0x76cfd82d0180> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_max at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9555,7 +9555,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_max at 0x76cfd82d0180> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_max at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -9569,7 +9569,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _mean at 0x76cfd82d1ee0> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _mean at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9577,7 +9577,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _mean at 0x76cfd82d1ee0> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _mean at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -9591,7 +9591,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_min at 0x76cfd82d0400> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_min at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9599,7 +9599,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_min at 0x76cfd82d0400> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_min at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -9635,7 +9635,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function nanprod at 0x76cfd82d36a0> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function nanprod at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9643,7 +9643,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function nanprod at 0x76cfd82d36a0> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function nanprod at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -9679,7 +9679,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function outer at 0x76cfd837b7e0> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function outer at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9789,7 +9789,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function ravel at 0x76cfd838ee80> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function ravel at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -9797,7 +9797,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function ravel at 0x76cfd838ee80> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function ravel at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -10163,7 +10163,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_sum at 0x76cfd82c7c40> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_sum at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -10171,7 +10171,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _reduce_sum at 0x76cfd82c7c40> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _reduce_sum at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },
@@ -10207,7 +10207,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to <function _take at 0x76cfd82c5800> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _take at 0x...> as an abstract array. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       },
       "numpy": {
@@ -10215,7 +10215,7 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Error interpreting argument to <function _take at 0x76cfd82c5800> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
+        "detail": "TypeError: Error interpreting argument to <function _take at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path a.\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
         "status": "skip"
       }
     },

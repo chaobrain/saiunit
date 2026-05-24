@@ -115,17 +115,24 @@ def _render_table(
     return lines
 
 
+def _escape_rst_inline(s: str) -> str:
+    """Escape rst inline markup characters (``*``, ``|``) that appear inside
+    backend error messages — torch errors contain ``*`` list bullets and pipe
+    chars that docutils otherwise parses as emphasis or table separators."""
+    return s.replace("\\", "\\\\").replace("*", "\\*").replace("|", "\\|")
+
+
 def _render_footnotes(notes: dict[str, str]) -> list[str]:
     """Emit a single block of footnotes in registration order."""
     lines: list[str] = []
     # Reverse map: id -> message
     items = sorted(notes.items(), key=lambda kv: int(kv[1].split("-")[1]))
     for msg, fid in items:
-        # Sanitize message: collapse newlines, truncate.
+        # Sanitize message: collapse newlines, truncate, escape rst inline markup.
         clean = " ".join(msg.split())
         if len(clean) > 200:
             clean = clean[:197] + "..."
-        lines.append(f".. [#{fid}] {clean}")
+        lines.append(f".. [#{fid}] {_escape_rst_inline(clean)}")
     if lines:
         lines.insert(0, "")
         lines.insert(0, "Footnotes")
@@ -425,16 +432,16 @@ def main() -> None:
     for key, title in submodule_order:
         rows = math_by_submodule.get(key, [])
         seen_labels.add(key)
-        out += [f"``{key}`` — {title}",
-                "^" * (len(key) + len(title) + 6),
-                ""]
+        header = f"``{key}`` — {title}"
+        out += [header, "^" * len(header), ""]
         out += _render_table(f"saiunit.math — {title}", rows, swept, notes)
 
     # Any remaining math buckets we didn't pre-label.
     for key, rows in math_by_submodule.items():
         if key in seen_labels:
             continue
-        out += [f"``{key}``", "^" * (len(key) + 4), ""]
+        header = f"``{key}``"
+        out += [header, "^" * len(header), ""]
         out += _render_table(f"saiunit.math — {key}", rows, swept, notes)
 
     # Non-dispatched math (dtype factories, predicates).
