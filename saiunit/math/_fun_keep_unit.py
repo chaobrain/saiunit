@@ -1989,8 +1989,6 @@ def sum(
     keepdims: bool = False,
     initial: Union[jax.typing.ArrayLike, Quantity, None] = None,
     where: Union[jax.typing.ArrayLike, None] = None,
-    promote_integers: bool = True,
-    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the sum of the array elements.
@@ -2028,8 +2026,6 @@ def sum(
       Starting value for the sum. See `~numpy.ufunc.reduce` for details.
     where : array_like of bool, optional
       Elements to include in the sum. See `~numpy.ufunc.reduce` for details.
-    promote_integers : bool, optional
-      If True, and if the accumulator is an integer type, then the
 
     Returns
     -------
@@ -2046,14 +2042,14 @@ def sum(
     """
     if initial is not None:
         initial = Quantity(initial).in_unit(get_unit(x)).mantissa
-    return _fun_keep_unit_unary('sum',
-                                x,
-                                axis=axis,
-                                dtype=dtype,
-                                keepdims=keepdims,
-                                initial=initial,
-                                where=where,
-                                promote_integers=promote_integers, **kwargs)
+    # numpy.sum treats an explicit ``where=None`` / ``initial=None`` as
+    # "kwarg supplied" rather than "use default", and then complains that
+    # ``where`` requires ``initial``. JAX is more forgiving. To keep both
+    # paths happy, only forward kwargs whose value is non-None.
+    extra = {k: v for k, v in
+             (("dtype", dtype), ("initial", initial), ("where", where))
+             if v is not None}
+    return _fun_keep_unit_unary('sum', x, axis=axis, keepdims=keepdims, **extra)
 
 
 @set_module_as('saiunit.math')

@@ -345,8 +345,6 @@ def prod(
     keepdims: Optional[bool] = False,
     initial: Union[Quantity, jax.typing.ArrayLike] = None,
     where: Union[Quantity, jax.typing.ArrayLike] = None,
-    promote_integers: bool = True,
-    **kwargs,
 ) -> Union[Quantity, jax.Array]:
     """
     Return the product of array elements over a given axis.
@@ -372,8 +370,6 @@ def prod(
         The starting value for this product.
     where : array_like of bool, optional
         Elements to include in the product.
-    promote_integers : bool, optional
-        Whether to promote integer dtypes to the default platform integer.
 
     Returns
     -------
@@ -391,21 +387,18 @@ def prod(
         >>> u.math.prod(q)  # product is 6.0, unit is meter ** 2
     """
     x = maybe_custom_array(x)
+    # numpy.prod treats an explicit ``where=None`` / ``initial=None`` as
+    # "kwarg supplied" rather than "use default", and then complains that
+    # ``where`` requires ``initial``. JAX is more forgiving. To keep both
+    # paths happy, only forward kwargs whose value is non-None.
+    extra = {k: v for k, v in
+             (("dtype", dtype), ("initial", initial), ("where", where))
+             if v is not None}
     if isinstance(x, Quantity):
-        return x.prod(axis=axis,
-                      dtype=dtype,
-                      keepdims=keepdims,
-                      initial=initial,
-                      where=where,
-                      promote_integers=promote_integers)
+        return x.prod(axis=axis, keepdims=keepdims, **extra)
     else:
-        return jnp.prod(x,
-                        axis=axis,
-                        dtype=dtype,
-                        keepdims=keepdims,
-                        initial=initial,
-                        where=where,
-                        promote_integers=promote_integers, **kwargs)
+        xp = get_backend(x)
+        return xp.prod(x, axis=axis, keepdims=keepdims, **extra)
 
 
 @set_module_as('saiunit.math')

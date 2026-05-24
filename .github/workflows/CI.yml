@@ -175,3 +175,208 @@ jobs:
       - name: Test with pytest
         run: |
           pytest saiunit/ -p no:faulthandler
+
+
+  # ---------------------------------------------------------------------------
+  # Per-backend isolation jobs.
+  #
+  # Each job below installs exactly ONE array backend on top of the base
+  # `requirements.txt` (numpy + array_api_compat) and runs the full test
+  # suite with that backend set as the saiunit default via the
+  # `SAIUNIT_DEFAULT_BACKEND` env var (read in conftest.py).
+  #
+  # Goal: prove that `pip install saiunit[<backend>]` works end-to-end and
+  # that backend-specific kwargs / hidden cross-backend dependencies cannot
+  # leak through saiunit's public API. The cross-platform "all backends
+  # installed" smoke is still covered by test_linux / test_macos /
+  # test_windows above.
+  #
+  # cupy is intentionally not included: GitHub free runners have no GPU.
+  # ---------------------------------------------------------------------------
+
+  test_pure_numpy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.13" ]
+    env:
+      SAIUNIT_DEFAULT_BACKEND: numpy
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          access_token: ${{ github.token }}
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install (numpy backend only)
+        run: |
+          python -m pip cache purge
+          python -m pip install --upgrade pip setuptools --no-cache-dir
+          python -m pip install -r requirements.txt --no-cache-dir
+          python -m pip install pytest --no-cache-dir
+          pip install . --no-cache-dir
+      - name: Verify only numpy backend is installed
+        run: |
+          python -c "import importlib.util as u
+          for name in ('jax', 'torch', 'cupy', 'dask', 'ndonnx'):
+              assert u.find_spec(name) is None, f'{name} should not be installed in pure-numpy job'
+          print('OK: only numpy backend installed')"
+      - name: Test with pytest
+        run: |
+          pytest saiunit/
+
+
+  test_pure_jax:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.13" ]
+    env:
+      SAIUNIT_DEFAULT_BACKEND: jax
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          access_token: ${{ github.token }}
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install (jax backend only)
+        run: |
+          python -m pip cache purge
+          python -m pip install --upgrade pip setuptools --no-cache-dir
+          python -m pip install -r requirements.txt --no-cache-dir
+          python -m pip install pytest --no-cache-dir
+          python -m pip install jax --no-cache-dir
+          pip install . --no-cache-dir
+      - name: Verify only jax backend is installed
+        run: |
+          python -c "import importlib.util as u
+          for name in ('torch', 'cupy', 'dask', 'ndonnx'):
+              assert u.find_spec(name) is None, f'{name} should not be installed in pure-jax job'
+          assert u.find_spec('jax') is not None, 'jax must be installed'
+          print('OK: only jax backend installed')"
+      - name: Test with pytest
+        run: |
+          pytest saiunit/
+
+
+  test_pure_torch:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.13" ]
+    env:
+      SAIUNIT_DEFAULT_BACKEND: torch
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          access_token: ${{ github.token }}
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install (torch backend only, CPU wheel)
+        run: |
+          python -m pip cache purge
+          python -m pip install --upgrade pip setuptools --no-cache-dir
+          python -m pip install -r requirements.txt --no-cache-dir
+          python -m pip install pytest --no-cache-dir
+          pip install torch --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
+          pip install . --no-cache-dir
+      - name: Verify only torch backend is installed
+        run: |
+          python -c "import importlib.util as u
+          for name in ('jax', 'cupy', 'dask', 'ndonnx'):
+              assert u.find_spec(name) is None, f'{name} should not be installed in pure-torch job'
+          assert u.find_spec('torch') is not None, 'torch must be installed'
+          print('OK: only torch backend installed')"
+      - name: Test with pytest
+        run: |
+          pytest saiunit/
+
+
+  test_pure_dask:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.13" ]
+    env:
+      SAIUNIT_DEFAULT_BACKEND: dask
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          access_token: ${{ github.token }}
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install (dask backend only)
+        run: |
+          python -m pip cache purge
+          python -m pip install --upgrade pip setuptools --no-cache-dir
+          python -m pip install -r requirements.txt --no-cache-dir
+          python -m pip install pytest --no-cache-dir
+          pip install 'dask[array]' --no-cache-dir
+          pip install . --no-cache-dir
+      - name: Verify only dask backend is installed
+        run: |
+          python -c "import importlib.util as u
+          for name in ('jax', 'torch', 'cupy', 'ndonnx'):
+              assert u.find_spec(name) is None, f'{name} should not be installed in pure-dask job'
+          assert u.find_spec('dask.array') is not None, 'dask.array must be installed'
+          print('OK: only dask backend installed')"
+      - name: Test with pytest
+        run: |
+          pytest saiunit/
+
+
+  test_pure_ndonnx:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.13" ]
+    env:
+      SAIUNIT_DEFAULT_BACKEND: ndonnx
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          access_token: ${{ github.token }}
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install (ndonnx backend only)
+        run: |
+          python -m pip cache purge
+          python -m pip install --upgrade pip setuptools --no-cache-dir
+          python -m pip install -r requirements.txt --no-cache-dir
+          python -m pip install pytest --no-cache-dir
+          pip install ndonnx --no-cache-dir
+          pip install . --no-cache-dir
+      - name: Verify only ndonnx backend is installed
+        run: |
+          python -c "import importlib.util as u
+          for name in ('jax', 'torch', 'cupy', 'dask'):
+              assert u.find_spec(name) is None, f'{name} should not be installed in pure-ndonnx job'
+          assert u.find_spec('ndonnx') is not None, 'ndonnx must be installed'
+          print('OK: only ndonnx backend installed')"
+      - name: Test with pytest
+        run: |
+          pytest saiunit/
