@@ -19,6 +19,7 @@ from collections.abc import Sequence
 from typing import (Union, TypeVar, Any)
 
 from saiunit._jax_compat import jax, jnp
+from saiunit._backend import get_backend
 from saiunit._typing import Array, ArrayLike
 import numpy as np
 
@@ -278,8 +279,7 @@ def isreal(a: Union[Quantity, ArrayLike]) -> Array:
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isreal
-    else:
-        return jnp.isreal(a)
+    return get_backend(a).isreal(a)
 
 
 @set_module_as('saiunit.math')
@@ -340,8 +340,7 @@ def isfinite(a: Union[Quantity, ArrayLike]) -> Array:
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isfinite
-    else:
-        return jnp.isfinite(a)
+    return get_backend(a).isfinite(a)
 
 
 @set_module_as('saiunit.math')
@@ -370,8 +369,7 @@ def isinf(a: Union[Quantity, ArrayLike]) -> Array:
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isinf
-    else:
-        return jnp.isinf(a)
+    return get_backend(a).isinf(a)
 
 
 @set_module_as('saiunit.math')
@@ -400,8 +398,7 @@ def isnan(a: Union[Quantity, ArrayLike]) -> Array:
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return a.isnan
-    else:
-        return jnp.isnan(a)
+    return get_backend(a).isnan(a)
 
 
 @set_module_as('saiunit.math')
@@ -704,22 +701,24 @@ def gradient(
     if edge_order is not None:
         raise NotImplementedError("The 'edge_order' argument to jnp.gradient is not supported.")
 
+    f_mantissa = f.mantissa if isinstance(f, Quantity) else f
+    varargs_mantissa = [v.mantissa if isinstance(v, Quantity) else v for v in varargs]
+    xp = get_backend(f_mantissa, *varargs_mantissa)
+
     if len(varargs) == 0:
         if isinstance(f, Quantity) and not is_unitless(f):
-            return Quantity(jnp.gradient(f.mantissa, axis=axis), unit=f.unit)
+            return Quantity(xp.gradient(f.mantissa, axis=axis), unit=f.unit)
         else:
-            return jnp.gradient(f)  # type: ignore[arg-type]
+            return xp.gradient(f)  # type: ignore[arg-type]
     elif len(varargs) == 1:
         unit = get_unit(f) / get_unit(varargs[0])
         if isinstance(unit, Unit) and unit.is_unitless:
-            return jnp.gradient(f, varargs[0], axis=axis)  # type: ignore[arg-type]
+            return xp.gradient(f_mantissa, varargs_mantissa[0], axis=axis)  # type: ignore[arg-type]
         else:
-            return [Quantity(r, unit=unit) for r in jnp.gradient(f.mantissa, Quantity(varargs[0]).mantissa, axis=axis)]  # type: ignore[union-attr]
+            return [Quantity(r, unit=unit) for r in xp.gradient(f_mantissa, varargs_mantissa[0], axis=axis)]
     else:
         unit_list = [get_unit(f) / get_unit(v) for v in varargs]
-        f = f.mantissa if isinstance(f, Quantity) else f
-        varargs = [v.mantissa if isinstance(v, Quantity) else v for v in varargs]  # type: ignore[assignment]
-        result_list = jnp.gradient(f, *varargs, axis=axis)  # type: ignore[arg-type]
+        result_list = xp.gradient(f_mantissa, *varargs_mantissa, axis=axis)  # type: ignore[arg-type]
         return [(Quantity(r, unit=unit) if unit is not None else r) for r, unit in zip(result_list, unit_list)]
 
 
