@@ -19,7 +19,7 @@ from __future__ import annotations
 from ._base_quantity import Quantity
 from ._misc import maybe_custom_array
 from ._unit_common import kelvin
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import ArrayLike
 
 __all__ = [
     "celsius2kelvin",

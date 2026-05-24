@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import Union
 
-from saiunit._jax_compat import HAS_JAX, jax, jnp, Array, require_jax, ArrayLike
+from saiunit._jax_compat import HAS_JAX, jax, jnp, require_jax
+from saiunit._typing import Array, ArrayLike
 
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
@@ -52,7 +53,7 @@ def norm(
     axis: None | tuple[int, ...] | int = None,
     keepdims: bool = False,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """Compute the norm of a matrix or vector.
 
     Computes a variety of vector and matrix norms, preserving the physical
@@ -133,7 +134,7 @@ def matrix_norm(
     keepdims: bool = False,
     ord: int | str = 'fro',
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """Compute the norm of a matrix or stack of matrices.
 
     SaiUnit implementation of :func:`numpy.linalg.matrix_norm`.
@@ -180,7 +181,7 @@ def vector_norm(
     keepdims: bool = False,
     ord: int | str = 2,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """Compute the vector norm of a vector or batch of vectors.
 
     SaiUnit implementation of :func:`numpy.linalg.vector_norm`.
@@ -312,7 +313,7 @@ def svd(
     subset_by_index: tuple[int, int] | None = None,
     algorithm: jax.lax.linalg.SvdAlgorithm | None = None,
     **kwargs,
-) -> Union[Quantity, ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
+) -> Union[Quantity, ArrayLike] | tuple[Array, Quantity | Array, Array]:
     """Singular value decomposition.
 
     SaiUnit implementation of :func:`numpy.linalg.svd`.
@@ -410,7 +411,7 @@ def svd(
 def svdvals(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """Compute the singular values of a matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.svdvals`.
@@ -444,7 +445,7 @@ def svdvals(
 def eig(
     a: Union[Quantity, ArrayLike],
     **kwargs,
-) -> tuple[Union[jax.Array, Quantity], Union[jax.Array, Quantity]]:
+) -> tuple[Union[Array, Quantity], Union[Array, Quantity]]:
     """Compute the eigenvalues and eigenvectors of a square matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.eig`.
@@ -487,7 +488,7 @@ def eigh(
     UPLO: str | None = None,
     symmetrize_input: bool = True,
     **kwargs,
-) -> tuple[Union[jax.Array, Quantity], Union[jax.Array, Quantity]]:
+) -> tuple[Union[Array, Quantity], Union[Array, Quantity]]:
     """Compute eigenvalues and eigenvectors of a Hermitian matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.eigh`.
@@ -541,7 +542,7 @@ def eigh(
 def eigvals(
     a: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """Compute the eigenvalues of a general matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.eigvals`.
@@ -578,7 +579,7 @@ def eigvalsh(
     *,
     symmetrize_input: bool = True,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """Compute the eigenvalues of a Hermitian matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.eigvalsh`.

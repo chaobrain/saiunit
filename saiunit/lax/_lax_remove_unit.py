@@ -23,7 +23,7 @@ from jax import lax
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit.math._fun_remove_unit import _fun_remove_unit_unary, _fun_logic_binary
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import Array, ArrayLike
 
 __all__ = [
     # math funcs remove unit (unary)
@@ -41,7 +41,7 @@ __all__ = [
 @set_module_as('saiunit.lax')
 def population_count(
     x: Union[ArrayLike, Quantity],
-) -> jax.Array:
+) -> Array:
     r"""Elementwise popcount: count the number of set bits in each element.
 
     Parameters
@@ -52,7 +52,7 @@ def population_count(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         The number of set bits in each element. Always unitless.
 
     Examples
@@ -72,7 +72,7 @@ def population_count(
 @set_module_as('saiunit.lax')
 def clz(
     x: Union[ArrayLike, Quantity],
-) -> jax.Array:
+) -> Array:
     r"""Elementwise count of leading zeros.
 
     Parameters
@@ -83,7 +83,7 @@ def clz(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         The count of leading zeros in each element. Always unitless.
 
     Examples
@@ -105,7 +105,7 @@ def clz(
 def eq(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     r"""Elementwise equals: :math:`x = y`.
 
     Parameters
@@ -117,7 +117,7 @@ def eq(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         Boolean array. Always unitless.
 
     Examples
@@ -139,7 +139,7 @@ def eq(
 def ne(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     r"""Elementwise not-equals: :math:`x \neq y`.
 
     Parameters
@@ -151,7 +151,7 @@ def ne(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         Boolean array. Always unitless.
 
     Examples
@@ -173,7 +173,7 @@ def ne(
 def ge(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     r"""Elementwise greater-than-or-equals: :math:`x \geq y`.
 
     Parameters
@@ -185,7 +185,7 @@ def ge(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         Boolean array. Always unitless.
 
     Examples
@@ -207,7 +207,7 @@ def ge(
 def gt(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     r"""Elementwise greater-than: :math:`x > y`.
 
     Parameters
@@ -219,7 +219,7 @@ def gt(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         Boolean array. Always unitless.
 
     Examples
@@ -241,7 +241,7 @@ def gt(
 def le(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     r"""Elementwise less-than-or-equals: :math:`x \leq y`.
 
     Parameters
@@ -253,7 +253,7 @@ def le(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         Boolean array. Always unitless.
 
     Examples
@@ -275,7 +275,7 @@ def le(
 def lt(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     r"""Elementwise less-than: :math:`x < y`.
 
     Parameters
@@ -287,7 +287,7 @@ def lt(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         Boolean array. Always unitless.
 
     Examples

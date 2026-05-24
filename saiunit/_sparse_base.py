@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Optional, Sequence, Union
 import numpy as np
 
 from ._jax_compat import Tracer as _Tracer
+from ._typing import Array
 
 if TYPE_CHECKING:
     import jax
@@ -61,7 +62,7 @@ class SparseMatrix:
 
     Attributes
     ----------
-    data : jax.Array
+    data : Array
         The non-zero values in the sparse matrix.
 
     Notes
@@ -86,7 +87,7 @@ class SparseMatrix:
         True
     """
 
-    data: jax.Array
+    data: Array
     shape: tuple[int, ...]
     nse: property
     dtype: property
@@ -95,7 +96,7 @@ class SparseMatrix:
 
     def __init__(
         self,
-        args: tuple[jax.Array, ...],
+        args: tuple[Array, ...],
         *,
         shape: Sequence[int]
     ):
@@ -148,14 +149,14 @@ class SparseMatrix:
 
     def with_data(
         self,
-        data: Union[jax.Array, np.ndarray, numbers.Number, 'Quantity']
+        data: Union[Array, np.ndarray, numbers.Number, 'Quantity']
     ):
         """
         Create a new sparse matrix with the same sparsity structure but different data.
 
         Parameters
         ----------
-        data : jax.Array, numpy.ndarray, numbers.Number, or Quantity
+        data : Array, numpy.ndarray, numbers.Number, or Quantity
             The new non-zero values. Must have the same shape, dtype, and unit
             as the current ``self.data``.
 
@@ -198,7 +199,7 @@ class SparseMatrix:
 
         Returns
         -------
-        jax.Array or Quantity
+        Array or Quantity
             The sum of all elements in the sparse matrix.
 
         Raises
@@ -212,9 +213,9 @@ class SparseMatrix:
 
     def yw_to_w(
         self,
-        y_dim_arr: Union[jax.Array, np.ndarray, 'Quantity'],
-        w_dim_arr: Union[jax.Array, np.ndarray, 'Quantity']
-    ) -> Union[jax.Array, 'Quantity']:
+        y_dim_arr: Union[Array, np.ndarray, 'Quantity'],
+        w_dim_arr: Union[Array, np.ndarray, 'Quantity']
+    ) -> Union[Array, 'Quantity']:
         """
         The protocol method to convert the product of the sparse matrix and a vector to the sparse matrix data.
 

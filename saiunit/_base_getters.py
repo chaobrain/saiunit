@@ -24,11 +24,11 @@ from ._jax_compat import (
     HAS_JAX,
     jax,
     jnp,
-    ArrayLike,
     ShapeDtypeStruct as _ShapeDtypeStruct,
     ShapedArray as _ShapedArray,
     Tracer as _Tracer,
 )
+from ._typing import Array, ArrayLike, DTypeLike
 
 if TYPE_CHECKING:
     from ._base_quantity import Quantity
@@ -651,7 +651,7 @@ def display_in_unit(
 def maybe_decimal(
     val: 'Quantity | ArrayLike',
     unit: 'Unit | None' = None
-) -> 'jax.Array | Quantity | ArrayLike':
+) -> 'Array | Quantity | ArrayLike':
     """
     Convert a quantity to a plain number if it is dimensionless.
 
@@ -743,7 +743,7 @@ def unit_scale_align_to_first(*args) -> 'list[Quantity]':
 def array_with_unit(
     mantissa,
     unit: 'Unit',
-    dtype: jax.typing.DTypeLike | None = None
+    dtype: DTypeLike | None = None
 ) -> 'Quantity':
     """
     Create a new `Quantity` with the given unit.

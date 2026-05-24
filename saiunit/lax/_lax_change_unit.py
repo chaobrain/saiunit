@@ -24,7 +24,7 @@ from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit.math._fun_change_unit import _fun_change_unit_unary, _fun_change_unit_binary
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import Array, ArrayLike, DTypeLike
 
 __all__ = [
     # math funcs change unit (unary)
@@ -56,7 +56,7 @@ def unit_change(
 def rsqrt(
     x: Union[ArrayLike, Quantity],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Elementwise reciprocal square root: :math:`1 \over \sqrt{x}`.
 
     Parameters
@@ -66,7 +66,7 @@ def rsqrt(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The reciprocal square root. If ``x`` has unit ``u``, the result has
         unit ``u ** -0.5``.
 
@@ -95,9 +95,9 @@ def conv(
     window_strides: Sequence[int],
     padding: str,
     precision: lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None,
+    preferred_element_type: DTypeLike | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Convenience wrapper around ``conv_general_dilated``.
 
     Parameters
@@ -118,7 +118,7 @@ def conv(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         An array containing the convolution result.
     """
     return _fun_change_unit_binary(lax.conv,
@@ -137,9 +137,9 @@ def conv_transpose(
     dimension_numbers: jax.lax.ConvGeneralDilatedDimensionNumbers = None,
     transpose_kernel: bool = False,
     precision: lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None,
+    preferred_element_type: DTypeLike | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Convenience wrapper for calculating the N-d convolution "transpose".
 
     This function directly calculates a fractionally strided conv rather than
@@ -186,7 +186,7 @@ def div(
     x: Union[ArrayLike, Quantity],
     y: Union[ArrayLike, Quantity],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Elementwise division: :math:`x \over y`.
 
     Integer division overflow (division by zero or signed division of
@@ -201,7 +201,7 @@ def div(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The quotient. The resulting unit is ``unit(x) / unit(y)``.
 
     Examples
@@ -228,10 +228,10 @@ def dot_general(
     y: Union[ArrayLike, Quantity],
     dimension_numbers: jax.lax.DotDimensionNumbers,
     precision: jax.lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None,
+    preferred_element_type: DTypeLike | None = None,
     out_type=None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """General dot product/contraction operator.
 
     Wraps XLA's `DotGeneral
@@ -294,7 +294,7 @@ def pow(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Elementwise power: :math:`x^y`.
 
     Parameters
@@ -306,7 +306,7 @@ def pow(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The result of ``x ** y``. If ``x`` has unit ``u``, the result
         has unit ``u ** y``.
 
@@ -349,7 +349,7 @@ def integer_pow(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Elementwise integer power: :math:`x^y`, where :math:`y` is a fixed integer.
 
     Parameters
@@ -361,7 +361,7 @@ def integer_pow(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The result of ``x ** y``. If ``x`` has unit ``u``, the result
         has unit ``u ** y``.
 
@@ -416,7 +416,7 @@ def mul(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The product. The resulting unit is ``unit(x) * unit(y)``.
 
     Examples
@@ -485,7 +485,7 @@ def batch_matmul(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         The batch matrix product of shape ``[..., m, n]``.
         The resulting unit is ``unit(x) * unit(y)``.
 

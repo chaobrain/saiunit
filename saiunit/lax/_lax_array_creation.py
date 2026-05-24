@@ -22,7 +22,7 @@ import jax.numpy as jnp
 from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import Array, ArrayLike, DTypeLike
 
 Shape = Union[int, Sequence[int]]
 
@@ -42,7 +42,7 @@ def zeros_like_array(
     x: Union[Quantity, ArrayLike],
     unit: Optional[Unit] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Create a zero-filled array with the same shape and dtype as ``x``.
 
     Parameters
@@ -56,7 +56,7 @@ def zeros_like_array(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         A zero-filled array. If ``x`` is a ``Quantity`` (or ``unit`` is
         provided), the result is a ``Quantity`` with the corresponding unit.
 
@@ -93,11 +93,11 @@ def zeros_like_array(
 # array creation (misc)
 @set_module_as('saiunit.lax')
 def iota(
-    dtype: jax.typing.DTypeLike,
+    dtype: DTypeLike,
     size: int,
     unit: Optional[Unit] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Create an iota array (integer sequence) with an optional unit.
 
     Wraps XLA's ``Iota`` operator.
@@ -113,7 +113,7 @@ def iota(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         An array ``[0, 1, 2, ..., size - 1]`` of the given dtype.
 
     Examples
@@ -138,13 +138,13 @@ def iota(
 
 @set_module_as('saiunit.lax')
 def broadcasted_iota(
-    dtype: jax.typing.DTypeLike,
+    dtype: DTypeLike,
     shape: Shape,
     dimension: int,
     _sharding=None,
     unit: Optional[Unit] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """Broadcast an iota array into the given shape along one dimension.
 
     Convenience wrapper around ``iota``.
@@ -164,7 +164,7 @@ def broadcasted_iota(
 
     Returns
     -------
-    result : jax.Array or Quantity
+    result : Array or Quantity
         An array of the given shape with iota values along ``dimension``.
 
     Examples

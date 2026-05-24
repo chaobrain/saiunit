@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import Union, Sequence
 
-from saiunit._jax_compat import HAS_JAX, jax, ArrayLike
+from saiunit._jax_compat import HAS_JAX, jax
+from saiunit._typing import ArrayLike
 
 if HAS_JAX:
     from jax.numpy import fft as jnpfft

@@ -94,8 +94,16 @@ from typing import TYPE_CHECKING, Annotated, Any, Union, get_type_hints, get_ori
 
 import numpy as np
 
-from ._jax_compat import Array as _JaxArray
-from ._jax_compat import ArrayLike, ScalarOrArrayLike
+from ._typing import (
+    Array,
+    ArrayLike,
+    ScalarOrArrayLike,
+    DTypeLike,
+    Shape,
+    Axis,
+    Axes,
+    PyTree,
+)
 
 from ._base_dimension import Dimension, UnitMismatchError, DimensionMismatchError
 from ._base_dimension import get_or_create_dimension
@@ -107,9 +115,15 @@ __all__ = [
     'PhysicalType',
     'is_physical_type',
 
-    # Core type aliases
+    # Core type aliases (re-exported from saiunit._typing)
+    'Array',
     'ArrayLike',
     'ScalarOrArrayLike',
+    'DTypeLike',
+    'Shape',
+    'Axis',
+    'Axes',
+    'PyTree',
     'QuantityLike',
     'UnitLike',
     'DimensionLike',
@@ -397,7 +411,7 @@ QuantityLike = Union[
     complex,
     np.number,
     np.ndarray,
-    _JaxArray,
+    Array,
     "Quantity",
 ]
 

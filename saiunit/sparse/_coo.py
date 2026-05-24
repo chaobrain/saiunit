@@ -32,7 +32,7 @@ from saiunit._base_getters import (
     maybe_decimal,
     split_mantissa_unit,
 )
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import Array, ArrayLike, DTypeLike
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
 from saiunit._sparse_base import SparseMatrix, _same_sparsity_pattern
@@ -47,7 +47,7 @@ Dtype = Any
 Shape = tuple[int, ...]
 
 
-def _const_like(x: jax.Array, value: int) -> jax.Array:
+def _const_like(x: Array, value: int) -> Array:
     return jnp.asarray(value, dtype=x.dtype)
 
 
@@ -68,7 +68,7 @@ class COO(SparseMatrix):
     Parameters
     ----------
     args : tuple of (data, row, col)
-        ``data`` contains the non-zero values (``jax.Array`` or ``Quantity``),
+        ``data`` contains the non-zero values (``Array`` or ``Quantity``),
         ``row`` contains the row indices, and ``col`` contains the column
         indices.
     shape : tuple of int
@@ -80,11 +80,11 @@ class COO(SparseMatrix):
 
     Attributes
     ----------
-    data : jax.Array or Quantity
+    data : Array or Quantity
         Non-zero values of shape ``(nse,)``.
-    row : jax.Array
+    row : Array
         Row indices of shape ``(nse,)``.
-    col : jax.Array
+    col : Array
         Column indices of shape ``(nse,)``.
     shape : tuple of int
         Shape of the matrix ``(nrows, ncols)``.
@@ -123,9 +123,9 @@ class COO(SparseMatrix):
         Array([[1., 0., 2.],
                [0., 0., 3.]], dtype=float32)
     """
-    data: jax.Array
-    row: jax.Array
-    col: jax.Array
+    data: Array
+    row: Array
+    col: Array
     shape: tuple[int, int]
     nse = property(lambda self: self.data.size)
     dtype = property(lambda self: self.data.dtype)
@@ -141,7 +141,7 @@ class COO(SparseMatrix):
 
     def __init__(
         self,
-        args: Tuple[jax.Array | Quantity, jax.Array, jax.Array],
+        args: Tuple[Array | Quantity, Array, Array],
         *,
         shape: Shape,
         rows_sorted: bool = False,
@@ -155,10 +155,10 @@ class COO(SparseMatrix):
     @classmethod
     def fromdense(
         cls,
-        mat: jax.Array,
+        mat: Array,
         *,
         nse: int | None = None,
-        index_dtype: jax.typing.DTypeLike = np.int32
+        index_dtype: DTypeLike = np.int32
     ) -> COO:
         return coo_fromdense(mat, nse=nse, index_dtype=index_dtype)
 
@@ -188,8 +188,8 @@ class COO(SparseMatrix):
         cls,
         shape: Sequence[int],
         *,
-        dtype: jax.typing.DTypeLike | None = None,
-        index_dtype: jax.typing.DTypeLike = 'int32'
+        dtype: DTypeLike | None = None,
+        index_dtype: DTypeLike = 'int32'
     ) -> COO:
         """Create an empty COO instance. Public method is sparse.empty()."""
         shape = tuple(shape)
@@ -211,8 +211,8 @@ class COO(SparseMatrix):
         M: int,
         k: int,
         *,
-        dtype: jax.typing.DTypeLike | None = None,
-        index_dtype: jax.typing.DTypeLike = 'int32'
+        dtype: DTypeLike | None = None,
+        index_dtype: DTypeLike = 'int32'
     ) -> COO:
         if k > 0:
             diag_size = min(N, M - k)
@@ -236,13 +236,13 @@ class COO(SparseMatrix):
             cols_sorted=True
         )
 
-    def with_data(self, data: jax.Array | Quantity) -> COO:  # type: ignore[override]
+    def with_data(self, data: Array | Quantity) -> COO:  # type: ignore[override]
         """
         Create a new COO matrix with the same sparsity structure but different data.
 
         Parameters
         ----------
-        data : jax.Array or Quantity
+        data : Array or Quantity
             New non-zero values. Must have the same shape, dtype, and unit as
             the current ``self.data``.
 
@@ -279,13 +279,13 @@ class COO(SparseMatrix):
             cols_sorted=self._cols_sorted
         )
 
-    def todense(self) -> jax.Array:
+    def todense(self) -> Array:
         """
         Convert this COO matrix to a dense array.
 
         Returns
         -------
-        jax.Array or Quantity
+        Array or Quantity
             Dense 2-D array equivalent to this sparse matrix.
 
         Examples
@@ -314,7 +314,7 @@ class COO(SparseMatrix):
         )
 
     def tree_flatten(self) -> Tuple[
-        Tuple[jax.Array | Quantity,], dict[str, Any]
+        Tuple[Array | Quantity,], dict[str, Any]
     ]:
         aux = self._info._asdict()
         aux['row'] = self.row
@@ -444,16 +444,16 @@ class COO(SparseMatrix):
         else:
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
-    def __mul__(self, other: jax.Array | Quantity) -> COO:
+    def __mul__(self, other: Array | Quantity) -> COO:
         return self._binary_op(other, operator.mul)
 
-    def __rmul__(self, other: jax.Array | Quantity) -> COO:
+    def __rmul__(self, other: Array | Quantity) -> COO:
         return self._binary_rop(other, operator.mul)
 
-    def __div__(self, other: jax.Array | Quantity) -> COO:
+    def __div__(self, other: Array | Quantity) -> COO:
         return self._binary_op(other, operator.truediv)
 
-    def __rdiv__(self, other: jax.Array | Quantity) -> COO:
+    def __rdiv__(self, other: Array | Quantity) -> COO:
         return self._binary_rop(other, operator.truediv)
 
     def __truediv__(self, other) -> COO:
@@ -482,7 +482,7 @@ class COO(SparseMatrix):
 
     def __matmul__(
         self, other: ArrayLike
-    ) -> jax.Array | Quantity:
+    ) -> Array | Quantity:
         if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
@@ -505,7 +505,7 @@ class COO(SparseMatrix):
     def __rmatmul__(
         self,
         other: ArrayLike
-    ) -> jax.Array | Quantity:
+    ) -> Array | Quantity:
         if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
         other = asarray(other)
@@ -527,7 +527,7 @@ class COO(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
 
-def coo_todense(mat: COO) -> jax.Array | Quantity:
+def coo_todense(mat: COO) -> Array | Quantity:
     """
     Convert a COO-format sparse matrix to a dense matrix.
 
@@ -538,7 +538,7 @@ def coo_todense(mat: COO) -> jax.Array | Quantity:
 
     Returns
     -------
-    jax.Array or Quantity
+    Array or Quantity
         Dense 2-D array equivalent to ``mat``.
 
     Examples
@@ -558,17 +558,17 @@ def coo_todense(mat: COO) -> jax.Array | Quantity:
 
 
 def coo_fromdense(
-    mat: jax.Array | Quantity,
+    mat: Array | Quantity,
     *,
     nse: int | None = None,
-    index_dtype: jax.typing.DTypeLike = jnp.int32
+    index_dtype: DTypeLike = jnp.int32
 ) -> COO:
     """
     Create a COO-format sparse matrix from a dense matrix.
 
     Parameters
     ----------
-    mat : jax.Array or Quantity
+    mat : Array or Quantity
         Dense 2-D array to be converted to COO format.
     nse : int or None, optional
         Number of specified (non-zero) entries in ``mat``. If ``None``
@@ -607,12 +607,12 @@ def coo_fromdense(
 
 
 def _coo_todense(
-    data: jax.Array | Quantity,
-    row: jax.Array,
-    col: jax.Array,
+    data: Array | Quantity,
+    row: Array,
+    col: Array,
     *,
     spinfo: COOInfo
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """Convert CSR-format sparse matrix to a dense matrix.
 
     Args:
@@ -630,11 +630,11 @@ def _coo_todense(
 
 
 def _coo_fromdense(
-    mat: jax.Array | Quantity,
+    mat: Array | Quantity,
     *,
     nse: int,
-    index_dtype: jax.typing.DTypeLike = jnp.int32
-) -> Tuple[jax.Array | Quantity, jax.Array, jax.Array]:
+    index_dtype: DTypeLike = jnp.int32
+) -> Tuple[Array | Quantity, Array, Array]:
     """Create COO-format sparse matrix from a dense matrix.
 
     Args:
@@ -658,9 +658,9 @@ def _coo_fromdense(
 
 def coo_matvec(
     mat: COO,
-    v: jax.Array | Quantity,
+    v: Array | Quantity,
     transpose: bool = False
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """Product of COO sparse matrix and a dense vector.
 
     Args:
@@ -679,14 +679,14 @@ def coo_matvec(
 
 
 def _coo_matvec(
-    data: jax.Array | Quantity,
-    row: jax.Array,
-    col: jax.Array,
-    v: jax.Array | Quantity,
+    data: Array | Quantity,
+    row: Array,
+    col: Array,
+    v: Array | Quantity,
     *,
     spinfo: COOInfo,
     transpose: bool = False
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """Product of COO sparse matrix and a dense vector.
 
     Args:
@@ -711,10 +711,10 @@ def _coo_matvec(
 
 def coo_matmat(
     mat: COO,
-    B: jax.Array | Quantity,
+    B: Array | Quantity,
     *,
     transpose: bool = False
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """Product of COO sparse matrix and a dense matrix.
 
     Args:
@@ -733,14 +733,14 @@ def coo_matmat(
 
 
 def _coo_matmat(
-    data: jax.Array | Quantity,
-    row: jax.Array,
-    col: jax.Array,
-    B: jax.Array | Quantity,
+    data: Array | Quantity,
+    row: Array,
+    col: Array,
+    B: Array | Quantity,
     *,
     spinfo: COOInfo,
     transpose: bool = False
-) -> jax.Array:
+) -> Array:
     """Product of COO sparse matrix and a dense matrix.
 
     Args:

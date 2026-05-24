@@ -16,7 +16,8 @@ from __future__ import annotations
 
 from typing import Union, Optional, Tuple, Any, Callable
 
-from saiunit._jax_compat import jax, jnp, ArrayLike
+from saiunit._jax_compat import jax, jnp
+from saiunit._typing import Array, ArrayLike, DTypeLike
 
 from saiunit._backend import get_backend
 from saiunit._base_unit import Unit
@@ -121,7 +122,7 @@ def _fun_accept_unitless_unary(
 def exprel(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Relative error exponential, ``(exp(x) - 1)/x``.
 
@@ -151,7 +152,7 @@ def exp(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Calculate the exponential of all elements in the input.
 
@@ -168,7 +169,7 @@ def exp(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise exponential.
 
     Examples
@@ -188,7 +189,7 @@ def exp2(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Calculate ``2**x`` element-wise.
 
@@ -201,7 +202,7 @@ def exp2(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise ``2**x``.
 
     Examples
@@ -221,7 +222,7 @@ def expm1(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Calculate ``exp(x) - 1`` element-wise with improved precision near zero.
 
@@ -234,7 +235,7 @@ def expm1(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise ``exp(x) - 1``.
 
     Examples
@@ -254,7 +255,7 @@ def log(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Natural logarithm, element-wise.
 
@@ -267,7 +268,7 @@ def log(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise natural logarithm.
 
     Examples
@@ -287,7 +288,7 @@ def log10(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Base-10 logarithm, element-wise.
 
@@ -300,7 +301,7 @@ def log10(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise base-10 logarithm.
 
     Examples
@@ -320,7 +321,7 @@ def log1p(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Natural logarithm of ``1 + x``, element-wise.
 
@@ -335,7 +336,7 @@ def log1p(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise ``log(1 + x)``.
 
     Examples
@@ -355,7 +356,7 @@ def log2(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Base-2 logarithm, element-wise.
 
@@ -368,7 +369,7 @@ def log2(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise base-2 logarithm.
 
     Examples
@@ -388,7 +389,7 @@ def arccos(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Inverse cosine, element-wise.
 
@@ -401,7 +402,7 @@ def arccos(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in radians, in ``[0, pi]``.
 
     Examples
@@ -421,7 +422,7 @@ def arccosh(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Inverse hyperbolic cosine, element-wise.
 
@@ -434,7 +435,7 @@ def arccosh(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise inverse hyperbolic cosine.
 
     Examples
@@ -454,7 +455,7 @@ def arcsin(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Inverse sine, element-wise.
 
@@ -467,7 +468,7 @@ def arcsin(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in radians, in ``[-pi/2, pi/2]``.
 
     Examples
@@ -487,7 +488,7 @@ def arcsinh(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Inverse hyperbolic sine, element-wise.
 
@@ -500,7 +501,7 @@ def arcsinh(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise inverse hyperbolic sine.
 
     Examples
@@ -520,7 +521,7 @@ def arctan(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Inverse tangent, element-wise.
 
@@ -533,7 +534,7 @@ def arctan(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in radians, in ``[-pi/2, pi/2]``.
 
     Examples
@@ -553,7 +554,7 @@ def arctanh(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Inverse hyperbolic tangent, element-wise.
 
@@ -566,7 +567,7 @@ def arctanh(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise inverse hyperbolic tangent.
 
     Examples
@@ -586,7 +587,7 @@ def cos(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Cosine, element-wise.
 
@@ -599,7 +600,7 @@ def cos(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise cosine.
 
     Examples
@@ -619,7 +620,7 @@ def cosh(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Hyperbolic cosine, element-wise.
 
@@ -632,7 +633,7 @@ def cosh(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise hyperbolic cosine.
 
     Examples
@@ -652,7 +653,7 @@ def sin(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Sine, element-wise.
 
@@ -665,7 +666,7 @@ def sin(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise sine.
 
     Examples
@@ -685,7 +686,7 @@ def sinc(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Normalized sinc function, ``sin(pi*x) / (pi*x)``, element-wise.
 
@@ -698,7 +699,7 @@ def sinc(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise sinc.
 
     Examples
@@ -718,7 +719,7 @@ def sinh(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Hyperbolic sine, element-wise.
 
@@ -731,7 +732,7 @@ def sinh(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise hyperbolic sine.
 
     Examples
@@ -751,7 +752,7 @@ def tan(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Tangent, element-wise.
 
@@ -764,7 +765,7 @@ def tan(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise tangent.
 
     Examples
@@ -784,7 +785,7 @@ def tanh(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Hyperbolic tangent, element-wise.
 
@@ -797,7 +798,7 @@ def tanh(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise hyperbolic tangent, in ``(-1, 1)``.
 
     Examples
@@ -817,7 +818,7 @@ def deg2rad(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Convert angles from degrees to radians.
 
@@ -830,7 +831,7 @@ def deg2rad(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in radians.
 
     Examples
@@ -850,7 +851,7 @@ def rad2deg(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Convert angles from radians to degrees.
 
@@ -863,7 +864,7 @@ def rad2deg(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in degrees.
 
     Examples
@@ -883,7 +884,7 @@ def degrees(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Convert angles from radians to degrees (alias for :func:`rad2deg`).
 
@@ -896,7 +897,7 @@ def degrees(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in degrees.
 
     Examples
@@ -916,7 +917,7 @@ def radians(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Convert angles from degrees to radians (alias for :func:`deg2rad`).
 
@@ -929,7 +930,7 @@ def radians(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in radians.
 
     Examples
@@ -949,7 +950,7 @@ def angle(
     x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Return the angle of the complex argument, element-wise.
 
@@ -962,7 +963,7 @@ def angle(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in radians, in ``(-pi, pi]``.
 
     Examples
@@ -982,7 +983,7 @@ def frexp(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> Tuple[jax.Array, jax.Array]:
+) -> Tuple[Array, Array]:
     """
     Decompose elements into mantissa and base-2 exponent.
 
@@ -998,9 +999,9 @@ def frexp(
 
     Returns
     -------
-    mantissa : jax.Array
+    mantissa : Array
         Floating values in ``(-1, 1)``.
-    exponent : jax.Array
+    exponent : Array
         Integer exponents of 2.
 
     Examples
@@ -1064,7 +1065,7 @@ def hypot(
     y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Given the legs of a right triangle, return its hypotenuse.
 
@@ -1081,7 +1082,7 @@ def hypot(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Hypotenuse values.
 
     Examples
@@ -1102,7 +1103,7 @@ def arctan2(
     y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Element-wise arc tangent of ``x / y`` choosing the quadrant correctly.
 
@@ -1117,7 +1118,7 @@ def arctan2(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Angle in radians, in ``(-pi, pi]``.
 
     Examples
@@ -1139,7 +1140,7 @@ def logaddexp(
     y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Logarithm of the sum of exponentiations of the inputs.
 
@@ -1156,7 +1157,7 @@ def logaddexp(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise ``log(exp(x) + exp(y))``.
 
     Examples
@@ -1177,7 +1178,7 @@ def logaddexp2(
     y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Logarithm of the sum of exponentiations of the inputs in base 2.
 
@@ -1194,7 +1195,7 @@ def logaddexp2(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise ``log2(2**x + 2**y)``.
 
     Examples
@@ -1216,7 +1217,7 @@ def corrcoef(
     rowvar: bool = True,
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     r"""
     Return Pearson product-moment correlation coefficients.
 
@@ -1260,10 +1261,10 @@ def correlate(
     mode: str = 'valid',
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    preferred_element_type: Optional[DTypeLike] = None,
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     r"""
     Cross-correlation of two 1-dimensional sequences.
 
@@ -1320,7 +1321,7 @@ def cov(
     aweights: Optional[ArrayLike] = None,
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Estimate a covariance matrix, given data and weights.
 
@@ -1426,7 +1427,7 @@ def ldexp(
 def bitwise_not(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute bit-wise NOT, element-wise.
 
@@ -1439,7 +1440,7 @@ def bitwise_not(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise bit-wise NOT.
 
     Examples
@@ -1458,7 +1459,7 @@ def bitwise_not(
 def invert(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute bit-wise inversion (NOT), element-wise.
 
@@ -1471,7 +1472,7 @@ def invert(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise bit-wise inversion.
 
     Examples
@@ -1514,7 +1515,7 @@ def bitwise_and(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute bit-wise AND of two arrays, element-wise.
 
@@ -1529,7 +1530,7 @@ def bitwise_and(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise bit-wise AND.
 
     Examples
@@ -1550,7 +1551,7 @@ def bitwise_or(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute bit-wise OR of two arrays, element-wise.
 
@@ -1565,7 +1566,7 @@ def bitwise_or(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise bit-wise OR.
 
     Examples
@@ -1586,7 +1587,7 @@ def bitwise_xor(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute bit-wise XOR of two arrays, element-wise.
 
@@ -1601,7 +1602,7 @@ def bitwise_xor(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise bit-wise XOR.
 
     Examples
@@ -1622,7 +1623,7 @@ def left_shift(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Shift the bits of an integer to the left, element-wise.
 
@@ -1637,7 +1638,7 @@ def left_shift(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise left shift.
 
     Examples
@@ -1657,7 +1658,7 @@ def right_shift(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Shift the bits of an integer to the right, element-wise.
 
@@ -1672,7 +1673,7 @@ def right_shift(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Element-wise right shift.
 
     Examples

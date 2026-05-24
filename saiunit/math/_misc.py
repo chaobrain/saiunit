@@ -18,7 +18,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import (Union, TypeVar, Any)
 
-from saiunit._jax_compat import jax, jnp, ArrayLike
+from saiunit._jax_compat import jax, jnp
+from saiunit._typing import Array, ArrayLike
 import numpy as np
 
 from saiunit._base_unit import Unit
@@ -252,7 +253,7 @@ def ndim(a: Union[Quantity, ArrayLike]) -> int:
 
 
 @set_module_as('saiunit.math')
-def isreal(a: Union[Quantity, ArrayLike]) -> jax.Array:
+def isreal(a: Union[Quantity, ArrayLike]) -> Array:
     """Test element-wise whether each element is real (has zero imaginary part).
 
     Parameters
@@ -262,7 +263,7 @@ def isreal(a: Union[Quantity, ArrayLike]) -> jax.Array:
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Boolean array of the same shape as *a*.
 
     Examples
@@ -314,7 +315,7 @@ def isscalar(a: Union[Quantity, ArrayLike]) -> bool:
 
 
 @set_module_as('saiunit.math')
-def isfinite(a: Union[Quantity, ArrayLike]) -> jax.Array:
+def isfinite(a: Union[Quantity, ArrayLike]) -> Array:
     """Test element-wise for finiteness (not inf and not NaN).
 
     Parameters
@@ -324,7 +325,7 @@ def isfinite(a: Union[Quantity, ArrayLike]) -> jax.Array:
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Boolean array of the same shape as *a*.
 
     Examples
@@ -344,7 +345,7 @@ def isfinite(a: Union[Quantity, ArrayLike]) -> jax.Array:
 
 
 @set_module_as('saiunit.math')
-def isinf(a: Union[Quantity, ArrayLike]) -> jax.Array:
+def isinf(a: Union[Quantity, ArrayLike]) -> Array:
     """Test element-wise for positive or negative infinity.
 
     Parameters
@@ -354,7 +355,7 @@ def isinf(a: Union[Quantity, ArrayLike]) -> jax.Array:
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Boolean array of the same shape as *a*.
 
     Examples
@@ -374,7 +375,7 @@ def isinf(a: Union[Quantity, ArrayLike]) -> jax.Array:
 
 
 @set_module_as('saiunit.math')
-def isnan(a: Union[Quantity, ArrayLike]) -> jax.Array:
+def isnan(a: Union[Quantity, ArrayLike]) -> Array:
     """Test element-wise for NaN.
 
     Parameters
@@ -384,7 +385,7 @@ def isnan(a: Union[Quantity, ArrayLike]) -> jax.Array:
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Boolean array of the same shape as *a*.
 
     Examples
@@ -438,7 +439,7 @@ def shape(a: Union[Quantity, ArrayLike]) -> tuple[int, ...]:
 
     """
     a = maybe_custom_array(a)
-    if isinstance(a, (Quantity, jax.Array, np.ndarray)):
+    if isinstance(a, (Quantity, Array, np.ndarray)):
         return a.shape
     else:
         return np.shape(a)
@@ -479,7 +480,7 @@ def size(a: Union[Quantity, ArrayLike], axis: int | None = None) -> int:
     2
     """
     a = maybe_custom_array(a)
-    if isinstance(a, (Quantity, jax.Array, np.ndarray)):
+    if isinstance(a, (Quantity, Array, np.ndarray)):
         if axis is None:
             return a.size
         else:
@@ -644,7 +645,7 @@ def gradient(
     *varargs: Union[ArrayLike, Quantity],
     axis: Union[int, Sequence[int], None] = None,
     edge_order: Union[int, None] = None,
-) -> Union[jax.Array, list[jax.Array], Quantity, list[Quantity]]:
+) -> Union[Array, list[Array], Quantity, list[Quantity]]:
     """
     Computes the gradient of a scalar field.
 

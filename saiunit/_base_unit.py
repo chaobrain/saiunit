@@ -24,7 +24,7 @@ from ._base_dimension import (
     DIMENSIONLESS,
     _is_tracer,
 )
-from ._jax_compat import ArrayLike
+from ._typing import ArrayLike
 
 if TYPE_CHECKING:
     from ._base_quantity import Quantity
