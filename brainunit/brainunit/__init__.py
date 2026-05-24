@@ -67,7 +67,7 @@ from ._base_getters import (
     split_mantissa_unit,
     unit_scale_align_to_first,
 )
-from ._base_quantity import Quantity, compatible_with_equinox
+from ._base_quantity import Quantity
 from ._base_unit import UNITLESS, Unit, add_standard_unit, parse_unit
 from ._celsius import celsius2kelvin, kelvin2celsius, fahrenheit2kelvin, kelvin2fahrenheit
 from ._misc import maybe_custom_array, maybe_custom_array_tree
@@ -157,7 +157,6 @@ __all__ = [
 
               # _base_quantity
               'Quantity',
-              'compatible_with_equinox',
 
               # _base_decorators
               'check_dims',

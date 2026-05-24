@@ -165,7 +165,7 @@ else:
     # -- Minimal pytree implementation over Python containers -----------------
     #
     # Real ``jax.tree.map`` understands registered pytree nodes (Quantity,
-    # equinox modules, dataclasses, …). Without JAX, registration is skipped,
+    # dataclasses, …). Without JAX, registration is skipped,
     # so every saiunit type is a leaf already. This fallback only needs to
     # traverse the standard Python containers — list, tuple, dict, None — plus
     # honour the caller's ``is_leaf`` predicate.

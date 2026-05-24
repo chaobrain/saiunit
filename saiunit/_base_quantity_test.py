@@ -36,8 +36,6 @@ from saiunit._base_quantity import (
     _wrap_function_keep_unit,
     _wrap_function_remove_unit,
     _zoom_values_with_units,
-    compat_with_equinox,
-    compatible_with_equinox,
 )
 from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import (
@@ -527,25 +525,6 @@ class TestReplaceWithArray:
         assert isinstance(result, list)
         assert all(isinstance(r, Quantity) for r in result)
         assert all(r.unit == _metre for r in result)
-
-
-# =========================================================================
-# compatible_with_equinox
-# =========================================================================
-
-class TestCompatibleWithEquinox:
-    def test_default_false(self):
-        # Reset to default
-        compatible_with_equinox(False)
-        from saiunit._base_quantity import compat_with_equinox
-        assert not compat_with_equinox
-
-    def test_set_true(self):
-        compatible_with_equinox(True)
-        from saiunit._base_quantity import compat_with_equinox
-        assert compat_with_equinox
-        # Reset
-        compatible_with_equinox(False)
 
 
 # =========================================================================
@@ -1644,18 +1623,6 @@ def test_docstring_example_with_unit():
     q = u.Quantity.with_unit(2.0, unit=u.metre)
     assert jnp.allclose(q.mantissa, 2.0)
     assert q.unit == u.metre
-
-
-def test_docstring_example_compatible_with_equinox():
-    """Test compatible_with_equinox() function from the docstring."""
-    import saiunit as u
-    import saiunit._base_quantity as bq
-
-    u.compatible_with_equinox(True)
-    assert bq.compat_with_equinox is True
-
-    u.compatible_with_equinox(False)
-    assert bq.compat_with_equinox is False
 
 
 def test_docstring_example_mantissa():

@@ -57,7 +57,6 @@ from ._sparse_base import SparseMatrix
 
 __all__ = [
     'Quantity',
-    'compatible_with_equinox',
 ]
 
 # ---------------------------------------------------------------------------
@@ -70,7 +69,6 @@ StaticScalar = (
 )
 PyTree = Any
 _all_slice = slice(None, None, None)
-compat_with_equinox = False
 
 
 def _xp_attr(name: str):
@@ -84,36 +82,6 @@ def _xp_attr(name: str):
     if HAS_JAX:
         return getattr(jnp, name)
     return getattr(np, name)
-
-
-def compatible_with_equinox(mode: bool = True):
-    """
-    Enable or disable compatibility with the Equinox library.
-
-    When enabled, ``Quantity`` objects interact correctly with Equinox
-    transformations such as those used in
-    `unit-aware diffrax <https://github.com/chaoming0625/diffrax>`_.
-
-    Parameters
-    ----------
-    mode : bool, optional
-        If ``True`` (default), enable Equinox compatibility.
-        If ``False``, disable it.
-
-    Examples
-    --------
-    .. code-block:: python
-
-        >>> import saiunit as u
-        >>> u.compatible_with_equinox(True)   # enable
-        >>> u.compatible_with_equinox(False)  # disable
-
-    See Also
-    --------
-    Quantity : The core physical-quantity class affected by this setting.
-    """
-    global compat_with_equinox
-    compat_with_equinox = mode
 
 
 # ---------------------------------------------------------------------------
@@ -506,7 +474,6 @@ class Quantity:
     See Also
     --------
     Unit : Represents a physical unit (dimension + scale).
-    compatible_with_equinox : Toggle Equinox interoperability.
     """
 
     __module__ = "saiunit"
@@ -2207,13 +2174,6 @@ class Quantity:
 
     def __pow__(self, oc):
         self = self.factorless()
-        if compat_with_equinox:
-            try:
-                from equinox.internal._omega import ω  # noqa
-                if isinstance(oc, ω):
-                    return ω(self)
-            except (ImportError, ModuleNotFoundError):
-                pass
         if isinstance(oc, Quantity):
             if not oc.is_unitless:
                 raise ValueError(f"Cannot calculate {self} ** {oc}, the exponent has to be dimensionless")
