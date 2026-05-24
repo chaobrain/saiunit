@@ -17,6 +17,9 @@ exclude = [
     "saiunit/__init__.py"
 ]
 
+[tool.setuptools.package-data]
+saiunit = ["py.typed"]
+
 
 [project]
 name = "saiunit"
