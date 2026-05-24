@@ -450,7 +450,7 @@ def fftn(
         >>> X = sufft.fftn(x)
         >>> x_back = sufft.ifftn(X)
     """
-    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a, **kwargs).ndim
+    input_ndim = a.ndim if hasattr(a, 'ndim') else np.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
@@ -504,7 +504,7 @@ def rfftn(
         >>> x = jnp.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) * u.meter
         >>> X = sufft.rfftn(x)
     """
-    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a, **kwargs).ndim
+    input_ndim = a.ndim if hasattr(a, 'ndim') else np.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u * (second ** n)
     # TODO: may cause computation overhead?
@@ -663,7 +663,7 @@ def ifftn(
         >>> X = sufft.fftn(x)
         >>> x_back = sufft.ifftn(X)
     """
-    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a, **kwargs).ndim
+    input_ndim = a.ndim if hasattr(a, 'ndim') else np.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?
@@ -719,7 +719,7 @@ def irfftn(
         >>> X = sufft.rfftn(x)
         >>> x_back = sufft.irfftn(X)
     """
-    input_ndim = a.ndim if hasattr(a, 'ndim') else jnp.asarray(a, **kwargs).ndim
+    input_ndim = a.ndim if hasattr(a, 'ndim') else np.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u / (second ** n)
     # TODO: may cause computation overhead?

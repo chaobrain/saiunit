@@ -18,6 +18,7 @@ from __future__ import annotations
 from typing import Optional, Union
 
 from saiunit._jax_compat import HAS_JAX, jax, require_jax
+from saiunit._jax_guard import require_jax_backend
 
 if HAS_JAX:
     from jax import nn
@@ -84,6 +85,7 @@ def relu(
         >>> q = u.Quantity(jnp.array([-1., 0., 1.]), unit=u.meter)
         >>> sumath.relu(q)  # units are preserved
     """
+    require_jax_backend("saiunit.math.relu", x)
     return _fun_keep_unit_unary(nn.relu, x)
 
 
@@ -131,6 +133,7 @@ def relu6(
         >>> sumath.relu6(jnp.array([-1., 0., 3., 7.]))
         Array([0., 0., 3., 6.], dtype=float32)
     """
+    require_jax_backend("saiunit.math.relu6", x)
     return _fun_accept_unitless_unary(nn.relu6, x, unit_to_scale=unit_to_scale)
 
 
@@ -168,6 +171,7 @@ def sigmoid(
         >>> sumath.sigmoid(jnp.array([-2., 0., 2.]))
         Array([0.11920292, 0.5       , 0.8807971 ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.sigmoid", x)
     return _fun_accept_unitless_unary(nn.sigmoid, x, unit_to_scale=unit_to_scale)
 
 
@@ -205,6 +209,7 @@ def softplus(
         >>> sumath.softplus(jnp.array([-2., 0., 2.]))
         Array([0.12692805, 0.6931472 , 2.126928  ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.softplus", x)
     return _fun_accept_unitless_unary(nn.softplus, x, unit_to_scale=unit_to_scale)
 
 
@@ -252,6 +257,7 @@ def sparse_plus(
         >>> sumath.sparse_plus(jnp.array([-2., 0., 2.]))
         Array([0.  , 0.25, 2.  ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.sparse_plus", x)
     return _fun_accept_unitless_unary(nn.sparse_plus, x, unit_to_scale=unit_to_scale)
 
 
@@ -301,6 +307,7 @@ def sparse_sigmoid(
         >>> sumath.sparse_sigmoid(jnp.array([-2., 0., 2.]))
         Array([0. , 0.5, 1. ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.sparse_sigmoid", x)
     return _fun_accept_unitless_unary(nn.sparse_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
@@ -338,6 +345,7 @@ def soft_sign(
         >>> sumath.soft_sign(jnp.array([-2., 0., 2.]))
         Array([-0.6666667,  0.       ,  0.6666667], dtype=float32)
     """
+    require_jax_backend("saiunit.math.soft_sign", x)
     return _fun_accept_unitless_unary(nn.soft_sign, x, unit_to_scale=unit_to_scale)
 
 
@@ -377,6 +385,7 @@ def silu(
         >>> sumath.silu(jnp.array([-2., 0., 2.]))
         Array([-0.23840584,  0.        ,  1.7615942 ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.silu", x)
     return _fun_accept_unitless_unary(nn.silu, x, unit_to_scale=unit_to_scale)
 
 
@@ -416,6 +425,7 @@ def swish(
         >>> sumath.swish(jnp.array([-2., 0., 2.]))
         Array([-0.23840584,  0.        ,  1.7615942 ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.swish", x)
     return _fun_accept_unitless_unary(nn.silu, x, unit_to_scale=unit_to_scale)
 
 
@@ -453,6 +463,7 @@ def log_sigmoid(
         >>> sumath.log_sigmoid(jnp.array([-2., 0., 2.]))
         Array([-2.126928  , -0.6931472 , -0.12692805], dtype=float32)
     """
+    require_jax_backend("saiunit.math.log_sigmoid", x)
     return _fun_accept_unitless_unary(nn.log_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
@@ -536,6 +547,7 @@ def hard_sigmoid(
         >>> sumath.hard_sigmoid(jnp.array([-4., 0., 4.]))
         Array([0. , 0.5, 1. ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.hard_sigmoid", x)
     return _fun_accept_unitless_unary(nn.hard_sigmoid, x, unit_to_scale=unit_to_scale)
 
 
@@ -576,6 +588,7 @@ def hard_silu(
         >>> sumath.hard_silu(jnp.array([-4., 0., 4.]))
         Array([-0.,  0.,  4.], dtype=float32)
     """
+    require_jax_backend("saiunit.math.hard_silu", x)
     return _fun_accept_unitless_unary(nn.hard_silu, x, unit_to_scale=unit_to_scale)
 
 
@@ -620,6 +633,7 @@ def hard_tanh(
         >>> sumath.hard_tanh(jnp.array([-2., -0.5, 0., 0.5, 2.]))
         Array([-1. , -0.5,  0. ,  0.5,  1. ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.hard_tanh", x)
     return _fun_accept_unitless_unary(nn.hard_tanh, x, unit_to_scale=unit_to_scale)
 
 
@@ -665,6 +679,7 @@ def elu(
         >>> sumath.elu(jnp.array([-1., 1.]), alpha=2.0)
         Array([-1.2642411,  1.       ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.elu", x)
     return _fun_accept_unitless_unary(nn.elu, x, alpha=alpha, unit_to_scale=unit_to_scale)
 
 
@@ -712,6 +727,7 @@ def celu(
         >>> sumath.celu(jnp.array([-2., 0., 2.]))
         Array([-0.86466473,  0.        ,  2.        ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.celu", x)
     return _fun_accept_unitless_unary(nn.celu, x, alpha=alpha, unit_to_scale=unit_to_scale)
 
 
@@ -759,6 +775,7 @@ def selu(
         >>> sumath.selu(jnp.array([-2., 0., 2.]))
         Array([-1.5201665,  0.       ,  2.1014020], dtype=float32)
     """
+    require_jax_backend("saiunit.math.selu", x)
     return _fun_accept_unitless_unary(nn.selu, x, unit_to_scale=unit_to_scale)
 
 
@@ -809,6 +826,7 @@ def gelu(
         >>> sumath.gelu(jnp.array([-2., 0., 2.]))
         Array([-0.04540231,  0.        ,  1.9545977 ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.gelu", x)
     return _fun_accept_unitless_unary(nn.gelu, x, approximate=approximate, unit_to_scale=unit_to_scale)
 
 
@@ -856,6 +874,7 @@ def glu(
         >>> sumath.glu(x)
         Array([[0.95257413, 1.9640275 ]], dtype=float32)
     """
+    require_jax_backend("saiunit.math.glu", x)
     return _fun_accept_unitless_unary(nn.glu, x, axis=axis, unit_to_scale=unit_to_scale)
 
 
@@ -898,6 +917,7 @@ def squareplus(
         >>> sumath.squareplus(jnp.array([-2., 0., 2.]))
         Array([0.23606798, 1.        , 2.2360680 ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.squareplus", x)
     return _fun_accept_unitless_unary(nn.squareplus, x, b=b, unit_to_scale=unit_to_scale)
 
 
@@ -939,4 +959,5 @@ def mish(
         >>> sumath.mish(jnp.array([-2., 0., 2.]))
         Array([-0.25250152,  0.        ,  1.9439590 ], dtype=float32)
     """
+    require_jax_backend("saiunit.math.mish", x)
     return _fun_accept_unitless_unary(nn.mish, x, unit_to_scale=unit_to_scale)
