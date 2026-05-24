@@ -292,7 +292,7 @@ else:
         _, treedef = _flatten(tree_obj, is_leaf)
         return treedef
 
-    def tree_flatten(tree_obj, is_leaf: Callable | None = None):  # type: ignore[no-redef]
+    def tree_flatten(tree_obj, is_leaf: Callable | None = None):  # type: ignore[no-redef, misc]
         """Fallback ``jax.tree.flatten`` returning ``(leaves, treedef)``."""
         return _flatten(tree_obj, is_leaf)
 

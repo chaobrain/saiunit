@@ -83,7 +83,7 @@ def get_promote_dtypes(
     leaves, _ = tree.flatten(args)
     if HAS_JAX:
         return jnp.promote_types(*leaves, **kwargs)  # type: ignore[return-value]
-    return np.result_type(*leaves, **kwargs)
+    return np.result_type(*leaves, **kwargs)  # type: ignore[return-value]
 
 
 def _fun_remove_unit_unary(func, x, *args, **kwargs):
