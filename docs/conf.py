@@ -138,11 +138,11 @@ if package == 'brainunit':
     exclude_patterns += ['apis/saiunit*.rst', 'apis/generated/saiunit*.rst']
 
 html_theme = "sphinx_book_theme"
-html_logo = f"_static/{package}.png"
+html_logo = "https://brainx.chaobrain.com/images/brainunit.webp" if package == 'brainunit' else f"_static/{package}.png"
 html_title = f"{package}"
 html_copy_source = True
 html_sourcelink_suffix = ""
-html_favicon = f"_static/{package}.png"
+html_favicon = "https://brainx.chaobrain.com/images/brainunit.webp" if package == 'brainunit' else f"_static/{package}.png"
 html_last_updated_fmt = ""
 
 # Add any paths that contain custom static files (such as style sheets) here,

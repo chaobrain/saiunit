@@ -2,7 +2,7 @@
 <h2 align='center'>Physical units and unit-aware math system for general-purpose brain dynamics modeling</h2>
 
 <p align="center">
-  	<img alt="Header image of brainunit." src="https://raw.githubusercontent.com/chaobrain/saiunit/main/docs/_static/brainunit.png" width=30%>
+  	<img alt="Header image of brainunit." src="https://brainx.chaobrain.com/images/brainunit.webp" width=30%>
 </p> 
 
 
