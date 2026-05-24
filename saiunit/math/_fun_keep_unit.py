@@ -18,7 +18,7 @@ from __future__ import annotations
 import functools
 from typing import (Union, Sequence, Tuple, Optional)
 
-from saiunit._jax_compat import jax, jnp
+from saiunit._jax_compat import jax, jnp, tree
 import numpy as np
 
 from saiunit._backend import get_backend
@@ -169,7 +169,10 @@ def _fun_keep_unit_sequence(
     **kwargs
 ):
     args = maybe_custom_array_tree(args)
-    leaves, treedef = jax.tree.flatten(args, is_leaf=lambda x: isinstance(x, Quantity))
+    # Use the ``tree`` namespace from ``_jax_compat`` rather than ``jax.tree``
+    # directly so this works under pure-numpy/torch/dask/ndonnx where ``jax``
+    # is None and pytree registration is unavailable.
+    leaves, treedef = tree.flatten(args, is_leaf=lambda x: isinstance(x, Quantity))
     # leaves = jax.tree.map(
     #     lambda x: x.factorless() if isinstance(x, Quantity) else x,
     #     leaves,

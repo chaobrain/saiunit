@@ -60,6 +60,7 @@ __all__ = [
     "canonicalize_dtype",
     "tree_map",
     "tree_structure",
+    "tree_flatten",
     "tree",
     "device_put",
     "devices",
@@ -104,6 +105,7 @@ if HAS_JAX:
     tree = _jax.tree
     tree_map = _jax.tree.map
     tree_structure = _jax.tree.structure
+    tree_flatten = _jax.tree.flatten
     device_put = _jax.device_put
     devices = _jax.devices
 else:
@@ -262,11 +264,16 @@ else:
         _, treedef = _flatten(tree_obj, is_leaf)
         return treedef
 
+    def tree_flatten(tree_obj, is_leaf: Callable | None = None):  # type: ignore[no-redef]
+        """Fallback ``jax.tree.flatten`` returning ``(leaves, treedef)``."""
+        return _flatten(tree_obj, is_leaf)
+
     class _TreeNamespace:
-        """Namespace object that mimics ``jax.tree``'s ``map`` / ``structure``."""
+        """Namespace object that mimics ``jax.tree``'s ``map`` / ``structure`` / ``flatten``."""
 
         map = staticmethod(tree_map)
         structure = staticmethod(tree_structure)
+        flatten = staticmethod(tree_flatten)
 
     tree = _TreeNamespace()  # type: ignore[assignment]
 
