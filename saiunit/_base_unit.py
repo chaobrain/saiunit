@@ -17,12 +17,17 @@ from __future__ import annotations
 
 import re
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 from ._base_dimension import (
     Dimension,
     DIMENSIONLESS,
     _is_tracer,
 )
+from ._jax_compat import ArrayLike
+
+if TYPE_CHECKING:
+    from ._base_quantity import Quantity
 
 __all__ = [
     'Unit',
@@ -302,7 +307,7 @@ def _get_display_parts(unit: 'Unit'):
 
     Each element is ``(name, dispname, exponent)``.
     """
-    if getattr(unit, '_display_parts', None) is not None:
+    if unit._display_parts is not None:
         return list(unit._display_parts)
     return [(unit.name, unit.dispname, 1)]
 
@@ -747,14 +752,24 @@ class Unit:
     __slots__ = ["_dim", "_base", "_scale", "_factor", "_dispname", "_name", "is_fullname", "_hash", "_display_parts"]
     __array_priority__ = 1000
 
+    _dim: 'Dimension'
+    _base: int | float
+    _scale: int | float
+    _factor: int | float
+    _dispname: str
+    _name: str
+    is_fullname: bool
+    _hash: int | None
+    _display_parts: 'list[tuple[str, str, int]] | None'
+
     def __init__(
         self,
-        dim: 'Dimension | str' = None,
-        scale: jax.typing.ArrayLike = 0,
-        base: jax.typing.ArrayLike = 10.,
-        factor: jax.typing.ArrayLike = 1.,
-        name: str = None,
-        dispname: str = None,
+        dim: 'Dimension | str | None' = None,
+        scale: int | float = 0,
+        base: int | float = 10.,
+        factor: int | float = 1.,
+        name: str | None = None,
+        dispname: str | None = None,
         is_fullname: bool = True,
         display_parts=None,
     ):
@@ -1314,7 +1329,7 @@ class Unit:
         dim: Dimension,
         name: str,
         dispname: str,
-        scale: int = 0,
+        scale: int | float = 0,
         base: float = 10.,
         factor: float = 1.,
     ) -> 'Unit':
@@ -1535,7 +1550,7 @@ class Unit:
         else:
             from ._base_quantity import Quantity
             if isinstance(other, Quantity):
-                return Quantity(other.mantissa, unit=(self * other.unit))
+                return Quantity(other.mantissa, unit=(self * other.unit))  # type: ignore[arg-type]
             return Quantity(other, unit=self)
 
     def __rmul__(self, other) -> 'Unit | Quantity':
@@ -1545,7 +1560,7 @@ class Unit:
 
         from ._base_quantity import Quantity
         if isinstance(other, Quantity):
-            return Quantity(other.mantissa, unit=(other.unit * self))
+            return Quantity(other.mantissa, unit=(other.unit * self))  # type: ignore[arg-type]
         return Quantity(other, unit=self)
 
     def __imul__(self, other):

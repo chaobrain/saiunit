@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import unittest
 
-import brainstate as bst
+import brainstate as bst  # type: ignore[import-untyped]
 import jax
 
 import saiunit as u
@@ -769,7 +769,7 @@ def test_csr_fromdense_raises_on_numpy_quantity():
         u.sparse.CSR.fromdense(q)
 
 
-def test_csr_fromdense_raises_on_numpy_quantity():
+def test_csr_fromdense_raises_on_numpy_quantity():  # type: ignore[no-redef]
     import numpy as np
     import pytest
     import saiunit as u

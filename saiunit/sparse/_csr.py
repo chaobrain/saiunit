@@ -101,7 +101,7 @@ class CSR(SparseMatrix):
         Array([[1., 0., 2.],
                [0., 0., 3.]], dtype=float32)
     """
-    data: jax.Array | Quantity
+    data: jax.Array | Quantity  # type: ignore[assignment]
     indices: jax.Array
     indptr: jax.Array
     shape: tuple[int, int]
@@ -155,7 +155,7 @@ class CSR(SparseMatrix):
             jnp.cumsum(jnp.bincount(row, length=N).astype(index_dtype)))
         return cls((data, indices, indptr), shape=(N, M))
 
-    def with_data(self, data: jax.Array | Quantity) -> CSR:
+    def with_data(self, data: jax.Array | Quantity) -> CSR:  # type: ignore[override]
         """
         Create a new CSR matrix with the same sparsity structure but different data.
 
@@ -481,7 +481,7 @@ class CSC(SparseMatrix):
     def _eye(cls, N, M, k, *, dtype=None, index_dtype='int32'):
         return CSR._eye(M, N, -k, dtype=dtype, index_dtype=index_dtype).T
 
-    def with_data(self, data: jax.Array | Quantity) -> CSC:
+    def with_data(self, data: jax.Array | Quantity) -> CSC:  # type: ignore[override]
         """
         Create a new CSC matrix with the same sparsity structure but different data.
 

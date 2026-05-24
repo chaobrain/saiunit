@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -23,10 +24,14 @@ from ._jax_compat import (
     HAS_JAX,
     jax,
     jnp,
+    ArrayLike,
     ShapeDtypeStruct as _ShapeDtypeStruct,
     ShapedArray as _ShapedArray,
     Tracer as _Tracer,
 )
+
+if TYPE_CHECKING:
+    from ._base_quantity import Quantity
 
 from ._base_dimension import (
     Dimension,
@@ -64,7 +69,7 @@ __all__ = [
 # Utility helpers
 # ---------------------------------------------------------------------------
 
-def _to_quantity(array):
+def _to_quantity(array) -> 'Quantity':
     from ._base_quantity import Quantity
     array = maybe_custom_array(array)
     if isinstance(array, Quantity):
@@ -597,8 +602,8 @@ def fail_for_unit_mismatch(
 
 @set_module_as('saiunit')
 def display_in_unit(
-    x: 'jax.typing.ArrayLike | Quantity',
-    u: 'Unit' = None,
+    x: 'ArrayLike | Quantity',
+    u: 'Unit | None' = None,
     precision: int | None = None,
 ) -> str:
     """
@@ -644,9 +649,9 @@ def display_in_unit(
 
 @set_module_as('saiunit')
 def maybe_decimal(
-    val: 'Quantity | jax.typing.ArrayLike',
+    val: 'Quantity | ArrayLike',
     unit: 'Unit | None' = None
-) -> 'jax.Array | Quantity':
+) -> 'jax.Array | Quantity | ArrayLike':
     """
     Convert a quantity to a plain number if it is dimensionless.
 
@@ -719,20 +724,20 @@ def unit_scale_align_to_first(*args) -> 'list[Quantity]':
     """
     from ._base_quantity import Quantity
     if len(args) == 0:
-        return args
-    args = list(args)
-    first_unit = get_unit(args[0])
+        return []
+    items: list = list(args)
+    first_unit = get_unit(items[0])
     if first_unit.is_unitless:
-        if not isinstance(args[0], Quantity):
-            args[0] = Quantity(args[0])
-        for i in range(1, len(args)):
-            fail_for_unit_mismatch(args[i], args[0], 'Non-matching unit for function "unit_scale_align_to_first"')
-            if not isinstance(args[i], Quantity):
-                args[i] = Quantity(args[i])
+        if not isinstance(items[0], Quantity):
+            items[0] = Quantity(items[0])
+        for i in range(1, len(items)):
+            fail_for_unit_mismatch(items[i], items[0], 'Non-matching unit for function "unit_scale_align_to_first"')
+            if not isinstance(items[i], Quantity):
+                items[i] = Quantity(items[i])
     else:
-        for i in range(1, len(args)):
-            args[i] = args[i].in_unit(first_unit)
-    return args
+        for i in range(1, len(items)):
+            items[i] = items[i].in_unit(first_unit)
+    return items
 
 
 def array_with_unit(
@@ -783,7 +788,7 @@ def array_with_unit(
 # ---------------------------------------------------------------------------
 
 @set_module_as('saiunit')
-def is_dimensionless(obj: 'Quantity | Unit | Dimension | jax.typing.ArrayLike') -> bool:
+def is_dimensionless(obj: 'Quantity | Unit | Dimension | ArrayLike') -> bool:
     """
     Test if a value is dimensionless or not.
 
@@ -820,7 +825,7 @@ def is_dimensionless(obj: 'Quantity | Unit | Dimension | jax.typing.ArrayLike') 
 
 
 @set_module_as('saiunit')
-def is_unitless(obj: 'Quantity | Unit | jax.typing.ArrayLike') -> bool:
+def is_unitless(obj: 'Quantity | Unit | ArrayLike') -> bool:
     """
     Test if a value is unitless or not.
 
@@ -904,9 +909,9 @@ def is_scalar_type(obj) -> bool:
 
 @set_module_as('saiunit')
 def assert_quantity(
-    q: 'Quantity | jax.typing.ArrayLike',
-    mantissa: jax.typing.ArrayLike,
-    unit: 'Unit' = None
+    q: 'Quantity | ArrayLike',
+    mantissa: ArrayLike,
+    unit: 'Unit | None' = None
 ):
     """
     Assert that a `Quantity` has a certain mantissa and unit.

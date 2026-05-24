@@ -71,7 +71,7 @@ _CONVERSION_INTERFACE = getattr(_UNITS_MODULE, 'ConversionInterface', object) if
 _CONVERSION_ERROR = _resolve_conversion_error(_UNITS_MODULE)
 
 
-class QuantityConverter(_CONVERSION_INTERFACE):
+class QuantityConverter(_CONVERSION_INTERFACE):  # type: ignore[misc,valid-type]
     """Matplotlib converter for :class:`~saiunit.Quantity` values."""
 
     @staticmethod

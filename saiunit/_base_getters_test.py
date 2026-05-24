@@ -599,7 +599,7 @@ class TestGetMethodIntegration:
         assert u.get_mantissa(u.mV.dim ** 2 / u.second.dim ** 2) == u.mV.dim ** 2 / u.second.dim ** 2
 
     def test_format_scalar(self):
-        import brainstate
+        import brainstate  # type: ignore[import-untyped]
         with brainstate.environ.context(precision=64):
             q1 = 1.23456789 * u.mV
             assert f"{q1:.2f}" == "1.23 mV"

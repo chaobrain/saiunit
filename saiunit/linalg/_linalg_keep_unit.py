@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Union
 
-from saiunit._jax_compat import HAS_JAX, jax, jnp, Array, require_jax
+from saiunit._jax_compat import HAS_JAX, jax, jnp, Array, require_jax, ArrayLike
 
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
@@ -47,7 +47,7 @@ __all__ = [
 
 @set_module_as('saiunit.linalg')
 def norm(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     ord: int | str | None = None,
     axis: None | tuple[int, ...] | int = None,
     keepdims: bool = False,
@@ -128,7 +128,7 @@ def norm(
 
 @set_module_as('saiunit.linalg')
 def matrix_norm(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     *,
     keepdims: bool = False,
     ord: int | str = 'fro',
@@ -175,7 +175,7 @@ def matrix_norm(
 
 @set_module_as('saiunit.linalg')
 def vector_norm(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     *, axis: int | tuple[int, ...] | None = None,
     keepdims: bool = False,
     ord: int | str = 2,
@@ -233,7 +233,7 @@ def vector_norm(
 
 @set_module_as('saiunit.linalg')
 def qr(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     mode: str = "reduced",
     **kwargs,
 ) -> Array | Quantity:
@@ -293,18 +293,18 @@ def qr(
             return maybe_decimal(Quantity(result, unit=a.unit))
         else:
             Q, R = result
-            return Q, maybe_decimal(Quantity(R, unit=a.unit))
+            return Q, maybe_decimal(Quantity(R, unit=a.unit))  # type: ignore[return-value]
     else:
         result = jnp.linalg.qr(a, mode=mode, **kwargs)
         if mode == "r":
-            return result
+            return result  # type: ignore[return-value]
         else:
-            return result
+            return result  # type: ignore[return-value]
 
 
 @set_module_as('saiunit.linalg')
 def svd(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     *,
     full_matrices: bool = True,
     compute_uv: bool = True,
@@ -312,7 +312,7 @@ def svd(
     subset_by_index: tuple[int, int] | None = None,
     algorithm: jax.lax.linalg.SvdAlgorithm | None = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
+) -> Union[Quantity, ArrayLike] | tuple[jax.Array, Quantity | jax.Array, jax.Array]:
     """Singular value decomposition.
 
     SaiUnit implementation of :func:`numpy.linalg.svd`.
@@ -408,7 +408,7 @@ def svd(
 
 @set_module_as('saiunit.linalg')
 def svdvals(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """Compute the singular values of a matrix.
@@ -442,7 +442,7 @@ def svdvals(
 
 @set_module_as('saiunit.linalg')
 def eig(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> tuple[Union[jax.Array, Quantity], Union[jax.Array, Quantity]]:
     """Compute the eigenvalues and eigenvectors of a square matrix.
@@ -483,7 +483,7 @@ def eig(
 
 @set_module_as('saiunit.linalg')
 def eigh(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     UPLO: str | None = None,
     symmetrize_input: bool = True,
     **kwargs,
@@ -539,7 +539,7 @@ def eigh(
 
 @set_module_as('saiunit.linalg')
 def eigvals(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> Union[jax.Array, Quantity]:
     """Compute the eigenvalues of a general matrix.
@@ -573,7 +573,7 @@ def eigvals(
 
 @set_module_as('saiunit.linalg')
 def eigvalsh(
-    a: Union[Quantity, jax.typing.ArrayLike],
+    a: Union[Quantity, ArrayLike],
     UPLO: str = 'L',
     *,
     symmetrize_input: bool = True,
@@ -616,9 +616,9 @@ def eigvalsh(
 
 @set_module_as('saiunit.linalg')
 def matrix_transpose(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Transpose a matrix or stack of matrices.
 
     SaiUnit implementation of :func:`numpy.linalg.matrix_transpose`.

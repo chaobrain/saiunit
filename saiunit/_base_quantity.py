@@ -30,8 +30,8 @@ from ._jax_compat import (
     HAS_JAX,
     jax,
     jnp,
+    ArrayLike,
     Array as _JaxArray,
-    ArrayLike as _JaxArrayLike,
     DTypeLike as _JaxDTypeLike,
     canonicalize_dtype as _canonicalize_dtype,
     ensure_compile_time_eval as _ensure_compile_time_eval,
@@ -207,7 +207,7 @@ def _wrap_function_remove_unit(func):
 # ---------------------------------------------------------------------------
 
 def _zoom_values_with_units(
-    values: Sequence[jax.typing.ArrayLike],
+    values: Sequence[ArrayLike],
     units: Sequence[Unit]
 ):
     """
@@ -234,9 +234,9 @@ def _zoom_values_with_units(
     return values
 
 
-def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
-    units = []
-    values = []
+def _check_units_and_collect_values(lst) -> tuple[ArrayLike, Unit]:
+    units: list = []
+    values: list = []
 
     for item in lst:
         if isinstance(item, (list, tuple)):
@@ -273,7 +273,7 @@ def _check_units_and_collect_values(lst) -> tuple[jax.typing.ArrayLike, Unit]:
         return _xp.asarray(values), UNITLESS
 
 
-def _process_list_with_units(value: list) -> tuple[jax.typing.ArrayLike, Unit]:
+def _process_list_with_units(value: 'list | tuple') -> tuple[ArrayLike, Unit]:
     values, unit = _check_units_and_collect_values(value)
     return values, unit
 
@@ -509,7 +509,7 @@ class Quantity:
     __module__ = "saiunit"
     __slots__ = ('_mantissa', '_unit')
     __array_priority__ = 1000
-    _mantissa: jax.Array | np.ndarray
+    _mantissa: 'ArrayLike'
     _unit: Unit
 
     def __class_getitem__(cls, item: Unit | str) -> type['Quantity']:
@@ -553,7 +553,7 @@ class Quantity:
     def __init__(
         self,
         mantissa: PyTree | Unit,
-        unit: 'Unit | jax.typing.ArrayLike | str | None' = UNITLESS,
+        unit: 'Unit | str | None' = UNITLESS,
         dtype: jax.typing.DTypeLike | None = None,
     ):
 
@@ -567,6 +567,9 @@ class Quantity:
             if isinstance(unit, str):
                 from ._base_unit import parse_unit
                 unit = parse_unit(unit)
+            if unit is None:
+                unit = UNITLESS
+            assert isinstance(unit, Unit), f"Expected a Unit, got {type(unit).__name__}: {unit!r}"
 
             # Handle custom arrays in the mantissa tree structure
             mantissa = maybe_custom_array_tree(mantissa)
@@ -640,7 +643,7 @@ class Quantity:
                 # else: keep as-is for arbitrary pytree leaves
 
         # mantissa
-        self._mantissa = mantissa
+        self._mantissa = mantissa  # type: ignore[assignment]
 
         # dimension
         self._unit = unit
@@ -749,7 +752,7 @@ class Quantity:
         return _IndexUpdateHelper(self)
 
     @property
-    def mantissa(self) -> jax.typing.ArrayLike:
+    def mantissa(self) -> ArrayLike:
         r"""
         The raw numerical data of this quantity (without the unit).
 
@@ -779,7 +782,7 @@ class Quantity:
         return self._mantissa
 
     @property
-    def magnitude(self) -> jax.typing.ArrayLike:
+    def magnitude(self) -> ArrayLike:
         """
         Alias for :attr:`mantissa`.
 
@@ -975,7 +978,7 @@ class Quantity:
         """
         return self.in_unit(new_unit)
 
-    def to_decimal(self, unit: Unit = UNITLESS) -> jax.typing.ArrayLike:
+    def to_decimal(self, unit: Unit = UNITLESS) -> ArrayLike:
         """
         Return the numerical value expressed in the given unit, without wrapping
         the result in a ``Quantity``.
@@ -1027,7 +1030,7 @@ class Quantity:
         else:
             return self.mantissa
 
-    def in_unit(self, unit: Unit, err_msg: str = None) -> 'Quantity':
+    def in_unit(self, unit: Unit, err_msg: str | None = None) -> 'Quantity':
         """
         Convert this quantity to a compatible unit.
 
@@ -1169,6 +1172,7 @@ class Quantity:
         from saiunit._backend import is_dask_array
         if is_dask_array(m):
             return repr(m)
+        value: 'ArrayLike'
         if isinstance(m, (_JaxArray, np.ndarray)):
             value = m
         elif isinstance(m, (numbers.Number, list, tuple)):
@@ -1199,9 +1203,9 @@ class Quantity:
                 kw = {}
                 if precision is not None:
                     kw['precision'] = precision
-                with np.printoptions(threshold=10, **kw):
-                    return np.array_str(value)
-            return np.array_str(value, precision=precision)
+                with np.printoptions(threshold=10, **kw):  # type: ignore[arg-type]
+                    return np.array_str(value)  # type: ignore[arg-type]
+            return np.array_str(value, precision=precision)  # type: ignore[arg-type]
         except (TypeError, AttributeError):
             return str(value)
 
@@ -1553,7 +1557,7 @@ class Quantity:
     # bool, so any hash would silently violate the hash/eq invariant and
     # corrupt dict/set lookups. Use ``id(q)`` if a stable identity key is
     # really required.
-    __hash__ = None
+    __hash__ = None  # type: ignore[assignment]
 
     def __repr__(self) -> str:
         value_str = self._format_value()
@@ -1626,9 +1630,9 @@ class Quantity:
                     raise TypeError("Array indices must be integers or slices, not Array")
         elif isinstance(index, Quantity):
             raise TypeError("Array indices must be integers or slices, not Array")
-        return Quantity(self.mantissa[index], unit=self.unit)
+        return Quantity(self.mantissa[index], unit=self.unit)  # type: ignore[index]
 
-    def __setitem__(self, index, value: 'Quantity | jax.typing.ArrayLike'):
+    def __setitem__(self, index, value: 'Quantity | ArrayLike'):
         if _is_tracer(self.mantissa):
             raise RuntimeError(
                 "Quantity[...] = value cannot mutate a Quantity whose mantissa "
@@ -1653,8 +1657,8 @@ class Quantity:
 
     def scatter_add(
         self,
-        index: jax.typing.ArrayLike,
-        value: 'Quantity | jax.typing.ArrayLike'
+        index: ArrayLike,
+        value: 'Quantity | ArrayLike'
     ) -> 'Quantity':
         """
         Return a copy with *value* added at *index*.
@@ -1699,8 +1703,8 @@ class Quantity:
 
     def scatter_sub(
         self,
-        index: jax.typing.ArrayLike,
-        value: 'Quantity | jax.typing.ArrayLike'
+        index: ArrayLike,
+        value: 'Quantity | ArrayLike'
     ) -> 'Quantity':
         """
         Return a copy with *value* subtracted at *index*.
@@ -1727,12 +1731,12 @@ class Quantity:
             >>> q.scatter_sub(0, u.Quantity(1.0, unit=u.mV))
             Quantity([0. 2. 3.], "mV")
         """
-        return self.scatter_add(index, -value)
+        return self.scatter_add(index, -value)  # type: ignore[operator]
 
     def scatter_mul(
         self,
-        index: jax.typing.ArrayLike,
-        value: 'Quantity | jax.typing.ArrayLike'
+        index: ArrayLike,
+        value: 'Quantity | ArrayLike'
     ) -> 'Quantity':
         """
         Return a copy with the element at *index* multiplied by *value*.
@@ -1785,8 +1789,8 @@ class Quantity:
 
     def scatter_div(
         self,
-        index: jax.typing.ArrayLike,
-        value: 'Quantity | jax.typing.ArrayLike'
+        index: ArrayLike,
+        value: 'Quantity | ArrayLike'
     ) -> 'Quantity':
         """
         Return a copy with the element at *index* divided by *value*.
@@ -1839,8 +1843,8 @@ class Quantity:
 
     def scatter_max(
         self,
-        index: jax.typing.ArrayLike,
-        value: 'Quantity | jax.typing.ArrayLike'
+        index: ArrayLike,
+        value: 'Quantity | ArrayLike'
     ) -> 'Quantity':
         """
         Return a copy where the element at *index* is the maximum of
@@ -1886,8 +1890,8 @@ class Quantity:
 
     def scatter_min(
         self,
-        index: jax.typing.ArrayLike,
-        value: 'Quantity | jax.typing.ArrayLike'
+        index: ArrayLike,
+        value: 'Quantity | ArrayLike'
     ) -> 'Quantity':
         """
         Return a copy where the element at *index* is the minimum of
@@ -1936,19 +1940,19 @@ class Quantity:
     # ---------- #
 
     def __len__(self) -> int:
-        return len(self.mantissa)
+        return len(self.mantissa)  # type: ignore[arg-type]
 
     def __neg__(self) -> 'Quantity':
-        return Quantity(self.mantissa.__neg__(), unit=self.unit)
+        return Quantity(-self.mantissa, unit=self.unit)  # type: ignore[operator]
 
     def __pos__(self) -> 'Quantity':
-        return Quantity(self.mantissa.__pos__(), unit=self.unit)
+        return Quantity(+self.mantissa, unit=self.unit)  # type: ignore[operator]
 
     def __abs__(self) -> 'Quantity':
-        return Quantity(self.mantissa.__abs__(), unit=self.unit)
+        return Quantity(abs(self.mantissa), unit=self.unit)
 
     def __invert__(self) -> 'Quantity':
-        return Quantity(self.mantissa.__invert__(), unit=self.unit)
+        return Quantity(~self.mantissa, unit=self.unit)  # type: ignore[operator]
 
     def _comparison(self, other: Any, operator_str: str, operation: Callable):
         other = _to_quantity(other)
@@ -1961,22 +1965,22 @@ class Quantity:
             ) from e
         return operation(self.mantissa, other_value)
 
-    def __eq__(self, oc) -> jax.typing.ArrayLike:
+    def __eq__(self, oc) -> ArrayLike:  # type: ignore[override]
         return self._comparison(oc, "==", operator.eq)
 
-    def __ne__(self, oc) -> jax.typing.ArrayLike:
+    def __ne__(self, oc) -> ArrayLike:  # type: ignore[override]
         return self._comparison(oc, "!=", operator.ne)
 
-    def __lt__(self, oc) -> jax.typing.ArrayLike:
+    def __lt__(self, oc) -> ArrayLike:
         return self._comparison(oc, "<", operator.lt)
 
-    def __le__(self, oc) -> jax.typing.ArrayLike:
+    def __le__(self, oc) -> ArrayLike:
         return self._comparison(oc, "<=", operator.le)
 
-    def __gt__(self, oc) -> jax.typing.ArrayLike:
+    def __gt__(self, oc) -> ArrayLike:
         return self._comparison(oc, ">", operator.gt)
 
-    def __ge__(self, oc) -> jax.typing.ArrayLike:
+    def __ge__(self, oc) -> ArrayLike:
         return self._comparison(oc, ">=", operator.ge)
 
     def _binary_operation(
@@ -1985,7 +1989,7 @@ class Quantity:
         value_operation: Callable,
         unit_operation: Callable = lambda a, b: a,
         fail_for_mismatch: bool = False,
-        operator_str: str = None,
+        operator_str: str | None = None,
         inplace: bool = False,
     ):
         """
@@ -2277,7 +2281,7 @@ class Quantity:
         r = Quantity(self.mantissa << oc, unit=self.unit)
         return maybe_decimal(r)
 
-    def __rlshift__(self, oc) -> 'Quantity | jax.typing.ArrayLike':
+    def __rlshift__(self, oc) -> 'Quantity | ArrayLike':
         # oc << self
         if not self.is_unitless:
             raise ValueError("The shift amount must be dimensionless")
@@ -2298,7 +2302,7 @@ class Quantity:
         r = Quantity(self.mantissa >> oc, unit=self.unit)
         return maybe_decimal(r)
 
-    def __rrshift__(self, oc) -> 'Quantity | jax.typing.ArrayLike':
+    def __rrshift__(self, oc) -> 'Quantity | ArrayLike':
         # oc >> self
         if not self.is_unitless:
             raise ValueError("The shift amount must be dimensionless")
@@ -2310,14 +2314,14 @@ class Quantity:
         self.update_mantissa(r.mantissa)
         return self
 
-    def __round__(self, ndigits: int = None) -> 'Quantity':
+    def __round__(self, ndigits: int | None = None) -> 'Quantity':
         """
         Round the mantissa to the given number of decimals.
 
         :param ndigits: The number of decimals to round to.
         :return: The rounded Quantity.
         """
-        return Quantity(self.mantissa.__round__(ndigits), unit=self.unit)
+        return Quantity(round(self.mantissa, ndigits), unit=self.unit)  # type: ignore[arg-type,call-overload]
 
     def __reduce__(self):
         """
@@ -2430,8 +2434,8 @@ class Quantity:
 
     def clip(
         self,
-        min: 'Quantity | jax.typing.ArrayLike' = None,
-        max: 'Quantity | jax.typing.ArrayLike' = None,
+        min: 'Quantity | ArrayLike | None' = None,
+        max: 'Quantity | ArrayLike | None' = None,
     ) -> 'Quantity':
         """
         Clip (limit) the values in the array to ``[min, max]``.
@@ -2463,7 +2467,7 @@ class Quantity:
         """
         _, min = unit_scale_align_to_first(self, min)
         _, max = unit_scale_align_to_first(self, max)
-        return Quantity(get_backend(self, min, max).clip(self.mantissa, min.mantissa, max.mantissa), unit=self.unit)
+        return Quantity(get_backend(self, min, max).clip(self.mantissa, min.mantissa, max.mantissa), unit=self.unit)  # type: ignore[union-attr]
 
     def conj(self) -> 'Quantity':
         """
@@ -2551,7 +2555,7 @@ class Quantity:
                                    operator.mul, operator_str="@")
         return maybe_decimal(r)
 
-    def trace(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':
+    def trace(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':  # type: ignore[no-redef]
         """
         Sum along diagonals of the array, preserving units.
 
@@ -2581,7 +2585,7 @@ class Quantity:
         """
         return Quantity(get_backend(self).trace(self.mantissa, offset=offset, axis1=axis1, axis2=axis2), unit=self.unit)
 
-    def diagonal(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':
+    def diagonal(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':  # type: ignore[no-redef]
         """
         Return specified diagonals, preserving units.
 
@@ -2644,7 +2648,7 @@ class Quantity:
                                    operator.mul, operator_str="outer")
         return maybe_decimal(r)
 
-    def cross(self, b: 'Quantity', axisa: int = -1, axisb: int = -1, axisc: int = -1, axis: int = None) -> 'Quantity':
+    def cross(self, b: 'Quantity', axisa: int = -1, axisb: int = -1, axisc: int = -1, axis: int | None = None) -> 'Quantity':
         """
         Cross product of two arrays.
 
@@ -2685,7 +2689,7 @@ class Quantity:
             kwargs['axis'] = axis
         result_mantissa = get_backend(self, b).cross(self.mantissa, b.mantissa, **kwargs)
         result_unit = self.unit * b.unit
-        r = Quantity(result_mantissa, unit=result_unit)
+        r = Quantity(result_mantissa, unit=result_unit)  # type: ignore[arg-type]
         return maybe_decimal(r)
 
     def searchsorted(self, v, side: str = 'left', sorter=None) -> jax.Array:
@@ -3557,7 +3561,7 @@ class Quantity:
         """
         return Quantity(get_backend(self).expand_dims(self.mantissa, axis), unit=self.unit)
 
-    def expand_as(self, array: 'Quantity | jax.typing.ArrayLike') -> 'Quantity':
+    def expand_as(self, array: 'Quantity | ArrayLike') -> 'Quantity':
         """
         Expand an array to a shape of another array.
 
@@ -3625,7 +3629,7 @@ class Quantity:
         """
         return self.copy()
 
-    def tree_flatten(self) -> tuple[tuple[jax.typing.ArrayLike], Unit]:
+    def tree_flatten(self) -> tuple[tuple[ArrayLike], Unit]:
         """
         Tree flattens the data.
 
@@ -3646,7 +3650,7 @@ class Quantity:
         Returns:
           The Quantity object.
         """
-        return cls(*values, unit=unit)
+        return cls(*values, unit=unit)  # type: ignore[misc]
 
     def cuda(self, device=None) -> 'Quantity':
         from saiunit._jax_compat import device_put as _device_put, devices as _devices
@@ -3754,7 +3758,7 @@ class _IndexUpdateRef:
         arguments ``indices_are_sorted`` and ``unique_indices`` to be passed.
         """
         if fill_value is not None:
-            fill_value = Quantity(fill_value).in_unit(self.unit).mantissa
+            fill_value = Quantity(fill_value).in_unit(self.unit).mantissa  # type: ignore[assignment]
         return Quantity(
             self._scatter(
                 "get",
@@ -3943,7 +3947,7 @@ class _IndexUpdateRef:
 
     def apply(
         self,
-        mantissa_fun: Callable[[jax.typing.ArrayLike], jax.typing.ArrayLike],
+        mantissa_fun: Callable[[ArrayLike], ArrayLike],
         unit_fun: Callable[[Unit], Unit] | None = None,
         indices_are_sorted: bool = False,
         unique_indices: bool = False,

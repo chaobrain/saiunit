@@ -57,7 +57,7 @@ def _make_quantity(values, unit, backend_name: str) -> Quantity:
         import jax.numpy as jnp
         return Quantity(jnp.asarray(arr_np), unit=unit)
     if backend_name == "cupy":
-        import cupy as cp
+        import cupy as cp  # type: ignore[import-not-found]
         return Quantity(cp.asarray(arr_np), unit=unit)
     if backend_name == "torch":
         import torch

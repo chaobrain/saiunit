@@ -32,6 +32,7 @@ from saiunit._base_getters import (
     maybe_decimal,
     split_mantissa_unit,
 )
+from saiunit._jax_compat import ArrayLike
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
 from saiunit._sparse_base import SparseMatrix, _same_sparsity_pattern
@@ -149,7 +150,7 @@ class COO(SparseMatrix):
         self.data, self.row, self.col = map(asarray, args)
         self._rows_sorted = rows_sorted
         self._cols_sorted = cols_sorted
-        super().__init__(args, shape=shape)
+        super().__init__(args, shape=shape)  # type: ignore[arg-type]
 
     @classmethod
     def fromdense(
@@ -225,7 +226,7 @@ class COO(SparseMatrix):
         data = jnp.ones(diag_size, dtype=dtype)
         idx = jnp.arange(diag_size, dtype=index_dtype)
         zero = _const_like(idx, 0)
-        k = _const_like(idx, k)
+        k = _const_like(idx, k)  # type: ignore[assignment]
         row = lax.sub(idx, lax.cond(k >= 0, lambda: zero, lambda: k))
         col = lax.add(idx, lax.cond(k <= 0, lambda: zero, lambda: k))
         return cls(
@@ -235,7 +236,7 @@ class COO(SparseMatrix):
             cols_sorted=True
         )
 
-    def with_data(self, data: jax.Array | Quantity) -> COO:
+    def with_data(self, data: jax.Array | Quantity) -> COO:  # type: ignore[override]
         """
         Create a new COO matrix with the same sparsity structure but different data.
 
@@ -300,7 +301,7 @@ class COO(SparseMatrix):
             Array([[0., 3.],
                    [4., 0.]], dtype=float32)
         """
-        return coo_todense(self)
+        return coo_todense(self)  # type: ignore[return-value]
 
     def transpose(self, axes: Tuple[int, ...] | None = None) -> COO:
         if axes is not None:
@@ -480,7 +481,7 @@ class COO(SparseMatrix):
         return self._binary_rop(other, operator.mod)
 
     def __matmul__(
-        self, other: jax.typing.ArrayLike
+        self, other: ArrayLike
     ) -> jax.Array | Quantity:
         if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
@@ -495,15 +496,15 @@ class COO(SparseMatrix):
             **self._info._asdict()
         )
         if other.ndim == 1:
-            return coo_matvec(self_promoted, other)
+            return coo_matvec(self_promoted, other)  # type: ignore[arg-type]
         elif other.ndim == 2:
-            return coo_matmat(self_promoted, other)
+            return coo_matmat(self_promoted, other)  # type: ignore[arg-type]
         else:
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def __rmatmul__(
         self,
-        other: jax.typing.ArrayLike
+        other: ArrayLike
     ) -> jax.Array | Quantity:
         if isinstance(other, (JAXSparse, SparseMatrix)):
             raise NotImplementedError("matmul between two sparse objects.")
@@ -518,10 +519,10 @@ class COO(SparseMatrix):
             **self._info._asdict()
         )
         if other.ndim == 1:
-            return coo_matvec(self_promoted, other, transpose=True)
+            return coo_matvec(self_promoted, other, transpose=True)  # type: ignore[arg-type]
         elif other.ndim == 2:
             other = other.T
-            return coo_matmat(self_promoted, other, transpose=True).T
+            return coo_matmat(self_promoted, other, transpose=True).T  # type: ignore[arg-type]
         else:
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 

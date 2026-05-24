@@ -23,6 +23,7 @@ from jax import lax
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit.math._fun_remove_unit import _fun_remove_unit_unary, _fun_logic_binary
+from saiunit._jax_compat import ArrayLike
 
 __all__ = [
     # math funcs remove unit (unary)
@@ -39,7 +40,7 @@ __all__ = [
 # math funcs remove unit (unary)
 @set_module_as('saiunit.lax')
 def population_count(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
 ) -> jax.Array:
     r"""Elementwise popcount: count the number of set bits in each element.
 
@@ -70,7 +71,7 @@ def population_count(
 
 @set_module_as('saiunit.lax')
 def clz(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
 ) -> jax.Array:
     r"""Elementwise count of leading zeros.
 
@@ -102,8 +103,8 @@ def clz(
 # logic funcs (binary)
 @set_module_as('saiunit.lax')
 def eq(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
 ) -> Union[bool, jax.Array]:
     r"""Elementwise equals: :math:`x = y`.
 
@@ -136,8 +137,8 @@ def eq(
 
 @set_module_as('saiunit.lax')
 def ne(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
 ) -> Union[bool, jax.Array]:
     r"""Elementwise not-equals: :math:`x \neq y`.
 
@@ -170,8 +171,8 @@ def ne(
 
 @set_module_as('saiunit.lax')
 def ge(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
 ) -> Union[bool, jax.Array]:
     r"""Elementwise greater-than-or-equals: :math:`x \geq y`.
 
@@ -204,8 +205,8 @@ def ge(
 
 @set_module_as('saiunit.lax')
 def gt(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
 ) -> Union[bool, jax.Array]:
     r"""Elementwise greater-than: :math:`x > y`.
 
@@ -238,8 +239,8 @@ def gt(
 
 @set_module_as('saiunit.lax')
 def le(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
 ) -> Union[bool, jax.Array]:
     r"""Elementwise less-than-or-equals: :math:`x \leq y`.
 
@@ -272,8 +273,8 @@ def le(
 
 @set_module_as('saiunit.lax')
 def lt(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
 ) -> Union[bool, jax.Array]:
     r"""Elementwise less-than: :math:`x < y`.
 

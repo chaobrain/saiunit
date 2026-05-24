@@ -17,5 +17,5 @@ from saiunit.fft import *
 from saiunit.fft import __all__ as __all__
 
 if __name__ == '__main__':
-    fft
+    fft  # type: ignore[name-defined] # noqa: F821
     __all__

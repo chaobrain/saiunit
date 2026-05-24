@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import (Union, Optional)
 
-from saiunit._jax_compat import jax, jnp
+from saiunit._jax_compat import jax, jnp, ArrayLike
 
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
@@ -31,7 +31,7 @@ __all__ = [
 
 @set_module_as('saiunit.linalg')
 def cond(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     p=None,
     **kwargs,
 ) -> jax.Array:
@@ -100,10 +100,10 @@ def cond(
 
 @set_module_as('saiunit.linalg')
 def matrix_rank(
-    M: Union[jax.typing.ArrayLike, Quantity],
-    rtol: Optional[Union[jax.typing.ArrayLike, Quantity]] = None,
+    M: Union[ArrayLike, Quantity],
+    rtol: Optional[Union[ArrayLike, Quantity]] = None,
     *,
-    tol: jax.typing.ArrayLike | None = None,
+    tol: ArrayLike | None = None,
     **kwargs,
 ) -> jax.Array:
     """Compute the rank of a matrix.
@@ -176,7 +176,7 @@ def matrix_rank(
 
 @set_module_as('saiunit.linalg')
 def slogdet(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     *,
     method: str | None = None,
     **kwargs,

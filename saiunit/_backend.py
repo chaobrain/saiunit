@@ -187,6 +187,7 @@ def _xp_for(name: BackendName) -> ModuleType:
     cached = _XP_CACHE.get(name)
     if cached is not None:
         return cached
+    mod: ModuleType
     if name == "numpy":
         mod = _numpy_xp
     elif name == "jax":
@@ -202,21 +203,24 @@ def _xp_for(name: BackendName) -> ModuleType:
                 "cupy backend requested but cupy is not installed. "
                 "Install with: pip install saiunit[cupy]"
             )
-        import array_api_compat.cupy as mod  # noqa: F811
+        import array_api_compat.cupy as _cupy_xp
+        mod = _cupy_xp
     elif name == "torch":
         if _try_import("torch") is None:
             raise BackendError(
                 "torch backend requested but torch is not installed. "
                 "Install with: pip install saiunit[torch]"
             )
-        import array_api_compat.torch as mod  # noqa: F811
+        import array_api_compat.torch as _torch_xp
+        mod = _torch_xp
     elif name == "dask":
         if _try_import("dask.array") is None:
             raise BackendError(
                 "dask backend requested but dask is not installed. "
                 "Install with: pip install saiunit[dask]"
             )
-        import array_api_compat.dask.array as mod  # noqa: F811
+        import array_api_compat.dask.array as _dask_xp
+        mod = _dask_xp
     elif name == "ndonnx":
         ndonnx = _try_import("ndonnx")
         if ndonnx is None:
@@ -253,10 +257,12 @@ def get_backend(*arrays_or_quantities) -> ModuleType:
     has_dask = any(is_dask_array(x) for x in mantissas)
     has_ndonnx = any(is_ndonnx_array(x) for x in mantissas)
 
-    kinds = [name for name, has in
-             [("numpy", has_numpy), ("jax", has_jax),
-              ("cupy", has_cupy), ("torch", has_torch),
-              ("dask", has_dask), ("ndonnx", has_ndonnx)] if has]
+    kinds: list[BackendName] = [
+        name for name, has in  # type: ignore[misc]
+        [("numpy", has_numpy), ("jax", has_jax),
+         ("cupy", has_cupy), ("torch", has_torch),
+         ("dask", has_dask), ("ndonnx", has_ndonnx)] if has
+    ]
 
     if len(kinds) == 1:
         return _xp_for(kinds[0])

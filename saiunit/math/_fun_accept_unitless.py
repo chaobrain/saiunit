@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Union, Optional, Tuple, Any, Callable
 
-from saiunit._jax_compat import jax, jnp
+from saiunit._jax_compat import jax, jnp, ArrayLike
 
 from saiunit._backend import get_backend
 from saiunit._base_unit import Unit
@@ -87,8 +87,8 @@ def _unit_to_scale_without_quantity_message(func: Callable, x: Any) -> str:
 
 
 def _fun_accept_unitless_unary(
-    func: Callable,
-    x: jax.typing.ArrayLike | Quantity,
+    func: Callable | str,
+    x: ArrayLike | Quantity,
     *args,
     unit_to_scale: Optional[Unit] = None,
     **kwargs
@@ -100,7 +100,7 @@ def _fun_accept_unitless_unary(
     if isinstance(x, Quantity):
         if unit_to_scale is None:
             if not x.dim.is_dimensionless:
-                raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
+                raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))  # type: ignore[arg-type]
             x = x.to_decimal()
         else:
             if not isinstance(unit_to_scale, Unit):
@@ -108,18 +108,18 @@ def _fun_accept_unitless_unary(
             x = x.to_decimal(unit_to_scale)
         xp = get_backend(x)
         func = _resolve_op(func, xp)
-        return func(x, *args, **kwargs)
+        return func(x, *args, **kwargs)  # type: ignore[operator]
     else:
         if unit_to_scale is not None:
-            raise TypeError(_unit_to_scale_without_quantity_message(func, x))
+            raise TypeError(_unit_to_scale_without_quantity_message(func, x))  # type: ignore[arg-type]
         xp = get_backend(x)
         func = _resolve_op(func, xp)
-        return func(x, *args, **kwargs)
+        return func(x, *args, **kwargs)  # type: ignore[operator]
 
 
 @set_module_as('saiunit.math')
 def exprel(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     """
@@ -148,7 +148,7 @@ def exprel(
 
 @set_module_as('saiunit.math')
 def exp(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -185,7 +185,7 @@ def exp(
 
 @set_module_as('saiunit.math')
 def exp2(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -218,7 +218,7 @@ def exp2(
 
 @set_module_as('saiunit.math')
 def expm1(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -251,7 +251,7 @@ def expm1(
 
 @set_module_as('saiunit.math')
 def log(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -284,7 +284,7 @@ def log(
 
 @set_module_as('saiunit.math')
 def log10(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -317,7 +317,7 @@ def log10(
 
 @set_module_as('saiunit.math')
 def log1p(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -352,7 +352,7 @@ def log1p(
 
 @set_module_as('saiunit.math')
 def log2(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -385,7 +385,7 @@ def log2(
 
 @set_module_as('saiunit.math')
 def arccos(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -418,7 +418,7 @@ def arccos(
 
 @set_module_as('saiunit.math')
 def arccosh(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -451,7 +451,7 @@ def arccosh(
 
 @set_module_as('saiunit.math')
 def arcsin(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -484,7 +484,7 @@ def arcsin(
 
 @set_module_as('saiunit.math')
 def arcsinh(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -517,7 +517,7 @@ def arcsinh(
 
 @set_module_as('saiunit.math')
 def arctan(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -550,7 +550,7 @@ def arctan(
 
 @set_module_as('saiunit.math')
 def arctanh(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -583,7 +583,7 @@ def arctanh(
 
 @set_module_as('saiunit.math')
 def cos(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -616,7 +616,7 @@ def cos(
 
 @set_module_as('saiunit.math')
 def cosh(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -649,7 +649,7 @@ def cosh(
 
 @set_module_as('saiunit.math')
 def sin(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -682,7 +682,7 @@ def sin(
 
 @set_module_as('saiunit.math')
 def sinc(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -715,7 +715,7 @@ def sinc(
 
 @set_module_as('saiunit.math')
 def sinh(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -748,7 +748,7 @@ def sinh(
 
 @set_module_as('saiunit.math')
 def tan(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -781,7 +781,7 @@ def tan(
 
 @set_module_as('saiunit.math')
 def tanh(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -814,7 +814,7 @@ def tanh(
 
 @set_module_as('saiunit.math')
 def deg2rad(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -847,7 +847,7 @@ def deg2rad(
 
 @set_module_as('saiunit.math')
 def rad2deg(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -880,7 +880,7 @@ def rad2deg(
 
 @set_module_as('saiunit.math')
 def degrees(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -913,7 +913,7 @@ def degrees(
 
 @set_module_as('saiunit.math')
 def radians(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -946,7 +946,7 @@ def radians(
 
 @set_module_as('saiunit.math')
 def angle(
-    x: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -979,7 +979,7 @@ def angle(
 
 @set_module_as('saiunit.math')
 def frexp(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> Tuple[jax.Array, jax.Array]:
@@ -1023,9 +1023,9 @@ def frexp(
 
 
 def _fun_accept_unitless_binary(
-    func: Callable,
-    x: jax.typing.ArrayLike | Quantity,
-    y: jax.typing.ArrayLike | Quantity,
+    func: Callable | str,
+    x: ArrayLike | Quantity,
+    y: ArrayLike | Quantity,
     *args,
     unit_to_scale: Optional[Unit] = None,
     **kwargs
@@ -1038,7 +1038,7 @@ def _fun_accept_unitless_binary(
     if isinstance(x, Quantity):
         if unit_to_scale is None:
             if not x.dim.is_dimensionless:
-                raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))
+                raise TypeError(_dimensionless_required_message(func, x, arg_name='x'))  # type: ignore[arg-type]
             x = x.to_decimal()
         else:
             if not isinstance(unit_to_scale, Unit):
@@ -1047,7 +1047,7 @@ def _fun_accept_unitless_binary(
     if isinstance(y, Quantity):
         if unit_to_scale is None:
             if not y.dim.is_dimensionless:
-                raise TypeError(_dimensionless_required_message(func, y, arg_name='y'))
+                raise TypeError(_dimensionless_required_message(func, y, arg_name='y'))  # type: ignore[arg-type]
             y = y.to_decimal()
         else:
             if not isinstance(unit_to_scale, Unit):
@@ -1055,13 +1055,13 @@ def _fun_accept_unitless_binary(
             y = y.to_decimal(unit_to_scale)
     xp = get_backend(x, y)
     func = _resolve_op(func, xp)
-    return func(x, y, *args, **kwargs)
+    return func(x, y, *args, **kwargs)  # type: ignore[operator]
 
 
 @set_module_as('saiunit.math')
 def hypot(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -1098,8 +1098,8 @@ def hypot(
 
 @set_module_as('saiunit.math')
 def arctan2(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -1135,8 +1135,8 @@ def arctan2(
 
 @set_module_as('saiunit.math')
 def logaddexp(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -1173,8 +1173,8 @@ def logaddexp(
 
 @set_module_as('saiunit.math')
 def logaddexp2(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -1211,8 +1211,8 @@ def logaddexp2(
 
 @set_module_as('saiunit.math')
 def corrcoef(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity] = None,
+    x: Union[ArrayLike, Quantity],
+    y: Optional[Union[ArrayLike, Quantity]] = None,
     rowvar: bool = True,
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
@@ -1250,13 +1250,13 @@ def corrcoef(
     R : ndarray
       The correlation coefficient matrix of the variables.
     """
-    return _fun_accept_unitless_binary('corrcoef', x, y, rowvar=rowvar, unit_to_scale=unit_to_scale, **kwargs)
+    return _fun_accept_unitless_binary('corrcoef', x, y, rowvar=rowvar, unit_to_scale=unit_to_scale, **kwargs)  # type: ignore[arg-type]
 
 
 @set_module_as('saiunit.math')
 def correlate(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    v: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
+    v: Union[ArrayLike, Quantity],
     mode: str = 'valid',
     *,
     precision: Any = None,
@@ -1311,13 +1311,13 @@ def correlate(
 
 @set_module_as('saiunit.math')
 def cov(
-    m: Union[jax.typing.ArrayLike, Quantity],
-    y: Optional[Union[jax.typing.ArrayLike, Quantity]] = None,
+    m: Union[ArrayLike, Quantity],
+    y: Optional[Union[ArrayLike, Quantity]] = None,
     rowvar: bool = True,
     bias: bool = False,
     ddof: Optional[int] = None,
-    fweights: Optional[jax.typing.ArrayLike] = None,
-    aweights: Optional[jax.typing.ArrayLike] = None,
+    fweights: Optional[ArrayLike] = None,
+    aweights: Optional[ArrayLike] = None,
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -1374,7 +1374,7 @@ def cov(
       The covariance matrix of the variables.
     """
     return _fun_accept_unitless_binary(
-        'cov', m, y,
+        'cov', m, y,  # type: ignore[arg-type]
         rowvar=rowvar, bias=bias, ddof=ddof, fweights=fweights,
         aweights=aweights, unit_to_scale=unit_to_scale,
         **kwargs,
@@ -1383,10 +1383,10 @@ def cov(
 
 @set_module_as('saiunit.math')
 def ldexp(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: jax.typing.ArrayLike,
+    x: Union[Quantity, ArrayLike],
+    y: ArrayLike,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """
     Returns x * 2**y, element-wise.
 
@@ -1424,7 +1424,7 @@ def ldexp(
 
 @set_module_as('saiunit.math')
 def bitwise_not(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     """
@@ -1456,7 +1456,7 @@ def bitwise_not(
 
 @set_module_as('saiunit.math')
 def invert(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     """
@@ -1511,8 +1511,8 @@ def _fun_unitless_binary(func, x, y, *args, **kwargs):
 
 @set_module_as('saiunit.math')
 def bitwise_and(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     """
@@ -1547,8 +1547,8 @@ def bitwise_and(
 
 @set_module_as('saiunit.math')
 def bitwise_or(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     """
@@ -1583,8 +1583,8 @@ def bitwise_or(
 
 @set_module_as('saiunit.math')
 def bitwise_xor(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     """
@@ -1619,8 +1619,8 @@ def bitwise_xor(
 
 @set_module_as('saiunit.math')
 def left_shift(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     """
@@ -1654,8 +1654,8 @@ def left_shift(
 
 @set_module_as('saiunit.math')
 def right_shift(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     """

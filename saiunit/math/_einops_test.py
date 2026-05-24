@@ -22,6 +22,7 @@ import saiunit as u
 from saiunit._base_getters import assert_quantity
 from saiunit.math._einops import einrearrange, einreduce, einrepeat, _enumerate_directions
 from saiunit.math._einops_parsing import EinopsError
+from saiunit._jax_compat import ArrayLike
 
 
 class Array(u.CustomArray):
@@ -575,7 +576,7 @@ class TestEinopsWithArrayCustomArray:
 
         # Test with dimensionless array
         result_dimensionless = einrearrange(self.dimensionless_array, "h w -> (h w)")
-        assert isinstance(result_dimensionless, jax.typing.ArrayLike)
+        assert isinstance(result_dimensionless, ArrayLike)
         expected_dimensionless = jnp.array([1.0, 2.0, 3.0, 4.0])
         assert jnp.allclose(result_dimensionless, expected_dimensionless)
 

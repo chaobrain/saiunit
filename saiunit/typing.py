@@ -90,13 +90,14 @@ from __future__ import annotations
 
 import functools
 import inspect
-from typing import Annotated, Any, Union, get_type_hints, get_origin
+from typing import TYPE_CHECKING, Annotated, Any, Union, get_type_hints, get_origin
 
 import numpy as np
 
 from ._jax_compat import Array as _JaxArray
+from ._jax_compat import ArrayLike, ScalarOrArrayLike
 
-from ._base_dimension import UnitMismatchError, DimensionMismatchError
+from ._base_dimension import Dimension, UnitMismatchError, DimensionMismatchError
 from ._base_dimension import get_or_create_dimension
 from ._base_quantity import Quantity
 from ._base_unit import Unit
@@ -107,6 +108,8 @@ __all__ = [
     'is_physical_type',
 
     # Core type aliases
+    'ArrayLike',
+    'ScalarOrArrayLike',
     'QuantityLike',
     'UnitLike',
     'DimensionLike',
@@ -410,35 +413,72 @@ DimensionLike = Union["Dimension", str]
 # ---------------------------------------------------------------------------
 # Pre-built physical-type aliases
 # ---------------------------------------------------------------------------
+#
+# At runtime, ``Quantity['length']`` returns a metaclass-backed class that
+# supports ``isinstance`` checks. Static type checkers (mypy/pyright) don't
+# know about ``Quantity.__class_getitem__`` and would otherwise emit
+# ``Quantity expects no type arguments`` and ``Name "length" is not defined``
+# for every alias below. To keep both worlds happy, ``TYPE_CHECKING`` exposes
+# plain ``Quantity`` aliases (acceptable in any annotation context), while
+# the runtime branch keeps the metaclass-backed types needed by ``isinstance``
+# and ``validate_units``.
 
-# Eager module-level aliases for common physical types.
 HAS_UNIT = Quantity
-DIMENSIONLESS_TYPE = Quantity['dimensionless']
-LENGTH = Quantity['length']
-MASS = Quantity['mass']
-TIME = Quantity['time']
-CURRENT = Quantity['current']
-TEMPERATURE = Quantity['temperature']
-SUBSTANCE = Quantity['substance']
-LUMINOSITY = Quantity['luminosity']
-FREQUENCY = Quantity['frequency']
-FORCE = Quantity['force']
-ENERGY = Quantity['energy']
-POWER = Quantity['power']
-PRESSURE = Quantity['pressure']
-CHARGE = Quantity['charge']
-VOLTAGE = Quantity['voltage']
-RESISTANCE = Quantity['resistance']
-CAPACITANCE = Quantity['capacitance']
-CONDUCTANCE = Quantity['conductance']
-MAGNETIC_FLUX = Quantity['magnetic flux']
-MAGNETIC_FIELD = Quantity['magnetic field']
-INDUCTANCE = Quantity['inductance']
-SPEED = Quantity['speed']
-ACCELERATION = Quantity['acceleration']
-AREA = Quantity['area']
-VOLUME = Quantity['volume']
-DENSITY = Quantity['density']
+
+if TYPE_CHECKING:
+    DIMENSIONLESS_TYPE = Quantity
+    LENGTH = Quantity
+    MASS = Quantity
+    TIME = Quantity
+    CURRENT = Quantity
+    TEMPERATURE = Quantity
+    SUBSTANCE = Quantity
+    LUMINOSITY = Quantity
+    FREQUENCY = Quantity
+    FORCE = Quantity
+    ENERGY = Quantity
+    POWER = Quantity
+    PRESSURE = Quantity
+    CHARGE = Quantity
+    VOLTAGE = Quantity
+    RESISTANCE = Quantity
+    CAPACITANCE = Quantity
+    CONDUCTANCE = Quantity
+    MAGNETIC_FLUX = Quantity
+    MAGNETIC_FIELD = Quantity
+    INDUCTANCE = Quantity
+    SPEED = Quantity
+    ACCELERATION = Quantity
+    AREA = Quantity
+    VOLUME = Quantity
+    DENSITY = Quantity
+else:
+    DIMENSIONLESS_TYPE = Quantity['dimensionless']
+    LENGTH = Quantity['length']
+    MASS = Quantity['mass']
+    TIME = Quantity['time']
+    CURRENT = Quantity['current']
+    TEMPERATURE = Quantity['temperature']
+    SUBSTANCE = Quantity['substance']
+    LUMINOSITY = Quantity['luminosity']
+    FREQUENCY = Quantity['frequency']
+    FORCE = Quantity['force']
+    ENERGY = Quantity['energy']
+    POWER = Quantity['power']
+    PRESSURE = Quantity['pressure']
+    CHARGE = Quantity['charge']
+    VOLTAGE = Quantity['voltage']
+    RESISTANCE = Quantity['resistance']
+    CAPACITANCE = Quantity['capacitance']
+    CONDUCTANCE = Quantity['conductance']
+    MAGNETIC_FLUX = Quantity['magnetic flux']
+    MAGNETIC_FIELD = Quantity['magnetic field']
+    INDUCTANCE = Quantity['inductance']
+    SPEED = Quantity['speed']
+    ACCELERATION = Quantity['acceleration']
+    AREA = Quantity['area']
+    VOLUME = Quantity['volume']
+    DENSITY = Quantity['density']
 
 
 # ---------------------------------------------------------------------------
@@ -577,7 +617,7 @@ def _extract_unit_metadata(hint) -> tuple[str, Any] | None:
 
     # Check for _AnnotatedQuantityMeta (new-style Quantity[...])
     if isinstance(hint, _AnnotatedQuantityMeta):
-        meta = hint._metadata
+        meta = hint._metadata  # type: ignore[attr-defined]
         if isinstance(meta, Unit):
             return ("unit", meta)
         if is_physical_type(meta):
