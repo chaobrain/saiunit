@@ -52,6 +52,9 @@ _UNSUPPORTED = {
     ("dask", "cross"): "array_api_compat.dask.array exposes no cross",
     ("dask", "cond"): "array_api_compat.dask.array exposes no linalg.cond",
     ("dask", "slogdet"): "array_api_compat.dask.array.linalg exposes no slogdet",
+    # dask: inv/solve route through dask.array.linalg.lu, which imports scipy.linalg
+    ("dask", "inv"): "dask.array.linalg.inv requires scipy (not in pure-dask env)",
+    ("dask", "solve"): "dask.array.linalg.solve requires scipy (not in pure-dask env)",
     # ndonnx: matmul is the only linalg op currently dispatchable through saiunit
     ("ndonnx", "norm"): "ndonnx exposes no linalg.norm",
     ("ndonnx", "vector_norm"): "ndonnx exposes no linalg.vector_norm",
