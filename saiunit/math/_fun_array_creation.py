@@ -20,7 +20,7 @@ from typing import (Union, Optional, List, Any, Tuple)
 from saiunit._jax_compat import jax, jnp, tree as _tree, Array, ArrayLike
 import numpy as np
 
-from saiunit._backend import get_backend, get_default_backend
+from saiunit._backend import get_backend, get_default_backend, _xp_for
 from saiunit._base_dimension import UnitMismatchError
 from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import fail_for_unit_mismatch, get_unit, unit_scale_align_to_first
@@ -31,8 +31,20 @@ import array_api_compat.numpy as _numpy_xp
 
 
 def _default_xp():
-    """Return the backend namespace selected by the current default."""
-    return _numpy_xp if get_default_backend() == "numpy" else jnp
+    """Return the backend namespace selected by the current default backend.
+
+    When no default is set, prefer JAX if installed (preserves legacy
+    behaviour where ``jnp`` was the fallback), otherwise NumPy. If the
+    configured default backend isn't importable — e.g. CI runs that test
+    individual backends in isolation without JAX — fall back to NumPy.
+    """
+    name = get_default_backend()
+    if name is None:
+        return jnp if jnp is not None else _numpy_xp
+    try:
+        return _xp_for(name)
+    except Exception:
+        return _numpy_xp
 
 Shape = Union[int, Sequence[int]]
 
@@ -885,7 +897,13 @@ def asarray(
 
     # reconstruct mantissa
     a = treedef.unflatten([leaf.mantissa for leaf in leaves])  # type: ignore[attr-defined]
-    a = _default_xp().asarray(a, dtype=dtype, order=order)
+    xp = _default_xp()
+    # ``order`` is a numpy/jax-only kwarg; torch / dask / ndonnx ``asarray``
+    # reject it. Only forward when explicitly provided.
+    extra = {}
+    if order is not None:
+        extra["order"] = order
+    a = xp.asarray(a, dtype=dtype, **extra)
 
     # returns
     if unit.is_unitless:

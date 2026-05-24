@@ -366,7 +366,7 @@ def svd(
             raise TypeError('"algorithm" is not supported when "hermitian=True".')
         mantissa = x.mantissa if isinstance(x, Quantity) else x
         xp = get_backend(mantissa)
-        svd_kwargs = dict(
+        svd_kwargs: dict = dict(
             full_matrices=full_matrices,
             compute_uv=compute_uv,
             hermitian=hermitian,

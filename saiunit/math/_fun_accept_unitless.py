@@ -58,7 +58,7 @@ def _quantity_summary(x: Quantity) -> str:
     return f"Quantity(unit={x.unit}, dim={x.dim})"
 
 
-def _dimensionless_required_message(func: Callable, x: Quantity, arg_name: str = 'x') -> str:
+def _dimensionless_required_message(func: Union[Callable, str], x: Quantity, arg_name: str = 'x') -> str:
     name = _func_name(func)
     summary = _quantity_summary(x)
     return (

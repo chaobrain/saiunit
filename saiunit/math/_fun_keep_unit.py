@@ -688,15 +688,27 @@ def vsplit(
 
 
 def _broadcast_fun(func, *args, **kwargs):
+    # ``asarray`` returns a ``Quantity`` for unit-bearing inputs. We must strip
+    # each input's unit before calling the backend op — passing a ``Quantity``
+    # to e.g. ``numpy.broadcast_arrays`` triggers ``__array__`` and raises for
+    # any non-dimensionless input. Each input keeps its own unit on the way
+    # out (operations like ``broadcast_arrays`` / ``promote_dtypes`` reshape
+    # or retype values but do not change their physical meaning).
     args = [asarray(x) for x in args]
-    args, treedef = tree.flatten(args)
-    xp = get_backend(*args)
+    units = [a.unit if isinstance(a, Quantity) else UNITLESS for a in args]
+    mantissas = [a.mantissa if isinstance(a, Quantity) else a for a in args]
+    xp = get_backend(*mantissas)
     func = _resolve_op(func, xp)
-    r = func(*args, **kwargs)
-    r = treedef.unflatten([r] if not isinstance(r, (list, tuple)) else r)
-    if len(r) == 1:
-        return r[0]
-    return r
+    r = func(*mantissas, **kwargs)
+    if isinstance(r, (list, tuple)):
+        # Pair each output with its corresponding input unit when shapes match.
+        if len(r) == len(units):
+            results = [x if u.is_unitless else Quantity(x, unit=u) for x, u in zip(r, units)]
+        else:
+            results = list(r)
+        return type(r)(results) if isinstance(r, tuple) else results
+    # Scalar result: take the first input's unit.
+    return r if units[0].is_unitless else Quantity(r, unit=units[0])
 
 
 # more
@@ -1677,7 +1689,7 @@ def remove_diag(x: ArrayLike | Quantity, **kwargs) -> jax.Array | Quantity:
     mask = ~xp.eye(x.shape[0], x.shape[1], dtype=bool)
     x = xp.reshape(x[mask], (x.shape[0], x.shape[1] - 1), **kwargs)  # type: ignore[index]
     if unit.is_unitless:
-        return x
+        return x  # type: ignore[return-value]
     return Quantity(x, unit=unit)
 
 
@@ -4153,7 +4165,7 @@ def compress(
         xp = get_backend(a)
         mantissa = a
     # ``size`` and ``fill_value`` are JAX-only; pass only on JAX or when set.
-    extra = {}
+    extra: dict = {}
     if xp is jnp:
         extra['size'] = size
         extra['fill_value'] = fill_value
@@ -4227,7 +4239,7 @@ def extract(
         xp = get_backend(arr)
         mantissa = arr
     # ``size`` and ``fill_value`` are JAX-only; pass only on JAX or when set.
-    extra = {}
+    extra: dict = {}
     if xp is jnp:
         extra['size'] = size
         extra['fill_value'] = fill_value
@@ -4369,13 +4381,13 @@ def select(
                 f'Strip units from all condition arrays before passing them to select.'
             )
     # Inline dispatch so we can route ``select`` to the active backend.
-    choicelist = maybe_custom_array_tree(list(choicelist))
+    choicelist = maybe_custom_array_tree(list(choicelist))  # type: ignore[arg-type]
     leaves, treedef = tree.flatten(choicelist, is_leaf=lambda x: isinstance(x, Quantity))
     leaves = unit_scale_align_to_first(*leaves)
     unit = leaves[0].unit
     mantissas = [x.mantissa for x in leaves]
     xp = get_backend(*mantissas)
-    new_choicelist = treedef.unflatten(mantissas)
+    new_choicelist = treedef.unflatten(mantissas)  # type: ignore[attr-defined]
     r = _resolve_op('select', xp)(condlist, new_choicelist, default=default, **kwargs)
     if unit.is_unitless:
         return r
