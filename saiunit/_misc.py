@@ -117,7 +117,10 @@ def maybe_custom_array_tree(x):
 
     Traverses a JAX-compatible pytree and replaces every
     :class:`~saiunit.CustomArray` leaf with its ``.data`` attribute using
-    :func:`jax.tree.map`. Non-CustomArray leaves are left unchanged.
+    the backend-agnostic ``tree`` namespace from :mod:`saiunit._jax_compat`
+    (which routes to :func:`jax.tree.map` when JAX is installed, and falls
+    back to a built-in container walker otherwise). Non-CustomArray leaves
+    are left unchanged.
 
     Parameters
     ----------

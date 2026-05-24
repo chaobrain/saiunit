@@ -59,7 +59,7 @@ def _quantity_summary(x: Quantity) -> str:
     return f"Quantity(unit={x.unit}, dim={x.dim})"
 
 
-def _dimensionless_required_message(func: Callable, x: Quantity, arg_name: str = 'x') -> str:
+def _dimensionless_required_message(func: Union[Callable, str], x: Quantity, arg_name: str = 'x') -> str:
     name = _func_name(func)
     summary = _quantity_summary(x)
     return (
@@ -1414,9 +1414,10 @@ def ldexp(
     x, y = maybe_custom_array_tree((x, y))
     if isinstance(x, Quantity):
         if not x.dim.is_dimensionless:
-            raise TypeError(_dimensionless_required_message(jnp.ldexp, x, arg_name='x'))
+            raise TypeError(_dimensionless_required_message('ldexp', x, arg_name='x'))
         x = x.mantissa
-    return jnp.ldexp(x, y, **kwargs)
+    xp = get_backend(x, y)
+    return _resolve_op('ldexp', xp)(x, y, **kwargs)
 
 
 # Elementwise bit operations (unary)

@@ -17,13 +17,8 @@ from __future__ import annotations
 
 from typing import Union, Sequence
 
-from saiunit._jax_compat import HAS_JAX, jax
+from saiunit._jax_compat import jax
 from saiunit._typing import ArrayLike
-
-if HAS_JAX:
-    from jax.numpy import fft as jnpfft
-else:
-    import numpy.fft as jnpfft  # type: ignore[no-redef]
 
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as

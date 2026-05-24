@@ -17,11 +17,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import (Union, Optional, List, Any, Tuple)
 
-from saiunit._jax_compat import jax, jnp
+from saiunit._jax_compat import jax, jnp, tree as _tree
 from saiunit._typing import Array, ArrayLike, DTypeLike
 import numpy as np
 
-from saiunit._backend import get_backend, get_default_backend
+from saiunit._backend import get_backend, get_default_backend, _xp_for
 from saiunit._base_dimension import UnitMismatchError
 from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import fail_for_unit_mismatch, get_unit, unit_scale_align_to_first
@@ -32,8 +32,20 @@ import array_api_compat.numpy as _numpy_xp
 
 
 def _default_xp():
-    """Return the backend namespace selected by the current default."""
-    return _numpy_xp if get_default_backend() == "numpy" else jnp
+    """Return the backend namespace selected by the current default backend.
+
+    When no default is set, prefer JAX if installed (preserves legacy
+    behaviour where ``jnp`` was the fallback), otherwise NumPy. If the
+    configured default backend isn't importable — e.g. CI runs that test
+    individual backends in isolation without JAX — fall back to NumPy.
+    """
+    name = get_default_backend()
+    if name is None:
+        return jnp if jnp is not None else _numpy_xp
+    try:
+        return _xp_for(name)
+    except Exception:
+        return _numpy_xp
 
 Shape = Union[int, Sequence[int]]
 
@@ -872,7 +884,7 @@ def asarray(
         )
 
     # get leaves
-    leaves, treedef = jax.tree.flatten(a, is_leaf=lambda x: isinstance(x, Quantity))
+    leaves, treedef = _tree.flatten(a, is_leaf=lambda x: isinstance(x, Quantity))
     leaves = unit_scale_align_to_first(*leaves)
     leaf_unit = leaves[0].unit
 
@@ -886,7 +898,13 @@ def asarray(
 
     # reconstruct mantissa
     a = treedef.unflatten([leaf.mantissa for leaf in leaves])  # type: ignore[attr-defined]
-    a = _default_xp().asarray(a, dtype=dtype, order=order)
+    xp = _default_xp()
+    # ``order`` is a numpy/jax-only kwarg; torch / dask / ndonnx ``asarray``
+    # reject it. Only forward when explicitly provided.
+    extra = {}
+    if order is not None:
+        extra["order"] = order
+    a = xp.asarray(a, dtype=dtype, **extra)
 
     # returns
     if unit.is_unitless:
@@ -1233,9 +1251,18 @@ def meshgrid(
         args[0], args[1] = args[1], args[0]
     shape = [1 if sparse else a.shape[0] for a in args]
     f_shape = lambda i, a: [*shape[:i], a.shape[0], *shape[i + 1:]] if sparse else shape
-    # use jax.tree.map to compatible with Quantity
+
+    def _broadcast_in_dim(x, target_shape, i):
+        xp = get_backend(x)
+        reshape_shape = [1] * len(args)
+        reshape_shape[i] = x.shape[0]
+        return xp.broadcast_to(xp.reshape(x, reshape_shape), target_shape)
+
+    # use ``_tree.map`` to be Quantity-aware (Quantity is a registered pytree
+    # when JAX is installed; the fallback ``_tree`` only descends standard
+    # containers so plain arrays are passed straight through).
     output = [
-        jax.tree.map(lambda x: jax.lax.broadcast_in_dim(x, f_shape(i, x), (i,)), a)
+        _tree.map(lambda x: _broadcast_in_dim(x, f_shape(i, x), i), a)
         for i, a, in enumerate(args)
     ]
     if indexing == "xy" and len(args) >= 2:
@@ -1490,7 +1517,7 @@ def tree_zeros_like(tree):
         {'a': Array([0., 0.], dtype=float32), 'b': Array([0.], dtype=float32)}
     """
     tree = maybe_custom_array_tree(tree)
-    return jax.tree.map(zeros_like, tree)
+    return _tree.map(zeros_like, tree)
 
 
 @set_module_as('saiunit.math')
@@ -1522,4 +1549,4 @@ def tree_ones_like(tree):
         {'a': Array([1., 1.], dtype=float32), 'b': Array([1.], dtype=float32)}
     """
     tree = maybe_custom_array_tree(tree)
-    return jax.tree.map(ones_like, tree)
+    return _tree.map(ones_like, tree)

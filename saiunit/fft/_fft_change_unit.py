@@ -20,14 +20,8 @@ from saiunit._jax_compat import HAS_JAX, jax, jnp
 from saiunit._typing import ArrayLike, DTypeLike, Shape
 import numpy as np
 
-if HAS_JAX:
-    from jax.numpy import fft as jnpfft
-    from jaxlib import xla_client
-else:
-    import numpy.fft as jnpfft  # type: ignore[no-redef]
-    xla_client = None  # type: ignore[assignment]
-
 from saiunit import _unit_common as uc
+from saiunit._backend import get_backend
 from saiunit._base_dimension import get_or_create_dimension
 from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
@@ -57,6 +51,18 @@ def unit_change(
         return set_module_as('saiunit.fft')(func)
 
     return actual_decorator
+
+
+def _fftfreq_extra_kwargs(xp, dtype):
+    """Forward ``dtype`` to ``xp.fft.fftfreq`` only when the backend supports it.
+
+    ``numpy.fft.fftfreq`` accepts ``dtype``; some other backends do not.
+    Always pass it when set; let the call site surface a backend error if the
+    backend genuinely lacks support.
+    """
+    if dtype is None:
+        return {}
+    return {"dtype": dtype}
 
 
 # return original unit * time unit
@@ -785,7 +791,6 @@ def fftfreq(
     d: Union[Quantity, ArrayLike] = 1.0,  # type: ignore[assignment]
     *,
     dtype: DTypeLike | None = None,
-    device: xla_client.Device | jax.sharding.Sharding | None = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:
     """Return sample frequencies for the discrete Fourier transform.
@@ -802,10 +807,6 @@ def fftfreq(
         Sample spacing.  If a :class:`~saiunit.Quantity` with a time
         unit is given, the output will carry the matching frequency
         unit (e.g. ``second`` -> ``hertz``).
-    dtype : dtype, optional
-        Desired data-type for the output.
-    device : Device or Sharding, optional
-        Device on which to place the output.
 
     Returns
     -------
@@ -836,8 +837,13 @@ def fftfreq(
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
                                     scale=freq_unit_scale, )
-        return Quantity(jnpfft.fftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device, **kwargs), unit=freq_unit)
-    return jnpfft.fftfreq(n, d, dtype=dtype, device=device, **kwargs)
+        d_value = d.to_decimal(time_unit)
+        xp = get_backend(d_value)
+        extra = _fftfreq_extra_kwargs(xp, dtype)
+        return Quantity(xp.fft.fftfreq(n, d=d_value, **extra, **kwargs), unit=freq_unit)
+    xp = get_backend(d)
+    extra = _fftfreq_extra_kwargs(xp, dtype)
+    return xp.fft.fftfreq(n, d=d, **extra, **kwargs)
 
 
 @set_module_as('saiunit.fft')
@@ -846,7 +852,6 @@ def rfftfreq(
     d: Union[Quantity, ArrayLike] = 1.0,  # type: ignore[assignment]
     *,
     dtype: DTypeLike | None = None,
-    device: xla_client.Device | jax.sharding.Sharding | None = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:
     """Return sample frequencies for the real discrete Fourier transform.
@@ -862,10 +867,6 @@ def rfftfreq(
         Sample spacing.  If a :class:`~saiunit.Quantity` with a time
         unit is given, the output will carry the matching frequency
         unit.
-    dtype : dtype, optional
-        Desired data-type for the output.
-    device : Device or Sharding, optional
-        Device on which to place the output.
 
     Returns
     -------
@@ -896,5 +897,10 @@ def rfftfreq(
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
                                     scale=freq_unit_scale, )
-        return Quantity(jnpfft.rfftfreq(n, d.to_decimal(time_unit), dtype=dtype, device=device, **kwargs), unit=freq_unit)
-    return jnpfft.rfftfreq(n, d, dtype=dtype, device=device, **kwargs)
+        d_value = d.to_decimal(time_unit)
+        xp = get_backend(d_value)
+        extra = _fftfreq_extra_kwargs(xp, dtype)
+        return Quantity(xp.fft.rfftfreq(n, d=d_value, **extra, **kwargs), unit=freq_unit)
+    xp = get_backend(d)
+    extra = _fftfreq_extra_kwargs(xp, dtype)
+    return xp.fft.rfftfreq(n, d=d, **extra, **kwargs)

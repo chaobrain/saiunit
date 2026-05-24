@@ -20,6 +20,7 @@ from typing import Union
 from saiunit._jax_compat import HAS_JAX, jax, jnp, require_jax
 from saiunit._typing import Array, ArrayLike
 
+from saiunit._backend import get_backend
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
@@ -288,19 +289,15 @@ def qr(
         meter
     """
     a = maybe_custom_array(a)
-    if isinstance(a, Quantity):
-        result = jnp.linalg.qr(a.mantissa, mode=mode, **kwargs)
-        if mode == "r":
-            return maybe_decimal(Quantity(result, unit=a.unit))
-        else:
-            Q, R = result
-            return Q, maybe_decimal(Quantity(R, unit=a.unit))  # type: ignore[return-value]
-    else:
-        result = jnp.linalg.qr(a, mode=mode, **kwargs)
-        if mode == "r":
-            return result  # type: ignore[return-value]
-        else:
-            return result  # type: ignore[return-value]
+    mantissa = a.mantissa if isinstance(a, Quantity) else a
+    xp = get_backend(mantissa)
+    result = xp.linalg.qr(mantissa, mode=mode, **kwargs)
+    if not isinstance(a, Quantity):
+        return result  # type: ignore[return-value]
+    if mode == "r":
+        return maybe_decimal(Quantity(result, unit=a.unit))
+    Q, R = result
+    return Q, maybe_decimal(Quantity(R, unit=a.unit))  # type: ignore[return-value]
 
 
 @set_module_as('saiunit.linalg')
@@ -368,34 +365,26 @@ def svd(
     if hermitian:
         if algorithm is not None:
             raise TypeError('"algorithm" is not supported when "hermitian=True".')
-        if isinstance(x, Quantity):
-            if compute_uv:
-                u, s, vh = jnp.linalg.svd(
-                    x.mantissa,
-                    full_matrices=full_matrices,
-                    compute_uv=compute_uv,
-                    hermitian=hermitian,
-                    subset_by_index=subset_by_index,
-                    **kwargs,
-                )
-                return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
-            s = jnp.linalg.svd(
-                x.mantissa,
-                full_matrices=full_matrices,
-                compute_uv=compute_uv,
-                hermitian=hermitian,
-                subset_by_index=subset_by_index,
-                **kwargs,
-            )
-            return maybe_decimal(Quantity(s, unit=x.unit))
-        return jnp.linalg.svd(
-            x,
+        mantissa = x.mantissa if isinstance(x, Quantity) else x
+        xp = get_backend(mantissa)
+        svd_kwargs: dict = dict(
             full_matrices=full_matrices,
             compute_uv=compute_uv,
             hermitian=hermitian,
-            subset_by_index=subset_by_index,
-            **kwargs,
         )
+        if xp is jnp and subset_by_index is not None:
+            svd_kwargs['subset_by_index'] = subset_by_index
+        elif subset_by_index is not None:
+            raise TypeError(
+                '"subset_by_index" is only supported on the jax backend.'
+            )
+        result = xp.linalg.svd(mantissa, **svd_kwargs, **kwargs)
+        if not isinstance(x, Quantity):
+            return result
+        if compute_uv:
+            u, s, vh = result
+            return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
+        return maybe_decimal(Quantity(result, unit=x.unit))
 
     return _lax_linalg().svd(
         x,
