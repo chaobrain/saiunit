@@ -22,6 +22,7 @@ import jax.numpy as jnp
 from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
+from saiunit._jax_compat import ArrayLike
 
 Shape = Union[int, Sequence[int]]
 
@@ -38,7 +39,7 @@ __all__ = [
 # array creation (given array)
 @set_module_as('saiunit.lax')
 def zeros_like_array(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit: Optional[Unit] = None,
     **kwargs,
 ) -> Union[Quantity, jax.Array]:
@@ -84,7 +85,7 @@ def zeros_like_array(
         if unit is not None:
             if not isinstance(unit, Unit):
                 raise TypeError('unit must be an instance of Unit.')
-            return jnp.zeros_like(x, **kwargs) * unit
+            return jnp.zeros_like(x, **kwargs) * unit  # type: ignore[return-value]
         else:
             return jnp.zeros_like(x, **kwargs)
 
@@ -130,7 +131,7 @@ def iota(
     if unit is not None:
         if not isinstance(unit, Unit):
             raise TypeError('unit must be an instance of Unit.')
-        return lax.iota(dtype, size, **kwargs) * unit
+        return lax.iota(dtype, size, **kwargs) * unit  # type: ignore[return-value]
     else:
         return lax.iota(dtype, size, **kwargs)
 
@@ -181,11 +182,11 @@ def broadcasted_iota(
         if not isinstance(unit, Unit):
             raise TypeError('unit must be an instance of Unit.')
         try:
-            return lax.broadcasted_iota(dtype, shape, dimension, _sharding, **kwargs) * unit
+            return lax.broadcasted_iota(dtype, shape, dimension, _sharding, **kwargs) * unit  # type: ignore[arg-type,misc,return-value]
         except TypeError:
-            return lax.broadcasted_iota(dtype, shape, dimension, **kwargs) * unit
+            return lax.broadcasted_iota(dtype, shape, dimension, **kwargs) * unit  # type: ignore[arg-type,return-value]
     else:
         try:
-            return lax.broadcasted_iota(dtype, shape, dimension, _sharding, **kwargs)
+            return lax.broadcasted_iota(dtype, shape, dimension, _sharding, **kwargs)  # type: ignore[arg-type,misc]
         except TypeError:
-            return lax.broadcasted_iota(dtype, shape, dimension, **kwargs)
+            return lax.broadcasted_iota(dtype, shape, dimension, **kwargs)  # type: ignore[arg-type]

@@ -15,7 +15,7 @@
 
 import unittest
 
-import brainstate
+import brainstate  # type: ignore[import-untyped]
 import jax
 import jax.numpy as jnp
 import numpy as np

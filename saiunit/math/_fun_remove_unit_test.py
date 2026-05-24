@@ -16,7 +16,7 @@
 
 import unittest
 
-import brainstate as bst
+import brainstate as bst  # type: ignore[import-untyped]
 import jax.numpy as jnp
 import pytest
 from absl.testing import parameterized

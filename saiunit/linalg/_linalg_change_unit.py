@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Union
 
-from saiunit._jax_compat import jax, jnp
+from saiunit._jax_compat import jax, jnp, ArrayLike
 
 from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import maybe_decimal
@@ -51,7 +51,7 @@ __all__ = [
 @unit_change(lambda x: x ** 0.5)
 @set_module_as('saiunit.linalg')
 def cholesky(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     *,
     upper: bool = False,
     symmetrize_input: bool = True,
@@ -122,10 +122,10 @@ def cholesky(
 @unit_change(lambda x, y: y / x)
 @set_module_as('saiunit.linalg')
 def solve(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    b: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
+    b: Union[ArrayLike, Quantity],
     **kwargs,
-) -> Union[jax.typing.ArrayLike, Quantity]:
+) -> Union[ArrayLike, Quantity]:
     """
     Solve a linear system of equations.
 
@@ -186,11 +186,11 @@ def solve(
 @unit_change(lambda x, y: y / x)
 @set_module_as('saiunit.linalg')
 def tensorsolve(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    b: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
+    b: Union[ArrayLike, Quantity],
     axes: tuple[int, ...] | None = None,
     **kwargs,
-) -> Union[jax.typing.ArrayLike, Quantity]:
+) -> Union[ArrayLike, Quantity]:
     """
     Solve the tensor equation ``a x = b`` for ``x``.
 
@@ -247,13 +247,13 @@ def tensorsolve(
 @unit_change(lambda x, y: y / x)
 @set_module_as('saiunit.linalg')
 def lstsq(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    b: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
+    b: Union[ArrayLike, Quantity],
     rcond: float | None = None,
     *,
     numpy_resid: bool = False,
     **kwargs,
-) -> tuple[Union[jax.typing.ArrayLike, Quantity], jax.Array, jax.Array, jax.Array]:
+) -> tuple[Union[ArrayLike, Quantity], jax.Array, jax.Array, jax.Array]:
     """
     Return the least-squares solution to a linear equation.
 
@@ -314,7 +314,7 @@ def lstsq(
         r = jnp.linalg.lstsq(a.mantissa, b.mantissa, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
         return maybe_decimal(Quantity(r[0], unit=b.unit / a.unit)), r[1], r[2], r[3]
     elif isinstance(a, Quantity):
-        r = jnp.linalg.lstsq(a.mantissa, b, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
+        r = jnp.linalg.lstsq(a.mantissa, b, rcond=rcond, numpy_resid=numpy_resid, **kwargs)  # type: ignore[arg-type]
         return maybe_decimal(Quantity(r[0], unit=UNITLESS / a.unit)), r[1], r[2], r[3]
     elif isinstance(b, Quantity):
         r = jnp.linalg.lstsq(a, b.mantissa, rcond=rcond, numpy_resid=numpy_resid, **kwargs)
@@ -326,9 +326,9 @@ def lstsq(
 @unit_change(lambda u: u ** -1)
 @set_module_as('saiunit.linalg')
 def inv(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     **kwargs,
-) -> Union[jax.typing.ArrayLike, Quantity]:
+) -> Union[ArrayLike, Quantity]:
     """
     Return the inverse of a square matrix.
 
@@ -381,13 +381,13 @@ def inv(
 @unit_change(lambda u: u ** -1)
 @set_module_as('saiunit.linalg')
 def pinv(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    rtol: jax.typing.ArrayLike | None = None,
+    a: Union[ArrayLike, Quantity],
+    rtol: ArrayLike | None = None,
     hermitian: bool = False,
     *,
-    rcond: jax.typing.ArrayLike | None = None,
+    rcond: ArrayLike | None = None,
     **kwargs,
-) -> Union[jax.typing.ArrayLike, Quantity]:
+) -> Union[ArrayLike, Quantity]:
     """
     Compute the Moore-Penrose pseudo-inverse of a matrix.
 
@@ -448,10 +448,10 @@ def pinv(
 @unit_change(lambda u: u ** -1)
 @set_module_as('saiunit.linalg')
 def tensorinv(
-    a: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
     ind: int = 2,
     **kwargs,
-) -> Union[jax.typing.ArrayLike, Quantity]:
+) -> Union[ArrayLike, Quantity]:
     """
     Compute the tensor inverse of an array.
 

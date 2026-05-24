@@ -44,7 +44,7 @@ if HAS_JAX:
     from jax.extend import linear_util
 
     if jax.__version_info__ < (0, 4, 38):
-        from jax.core import Primitive
+        from jax.core import Primitive  # type: ignore[attr-defined]
     else:
         from jax.extend.core import Primitive
 
@@ -78,7 +78,7 @@ if HAS_JAX:
 
 
     if jax.__version_info__ < (0, 6, 0):
-        from jax.util import safe_map, unzip2
+        from jax.util import safe_map, unzip2  # type: ignore[import-not-found]
 
     else:
 
@@ -119,7 +119,7 @@ else:
     def concrete_or_error(typ, val, context=""):  # type: ignore[no-redef]
         require_jax("concrete_or_error")
 
-    def wrap_init(fun, args, kwargs, name):  # type: ignore[no-redef]
+    def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):  # type: ignore[no-redef]
         require_jax("wrap_init")
 
     def safe_map(f, *args):  # type: ignore[no-redef]

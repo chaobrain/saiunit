@@ -22,9 +22,9 @@ import operator
 from collections import OrderedDict
 from typing import Set, Tuple, List, Dict, Union, Callable, Optional, Sequence, TypeVar
 
-from saiunit._jax_compat import jax, jnp, ArrayLike as _ArrayLike
+from saiunit._jax_compat import jax, jnp, ArrayLike
 import numpy as np
-import opt_einsum
+import opt_einsum  # type: ignore[import-untyped]
 
 from saiunit._base_unit import UNITLESS
 from saiunit._base_quantity import Quantity
@@ -45,7 +45,7 @@ __all__ = [
     'einsum',
 ]
 
-ReductionCallable = Callable[[_ArrayLike, Tuple[int, ...]], _ArrayLike]
+ReductionCallable = Callable[[ArrayLike, Tuple[int, ...]], ArrayLike]
 Reduction = Union[str, ReductionCallable]
 
 _reductions = ("min", "max", "sum", "mean", "prod", "any", "all")
@@ -56,18 +56,18 @@ _unknown_axis_length = -999999
 _expected_axis_length = -99999
 
 
-def is_float_type(x: jax.typing.ArrayLike):
+def is_float_type(x: ArrayLike):
     return x.dtype in ("float16", "float32", "float64", "float128", "bfloat16")
 
 
-def add_axis(x: jax.typing.ArrayLike, new_position: int):
+def add_axis(x: ArrayLike, new_position: int):
     return expand_dims(asarray(x), new_position)
 
 
-def add_axes(x: jax.typing.ArrayLike, n_axes, pos2len):
+def add_axes(x: 'ArrayLike | Quantity', n_axes, pos2len):
     repeats = [1] * n_axes
     for axis_position, axis_length in pos2len.items():
-        x = add_axis(x, axis_position)
+        x = add_axis(x, axis_position)  # type: ignore[arg-type]
         repeats[axis_position] = axis_length
     return tile(x, repeats)
 
@@ -98,7 +98,7 @@ def _reduce_axes(tensor, reduction_type: Reduction, reduced_axes: List[int]):
         return __reduce(tensor, reduction_type, tuple(reduced_axes))
 
 
-def __reduce(x: jax.typing.ArrayLike, operation: str, reduced_axes):
+def __reduce(x: ArrayLike, operation: str, reduced_axes):
     if operation == "min":
         return x.min(axis=reduced_axes)
     elif operation == "max":
@@ -230,7 +230,7 @@ class TransformRecipe:
 
 def _reconstruct_from_shape_uncached(
     self: TransformRecipe,
-    shape: List[int],
+    shape: Sequence[int],
     axes_dims: FakeHashableAxesLengths
 ) -> CookedRecipe:
     """
@@ -254,8 +254,8 @@ def _reconstruct_from_shape_uncached(
             continue
 
         known_product = 1
-        for axis in known_axes:
-            known_product *= axes_lengths[axis]
+        for known_axis in known_axes:
+            known_product *= axes_lengths[known_axis]
 
         if len(unknown_axes) == 0:
             if isinstance(length, int) and isinstance(known_product, int) and length != known_product:
@@ -307,17 +307,17 @@ _reconstruct_from_shape = functools.lru_cache(1024)(_reconstruct_from_shape_unca
 
 def _apply_recipe(
     recipe: TransformRecipe,
-    x: jax.typing.ArrayLike | Quantity,
+    x: 'ArrayLike | Quantity | Sequence[ArrayLike] | Sequence[Quantity]',
     reduction_type: Reduction,
     axes_lengths: HashableAxesLengths
-) -> jax.typing.ArrayLike | Quantity:
+) -> 'ArrayLike | Quantity':
     # this method implements actual work for all backends for 3 operations
     try:
         init_shapes, axes_reordering, reduced_axes, added_axes, final_shapes, n_axes_w_added = (
             _reconstruct_from_shape(recipe, _get_shape(x), axes_lengths))
     except TypeError:
         # shape or one of passed axes lengths is not hashable (i.e. they are symbols)
-        _result = _reconstruct_from_shape_uncached(recipe, _get_shape(x), axes_lengths)
+        _result = _reconstruct_from_shape_uncached(recipe, _get_shape(x), axes_lengths)  # type: ignore[arg-type]
         (init_shapes, axes_reordering, reduced_axes, added_axes, final_shapes, n_axes_w_added) = _result
     if init_shapes is not None:
         x = reshape(x, init_shapes)
@@ -326,10 +326,10 @@ def _apply_recipe(
     if len(reduced_axes) > 0:
         x = _reduce_axes(x, reduction_type=reduction_type, reduced_axes=reduced_axes)
     if len(added_axes) > 0:
-        x = add_axes(x, n_axes=n_axes_w_added, pos2len=added_axes)
+        x = add_axes(x, n_axes=n_axes_w_added, pos2len=added_axes)  # type: ignore[arg-type]
     if final_shapes is not None:
         x = reshape(asarray(x), final_shapes)
-    return x
+    return x  # type: ignore[return-value]
 
 
 @functools.lru_cache(256)
@@ -380,7 +380,7 @@ def _prepare_transformation_recipe(
             raise EinopsError(f"Wrong shape: expected >={n_other_dims} dims. Received {ndim}-dim tensor.")
         ellipsis_ndim = ndim - n_other_dims
         ell_axes = [_ellipsis + str(i) for i in range(ellipsis_ndim)]
-        left_composition = []
+        left_composition: list = []
         for composite_axis in left.composition:
             if composite_axis == _ellipsis:
                 for axis in ell_axes:
@@ -388,7 +388,7 @@ def _prepare_transformation_recipe(
             else:
                 left_composition.append(composite_axis)
 
-        rght_composition = []
+        rght_composition: list = []
         for composite_axis in rght.composition:
             if composite_axis == _ellipsis:
                 for axis in ell_axes:
@@ -519,11 +519,11 @@ def _get_shape(x) -> Tuple[int, ...]:
 
 @set_module_as('brainstate.math')
 def einreduce(
-    x: Union[jax.typing.ArrayLike, Quantity, Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
+    x: Union[ArrayLike, Quantity, Sequence[ArrayLike], Sequence[Quantity]],
     pattern: str,
     reduction: Reduction,
     **axes_lengths: int
-) -> jax.typing.ArrayLike | Quantity:
+) -> ArrayLike | Quantity:
     """Combine reordering and reduction using reader-friendly notation.
 
     ``einreduce`` provides combination of reordering and reduction using
@@ -578,10 +578,10 @@ def einreduce(
 
 @set_module_as('brainstate.math')
 def einrearrange(
-    x: Union[jax.typing.ArrayLike, Quantity, Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
+    x: Union[ArrayLike, Quantity, Sequence[ArrayLike], Sequence[Quantity]],
     pattern: str,
     **axes_lengths
-) -> jax.typing.ArrayLike | Quantity:
+) -> ArrayLike | Quantity:
     """Reader-friendly smart element reordering for multidimensional tensors.
 
     This operation includes functionality of transpose (axes permutation),
@@ -622,10 +622,10 @@ def einrearrange(
 
 @set_module_as('brainstate.math')
 def einrepeat(
-    x: Union[jax.typing.ArrayLike, Quantity, Sequence[jax.typing.ArrayLike], Sequence[Quantity]],
+    x: Union[ArrayLike, Quantity, Sequence[ArrayLike], Sequence[Quantity]],
     pattern: str,
     **axes_lengths
-) -> jax.typing.ArrayLike | Quantity:
+) -> ArrayLike | Quantity:
     """Reorder elements and repeat them in arbitrary combinations.
 
     This operation includes functionality of repeat, tile, and broadcast
@@ -665,7 +665,7 @@ def einrepeat(
 
 @set_module_as('brainstate.math')
 def einshape(
-    x: jax.typing.ArrayLike | Quantity,
+    x: ArrayLike | Quantity,
     pattern: str
 ) -> dict:
     """Parse a tensor shape to a dictionary mapping axis names to their lengths.
@@ -779,18 +779,18 @@ def _sum_uniques(operand, names, uniques, preferred_element_type):
 
 
 def _dot_general(
-    lhs: jax.typing.ArrayLike | Quantity,
-    rhs: jax.typing.ArrayLike | Quantity,
+    lhs: ArrayLike | Quantity,
+    rhs: ArrayLike | Quantity,
     dimension_numbers: jax.lax.DotDimensionNumbers,
     precision: jax.lax.PrecisionLike = None,
     preferred_element_type: jax.typing.DTypeLike | None = None
 ) -> jax.Array | Quantity:
     unit = UNITLESS
     if isinstance(lhs, Quantity):
-        unit = unit * lhs.unit
+        unit = unit * lhs.unit  # type: ignore[assignment]
         lhs = lhs.mantissa
     if isinstance(rhs, Quantity):
-        unit = unit * rhs.unit
+        unit = unit * rhs.unit  # type: ignore[assignment]
         rhs = rhs.mantissa
     r = jax.lax.dot_general(
         lhs,

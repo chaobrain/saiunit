@@ -17,13 +17,13 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
-from saiunit._jax_compat import HAS_JAX, jax, require_jax
+from saiunit._jax_compat import HAS_JAX, jax, require_jax, ArrayLike
 from saiunit._jax_guard import require_jax_backend
 
 if HAS_JAX:
     from jax import nn
 else:
-    nn = None
+    nn = None  # type: ignore[assignment]
 
 from saiunit._base_getters import get_mantissa
 from saiunit._base_quantity import Quantity
@@ -42,7 +42,7 @@ __all__ = [
 
 @set_module_as('saiunit.math')
 def relu(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
 ) -> Union[Quantity, jax.Array]:
     r"""Rectified linear unit activation function.
 
@@ -91,7 +91,7 @@ def relu(
 
 @set_module_as('saiunit.math')
 def relu6(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Rectified Linear Unit 6 activation function.
@@ -139,7 +139,7 @@ def relu6(
 
 @set_module_as('saiunit.math')
 def sigmoid(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sigmoid activation function.
@@ -177,7 +177,7 @@ def sigmoid(
 
 @set_module_as('saiunit.math')
 def softplus(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Softplus activation function.
@@ -215,7 +215,7 @@ def softplus(
 
 @set_module_as('saiunit.math')
 def sparse_plus(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sparse plus function.
@@ -263,7 +263,7 @@ def sparse_plus(
 
 @set_module_as('saiunit.math')
 def sparse_sigmoid(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Sparse sigmoid activation function.
@@ -313,7 +313,7 @@ def sparse_sigmoid(
 
 @set_module_as('saiunit.math')
 def soft_sign(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Soft-sign activation function.
@@ -351,7 +351,7 @@ def soft_sign(
 
 @set_module_as('saiunit.math')
 def silu(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""SiLU (aka swish) activation function.
@@ -391,7 +391,7 @@ def silu(
 
 @set_module_as('saiunit.math')
 def swish(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Swish (aka SiLU) activation function.
@@ -431,7 +431,7 @@ def swish(
 
 @set_module_as('saiunit.math')
 def log_sigmoid(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Log-sigmoid activation function.
@@ -469,8 +469,8 @@ def log_sigmoid(
 
 @set_module_as('saiunit.math')
 def leaky_relu(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    negative_slope: jax.typing.ArrayLike = 1e-2
+    x: Union[Quantity, ArrayLike],
+    negative_slope: ArrayLike = 1e-2  # type: ignore[assignment]
 ) -> Union[Quantity, jax.Array]:
     r"""Leaky rectified linear unit activation function.
 
@@ -515,7 +515,7 @@ def leaky_relu(
 
 @set_module_as('saiunit.math')
 def hard_sigmoid(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard Sigmoid activation function.
@@ -553,7 +553,7 @@ def hard_sigmoid(
 
 @set_module_as('saiunit.math')
 def hard_silu(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard SiLU (swish) activation function.
@@ -597,7 +597,7 @@ hard_swish = hard_silu
 
 @set_module_as('saiunit.math')
 def hard_tanh(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Hard :math:`\mathrm{tanh}` activation function.
@@ -639,8 +639,8 @@ def hard_tanh(
 
 @set_module_as('saiunit.math')
 def elu(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    alpha: jax.typing.ArrayLike = 1.0,
+    x: Union[Quantity, ArrayLike],
+    alpha: ArrayLike = 1.0,  # type: ignore[assignment]
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Exponential linear unit activation function.
@@ -685,8 +685,8 @@ def elu(
 
 @set_module_as('saiunit.math')
 def celu(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    alpha: jax.typing.ArrayLike = 1.0,
+    x: Union[Quantity, ArrayLike],
+    alpha: ArrayLike = 1.0,  # type: ignore[assignment]
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Continuously-differentiable exponential linear unit activation.
@@ -733,7 +733,7 @@ def celu(
 
 @set_module_as('saiunit.math')
 def selu(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Scaled exponential linear unit activation.
@@ -781,7 +781,7 @@ def selu(
 
 @set_module_as('saiunit.math')
 def gelu(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     approximate: bool = True,
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
@@ -832,7 +832,7 @@ def gelu(
 
 @set_module_as('saiunit.math')
 def glu(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     axis: int = -1,
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
@@ -880,8 +880,8 @@ def glu(
 
 @set_module_as('saiunit.math')
 def squareplus(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    b: jax.typing.ArrayLike = 4,
+    x: Union[Quantity, ArrayLike],
+    b: ArrayLike = 4,  # type: ignore[assignment]
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Squareplus activation function.
@@ -923,7 +923,7 @@ def squareplus(
 
 @set_module_as('saiunit.math')
 def mish(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
 ) -> jax.Array:
     r"""Mish activation function.

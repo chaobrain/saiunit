@@ -17,12 +17,12 @@ from __future__ import annotations
 
 from typing import Union, Sequence
 
-from saiunit._jax_compat import HAS_JAX, jax
+from saiunit._jax_compat import HAS_JAX, jax, ArrayLike
 
 if HAS_JAX:
     from jax.numpy import fft as jnpfft
 else:
-    import numpy.fft as jnpfft  # type: ignore[assignment]
+    import numpy.fft as jnpfft  # type: ignore[no-redef]
 
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
@@ -40,10 +40,10 @@ __all__ = [
 
 @set_module_as('saiunit.fft')
 def fftshift(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     axes: None | int | Sequence[int] = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Shift zero-frequency FFT component to the center of the spectrum.
 
     Unit-aware implementation of :func:`numpy.fft.fftshift`.  The unit of
@@ -83,10 +83,10 @@ def fftshift(
 
 @set_module_as('saiunit.fft')
 def ifftshift(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     axes: None | int | Sequence[int] = None,
     **kwargs,
-) -> Union[Quantity, jax.typing.ArrayLike]:
+) -> Union[Quantity, ArrayLike]:
     """Inverse of :func:`saiunit.fft.fftshift`.
 
     Unit-aware implementation of :func:`numpy.fft.ifftshift`.  The unit of

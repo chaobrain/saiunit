@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import brainstate as bst
+import brainstate as bst  # type: ignore[import-untyped]
 import jax.lax as lax
 import jax.numpy as jnp
 import numpy as np
@@ -226,9 +226,9 @@ class TestLaxKeepUnitWithArrayCustomArray(parameterized.TestCase):
 
 class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
     @parameterized.product(
-        [
+        [  # type: ignore[misc]
             dict(
-                shape=shape, starts=indices, limits=limit_indices, strides=strides
+                shape=shape, starts=indices, limits=limit_indices, strides=strides  # type: ignore[has-type]
             )
             for shape, indices, limit_indices, strides in [
             [(3,), (1,), (2,), None],
@@ -254,8 +254,8 @@ class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
         assert_quantity(result_q, expected, u.second)
 
     @parameterized.product(
-        [
-            dict(shape=shape, indices=indices, size_indices=size_indices)
+        [  # type: ignore[misc]
+            dict(shape=shape, indices=indices, size_indices=size_indices)  # type: ignore[has-type]
             for shape, indices, size_indices in [
             [(3,), np.array((1,)), (1,)],
             [(5, 3), (1, 1), (3, 1)],
@@ -275,8 +275,8 @@ class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
         assert_quantity(result_q, expected, u.second)
 
     @parameterized.product(
-        [
-            dict(shape=shape, indices=indices, update_shape=update_shape)
+        [  # type: ignore[misc]
+            dict(shape=shape, indices=indices, update_shape=update_shape)  # type: ignore[has-type]
             for shape, indices, update_shape in [
             [(3,), (1,), (1,)],
             [(5, 3), (1, 1), (3, 1)],
@@ -341,7 +341,7 @@ class TestLaxKeepUnitArrayManipulation(parameterized.TestCase):
         assert_quantity(result_q, expected, u.second)
 
     @parameterized.product(
-        [dict(shape=shape, idxs=idxs, axes=axes)
+        [dict(shape=shape, idxs=idxs, axes=axes)  # type: ignore[has-type,misc]
          for shape, idxs, axes in [
              [(3, 4, 5), (np.array([0, 2, 1]),), (0,)],
              [(3, 4, 5), (np.array([-1, -2]),), (0,)],
@@ -731,7 +731,7 @@ class TestLaxKeepUnit(parameterized.TestCase):
 class TestLaxKeepUnitNary(parameterized.TestCase):
 
     @parameterized.product(
-        [dict(min_shape=min_shape, operand_shape=operand_shape, max_shape=max_shape)
+        [dict(min_shape=min_shape, operand_shape=operand_shape, max_shape=max_shape)  # type: ignore[has-type,misc]
          for min_shape, operand_shape, max_shape in [
              [(), (2, 3), ()],
              [(2, 3), (2, 3), ()],

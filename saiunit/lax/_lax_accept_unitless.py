@@ -24,6 +24,7 @@ from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as
 from saiunit.math._fun_accept_unitless import _fun_accept_unitless_unary, _fun_accept_unitless_binary, _fun_unitless_binary
+from saiunit._jax_compat import ArrayLike
 
 __all__ = [
     # math funcs only accept unitless (unary)
@@ -57,7 +58,7 @@ __all__ = [
 
 @set_module_as('saiunit.lax')
 def acos(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -91,7 +92,7 @@ def acos(
 
 @set_module_as('saiunit.lax')
 def acosh(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -114,7 +115,7 @@ def acosh(
 
 @set_module_as('saiunit.lax')
 def asin(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -137,7 +138,7 @@ def asin(
 
 @set_module_as('saiunit.lax')
 def asinh(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -160,7 +161,7 @@ def asinh(
 
 @set_module_as('saiunit.lax')
 def atan(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -183,7 +184,7 @@ def atan(
 
 @set_module_as('saiunit.lax')
 def atanh(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -206,7 +207,7 @@ def atanh(
 
 @set_module_as('saiunit.lax')
 def collapse(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     start_dimension: int,
     stop_dimension: Optional[int] = None,
     unit_to_scale: Optional[Unit] = None,
@@ -240,7 +241,7 @@ def collapse(
 
 @set_module_as('saiunit.lax')
 def cumlogsumexp(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     axis: Optional[int] = 0,
     reverse: Optional[bool] = False,
     unit_to_scale: Optional[Unit] = None,
@@ -273,7 +274,7 @@ def cumlogsumexp(
 
 @set_module_as('saiunit.lax')
 def bessel_i0e(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -306,7 +307,7 @@ def bessel_i0e(
 
 @set_module_as('saiunit.lax')
 def bessel_i1e(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -330,7 +331,7 @@ def bessel_i1e(
 
 @set_module_as('saiunit.lax')
 def digamma(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -353,7 +354,7 @@ def digamma(
 
 @set_module_as('saiunit.lax')
 def lgamma(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -376,7 +377,7 @@ def lgamma(
 
 @set_module_as('saiunit.lax')
 def erf(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -409,7 +410,7 @@ def erf(
 
 @set_module_as('saiunit.lax')
 def erfc(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -432,7 +433,7 @@ def erfc(
 
 @set_module_as('saiunit.lax')
 def erf_inv(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -455,7 +456,7 @@ def erf_inv(
 
 @set_module_as('saiunit.lax')
 def logistic(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -490,8 +491,8 @@ def logistic(
 # ----------------------------------------
 @set_module_as('saiunit.lax')
 def atan2(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -525,8 +526,8 @@ def atan2(
 
 @set_module_as('saiunit.lax')
 def polygamma(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -551,8 +552,8 @@ def polygamma(
 
 @set_module_as('saiunit.lax')
 def igamma(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -577,8 +578,8 @@ def igamma(
 
 @set_module_as('saiunit.lax')
 def igammac(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -603,8 +604,8 @@ def igammac(
 
 @set_module_as('saiunit.lax')
 def igamma_grad_a(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -629,8 +630,8 @@ def igamma_grad_a(
 
 @set_module_as('saiunit.lax')
 def random_gamma_grad(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    y: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -655,8 +656,8 @@ def random_gamma_grad(
 
 @set_module_as('saiunit.lax')
 def zeta(
-    x: Union[jax.typing.ArrayLike, Quantity],
-    q: Union[jax.typing.ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
+    q: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -713,9 +714,9 @@ def _fun_accept_unitless_nary(
 
 @set_module_as('saiunit.lax')
 def betainc(
-    a: Union[jax.typing.ArrayLike, Quantity],
-    b: Union[jax.typing.ArrayLike, Quantity],
-    x: Union[jax.typing.ArrayLike, Quantity],
+    a: Union[ArrayLike, Quantity],
+    b: Union[ArrayLike, Quantity],
+    x: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
 ) -> jax.Array:
@@ -754,8 +755,8 @@ def betainc(
 # Elementwise bit operations (binary)
 @set_module_as('saiunit.lax')
 def shift_left(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     r"""Elementwise left shift: :math:`x \ll y`.
@@ -777,8 +778,8 @@ def shift_left(
 
 @set_module_as('saiunit.lax')
 def shift_right_arithmetic(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     r"""Elementwise arithmetic right shift: :math:`x \gg y`.
@@ -800,8 +801,8 @@ def shift_right_arithmetic(
 
 @set_module_as('saiunit.lax')
 def shift_right_logical(
-    x: Union[Quantity, jax.typing.ArrayLike],
-    y: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
+    y: Union[Quantity, ArrayLike],
     **kwargs,
 ) -> jax.Array:
     r"""Elementwise logical right shift: :math:`x \gg y`.
@@ -824,7 +825,7 @@ def shift_right_logical(
 # fft
 @set_module_as('saiunit.lax')
 def fft(
-    x: Union[Quantity, jax.typing.ArrayLike],
+    x: Union[Quantity, ArrayLike],
     fft_type: jax.lax.FftType | str,
     fft_lengths: Sequence[int],
     unit_to_scale: Optional[Unit] = None,

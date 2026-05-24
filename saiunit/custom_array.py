@@ -757,7 +757,7 @@ class CustomArray:
         return r
 
     def outer(self, other: ArrayLike) -> ArrayLike:
-        return math.outer(self.data, other.data)
+        return math.outer(self.data, other.data)  # type: ignore[union-attr]
 
     def abs(self) -> Optional[ArrayLike]:
         r = math.abs(self.data)

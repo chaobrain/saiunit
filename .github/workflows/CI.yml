@@ -21,6 +21,35 @@ concurrency:
 
 
 jobs:
+  type_check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.13" ]
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          access_token: ${{ github.token }}
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip cache purge
+          python -m pip install --upgrade pip setuptools --no-cache-dir
+          python -m pip install -r requirements-dev.txt --no-cache-dir
+          python -m pip install 'mypy>=1.11,<3' --no-cache-dir
+          pip install . --no-cache-dir
+      - name: Run mypy
+        run: |
+          mypy saiunit/
+
+
   test_no_jax:
     runs-on: ubuntu-latest
     strategy:
@@ -103,80 +132,6 @@ jobs:
           pytest saiunit/
 
 
-  test_macos:
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ "3.13" ]
-
-    steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.13.1
-        with:
-          access_token: ${{ github.token }}
-      - uses: actions/checkout@v6
-      - name: Print concurrency group
-        run: echo '${{ github.workflow }}-${{ github.ref }}'
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip cache purge
-          python -m pip install --upgrade pip setuptools --no-cache-dir
-          python -m pip install -r requirements-dev.txt  --no-cache-dir
-          pip install . --no-cache-dir
-          pip install torch --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
-          pip install 'dask[array]' --no-cache-dir
-          pip install ndonnx --no-cache-dir
-      - name: Build and install BrainUnit
-        run: |
-          python make_brainunit_setup.py
-          pip install ./brainunit --no-cache-dir
-      - name: Test with pytest
-        run: |
-          pytest saiunit/
-
-
-  test_windows:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ "3.13" ]
-
-    steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.13.1
-        with:
-          access_token: ${{ github.token }}
-      - uses: actions/checkout@v6
-      - name: Print concurrency group
-        run: echo '${{ github.workflow }}-${{ github.ref }}'
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip cache purge
-          python -m pip install --upgrade pip setuptools --no-cache-dir
-          python -m pip install -r requirements-dev.txt  --no-cache-dir
-          pip install .  --no-cache-dir
-          pip install torch --index-url https://download.pytorch.org/whl/cpu --no-cache-dir
-          pip install 'dask[array]' --no-cache-dir
-          pip install ndonnx --no-cache-dir
-      - name: Build and install BrainUnit
-        run: |
-          python make_brainunit_setup.py
-          pip install ./brainunit --no-cache-dir
-      - name: Test with pytest
-        run: |
-          pytest saiunit/ -p no:faulthandler
-
-
   # ---------------------------------------------------------------------------
   # Per-backend isolation jobs.
   #
@@ -188,8 +143,9 @@ jobs:
   # Goal: prove that `pip install saiunit[<backend>]` works end-to-end and
   # that backend-specific kwargs / hidden cross-backend dependencies cannot
   # leak through saiunit's public API. The cross-platform "all backends
-  # installed" smoke is still covered by test_linux / test_macos /
-  # test_windows above.
+  # installed" smoke is still covered by ``test_linux`` above (macOS / Windows
+  # runners were dropped — Linux is the platform we ship on and the
+  # per-backend jobs already cover backend isolation).
   #
   # cupy is intentionally not included: GitHub free runners have no GPU.
   # ---------------------------------------------------------------------------

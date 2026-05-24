@@ -79,3 +79,32 @@ torch = ["torch>=2.0"]
 dask = ["dask[array]>=2024.1"]
 ndonnx = ["ndonnx>=0.9"]
 all = ["saiunit[jax,cupy,torch,dask,ndonnx]"]
+
+
+[tool.mypy]
+# Optional third-party deps that may or may not be installed in a given
+# environment. Silence import errors so type_check can run with only the
+# core requirements (numpy + jax) installed.
+[[tool.mypy.overrides]]
+module = [
+    "brainstate",
+    "brainstate.*",
+    "cupy",
+    "cupy.*",
+    "torch",
+    "torch.*",
+    "dask",
+    "dask.*",
+    "ndonnx",
+    "ndonnx.*",
+    "scipy",
+    "scipy.*",
+    "matplotlib",
+    "matplotlib.*",
+    "opt_einsum",
+    "opt_einsum.*",
+    "equinox",
+    "equinox.*",
+    "jax.util",
+]
+ignore_missing_imports = true

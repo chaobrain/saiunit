@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import unittest
 
-import brainstate as bst
+import brainstate as bst  # type: ignore[import-untyped]
 import jax
 
 import saiunit as u

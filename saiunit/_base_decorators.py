@@ -543,7 +543,7 @@ def check_units(**au):
     return do_check_units
 
 
-class CallableAssignUnit(Callable):
+class CallableAssignUnit(Callable):  # type: ignore[misc]
     without_result_units = Callable
 
     def __call__(self, *args, **kwargs):
@@ -558,7 +558,7 @@ missing = Missing()
 
 
 @set_module_as('saiunit')
-def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[Callable], CallableAssignUnit]:
+def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[Callable], CallableAssignUnit]:  # type: ignore[assignment]
     """
     Decorator to transform units of arguments passed to a function and optionally assign units to the return value.
 
@@ -710,7 +710,7 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
         result = f(**newkeyset)
         return result
 
-    new_f.without_result_units = without_result_units
+    new_f.without_result_units = without_result_units  # type: ignore[attr-defined]
 
     return cast(CallableAssignUnit, new_f)
 
