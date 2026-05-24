@@ -22,7 +22,8 @@ from typing import Any, Optional, Union, Sequence
 import numpy as np
 
 from saiunit import math
-from saiunit._jax_compat import HAS_JAX, jnp, ArrayLike  # type: ignore[attr-defined]
+from saiunit._jax_compat import HAS_JAX, jnp
+from saiunit._typing import ArrayLike
 
 __all__ = [
     'CustomArray',

@@ -32,6 +32,7 @@ from saiunit._base_getters import (
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
 from saiunit._sparse_base import SparseMatrix, _same_sparsity_pattern
+from saiunit._typing import Array, DTypeLike
 from saiunit.math._fun_array_creation import asarray
 from saiunit.math._fun_keep_unit import promote_dtypes
 
@@ -44,7 +45,7 @@ __all__ = [
 Shape = tuple[int, ...]
 
 
-def _const_like(x: jax.Array, value: int) -> jax.Array:
+def _const_like(x: Array, value: int) -> Array:
     return jnp.asarray(value, dtype=x.dtype)
 
 
@@ -59,7 +60,7 @@ class CSR(SparseMatrix):
     Parameters
     ----------
     args : tuple of (data, indices, indptr)
-        ``data`` contains the non-zero values (``jax.Array`` or ``Quantity``),
+        ``data`` contains the non-zero values (``Array`` or ``Quantity``),
         ``indices`` contains the column indices, and ``indptr`` contains the
         row pointer array.
     shape : tuple of int
@@ -67,11 +68,11 @@ class CSR(SparseMatrix):
 
     Attributes
     ----------
-    data : jax.Array or Quantity
+    data : Array or Quantity
         Non-zero values of shape ``(nse,)``.
-    indices : jax.Array
+    indices : Array
         Column indices of shape ``(nse,)``.
-    indptr : jax.Array
+    indptr : Array
         Row pointer array of shape ``(nrows + 1,)``.
     shape : tuple of int
         Shape of the matrix ``(nrows, ncols)``.
@@ -101,9 +102,9 @@ class CSR(SparseMatrix):
         Array([[1., 0., 2.],
                [0., 0., 3.]], dtype=float32)
     """
-    data: jax.Array | Quantity  # type: ignore[assignment]
-    indices: jax.Array
-    indptr: jax.Array
+    data: Array | Quantity  # type: ignore[assignment]
+    indices: Array
+    indptr: Array
     shape: tuple[int, int]
     nse = property(lambda self: self.data.size)
     dtype = property(lambda self: self.data.dtype)
@@ -155,13 +156,13 @@ class CSR(SparseMatrix):
             jnp.cumsum(jnp.bincount(row, length=N).astype(index_dtype)))
         return cls((data, indices, indptr), shape=(N, M))
 
-    def with_data(self, data: jax.Array | Quantity) -> CSR:  # type: ignore[override]
+    def with_data(self, data: Array | Quantity) -> CSR:  # type: ignore[override]
         """
         Create a new CSR matrix with the same sparsity structure but different data.
 
         Parameters
         ----------
-        data : jax.Array or Quantity
+        data : Array or Quantity
             New non-zero values. Must have the same shape, dtype, and unit as
             the current ``self.data``.
 
@@ -199,7 +200,7 @@ class CSR(SparseMatrix):
 
         Returns
         -------
-        jax.Array or Quantity
+        Array or Quantity
             Dense 2-D array equivalent to this sparse matrix.
 
         Examples
@@ -293,16 +294,16 @@ class CSR(SparseMatrix):
         else:
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
-    def __mul__(self, other: jax.Array | Quantity) -> CSR:
+    def __mul__(self, other: Array | Quantity) -> CSR:
         return self._binary_op(other, operator.mul)
 
-    def __rmul__(self, other: jax.Array | Quantity) -> CSR:
+    def __rmul__(self, other: Array | Quantity) -> CSR:
         return self._binary_rop(other, operator.mul)
 
-    def __div__(self, other: jax.Array | Quantity) -> CSR:
+    def __div__(self, other: Array | Quantity) -> CSR:
         return self._binary_op(other, operator.truediv)
 
-    def __rdiv__(self, other: jax.Array | Quantity) -> CSR:
+    def __rdiv__(self, other: Array | Quantity) -> CSR:
         return self._binary_rop(other, operator.truediv)
 
     def __truediv__(self, other) -> CSR:
@@ -407,7 +408,7 @@ class CSC(SparseMatrix):
     Parameters
     ----------
     args : tuple of (data, indices, indptr)
-        ``data`` contains the non-zero values (``jax.Array`` or ``Quantity``),
+        ``data`` contains the non-zero values (``Array`` or ``Quantity``),
         ``indices`` contains the row indices, and ``indptr`` contains the
         column pointer array.
     shape : tuple of int
@@ -415,11 +416,11 @@ class CSC(SparseMatrix):
 
     Attributes
     ----------
-    data : jax.Array or Quantity
+    data : Array or Quantity
         Non-zero values of shape ``(nse,)``.
-    indices : jax.Array
+    indices : Array
         Row indices of shape ``(nse,)``.
-    indptr : jax.Array
+    indptr : Array
         Column pointer array of shape ``(ncols + 1,)``.
     shape : tuple of int
         Shape of the matrix ``(nrows, ncols)``.
@@ -449,9 +450,9 @@ class CSC(SparseMatrix):
         Array([[1., 0., 2.],
                [0., 0., 3.]], dtype=float32)
     """
-    data: jax.Array
-    indices: jax.Array
-    indptr: jax.Array
+    data: Array
+    indices: Array
+    indptr: Array
     shape: tuple[int, int]
     nse = property(lambda self: self.data.size)
     dtype = property(lambda self: self.data.dtype)
@@ -481,13 +482,13 @@ class CSC(SparseMatrix):
     def _eye(cls, N, M, k, *, dtype=None, index_dtype='int32'):
         return CSR._eye(M, N, -k, dtype=dtype, index_dtype=index_dtype).T
 
-    def with_data(self, data: jax.Array | Quantity) -> CSC:  # type: ignore[override]
+    def with_data(self, data: Array | Quantity) -> CSC:  # type: ignore[override]
         """
         Create a new CSC matrix with the same sparsity structure but different data.
 
         Parameters
         ----------
-        data : jax.Array or Quantity
+        data : Array or Quantity
             New non-zero values. Must have the same shape, dtype, and unit as
             the current ``self.data``.
 
@@ -525,7 +526,7 @@ class CSC(SparseMatrix):
 
         Returns
         -------
-        jax.Array or Quantity
+        Array or Quantity
             Dense 2-D array equivalent to this sparse matrix.
 
         Examples
@@ -639,16 +640,16 @@ class CSC(SparseMatrix):
         else:
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
-    def __mul__(self, other: jax.Array | Quantity) -> CSC:
+    def __mul__(self, other: Array | Quantity) -> CSC:
         return self._binary_op(other, operator.mul)
 
-    def __rmul__(self, other: jax.Array | Quantity) -> CSC:
+    def __rmul__(self, other: Array | Quantity) -> CSC:
         return self._binary_rop(other, operator.mul)
 
-    def __div__(self, other: jax.Array | Quantity) -> CSC:
+    def __div__(self, other: Array | Quantity) -> CSC:
         return self._binary_op(other, operator.truediv)
 
-    def __rdiv__(self, other: jax.Array | Quantity) -> CSC:
+    def __rdiv__(self, other: Array | Quantity) -> CSC:
         return self._binary_rop(other, operator.truediv)
 
     def __truediv__(self, other) -> CSC:
@@ -743,22 +744,22 @@ class CSC(SparseMatrix):
         return obj
 
 
-Data = Union[jax.Array, Quantity]
-Indices = jax.Array
-Indptr = jax.Array
+Data = Union[Array, Quantity]
+Indices = Array
+Indptr = Array
 
 
 def csr_fromdense(
-    mat: jax.Array | Quantity,
+    mat: Array | Quantity,
     *, nse: int | None = None,
-    index_dtype: jax.typing.DTypeLike = np.int32
+    index_dtype: DTypeLike = np.int32
 ) -> CSR:
     """
     Create a CSR-format sparse matrix from a dense matrix.
 
     Parameters
     ----------
-    mat : jax.Array or Quantity
+    mat : Array or Quantity
         Dense 2-D array to be converted to CSR format.
     nse : int or None, optional
         Number of specified (non-zero) entries in ``mat``. If ``None``
@@ -792,7 +793,7 @@ def csr_fromdense(
     return CSR(_csr_fromdense(mat, nse=nse_int, index_dtype=index_dtype), shape=mat.shape)
 
 
-def csr_todense(mat: CSR) -> jax.Array | Quantity:
+def csr_todense(mat: CSR) -> Array | Quantity:
     """
     Convert a CSR-format sparse matrix to a dense matrix.
 
@@ -803,7 +804,7 @@ def csr_todense(mat: CSR) -> jax.Array | Quantity:
 
     Returns
     -------
-    jax.Array or Quantity
+    Array or Quantity
         Dense 2-D array equivalent to ``mat``.
 
     Raises
@@ -829,7 +830,7 @@ def csr_todense(mat: CSR) -> jax.Array | Quantity:
     return _csr_todense(mat.data, mat.indices, mat.indptr, shape=mat.shape)
 
 
-def csc_todense(mat: CSC) -> jax.Array | Quantity:
+def csc_todense(mat: CSC) -> Array | Quantity:
     """
     Convert a CSC-format sparse matrix to a dense matrix.
 
@@ -840,7 +841,7 @@ def csc_todense(mat: CSC) -> jax.Array | Quantity:
 
     Returns
     -------
-    jax.Array or Quantity
+    Array or Quantity
         Dense 2-D array equivalent to ``mat``.
 
     Raises
@@ -867,17 +868,17 @@ def csc_todense(mat: CSC) -> jax.Array | Quantity:
 
 
 def csc_fromdense(
-    mat: jax.Array | Quantity,
+    mat: Array | Quantity,
     *,
     nse: int | None = None,
-    index_dtype: jax.typing.DTypeLike = np.int32
+    index_dtype: DTypeLike = np.int32
 ) -> CSC:
     """
     Create a CSC-format sparse matrix from a dense matrix.
 
     Parameters
     ----------
-    mat : jax.Array or Quantity
+    mat : Array or Quantity
         Dense 2-D array to be converted to CSC format.
     nse : int or None, optional
         Number of specified (non-zero) entries in ``mat``. If ``None``
@@ -911,10 +912,10 @@ def csc_fromdense(
 
 
 def _csr_fromdense(
-    mat: jax.Array | Quantity,
+    mat: Array | Quantity,
     *,
     nse: int,
-    index_dtype: jax.typing.DTypeLike = np.int32
+    index_dtype: DTypeLike = np.int32
 ) -> Tuple[Data, Indices, Indptr]:
     """Create CSR-format sparse matrix from a dense matrix.
 
@@ -939,11 +940,11 @@ def _csr_fromdense(
 
 
 def _csr_todense(
-    data: jax.Array | Quantity,
-    indices: jax.Array,
-    indptr: jax.Array, *,
+    data: Array | Quantity,
+    indices: Array,
+    indptr: Array, *,
     shape: Shape
-) -> jax.Array:
+) -> Array:
     """Convert CSR-format sparse matrix to a dense matrix.
 
     Args:
@@ -961,14 +962,14 @@ def _csr_todense(
 
 
 def _csr_matvec(
-    data: jax.Array | Quantity,
-    indices: jax.Array,
-    indptr: jax.Array,
-    v: jax.Array | Quantity,
+    data: Array | Quantity,
+    indices: Array,
+    indptr: Array,
+    v: Array | Quantity,
     *,
     shape: Shape,
     transpose: bool = False
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """Product of CSR sparse matrix and a dense vector.
 
     Args:
@@ -992,14 +993,14 @@ def _csr_matvec(
 
 
 def _csr_matmat(
-    data: jax.Array | Quantity,
-    indices: jax.Array,
-    indptr: jax.Array,
-    B: jax.Array | Quantity,
+    data: Array | Quantity,
+    indices: Array,
+    indptr: Array,
+    B: Array | Quantity,
     *,
     shape: Shape,
     transpose: bool = False
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """Product of CSR sparse matrix and a dense matrix.
 
     Args:
@@ -1023,6 +1024,6 @@ def _csr_matmat(
 
 
 @jax.jit
-def _csr_to_coo(indices: jax.Array, indptr: jax.Array) -> Tuple[jax.Array, jax.Array]:
+def _csr_to_coo(indices: Array, indptr: Array) -> Tuple[Array, Array]:
     """Given CSR (indices, indptr) return COO (row, col)"""
     return jnp.cumsum(jnp.zeros_like(indices).at[indptr].add(1)) - 1, indices

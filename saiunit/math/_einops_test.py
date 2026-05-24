@@ -22,7 +22,7 @@ import saiunit as u
 from saiunit._base_getters import assert_quantity
 from saiunit.math._einops import einrearrange, einreduce, einrepeat, _enumerate_directions
 from saiunit.math._einops_parsing import EinopsError
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import ArrayLike
 
 
 class Array(u.CustomArray):

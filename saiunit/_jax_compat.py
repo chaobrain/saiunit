@@ -30,13 +30,15 @@ not installed, fallbacks are provided so that:
   :class:`BackendError` with an install hint when called.
 
 External callers should not import this module directly. Inside saiunit, prefer
-``from saiunit._jax_compat import jax, jnp, Array, ...``.
+``from saiunit._jax_compat import jax, jnp, tree, ...``. Type aliases (``Array``,
+``ArrayLike``, ``DTypeLike``, ...) live in :mod:`saiunit._typing` and should be
+imported from there.
 """
 
 from __future__ import annotations
 
 import contextlib
-from typing import Any, Callable
+from typing import Callable
 
 import numpy as np
 
@@ -46,10 +48,6 @@ __all__ = [
     "HAS_JAX",
     "jax",
     "jnp",
-    "Array",
-    "ArrayLike",
-    "ScalarOrArrayLike",
-    "DTypeLike",
     "Tracer",
     "ShapedArray",
     "ShapeDtypeStruct",
@@ -91,17 +89,6 @@ except ImportError:  # pragma: no cover - exercised only in no-jax CI job
 if HAS_JAX:
     jax = _jax
     jnp = _jnp
-    Array = _jax.Array
-    # Narrow array-like alias: types that genuinely support ``.shape`` /
-    # ``.ndim`` / ``.dtype``. Excludes bare Python scalars (``bool``, ``int``,
-    # ``float``, ``complex``) so that mypy/pyright don't emit ``union-attr``
-    # false positives when downstream code reads those attributes. Callers
-    # that want to accept Python scalars too should use :data:`ScalarOrArrayLike`.
-    ArrayLike = _jax.Array | np.ndarray | np.number | np.bool_
-    # Wide alias: everything :data:`jax.typing.ArrayLike` accepts, including
-    # bare Python scalars. Use sparingly — prefer :data:`ArrayLike`.
-    ScalarOrArrayLike = ArrayLike | bool | int | float | complex
-    DTypeLike = _jax.typing.DTypeLike
     Tracer = _jax.core.Tracer
     ShapedArray = _jax.core.ShapedArray
     ShapeDtypeStruct = _jax.ShapeDtypeStruct
@@ -124,7 +111,7 @@ else:
     class _JaxSentinel:
         """Class that no real object can ever be an instance of.
 
-        Used as a placeholder for ``jax.Array``, ``jax.core.Tracer``, etc.
+        Used as a placeholder for ``jax.core.Tracer``, etc.
         ``isinstance(x, _JaxSentinel)`` is always ``False``, which is the
         correct answer when JAX is not installed.
         """
@@ -137,14 +124,10 @@ else:
                 "Install with: pip install saiunit[jax]"
             )
 
-    Array = type("Array", (_JaxSentinel,), {})  # type: ignore[misc, assignment]
     Tracer = type("Tracer", (_JaxSentinel,), {})  # type: ignore[misc, assignment]
     ShapedArray = type("ShapedArray", (_JaxSentinel,), {})  # type: ignore[misc, assignment]
     ShapeDtypeStruct = type("ShapeDtypeStruct", (_JaxSentinel,), {})  # type: ignore[misc, assignment]
     DynamicJaxprTracer = type("DynamicJaxprTracer", (_JaxSentinel,), {})  # type: ignore[misc, assignment]
-    ArrayLike = np.ndarray | np.number | np.bool_  # type: ignore[misc, assignment]
-    ScalarOrArrayLike = ArrayLike | bool | int | float | complex  # type: ignore[misc]
-    DTypeLike = Any  # type: ignore[assignment, misc]
 
     class TracerArrayConversionError(Exception):  # type: ignore[no-redef]
         """Placeholder for ``jax.errors.TracerArrayConversionError``.

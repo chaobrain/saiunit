@@ -18,7 +18,8 @@ from typing import (Union, Optional, Sequence)
 
 import numpy as np
 
-from saiunit._jax_compat import HAS_JAX, jax, jnp, tree, ArrayLike
+from saiunit._jax_compat import HAS_JAX, jax, jnp, tree
+from saiunit._typing import Array, ArrayLike
 
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
@@ -52,7 +53,7 @@ __all__ = [
 def get_promote_dtypes(
     *args: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
+) -> Union[Quantity | Array | Sequence[Array | Quantity]]:
     """
     Promote the data types of the inputs to a common type.
 
@@ -135,10 +136,10 @@ def iscomplexobj(
 
 @set_module_as('saiunit.math')
 def heaviside(
-    x1: Union[Quantity, jax.Array],
+    x1: Union[Quantity, Array],
     x2: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Compute the Heaviside step function.
 
@@ -155,7 +156,7 @@ def heaviside(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         The Heaviside step function applied to ``x1`` with half-value
         ``x2``.
 
@@ -183,7 +184,7 @@ def heaviside(
 
 
 @set_module_as('saiunit.math')
-def signbit(x: Union[ArrayLike, Quantity], **kwargs) -> jax.Array:
+def signbit(x: Union[ArrayLike, Quantity], **kwargs) -> Array:
     """
     Return element-wise True where the sign bit is set (less than zero).
 
@@ -196,7 +197,7 @@ def signbit(x: Union[ArrayLike, Quantity], **kwargs) -> jax.Array:
 
     Returns
     -------
-    result : jax.Array of bool
+    result : Array of bool
         Boolean array indicating where the sign bit is set.
 
     Examples
@@ -215,7 +216,7 @@ def signbit(x: Union[ArrayLike, Quantity], **kwargs) -> jax.Array:
 
 
 @set_module_as('saiunit.math')
-def sign(x: Union[ArrayLike, Quantity], **kwargs) -> jax.Array:
+def sign(x: Union[ArrayLike, Quantity], **kwargs) -> Array:
     """
     Return the sign of each element in the input array.
 
@@ -228,7 +229,7 @@ def sign(x: Union[ArrayLike, Quantity], **kwargs) -> jax.Array:
 
     Returns
     -------
-    y : jax.Array
+    y : Array
         The sign of ``x``. Contains -1 for negative, 0 for zero, and
         +1 for positive elements.
 
@@ -255,7 +256,7 @@ def bincount(
     *,
     length: Optional[int] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Count number of occurrences of each value in array of non-negative ints.
 
@@ -279,7 +280,7 @@ def bincount(
 
     Returns
     -------
-    out : jax.Array of int
+    out : Array of int
         The result of binning the input array.
         The length of ``out`` is equal to ``max(x) + 1``.
 
@@ -308,7 +309,7 @@ def digitize(
     bins: Union[ArrayLike, Quantity],
     right: bool = False,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Return the indices of the bins to which each value in input array belongs.
 
@@ -340,7 +341,7 @@ def digitize(
 
     Returns
     -------
-    indices : jax.Array of int
+    indices : Array of int
         Output array of bin indices, same shape as ``x``.
 
     Examples
@@ -405,9 +406,9 @@ def all(
     x: Union[Quantity, ArrayLike],
     axis: Optional[int] = None,
     keepdims: bool = False,
-    where: Optional[jax.Array] = None,
+    where: Optional[Array] = None,
     **kwargs,
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Test whether all array elements along a given axis evaluate to True.
 
@@ -428,7 +429,7 @@ def all(
 
     Returns
     -------
-    all : jax.Array or bool
+    all : Array or bool
         Boolean result of the AND reduction.
 
     Examples
@@ -452,9 +453,9 @@ def any(
     x: Union[Quantity, ArrayLike],
     axis: Optional[int] = None,
     keepdims: bool = False,
-    where: Optional[jax.Array] = None,
+    where: Optional[Array] = None,
     **kwargs,
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Test whether any array element along a given axis evaluates to True.
 
@@ -475,7 +476,7 @@ def any(
 
     Returns
     -------
-    any : jax.Array or bool
+    any : Array or bool
         Boolean result of the OR reduction.
 
     Examples
@@ -496,7 +497,7 @@ def any(
 def logical_not(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Compute the truth value of NOT x element-wise.
 
@@ -510,7 +511,7 @@ def logical_not(
 
     Returns
     -------
-    out : jax.Array or bool
+    out : Array or bool
         Boolean result of the NOT operation applied element-wise.
 
     Examples
@@ -574,7 +575,7 @@ def equal(
     y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Return ``(x == y)`` element-wise.
 
@@ -591,7 +592,7 @@ def equal(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Element-wise equality comparison.
 
     Examples
@@ -616,7 +617,7 @@ def not_equal(
     y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Return ``(x != y)`` element-wise.
 
@@ -632,7 +633,7 @@ def not_equal(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Element-wise inequality comparison.
 
     Examples
@@ -653,7 +654,7 @@ def greater(
     y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Return ``(x > y)`` element-wise.
 
@@ -669,7 +670,7 @@ def greater(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Element-wise greater-than comparison.
 
     Examples
@@ -695,7 +696,7 @@ def greater_equal(
     *args,
     **kwargs
 ) -> Union[
-    bool, jax.Array]:
+    bool, Array]:
     """
     Return ``(x >= y)`` element-wise.
 
@@ -711,7 +712,7 @@ def greater_equal(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Element-wise greater-than-or-equal comparison.
 
     Examples
@@ -732,7 +733,7 @@ def less(
     y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Return ``(x < y)`` element-wise.
 
@@ -748,7 +749,7 @@ def less(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Element-wise less-than comparison.
 
     Examples
@@ -770,7 +771,7 @@ def less_equal(
     *args,
     **kwargs
 ) -> Union[
-    bool, jax.Array]:
+    bool, Array]:
     """
     Return ``(x <= y)`` element-wise.
 
@@ -786,7 +787,7 @@ def less_equal(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Element-wise less-than-or-equal comparison.
 
     Examples
@@ -808,7 +809,7 @@ def array_equal(
     *args,
     **kwargs
 ) -> Union[
-    bool, jax.Array]:
+    bool, Array]:
     """
     Return True if two arrays have the same shape and elements.
 
@@ -849,7 +850,7 @@ def isclose(
     atol: float | Quantity | None = None,
     equal_nan: bool = False,
     **kwargs,
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Returns a boolean array where two arrays are element-wise equal within a
     tolerance.
@@ -873,7 +874,7 @@ def isclose(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Boolean array where ``x`` and ``y`` are equal within tolerance.
 
     Examples
@@ -926,7 +927,7 @@ def allclose(
     atol: float | Quantity | None = None,
     equal_nan: bool = False,
     **kwargs,
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Returns True if two arrays are element-wise equal within a tolerance.
 
@@ -1012,7 +1013,7 @@ def logical_and(
     y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Compute the truth value of ``x AND y`` element-wise.
 
@@ -1028,7 +1029,7 @@ def logical_and(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Boolean AND result.
 
     Examples
@@ -1050,7 +1051,7 @@ def logical_or(
     y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Compute the truth value of ``x OR y`` element-wise.
 
@@ -1066,7 +1067,7 @@ def logical_or(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Boolean OR result.
 
     Examples
@@ -1088,7 +1089,7 @@ def logical_xor(
     y: Union[Quantity, ArrayLike],
     *args,
     **kwargs
-) -> Union[bool, jax.Array]:
+) -> Union[bool, Array]:
     """
     Compute the truth value of ``x XOR y`` element-wise.
 
@@ -1104,7 +1105,7 @@ def logical_xor(
 
     Returns
     -------
-    out : jax.Array of bool
+    out : Array of bool
         Boolean XOR result.
 
     Examples
@@ -1135,7 +1136,7 @@ def argsort(
     stable: bool = True,
     descending: bool = False,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Return the indices that would sort an array or Quantity.
 
@@ -1159,7 +1160,7 @@ def argsort(
 
     Returns
     -------
-    indices : jax.Array
+    indices : Array
         Array of indices that would sort the input.
 
     Examples
@@ -1188,7 +1189,7 @@ def argmax(
     a: Union[ArrayLike, Quantity],
     axis: Optional[int] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Return the index of the maximum value along an axis.
 
@@ -1204,7 +1205,7 @@ def argmax(
 
     Returns
     -------
-    index : jax.Array
+    index : Array
         Index of the maximum value.
 
     Examples
@@ -1228,7 +1229,7 @@ def argmin(
     axis: Optional[int] = None,
     keepdims: Optional[bool] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Return the index of the minimum value along an axis.
 
@@ -1246,7 +1247,7 @@ def argmin(
 
     Returns
     -------
-    index : jax.Array
+    index : Array
         Index of the minimum value.
 
     Examples
@@ -1267,7 +1268,7 @@ def nanargmax(
     axis: int | None = None,
     keepdims: bool = False,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Return the index of the maximum value, ignoring NaNs.
 
@@ -1285,7 +1286,7 @@ def nanargmax(
 
     Returns
     -------
-    index : jax.Array
+    index : Array
         Index of the maximum value (NaNs ignored).
 
     Examples
@@ -1309,7 +1310,7 @@ def nanargmin(
     axis: int | None = None,
     keepdims: bool = False,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Return the index of the minimum value, ignoring NaNs.
 
@@ -1327,7 +1328,7 @@ def nanargmin(
 
     Returns
     -------
-    index : jax.Array
+    index : Array
         Index of the minimum value (NaNs ignored).
 
     Examples
@@ -1352,7 +1353,7 @@ def argwhere(
     size: Optional[int] = None,
     fill_value: Optional[ArrayLike] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Find the indices of array elements that are non-zero.
 
@@ -1369,7 +1370,7 @@ def argwhere(
 
     Returns
     -------
-    indices : jax.Array
+    indices : Array
         Array of shape ``(N, a.ndim)`` containing the indices of
         non-zero elements.
 
@@ -1399,7 +1400,7 @@ def nonzero(
     size: Optional[int] = None,
     fill_value: Optional[ArrayLike] = None,
     **kwargs,
-) -> Sequence[jax.Array]:
+) -> Sequence[Array]:
     """
     Return the indices of non-zero elements.
 
@@ -1416,7 +1417,7 @@ def nonzero(
 
     Returns
     -------
-    indices : tuple of jax.Array
+    indices : tuple of Array
         Tuple of arrays, one per dimension, containing the indices of
         non-zero elements.
 
@@ -1445,7 +1446,7 @@ def flatnonzero(
     size: Optional[int] = None,
     fill_value: Optional[ArrayLike] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Return indices that are non-zero in the flattened input.
 
@@ -1462,7 +1463,7 @@ def flatnonzero(
 
     Returns
     -------
-    indices : jax.Array
+    indices : Array
         Indices of non-zero elements in the flattened array.
 
     Examples
@@ -1492,7 +1493,7 @@ def count_nonzero(
     axis: Optional[int] = None,
     keepdims: Optional[bool] = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Count the number of non-zero values in the input.
 
@@ -1509,7 +1510,7 @@ def count_nonzero(
 
     Returns
     -------
-    count : jax.Array
+    count : Array
         Number of non-zero values along the given axis.
 
     Examples
@@ -1529,11 +1530,11 @@ def searchsorted(
     a: Union[ArrayLike, Quantity],
     v: Union[ArrayLike, Quantity],
     side: str = 'left',
-    sorter: Optional[jax.Array] = None,
+    sorter: Optional[Array] = None,
     *,
     method: Optional[str] = 'scan',
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Find indices where elements should be inserted to maintain order.
 
@@ -1556,7 +1557,7 @@ def searchsorted(
 
     Returns
     -------
-    indices : jax.Array
+    indices : Array
         Insertion points with the same shape as ``v``.
 
     Examples
@@ -1586,7 +1587,7 @@ def searchsorted(
 def diag_indices_from(
     arr: Union[ArrayLike, Quantity],
     **kwargs,
-) -> tuple[jax.Array, ...]:
+) -> tuple[Array, ...]:
     """
     Return indices for accessing the main diagonal of a given array.
 
@@ -1599,7 +1600,7 @@ def diag_indices_from(
 
     Returns
     -------
-    indices : tuple of jax.Array
+    indices : tuple of Array
         Index arrays to access the main diagonal.
 
     Examples

@@ -19,7 +19,8 @@ from typing import Union, Optional
 
 from saiunit._backend import get_backend
 from saiunit._base_quantity import Quantity
-from saiunit._jax_compat import jax, jnp, ArrayLike
+from saiunit._jax_compat import jax, jnp
+from saiunit._typing import Array, ArrayLike
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit.math._fun_remove_unit import _fun_remove_unit_unary
 
@@ -34,7 +35,7 @@ def cond(
     x: Union[ArrayLike, Quantity],
     p=None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """Compute the condition number of a matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.cond`.
@@ -58,7 +59,7 @@ def cond(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Condition number(s) of shape ``x.shape[:-2]``.  Always
         dimensionless.
 
@@ -105,7 +106,7 @@ def matrix_rank(
     *,
     tol: ArrayLike | None = None,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """Compute the rank of a matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.matrix_rank`.
@@ -131,7 +132,7 @@ def matrix_rank(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         Matrix rank of shape ``M.shape[:-2]``, as a dimensionless
         integer array.
 
@@ -178,7 +179,7 @@ def matrix_rank(
 def slogdet(
     a: Union[ArrayLike, Quantity],
     **kwargs,
-) -> tuple[jax.Array, jax.Array]:
+) -> tuple[Array, Array]:
     """Compute the sign and (natural) logarithm of the absolute determinant.
 
     SaiUnit implementation of :func:`numpy.linalg.slogdet`.
@@ -198,10 +199,10 @@ def slogdet(
 
     Returns
     -------
-    sign : jax.Array
+    sign : Array
         Sign of the determinant (``+1.``, ``-1.``, or ``0.``), of shape
         ``a.shape[:-2]``.
-    logabsdet : jax.Array
+    logabsdet : Array
         Natural logarithm of the absolute value of the determinant, of
         shape ``a.shape[:-2]``.
 

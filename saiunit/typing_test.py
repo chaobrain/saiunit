@@ -256,6 +256,63 @@ class TestTypeAliases:
         from saiunit.typing import DimensionLike
         assert DimensionLike is not None
 
+    def test_array_alias_importable(self):
+        from saiunit.typing import Array
+        assert Array is not None
+
+    def test_array_like_alias_importable(self):
+        from saiunit.typing import ArrayLike
+        assert ArrayLike is not None
+
+    def test_scalar_or_array_like_importable(self):
+        from saiunit.typing import ScalarOrArrayLike
+        assert ScalarOrArrayLike is not None
+
+    def test_dtype_like_importable(self):
+        from saiunit.typing import DTypeLike
+        assert DTypeLike is not None
+
+    def test_shape_alias(self):
+        from saiunit.typing import Shape
+        # Shape is Sequence[int]; the origin is collections.abc.Sequence
+        import collections.abc
+        import typing
+        assert typing.get_origin(Shape) is collections.abc.Sequence
+
+    def test_axis_alias(self):
+        from saiunit.typing import Axis
+        assert Axis is int
+
+    def test_axes_alias(self):
+        from saiunit.typing import Axes
+        import typing
+        # Axes = Union[int, Sequence[int]]
+        assert typing.get_origin(Axes) is typing.Union
+
+    def test_pytree_alias(self):
+        from saiunit.typing import PyTree
+        import typing
+        assert PyTree is typing.Any
+
+    def test_typing_array_matches_jax_array_when_jax_installed(self):
+        try:
+            import jax
+        except ImportError:
+            pytest.skip("JAX not installed")
+        from saiunit.typing import Array
+        assert Array is jax.Array
+
+    def test_typing_array_isinstance_false_without_jax(self):
+        """Without JAX, isinstance(anything, Array) is False (sentinel)."""
+        try:
+            import jax  # noqa: F401
+            pytest.skip("JAX is installed; sentinel path not exercised")
+        except ImportError:
+            from saiunit.typing import Array
+            assert not isinstance(1.0, Array)
+            assert not isinstance("string", Array)
+            assert not isinstance([1, 2, 3], Array)
+
 
 # =========================================================================
 # validate_units decorator

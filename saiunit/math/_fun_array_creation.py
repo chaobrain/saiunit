@@ -17,7 +17,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import (Union, Optional, List, Any, Tuple)
 
-from saiunit._jax_compat import jax, jnp, tree as _tree, Array, ArrayLike
+from saiunit._jax_compat import jax, jnp, tree as _tree
+from saiunit._typing import Array, ArrayLike, DTypeLike
 import numpy as np
 
 from saiunit._backend import get_backend, get_default_backend, _xp_for
@@ -77,7 +78,7 @@ __all__ = [
 def full(
     shape: Shape,
     fill_value: Union[Quantity, int, float],
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
 ) -> Union[Array, Quantity]:
     """
     Return a new quantity or array of given shape, filled with ``fill_value``.
@@ -98,7 +99,7 @@ def full(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array (or ``Quantity``) of ``fill_value`` with the given shape and
         dtype.
 
@@ -126,7 +127,7 @@ def eye(
     N: int,
     M: Optional[int] = None,
     k: int = 0,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     unit: Unit = UNITLESS,
 ) -> Union[Array, Quantity]:
     """
@@ -150,7 +151,7 @@ def eye(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         An array of shape ``(N, M)`` where all elements are zero except for
         the ``k``-th diagonal, whose values are one (optionally carrying
         ``unit``).
@@ -178,7 +179,7 @@ def eye(
 @set_module_as('saiunit.math')
 def identity(
     n: int,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
@@ -198,7 +199,7 @@ def identity(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         ``n x n`` array with its main diagonal set to one and all other
         elements zero.
 
@@ -228,7 +229,7 @@ def tri(
     N: int,
     M: Optional[int] = None,
     k: int = 0,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
@@ -252,7 +253,7 @@ def tri(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array of shape ``(N, M)`` with its lower triangle filled with ones
         and zero elsewhere; i.e. ``T[i, j] == 1`` for ``j <= i + k``,
         0 otherwise.
@@ -281,7 +282,7 @@ def tri(
 @set_module_as('saiunit.math')
 def empty(
     shape: Shape,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
@@ -299,7 +300,7 @@ def empty(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array of uninitialized (arbitrary) data of the given shape and dtype.
 
     Examples
@@ -325,7 +326,7 @@ def empty(
 @set_module_as('saiunit.math')
 def ones(
     shape: Shape,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
@@ -343,7 +344,7 @@ def ones(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array of ones with the given shape and dtype.
 
     Examples
@@ -368,7 +369,7 @@ def ones(
 @set_module_as('saiunit.math')
 def zeros(
     shape: Shape,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     unit: Unit = UNITLESS
 ) -> Union[Array, Quantity]:
     """
@@ -386,7 +387,7 @@ def zeros(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array of zeros with the given shape and dtype.
 
     Examples
@@ -411,9 +412,9 @@ def zeros(
 def full_like(
     a: Union[Quantity, ArrayLike],
     fill_value: Union[Quantity, ArrayLike],
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     shape: Shape | None = None
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return a new quantity or array with the same shape and type as a given array, filled with ``fill_value``.
 
@@ -433,7 +434,7 @@ def full_like(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         New array with the same shape and type as ``a``, filled with
         ``fill_value``.
 
@@ -493,7 +494,7 @@ def diag(
     v: Union[Quantity, ArrayLike],
     k: int = 0,
     unit: Unit = UNITLESS
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Extract a diagonal or construct a diagonal array.
 
@@ -515,7 +516,7 @@ def diag(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         The extracted diagonal or constructed diagonal array.
 
     Examples
@@ -552,7 +553,7 @@ def tril(
     m: Union[Quantity, ArrayLike],
     k: int = 0,
     unit: Unit = UNITLESS
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the lower triangle of an array.
 
@@ -572,7 +573,7 @@ def tril(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Lower triangle of ``m``, of the same shape and data-type as ``m``.
 
     Examples
@@ -606,7 +607,7 @@ def triu(
     m: Union[Quantity, ArrayLike],
     k: int = 0,
     unit: Unit = UNITLESS
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the upper triangle of an array.
 
@@ -626,7 +627,7 @@ def triu(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Upper triangle of ``m``, of the same shape and data-type as ``m``.
 
     See Also
@@ -662,10 +663,10 @@ def triu(
 @set_module_as('saiunit.math')
 def empty_like(
     prototype: Union[Quantity, ArrayLike],
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     shape: Shape | None = None,
     unit: Unit = UNITLESS
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return a new uninitialized quantity or array with the same shape and type as a given array.
 
@@ -684,7 +685,7 @@ def empty_like(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array of uninitialized (arbitrary) data with the same shape and type
         as ``prototype``.
 
@@ -716,10 +717,10 @@ def empty_like(
 @set_module_as('saiunit.math')
 def ones_like(
     a: Union[Quantity, ArrayLike],
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     shape: Shape | None = None,
     unit: Unit = UNITLESS
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return a quantity or array of ones with the same shape and type as a given array.
 
@@ -738,7 +739,7 @@ def ones_like(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array of ones with the same shape and type as ``a``.
 
     Examples
@@ -770,10 +771,10 @@ def ones_like(
 @set_module_as('saiunit.math')
 def zeros_like(
     a: Union[Quantity, ArrayLike],
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     shape: Shape | None = None,
     unit: Unit = UNITLESS
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return a quantity or array of zeros with the same shape and type as a given array.
 
@@ -792,7 +793,7 @@ def zeros_like(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array of zeros with the same shape and type as ``a``.
 
     Examples
@@ -824,10 +825,10 @@ def zeros_like(
 @set_module_as('saiunit.math')
 def asarray(
     a: Any,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     order: Optional[str] = None,
     unit: Optional[Unit] = None,
-) -> Quantity | jax.Array | None:
+) -> Quantity | Array | None:
     """
     Convert the input to a quantity or array.
 
@@ -853,7 +854,7 @@ def asarray(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array interpretation of ``a``.
 
     Raises
@@ -919,8 +920,8 @@ def arange(
     start: Optional[Union[Quantity, ArrayLike]] = None,
     stop: Optional[Union[Quantity, ArrayLike]] = None,
     step: Optional[Union[Quantity, ArrayLike]] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None
-) -> Union[Quantity, jax.Array]:
+    dtype: Optional[DTypeLike] = None
+) -> Union[Quantity, Array]:
     """
     Return evenly spaced values within a given interval.
 
@@ -943,7 +944,7 @@ def arange(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Array of evenly spaced values.
 
     Raises
@@ -998,8 +999,8 @@ def linspace(
     num: int = 50,
     endpoint: Optional[bool] = True,
     retstep: Optional[bool] = False,
-    dtype: Optional[jax.typing.DTypeLike] = None
-) -> Union[Quantity, jax.Array]:
+    dtype: Optional[DTypeLike] = None
+) -> Union[Quantity, Array]:
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -1027,7 +1028,7 @@ def linspace(
 
     Returns
     -------
-    samples : Quantity or jax.Array
+    samples : Quantity or Array
         ``num`` equally spaced samples in the closed interval
         ``[start, stop]`` or the half-open interval ``[start, stop)``.
 
@@ -1070,7 +1071,7 @@ def logspace(
     num: Optional[int] = 50,
     endpoint: Optional[bool] = True,
     base: Optional[float] = 10.0,
-    dtype: Optional[jax.typing.DTypeLike] = None
+    dtype: Optional[DTypeLike] = None
 ):
     """
     Return numbers spaced evenly on a log scale.
@@ -1100,7 +1101,7 @@ def logspace(
 
     Returns
     -------
-    samples : jax.Array
+    samples : Array
         ``num`` samples, equally spaced on a log scale.
 
     Raises
@@ -1139,7 +1140,7 @@ def fill_diagonal(
     val: Union[Quantity, ArrayLike],
     wrap: Optional[bool] = False,
     inplace: Optional[bool] = False
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Fill the main diagonal of the given array of any dimensionality.
 
@@ -1162,7 +1163,7 @@ def fill_diagonal(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         The input array with the diagonal filled.
 
     Examples
@@ -1198,7 +1199,7 @@ def meshgrid(
     copy: Optional[bool] = True,
     sparse: Optional[bool] = False,
     indexing: Optional[str] = 'xy'
-) -> List[Union[Quantity, jax.Array]]:
+) -> List[Union[Quantity, Array]]:
     """
     Return coordinate matrices from coordinate vectors.
 
@@ -1221,7 +1222,7 @@ def meshgrid(
 
     Returns
     -------
-    X1, X2, ..., XN : list of Quantity or jax.Array
+    X1, X2, ..., XN : list of Quantity or Array
         Coordinate matrices.
 
     Examples
@@ -1275,7 +1276,7 @@ def vander(
     N: Optional[bool] = None,
     increasing: Optional[bool] = False,
     unit: Unit = UNITLESS
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Generate a Vandermonde matrix.
 
@@ -1297,7 +1298,7 @@ def vander(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         Vandermonde matrix.
 
     Raises
@@ -1345,7 +1346,7 @@ def tril_indices(n, k=0, m=None):
 def tril_indices_from(
     arr: Union[Quantity, ArrayLike],
     k: Optional[int] = 0
-) -> Tuple[jax.Array, jax.Array]:
+) -> Tuple[Array, Array]:
     """
     Return the indices for the lower-triangle of an ``(n, m)`` array.
 
@@ -1359,7 +1360,7 @@ def tril_indices_from(
 
     Returns
     -------
-    out : tuple of jax.Array
+    out : tuple of Array
         Row and column indices for the lower triangle.
 
     Examples
@@ -1385,7 +1386,7 @@ def triu_indices(n, k=0, m=None):
 def triu_indices_from(
     arr: Union[Quantity, ArrayLike],
     k: Optional[int] = 0
-) -> Tuple[jax.Array, jax.Array]:
+) -> Tuple[Array, Array]:
     """
     Return the indices for the upper-triangle of an ``(n, m)`` array.
 
@@ -1399,7 +1400,7 @@ def triu_indices_from(
 
     Returns
     -------
-    out : tuple of jax.Array
+    out : tuple of Array
         Row and column indices for the upper triangle.
 
     Examples
@@ -1424,7 +1425,7 @@ def triu_indices_from(
 def from_numpy(
     x: np.ndarray,
     unit: Unit = UNITLESS
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Convert a NumPy array to a JAX array, optionally attaching a unit.
 
@@ -1438,7 +1439,7 @@ def from_numpy(
 
     Returns
     -------
-    out : Quantity or jax.Array
+    out : Quantity or Array
         JAX array (or ``Quantity``) created from ``x``.
 
     Examples

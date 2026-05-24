@@ -17,7 +17,8 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
-from saiunit._jax_compat import HAS_JAX, jax, require_jax, ArrayLike
+from saiunit._jax_compat import HAS_JAX, jax, require_jax
+from saiunit._typing import Array, ArrayLike
 from saiunit._jax_guard import require_jax_backend
 
 if HAS_JAX:
@@ -43,7 +44,7 @@ __all__ = [
 @set_module_as('saiunit.math')
 def relu(
     x: Union[Quantity, ArrayLike],
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Rectified linear unit activation function.
 
     Computes the element-wise function:
@@ -68,7 +69,7 @@ def relu(
 
     Returns
     -------
-    out : jax.Array or Quantity
+    out : Array or Quantity
         An array with the same shape as *x* where negative values are
         replaced by zero. Units are preserved when present.
 
@@ -93,7 +94,7 @@ def relu(
 def relu6(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Rectified Linear Unit 6 activation function.
 
     Computes the element-wise function
@@ -121,7 +122,7 @@ def relu6(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*, clipped to the range [0, 6].
 
     Examples
@@ -141,7 +142,7 @@ def relu6(
 def sigmoid(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Sigmoid activation function.
 
     Computes the element-wise function:
@@ -159,7 +160,7 @@ def sigmoid(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with values in the range (0, 1).
 
     Examples
@@ -179,7 +180,7 @@ def sigmoid(
 def softplus(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Softplus activation function.
 
     Computes the element-wise function
@@ -197,7 +198,7 @@ def softplus(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with non-negative values.
 
     Examples
@@ -217,7 +218,7 @@ def softplus(
 def sparse_plus(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Sparse plus function.
 
     Computes the function:
@@ -245,7 +246,7 @@ def sparse_plus(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples
@@ -265,7 +266,7 @@ def sparse_plus(
 def sparse_sigmoid(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Sparse sigmoid activation function.
 
     Computes the function:
@@ -295,7 +296,7 @@ def sparse_sigmoid(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with values in the range [0, 1].
 
     Examples
@@ -315,7 +316,7 @@ def sparse_sigmoid(
 def soft_sign(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Soft-sign activation function.
 
     Computes the element-wise function
@@ -333,7 +334,7 @@ def soft_sign(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with values in the range (-1, 1).
 
     Examples
@@ -353,7 +354,7 @@ def soft_sign(
 def silu(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""SiLU (aka swish) activation function.
 
     Computes the element-wise function:
@@ -373,7 +374,7 @@ def silu(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples
@@ -393,7 +394,7 @@ def silu(
 def swish(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Swish (aka SiLU) activation function.
 
     Computes the element-wise function:
@@ -413,7 +414,7 @@ def swish(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples
@@ -433,7 +434,7 @@ def swish(
 def log_sigmoid(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Log-sigmoid activation function.
 
     Computes the element-wise function:
@@ -451,7 +452,7 @@ def log_sigmoid(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with non-positive values.
 
     Examples
@@ -471,7 +472,7 @@ def log_sigmoid(
 def leaky_relu(
     x: Union[Quantity, ArrayLike],
     negative_slope: ArrayLike = 1e-2  # type: ignore[assignment]
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     r"""Leaky rectified linear unit activation function.
 
     Computes the element-wise function:
@@ -494,7 +495,7 @@ def leaky_relu(
 
     Returns
     -------
-    out : jax.Array or Quantity
+    out : Array or Quantity
         An array with the same shape as *x*.
 
     Examples
@@ -517,7 +518,7 @@ def leaky_relu(
 def hard_sigmoid(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Hard Sigmoid activation function.
 
     Computes the element-wise function
@@ -535,7 +536,7 @@ def hard_sigmoid(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with values in the range [0, 1].
 
     Examples
@@ -555,7 +556,7 @@ def hard_sigmoid(
 def hard_silu(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Hard SiLU (swish) activation function.
 
     Computes the element-wise function
@@ -576,7 +577,7 @@ def hard_silu(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples
@@ -599,7 +600,7 @@ hard_swish = hard_silu
 def hard_tanh(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Hard :math:`\mathrm{tanh}` activation function.
 
     Computes the element-wise function:
@@ -621,7 +622,7 @@ def hard_tanh(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with values clipped to the range [-1, 1].
 
     Examples
@@ -642,7 +643,7 @@ def elu(
     x: Union[Quantity, ArrayLike],
     alpha: ArrayLike = 1.0,  # type: ignore[assignment]
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Exponential linear unit activation function.
 
     Computes the element-wise function:
@@ -665,7 +666,7 @@ def elu(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples
@@ -688,7 +689,7 @@ def celu(
     x: Union[Quantity, ArrayLike],
     alpha: ArrayLike = 1.0,  # type: ignore[assignment]
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Continuously-differentiable exponential linear unit activation.
 
     Computes the element-wise function:
@@ -715,7 +716,7 @@ def celu(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples
@@ -735,7 +736,7 @@ def celu(
 def selu(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Scaled exponential linear unit activation.
 
     Computes the element-wise function:
@@ -763,7 +764,7 @@ def selu(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples
@@ -784,7 +785,7 @@ def gelu(
     x: Union[Quantity, ArrayLike],
     approximate: bool = True,
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Gaussian error linear unit activation function.
 
     If ``approximate=False``, computes the element-wise function:
@@ -814,7 +815,7 @@ def gelu(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples
@@ -835,7 +836,7 @@ def glu(
     x: Union[Quantity, ArrayLike],
     axis: int = -1,
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Gated linear unit activation function.
 
     Computes the function:
@@ -861,7 +862,7 @@ def glu(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array whose size along *axis* is half that of the input.
 
     Examples
@@ -883,7 +884,7 @@ def squareplus(
     x: Union[Quantity, ArrayLike],
     b: ArrayLike = 4,  # type: ignore[assignment]
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Squareplus activation function.
 
     Computes the element-wise function
@@ -905,7 +906,7 @@ def squareplus(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with non-negative values.
 
     Examples
@@ -925,7 +926,7 @@ def squareplus(
 def mish(
     x: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
-) -> jax.Array:
+) -> Array:
     r"""Mish activation function.
 
     Computes the element-wise function:
@@ -947,7 +948,7 @@ def mish(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
         An array with the same shape as *x*.
 
     Examples

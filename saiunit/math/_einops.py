@@ -22,7 +22,8 @@ import operator
 from collections import OrderedDict
 from typing import Set, Tuple, List, Dict, Union, Callable, Optional, Sequence, TypeVar
 
-from saiunit._jax_compat import jax, jnp, ArrayLike
+from saiunit._jax_compat import jax, jnp
+from saiunit._typing import Array, ArrayLike, DTypeLike
 import numpy as np
 import opt_einsum  # type: ignore[import-untyped]
 
@@ -545,7 +546,7 @@ def einreduce(
 
     Returns
     -------
-    out : jax.Array or Quantity
+    out : Array or Quantity
         The reduced tensor with the same type as the input.
 
     Examples
@@ -601,7 +602,7 @@ def einrearrange(
 
     Returns
     -------
-    out : jax.Array or Quantity
+    out : Array or Quantity
         Tensor of the same type as input. If possible, a view to the
         original tensor is returned.
 
@@ -645,7 +646,7 @@ def einrepeat(
 
     Returns
     -------
-    out : jax.Array or Quantity
+    out : Array or Quantity
         Tensor of the same type as input.
 
     Examples
@@ -783,8 +784,8 @@ def _dot_general(
     rhs: ArrayLike | Quantity,
     dimension_numbers: jax.lax.DotDimensionNumbers,
     precision: jax.lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None
-) -> jax.Array | Quantity:
+    preferred_element_type: DTypeLike | None = None
+) -> Array | Quantity:
     unit = UNITLESS
     if isinstance(lhs, Quantity):
         unit = unit * lhs.unit  # type: ignore[assignment]
@@ -805,7 +806,7 @@ def _dot_general(
         return Quantity(r, unit=unit)
 
 
-def _delta(dtype: jax.typing.DTypeLike, shape_, axes: Sequence[int]) -> jax.Array:
+def _delta(dtype: DTypeLike, shape_, axes: Sequence[int]) -> Array:
     """This utility function exists for creating Kronecker delta arrays."""
     axes = safe_map(int, axes)
     dtype = jax.dtypes.canonicalize_dtype(dtype)
@@ -977,8 +978,8 @@ def einsum(
     *operands,
     optimize: str | bool | list[tuple[int, ...]] = "optimal",
     precision: jax.lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None,
-) -> jax.Array:
+    preferred_element_type: DTypeLike | None = None,
+) -> Array:
     """Einstein summation for arrays and quantities.
 
     ``einsum`` is a powerful and generic API for computing various reductions,
@@ -1005,7 +1006,7 @@ def einsum(
 
     Returns
     -------
-    out : jax.Array or Quantity
+    out : Array or Quantity
         Result of the Einstein summation. When operands carry physical
         units, the output unit is derived from the contraction.
 

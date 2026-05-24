@@ -18,7 +18,8 @@ from __future__ import annotations
 import functools
 from typing import (Union, Sequence, Tuple, Optional)
 
-from saiunit._jax_compat import jax, jnp, tree, ArrayLike
+from saiunit._jax_compat import jax, jnp, tree
+from saiunit._typing import Array, ArrayLike, DTypeLike
 import numpy as np
 
 from saiunit._backend import get_backend
@@ -195,9 +196,9 @@ def _fun_keep_unit_sequence(
 def concatenate(
     arrays: Union[Sequence[ArrayLike], Sequence[Quantity]],
     axis: Optional[int] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Join a sequence of quantities or arrays along an existing axis.
 
@@ -238,9 +239,9 @@ def concatenate(
 def stack(
     arrays: Union[Sequence[ArrayLike], Sequence[Quantity]],
     axis: int = 0,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Join a sequence of quantities or arrays along a new axis.
 
@@ -274,9 +275,9 @@ def stack(
 @set_module_as('saiunit.math')
 def vstack(
     tup: Union[Sequence[ArrayLike], Sequence[Quantity]],
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Stack quantities or arrays in sequence vertically (row wise).
 
@@ -311,9 +312,9 @@ row_stack = vstack
 @set_module_as('saiunit.math')
 def hstack(
     arrays: Union[Sequence[ArrayLike], Sequence[Quantity]],
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Stack quantities arrays in sequence horizontally (column wise).
 
@@ -345,9 +346,9 @@ def hstack(
 @set_module_as('saiunit.math')
 def dstack(
     arrays: Union[Sequence[ArrayLike], Sequence[Quantity]],
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Stack quantities or arrays in sequence depth wise (along third axis).
 
@@ -380,7 +381,7 @@ def dstack(
 def column_stack(
     tup: Union[Sequence[ArrayLike], Sequence[Quantity]],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Stack 1-D arrays as columns into a 2-D array.
 
@@ -411,9 +412,9 @@ def column_stack(
 
 @set_module_as('saiunit.math')
 def block(
-    arrays: Sequence[Union[jax.Array, Quantity]],
+    arrays: Sequence[Union[Array, Quantity]],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Assemble a quantity or an array from nested lists of blocks.
 
@@ -441,11 +442,11 @@ def block(
 
 @set_module_as('saiunit.math')
 def append(
-    arr: Union[jax.Array, Quantity],
-    values: Union[jax.Array, Quantity],
+    arr: Union[Array, Quantity],
+    values: Union[Array, Quantity],
     axis: Optional[int] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Append values to the end of a quantity or an array.
 
@@ -496,11 +497,11 @@ def _fun_keep_unit_return_sequence(
 
 @set_module_as('saiunit.math')
 def split(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     indices_or_sections: Union[int, Sequence[int]],
     axis: int = 0,
     **kwargs,
-) -> Union[Sequence[jax.Array | Quantity]]:
+) -> Union[Sequence[Array | Quantity]]:
     """
     Split quantity or array into a list of multiple sub-arrays.
 
@@ -543,7 +544,7 @@ def array_split(
     indices_or_sections: Union[int, ArrayLike],
     axis: Optional[int] = 0,
     **kwargs,
-) -> Union[Sequence[Quantity | jax.Array]]:
+) -> Union[Sequence[Quantity | Array]]:
     """
     Split an array into multiple sub-arrays.
 
@@ -577,10 +578,10 @@ def array_split(
 
 @set_module_as('saiunit.math')
 def dsplit(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     indices_or_sections: Union[int, Sequence[int]],
     **kwargs,
-) -> Union[Sequence[jax.Array | Quantity]]:
+) -> Union[Sequence[Array | Quantity]]:
     """
     Split a quantity or an array into multiple sub-arrays along the 3rd axis (depth).
 
@@ -613,10 +614,10 @@ def dsplit(
 
 @set_module_as('saiunit.math')
 def hsplit(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     indices_or_sections: Union[int, Sequence[int]],
     **kwargs,
-) -> Union[Sequence[jax.Array | Quantity]]:
+) -> Union[Sequence[Array | Quantity]]:
     """
     Split a quantity or an array into multiple sub-arrays horizontally (column-wise).
 
@@ -649,10 +650,10 @@ def hsplit(
 
 @set_module_as('saiunit.math')
 def vsplit(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     indices_or_sections: Union[int, Sequence[int]],
     **kwargs,
-) -> Union[Sequence[jax.Array | Quantity]]:
+) -> Union[Sequence[Array | Quantity]]:
     """
     Split a quantity or an array into multiple sub-arrays vertically (row-wise).
 
@@ -717,7 +718,7 @@ def _broadcast_fun(func, *args, **kwargs):
 def broadcast_arrays(
     *args: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
+) -> Union[Quantity | Array | Sequence[Array | Quantity]]:
     """
     Broadcast any number of arrays against each other.
 
@@ -752,7 +753,7 @@ def broadcast_arrays(
 def promote_dtypes(
     *args: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
+) -> Union[Quantity | Array | Sequence[Array | Quantity]]:
     """
     Promote the data types of the inputs to a common type.
 
@@ -784,7 +785,7 @@ def broadcast_to(
     array: Union[Quantity, ArrayLike],
     shape: Tuple[int, ...],
     **kwargs,
-) -> Quantity | jax.Array:
+) -> Quantity | Array:
     """
     Broadcast an array to a new shape.
 
@@ -822,9 +823,9 @@ def broadcast_to(
 
 @set_module_as('saiunit.math')
 def atleast_1d(
-    *arys: Union[jax.Array, Quantity],
+    *arys: Union[Array, Quantity],
     **kwargs,
-) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
+) -> Union[Quantity | Array | Sequence[Array | Quantity]]:
     """
     View inputs as quantities or arrays with at least one dimension.
 
@@ -850,9 +851,9 @@ def atleast_1d(
 
 @set_module_as('saiunit.math')
 def atleast_2d(
-    *arys: Union[jax.Array, Quantity],
+    *arys: Union[Array, Quantity],
     **kwargs,
-) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
+) -> Union[Quantity | Array | Sequence[Array | Quantity]]:
     """
     View inputs as quantities or arrays with at least two dimensions.
 
@@ -879,9 +880,9 @@ def atleast_2d(
 
 @set_module_as('saiunit.math')
 def atleast_3d(
-    *arys: Union[jax.Array, Quantity],
+    *arys: Union[Array, Quantity],
     **kwargs,
-) -> Union[Quantity | jax.Array | Sequence[jax.Array | Quantity]]:
+) -> Union[Quantity | Array | Sequence[Array | Quantity]]:
     """
     View inputs as quantities or arrays with at least three dimensions.
 
@@ -912,11 +913,11 @@ def atleast_3d(
 
 @set_module_as('saiunit.math')
 def reshape(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     shape: Union[int, Tuple[int, ...]],
     order: str = 'C',
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Gives a new shape to a quantity or an array without changing its data.
 
@@ -963,11 +964,11 @@ def reshape(
 
 @set_module_as('saiunit.math')
 def moveaxis(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     source: Union[int, Tuple[int, ...]],
     destination: Union[int, Tuple[int, ...]],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Moves axes of a quantity or an array to new positions.
     Other axes remain in their original order.
@@ -1002,10 +1003,10 @@ def moveaxis(
 
 @set_module_as('saiunit.math')
 def transpose(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     axes: Optional[Union[int, Tuple[int, ...]]] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Permute the dimensions of a quantity or an array.
 
@@ -1038,11 +1039,11 @@ def transpose(
 
 @set_module_as('saiunit.math')
 def swapaxes(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     axis1: int,
     axis2: int,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Interchange two axes of a quantity or an array.
 
@@ -1075,10 +1076,10 @@ def swapaxes(
 
 @set_module_as('saiunit.math')
 def tile(
-    A: Union[jax.Array, Quantity],
+    A: Union[Array, Quantity],
     reps: Union[int, Tuple[int, ...]],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Construct a quantity or an array by repeating A the number of times given by reps.
 
@@ -1107,12 +1108,12 @@ def tile(
 
 @set_module_as('saiunit.math')
 def repeat(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     repeats: Union[int, Tuple[int, ...]],
     axis: Optional[int] = None,
     total_repeat_length: Optional[int] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Repeat elements of a quantity or an array.
 
@@ -1146,10 +1147,10 @@ def repeat(
 
 @set_module_as('saiunit.math')
 def flip(
-    m: Union[jax.Array, Quantity],
+    m: Union[Array, Quantity],
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Reverse the order of elements in a quantity or an array along the given axis.
 
@@ -1178,9 +1179,9 @@ def flip(
 
 @set_module_as('saiunit.math')
 def fliplr(
-    m: Union[jax.Array, Quantity],
+    m: Union[Array, Quantity],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Flip quantity or array in the left/right direction.
 
@@ -1207,9 +1208,9 @@ def fliplr(
 
 @set_module_as('saiunit.math')
 def flipud(
-    m: Union[jax.Array, Quantity],
+    m: Union[Array, Quantity],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Flip quantity or array in the up/down direction.
 
@@ -1236,11 +1237,11 @@ def flipud(
 
 @set_module_as('saiunit.math')
 def roll(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     shift: Union[int, Tuple[int, ...]],
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Roll quantity or array elements along a given axis.
 
@@ -1274,10 +1275,10 @@ def roll(
 
 @set_module_as('saiunit.math')
 def expand_dims(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     axis: int,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Expand the shape of a quantity or an array.
 
@@ -1307,10 +1308,10 @@ def expand_dims(
 
 @set_module_as('saiunit.math')
 def squeeze(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     axis: Optional[Union[int, Tuple[int, ...]]] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Remove single-dimensional entries from the shape of a quantity or an array.
 
@@ -1341,7 +1342,7 @@ def squeeze(
 
 @set_module_as('saiunit.math')
 def sort(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     axis: Optional[int] = -1,
     *,
     kind: None = None,
@@ -1349,7 +1350,7 @@ def sort(
     stable: bool = True,
     descending: bool = False,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Return a sorted copy of a quantity or an array.
 
@@ -1388,13 +1389,13 @@ def sort(
 
 @set_module_as('saiunit.math')
 def max(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     axis: Optional[int] = None,
     keepdims: bool = False,
     initial: Optional[Union[int, float, Quantity]] = None,
-    where: Optional[jax.Array] = None,
+    where: Optional[Array] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Return the maximum of a quantity or an array or maximum along an axis.
 
@@ -1433,13 +1434,13 @@ def max(
 
 @set_module_as('saiunit.math')
 def min(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     axis: Optional[int] = None,
     keepdims: bool = False,
     initial: Optional[Union[int, float, Quantity]] = None,
-    where: Optional[jax.Array] = None,
+    where: Optional[Array] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Return the minimum of a quantity or an array or minimum along an axis.
 
@@ -1482,12 +1483,12 @@ amin = min
 
 @set_module_as('saiunit.math')
 def diagonal(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     offset: int = 0,
     axis1: int = 0,
     axis2: int = 1,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Return specified diagonals.
 
@@ -1523,10 +1524,10 @@ def diagonal(
 
 @set_module_as('saiunit.math')
 def ravel(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     order: str = 'C',
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Return a contiguous flattened quantity or array.
 
@@ -1564,7 +1565,7 @@ def flatten(
     start_axis: Optional[int] = None,
     end_axis: Optional[int] = None,
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """Flattens input by reshaping it into a one-dimensional tensor.
     If ``start_dim`` or ``end_dim`` are passed, only dimensions starting
     with ``start_dim`` and ending with ``end_dim`` are flattened.
@@ -1621,7 +1622,7 @@ def unflatten(
     axis: int,
     sizes: Sequence[int],
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Expands a dimension of the input tensor over multiple dimensions.
 
@@ -1656,7 +1657,7 @@ def unflatten(
 
 
 @set_module_as('saiunit.math')
-def remove_diag(x: ArrayLike | Quantity, **kwargs) -> jax.Array | Quantity:
+def remove_diag(x: ArrayLike | Quantity, **kwargs) -> Array | Quantity:
     """Remove the diagonal of the matrix.
 
     Parameters
@@ -1698,11 +1699,11 @@ def remove_diag(x: ArrayLike | Quantity, **kwargs) -> jax.Array | Quantity:
 
 @set_module_as('saiunit.math')
 def choose(
-    a: Union[jax.Array, Quantity],
-    choices: Sequence[Union[jax.Array, Quantity]],
+    a: Union[Array, Quantity],
+    choices: Sequence[Union[Array, Quantity]],
     mode: str = 'raise',
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Construct a quantity or an array from an index array and a set of arrays to choose from.
 
@@ -1738,10 +1739,10 @@ def choose(
 
 @set_module_as('saiunit.math')
 def diagflat(
-    v: Union[jax.Array, Quantity],
+    v: Union[Array, Quantity],
     k: int = 0,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Create a two-dimensional a quantity or array with the flattened input as a diagonal.
 
@@ -1787,8 +1788,8 @@ def _fun_keep_unit_unary(func, x, *args, **kwargs):
 
 def astype(
     x: Union[ArrayLike, Quantity],
-    dtype: jax.typing.DTypeLike
-) -> Union[jax.Array, Quantity]:
+    dtype: DTypeLike
+) -> Union[Array, Quantity]:
     """
     Copy of the array, cast to a specified type.
 
@@ -1817,7 +1818,7 @@ def astype(
 
 
 @set_module_as('saiunit.math')
-def real(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def real(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the real part of the complex argument.
 
@@ -1828,7 +1829,7 @@ def real(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -1843,7 +1844,7 @@ def real(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 
 
 @set_module_as('saiunit.math')
-def imag(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def imag(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the imaginary part of the complex argument.
 
@@ -1854,7 +1855,7 @@ def imag(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -1869,7 +1870,7 @@ def imag(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 
 
 @set_module_as('saiunit.math')
-def conj(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def conj(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the complex conjugate of the argument.
 
@@ -1880,7 +1881,7 @@ def conj(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -1895,7 +1896,7 @@ def conj(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 
 
 @set_module_as('saiunit.math')
-def conjugate(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def conjugate(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the complex conjugate of the argument.
 
@@ -1906,7 +1907,7 @@ def conjugate(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Ar
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -1921,7 +1922,7 @@ def conjugate(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Ar
 
 
 @set_module_as('saiunit.math')
-def negative(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def negative(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the negative of the argument.
 
@@ -1932,7 +1933,7 @@ def negative(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Arr
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -1947,7 +1948,7 @@ def negative(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Arr
 
 
 @set_module_as('saiunit.math')
-def positive(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def positive(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the positive of the argument.
 
@@ -1958,7 +1959,7 @@ def positive(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Arr
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -1973,7 +1974,7 @@ def positive(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Arr
 
 
 @set_module_as('saiunit.math')
-def abs(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def abs(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the absolute value of the argument.
 
@@ -1984,7 +1985,7 @@ def abs(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2002,11 +2003,11 @@ def abs(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 def sum(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    dtype: Union[jax.typing.DTypeLike, None] = None,
+    dtype: Union[DTypeLike, None] = None,
     keepdims: bool = False,
     initial: Union[ArrayLike, Quantity, None] = None,
     where: Union[ArrayLike, None] = None,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the sum of the array elements.
 
@@ -2046,7 +2047,7 @@ def sum(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2073,9 +2074,9 @@ def sum(
 def nancumsum(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    dtype: Union[jax.typing.DTypeLike, None] = None,
+    dtype: Union[DTypeLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the cumulative sum of the array elements, ignoring NaNs.
 
@@ -2095,7 +2096,7 @@ def nancumsum(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2114,12 +2115,12 @@ def nancumsum(
 def nansum(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    dtype: Union[jax.typing.DTypeLike, None] = None,
+    dtype: Union[DTypeLike, None] = None,
     keepdims: bool = False,
     initial: Union[ArrayLike, Quantity, None] = None,
     where: Union[ArrayLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the sum of the array elements, ignoring NaNs.
 
@@ -2153,7 +2154,7 @@ def nansum(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2180,9 +2181,9 @@ def nansum(
 def cumsum(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    dtype: Union[jax.typing.DTypeLike, None] = None,
+    dtype: Union[DTypeLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the cumulative sum of the array elements.
 
@@ -2202,7 +2203,7 @@ def cumsum(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2222,7 +2223,7 @@ def ediff1d(
     to_end: ArrayLike | Quantity | None = None,
     to_begin: ArrayLike | Quantity | None = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the differences between consecutive elements of the array.
 
@@ -2237,7 +2238,7 @@ def ediff1d(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2257,7 +2258,7 @@ def ediff1d(
 
 
 @set_module_as('saiunit.math')
-def absolute(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def absolute(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the absolute value of the argument.
 
@@ -2268,7 +2269,7 @@ def absolute(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Arr
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2283,7 +2284,7 @@ def absolute(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Arr
 
 
 @set_module_as('saiunit.math')
-def fabs(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
+def fabs(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, Array]:
     """
     Return the absolute value of the argument.
 
@@ -2294,7 +2295,7 @@ def fabs(x: Union[Quantity, ArrayLike], **kwargs) -> Union[Quantity, jax.Array]:
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2315,7 +2316,7 @@ def median(
     overwrite_input: bool = False,
     keepdims: bool = False,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the median of the array elements.
 
@@ -2342,7 +2343,7 @@ def median(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2364,7 +2365,7 @@ def nanmin(
     initial: Union[ArrayLike, Quantity, None] = None,
     where: Union[ArrayLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the minimum of the array elements, ignoring NaNs.
 
@@ -2393,7 +2394,7 @@ def nanmin(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2418,7 +2419,7 @@ def nanmax(
     initial: Union[ArrayLike, None] = None,
     where: Union[ArrayLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the maximum of the array elements, ignoring NaNs.
 
@@ -2447,7 +2448,7 @@ def nanmax(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2470,7 +2471,7 @@ def ptp(
     axis: Union[int, Sequence[int], None] = None,
     keepdims: bool = False,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the range of the array elements (maximum - minimum).
 
@@ -2498,7 +2499,7 @@ def ptp(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2520,7 +2521,7 @@ def average(
     returned: bool = False,
     keepdims: bool = False,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the weighted average of the array elements.
 
@@ -2561,7 +2562,7 @@ def average(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2579,11 +2580,11 @@ def average(
 def mean(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    dtype: Union[jax.typing.DTypeLike, None] = None,
+    dtype: Union[DTypeLike, None] = None,
     keepdims: bool = False, *,
     where: Union[ArrayLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the mean of the array elements.
 
@@ -2616,7 +2617,7 @@ def mean(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2634,12 +2635,12 @@ def mean(
 def std(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    dtype: Union[jax.typing.DTypeLike, None] = None,
+    dtype: Union[DTypeLike, None] = None,
     ddof: int = 0,
     keepdims: bool = False, *,
     where: Union[ArrayLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the standard deviation of the array elements.
 
@@ -2677,7 +2678,7 @@ def std(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2698,7 +2699,7 @@ def nanmedian(
     overwrite_input: bool = False,
     keepdims: bool = False,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the median of the array elements, ignoring NaNs.
 
@@ -2731,7 +2732,7 @@ def nanmedian(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2750,11 +2751,11 @@ def nanmedian(
 def nanmean(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    dtype: Union[jax.typing.DTypeLike, None] = None,
+    dtype: Union[DTypeLike, None] = None,
     keepdims: bool = False, *,
     where: Union[ArrayLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the mean of the array elements, ignoring NaNs.
 
@@ -2787,7 +2788,7 @@ def nanmean(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2806,12 +2807,12 @@ def nanmean(
 def nanstd(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    dtype: Union[jax.typing.DTypeLike, None] = None,
+    dtype: Union[DTypeLike, None] = None,
     ddof: int = 0,
     keepdims: bool = False, *,
     where: Union[ArrayLike, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the standard deviation of the array elements, ignoring NaNs.
 
@@ -2849,7 +2850,7 @@ def nanstd(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2873,7 +2874,7 @@ def diff(
     prepend: Union[ArrayLike, Quantity, None] = None,
     append: Union[ArrayLike, Quantity, None] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the differences between consecutive elements of the array.
 
@@ -2896,7 +2897,7 @@ def diff(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x` is a Quantity, else an array.
 
     Examples
@@ -2922,7 +2923,7 @@ def rot90(
     axes: Tuple[int, int] = (0, 1),
     **kwargs,
 ) -> Union[
-    jax.Array, Quantity]:
+    Array, Quantity]:
     """
     Rotate an array by 90 degrees in the plane specified by axes.
 
@@ -2963,7 +2964,7 @@ def intersect1d(
     assume_unique: bool = False,
     return_indices: bool = False,
     **kwargs,
-) -> Union[jax.Array, Quantity, tuple[Union[jax.Array, Quantity], jax.Array, jax.Array]]:
+) -> Union[Array, Quantity, tuple[Union[Array, Quantity], Array, Array]]:
     """
     Find the intersection of two arrays.
 
@@ -3032,7 +3033,7 @@ def nan_to_num(
     posinf: float | Quantity | None = None,
     neginf: float | Quantity | None = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Replace NaN with zero and infinity with large finite numbers (default
     behaviour) or with the numbers defined by the user using the `nan`,
@@ -3102,13 +3103,13 @@ def nan_to_num(
 
 @set_module_as('saiunit.math')
 def trace(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     offset: int = 0,
     axis1: int = 0,
     axis2: int = 1,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Return the sum along diagonals of the array.
 
@@ -3159,13 +3160,13 @@ def trace(
 
 @set_module_as('saiunit.math')
 def percentile(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     q: ArrayLike,
     axis: Optional[Union[int, Tuple[int]]] = None,
     method: str = 'linear',
     keepdims: Optional[bool] = False,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute the q-th percentile of the data along the specified axis.
 
@@ -3205,7 +3206,7 @@ def percentile(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
       Output array.
 
     Examples
@@ -3231,13 +3232,13 @@ def percentile(
 
 @set_module_as('saiunit.math')
 def nanpercentile(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     q: ArrayLike,
     axis: Optional[Union[int, Tuple[int]]] = None,
     method: str = 'linear',
     keepdims: Optional[bool] = False,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute the q-th percentile of the data along the specified axis, while ignoring nan values.
 
@@ -3277,7 +3278,7 @@ def nanpercentile(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
       Output array.
 
     Examples
@@ -3304,13 +3305,13 @@ def nanpercentile(
 
 @set_module_as('saiunit.math')
 def quantile(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     q: ArrayLike,
     axis: Optional[Union[int, Tuple[int]]] = None,
     method: str = 'linear',
     keepdims: Optional[bool] = False,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute the q-th percentile of the data along the specified axis.
 
@@ -3350,7 +3351,7 @@ def quantile(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
       Output array.
 
     Examples
@@ -3376,13 +3377,13 @@ def quantile(
 
 @set_module_as('saiunit.math')
 def nanquantile(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     q: ArrayLike,
     axis: Optional[Union[int, Tuple[int]]] = None,
     method: str = 'linear',
     keepdims: Optional[bool] = False,
     **kwargs,
-) -> jax.Array:
+) -> Array:
     """
     Compute the q-th percentile of the data along the specified axis, while ignoring nan values.
 
@@ -3422,7 +3423,7 @@ def nanquantile(
 
     Returns
     -------
-    out : jax.Array
+    out : Array
       Output array.
 
     Examples
@@ -3486,7 +3487,7 @@ def _fun_keep_unit_binary(func, x1, x2, *args, **kwargs):
 
 @set_module_as('saiunit.math')
 def fmod(x1: Union[Quantity, ArrayLike],
-         x2: Union[Quantity, jax.Array], **kwargs) -> Union[Quantity, jax.Array]:
+         x2: Union[Quantity, Array], **kwargs) -> Union[Quantity, Array]:
     """
     Return the element-wise remainder of division.
 
@@ -3499,7 +3500,7 @@ def fmod(x1: Union[Quantity, ArrayLike],
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3515,7 +3516,7 @@ def fmod(x1: Union[Quantity, ArrayLike],
 
 
 @set_module_as('saiunit.math')
-def mod(x1: Union[Quantity, ArrayLike], x2: Union[Quantity, jax.Array], **kwargs) -> Union[Quantity, jax.Array]:
+def mod(x1: Union[Quantity, ArrayLike], x2: Union[Quantity, Array], **kwargs) -> Union[Quantity, Array]:
     """
     Return the element-wise modulus of division.
 
@@ -3528,7 +3529,7 @@ def mod(x1: Union[Quantity, ArrayLike], x2: Union[Quantity, jax.Array], **kwargs
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3548,7 +3549,7 @@ def copysign(
     x1: Union[Quantity, ArrayLike],
     x2: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return a copy of the first array elements with the sign of the second array.
 
@@ -3561,7 +3562,7 @@ def copysign(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3582,7 +3583,7 @@ def maximum(
     x1: Union[Quantity, ArrayLike],
     x2: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Element-wise maximum of array elements.
 
@@ -3595,7 +3596,7 @@ def maximum(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3615,7 +3616,7 @@ def minimum(
     x1: Union[Quantity, ArrayLike],
     x2: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Element-wise minimum of array elements.
 
@@ -3628,7 +3629,7 @@ def minimum(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3648,7 +3649,7 @@ def fmax(
     x1: Union[Quantity, ArrayLike],
     x2: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Element-wise maximum of array elements ignoring NaNs.
 
@@ -3661,7 +3662,7 @@ def fmax(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3682,7 +3683,7 @@ def fmin(
     x1: Union[Quantity, ArrayLike],
     x2: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Element-wise minimum of array elements ignoring NaNs.
 
@@ -3695,7 +3696,7 @@ def fmin(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3716,7 +3717,7 @@ def lcm(
     x1: Union[Quantity, ArrayLike],
     x2: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the least common multiple of `x1` and `x2`.
 
@@ -3729,7 +3730,7 @@ def lcm(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3747,7 +3748,7 @@ def lcm(
 
 @set_module_as('saiunit.math')
 def gcd(x1: Union[Quantity, ArrayLike],
-        x2: Union[Quantity, ArrayLike],  **kwargs) -> Union[Quantity, jax.Array]:
+        x2: Union[Quantity, ArrayLike],  **kwargs) -> Union[Quantity, Array]:
     """
     Return the greatest common divisor of `x1` and `x2`.
 
@@ -3760,7 +3761,7 @@ def gcd(x1: Union[Quantity, ArrayLike],
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `x1` and `x2` are Quantities that have the same unit, else an array.
 
     Examples
@@ -3781,7 +3782,7 @@ def add(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Add arguments element-wise.
 
@@ -3815,7 +3816,7 @@ def subtract(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Subtract arguments, element-wise.
 
@@ -3849,7 +3850,7 @@ def remainder(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Returns the element-wise remainder of division.
 
@@ -3892,7 +3893,7 @@ def nextafter(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the next floating-point value after x towards y, element-wise.
 
@@ -3934,7 +3935,7 @@ def interp(
     right: Optional[Union[Quantity, ArrayLike]] = None,
     period: Optional[Union[Quantity, ArrayLike]] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     One-dimensional linear interpolation.
 
@@ -3955,7 +3956,7 @@ def interp(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `fp` is a Quantity, else an array.
 
     Examples
@@ -3989,7 +3990,7 @@ def clip(
     a_min: Union[Quantity, ArrayLike],
     a_max: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Clip (limit) the values in an array.
 
@@ -4004,7 +4005,7 @@ def clip(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Quantity if `a` is a Quantity, else an array.
 
     Examples
@@ -4025,13 +4026,13 @@ def clip(
 
 @set_module_as('saiunit.math')
 def histogram(
-    x: Union[jax.Array, Quantity],
+    x: Union[Array, Quantity],
     bins: ArrayLike = 10,  # type: ignore[assignment]
     range: Optional[Sequence[ArrayLike | Quantity]] = None,
     weights: Optional[ArrayLike] = None,
     density: Optional[bool] = None,
     **kwargs,
-) -> Tuple[jax.Array, jax.Array | Quantity]:
+) -> Tuple[Array, Array | Quantity]:
     """
     Compute the histogram of a set of data.
 
@@ -4103,14 +4104,14 @@ def histogram(
 
 @set_module_as('saiunit.math')
 def compress(
-    condition: jax.Array,
-    a: Union[jax.Array, Quantity],
+    condition: Array,
+    a: Union[Array, Quantity],
     axis: Optional[int] = None,
     *,
     size: Optional[int] = None,
     fill_value: Optional[ArrayLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Return selected slices of a quantity or an array along given axis.
 
@@ -4182,13 +4183,13 @@ def compress(
 
 @set_module_as('saiunit.math')
 def extract(
-    condition: jax.Array,
-    arr: Union[jax.Array, Quantity],
+    condition: Array,
+    arr: Union[Array, Quantity],
     *,
     size: Optional[int] = None,
     fill_value: Optional[ArrayLike | Quantity] = None,
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Return the elements of an array that satisfy some condition.
 
@@ -4264,7 +4265,7 @@ def take(
     indices_are_sorted: bool = False,
     fill_value: Optional[Union[Quantity, ArrayLike]] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Take elements from an array along an axis.
 
@@ -4340,7 +4341,7 @@ def select(
     choicelist: Union[Quantity, ArrayLike],
     default: int = 0,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return an array drawn from elements in choicelist, depending on conditions.
 
@@ -4495,7 +4496,7 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None, **kwargs)
 
 @set_module_as('saiunit.math')
 def unique(
-    a: Union[jax.Array, Quantity],
+    a: Union[Array, Quantity],
     return_index: bool = False,
     return_inverse: bool = False,
     return_counts: bool = False,
@@ -4505,7 +4506,7 @@ def unique(
     size: Optional[int] = None,
     fill_value: Optional[ArrayLike, Quantity] = None,  # type: ignore[valid-type]
     **kwargs,
-) -> Sequence[jax.Array | Quantity] | jax.Array | Quantity:
+) -> Sequence[Array | Quantity] | Array | Quantity:
     """
     Find the unique elements of a quantity or an array.
 
@@ -4584,7 +4585,7 @@ def round(
     x: Union[Quantity, ArrayLike],
     decimals: int = 0,
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Round an array to the nearest integer.
 
@@ -4597,7 +4598,7 @@ def round(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Rounded values. Quantity if `x` is a Quantity.
 
     Examples
@@ -4616,7 +4617,7 @@ def around(
     x: Union[Quantity, ArrayLike],
     decimals: int = 0,
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Round an array to the nearest integer.
 
@@ -4629,7 +4630,7 @@ def around(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Rounded values. Quantity if `x` is a Quantity.
 
     Examples
@@ -4647,7 +4648,7 @@ def around(
 def rint(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Round an array to the nearest integer.
 
@@ -4658,7 +4659,7 @@ def rint(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Rounded values. Quantity if `x` is a Quantity.
 
     Examples
@@ -4676,7 +4677,7 @@ def rint(
 def floor(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Return the floor of the argument.
 
@@ -4687,7 +4688,7 @@ def floor(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Floor values. Quantity if `x` is a Quantity.
 
     Examples
@@ -4705,7 +4706,7 @@ def floor(
 def ceil(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Return the ceiling of the argument.
 
@@ -4716,7 +4717,7 @@ def ceil(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Ceiling values. Quantity if `x` is a Quantity.
 
     Examples
@@ -4734,7 +4735,7 @@ def ceil(
 def trunc(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Return the truncated value of the argument.
 
@@ -4745,7 +4746,7 @@ def trunc(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Truncated values. Quantity if `x` is a Quantity.
 
     Examples
@@ -4763,7 +4764,7 @@ def trunc(
 def fix(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> jax.Array | Quantity:
+) -> Array | Quantity:
     """
     Return the nearest integer towards zero.
 
@@ -4774,7 +4775,7 @@ def fix(
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Values rounded towards zero. Quantity if `x` is a Quantity.
 
     Examples
@@ -4792,7 +4793,7 @@ def fix(
 def modf(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Tuple[jax.Array | Quantity, jax.Array | Quantity]:
+) -> Tuple[Array | Quantity, Array | Quantity]:
     """
     Return the fractional and integer parts of the array elements.
 
@@ -4821,7 +4822,7 @@ def modf(
 
 
 @set_module_as('saiunit.math')
-def gather(input: jax.Array | Quantity, dim: int, index: jax.Array, **kwargs):
+def gather(input: Array | Quantity, dim: int, index: Array, **kwargs):
     """
     Gather values along an axis specified by dim, according to index.
 
@@ -4829,16 +4830,16 @@ def gather(input: jax.Array | Quantity, dim: int, index: jax.Array, **kwargs):
 
     Parameters
     ----------
-    input : jax.Array, Quantity
+    input : Array, Quantity
       The source array or Quantity.
     dim : int
       The axis along which to index.
-    index : jax.Array
+    index : Array
       The indices of elements to gather.
 
     Returns
     -------
-    out : jax.Array, Quantity
+    out : Array, Quantity
       Array with the gathered elements. Quantity if `input` is a Quantity.
 
     Examples

@@ -17,7 +17,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Union, Optional, Tuple, Any, Callable
 
-from saiunit._jax_compat import jax, jnp, ArrayLike
+from saiunit._jax_compat import jax, jnp
+from saiunit._typing import Array, ArrayLike, DTypeLike
 
 from saiunit._backend import get_backend
 from saiunit._base_unit import UNITLESS
@@ -74,7 +75,7 @@ def unit_change(
 def reciprocal(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the reciprocal of the argument, element-wise.
 
@@ -115,7 +116,7 @@ def var(
     *,
     where: Optional[ArrayLike] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Compute the variance along the specified axis.
 
@@ -180,7 +181,7 @@ def nanvar(
     keepdims: bool = False,
     where: Optional[ArrayLike] = None,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Compute the variance along the specified axis, while ignoring NaNs.
 
@@ -239,7 +240,7 @@ def nanvar(
 def sqrt(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Compute the positive square root of each element.
 
@@ -273,7 +274,7 @@ def sqrt(
 def cbrt(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Compute the cube root of each element.
 
@@ -307,7 +308,7 @@ def cbrt(
 def square(
     x: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Compute the square of each element.
 
@@ -341,11 +342,11 @@ def square(
 def prod(
     x: Union[Quantity, ArrayLike],
     axis: Optional[int] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     keepdims: Optional[bool] = False,
     initial: Optional[Union[Quantity, ArrayLike]] = None,
     where: Optional[Union[Quantity, ArrayLike]] = None,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the product of array elements over a given axis.
 
@@ -405,7 +406,7 @@ def prod(
 def nanprod(
     x: Union[Quantity, ArrayLike],
     axis: Optional[int] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     keepdims: bool = False,
     initial: Optional[Union[Quantity, ArrayLike]] = None,
     where: Optional[Union[Quantity, ArrayLike]] = None,
@@ -476,7 +477,7 @@ product = prod
 def cumprod(
     x: Union[Quantity, ArrayLike],
     axis: Optional[int] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:
     """
@@ -523,7 +524,7 @@ def cumprod(
 def nancumprod(
     x: Union[Quantity, ArrayLike],
     axis: Optional[int] = None,
-    dtype: Optional[jax.typing.DTypeLike] = None,
+    dtype: Optional[DTypeLike] = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:
     """
@@ -836,7 +837,7 @@ def convolve(
     mode: str = 'full',
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    preferred_element_type: Optional[DTypeLike] = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:
     """
@@ -896,7 +897,7 @@ def power(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     First array elements raised to powers from second array, element-wise.
 
@@ -965,7 +966,7 @@ def floor_divide(
     x: Union[Quantity, ArrayLike],
     y: Union[Quantity, ArrayLike],
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     Return the largest integer smaller or equal to the division of the inputs.
 
@@ -1003,7 +1004,7 @@ def float_power(
     x: Union[Quantity, ArrayLike],
     y: ArrayLike,
     **kwargs,
-) -> Union[Quantity, jax.Array]:
+) -> Union[Quantity, Array]:
     """
     First array elements raised to powers from second array, element-wise.
 
@@ -1077,9 +1078,9 @@ def dot(
     b: Union[ArrayLike, Quantity],
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    preferred_element_type: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Compute the dot product of two arrays or quantities.
 
@@ -1131,7 +1132,7 @@ def multi_dot(
     *,
     precision: jax.lax.PrecisionLike = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Efficiently compute matrix products between a sequence of arrays.
 
@@ -1192,9 +1193,9 @@ def vdot(
     b: Union[ArrayLike, Quantity],
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    preferred_element_type: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Perform a conjugate multiplication of two 1D vectors.
 
@@ -1248,7 +1249,7 @@ def vecdot(
     /, *,
     axis: int = -1,
     precision: jax.lax.PrecisionLike = None,
-    preferred_element_type: jax.typing.DTypeLike | None = None,
+    preferred_element_type: DTypeLike | None = None,
     **kwargs,
 ):
     """
@@ -1307,9 +1308,9 @@ def inner(
     b: Union[ArrayLike, Quantity],
     *,
     precision: jax.lax.PrecisionLike = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    preferred_element_type: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Compute the inner product of two arrays or quantities.
 
@@ -1363,7 +1364,7 @@ def outer(
     b: Union[ArrayLike, Quantity],
     out: Optional[Any] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Compute the outer product of two vectors or quantities.
 
@@ -1407,7 +1408,7 @@ def kron(
     a: Union[ArrayLike, Quantity],
     b: Union[ArrayLike, Quantity],
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Compute the Kronecker product of two arrays or quantities.
 
@@ -1446,9 +1447,9 @@ def matmul(
     b: Union[ArrayLike, Quantity],
     *,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    preferred_element_type: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Compute the matrix product of two arrays or quantities.
 
@@ -1500,9 +1501,9 @@ def tensordot(
     b: Union[ArrayLike, Quantity],
     axes: int | Sequence[int] | Sequence[Sequence[int]] = 2,
     precision: Any = None,
-    preferred_element_type: Optional[jax.typing.DTypeLike] = None,
+    preferred_element_type: Optional[DTypeLike] = None,
     **kwargs,
-) -> Union[jax.Array, Quantity]:
+) -> Union[Array, Quantity]:
     """
     Compute tensor dot product along specified axes.
 

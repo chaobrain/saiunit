@@ -22,7 +22,7 @@ from jax import lax
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
-from saiunit._jax_compat import ArrayLike
+from saiunit._typing import Array, ArrayLike
 
 __all__ = [
     'reduce', 'reduce_precision',
@@ -81,7 +81,7 @@ def reduce(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         The reduced result.  Note that unit information is not preserved
         through the raw XLA reduce; see Notes.
 
@@ -148,7 +148,7 @@ def reduce_precision(
 
     When the input is a :class:`~saiunit.Quantity`, the precision reduction
     is applied to the mantissa and the result is returned as a plain
-    :class:`jax.Array` (the unit is stripped).
+    :class:`Array` (the unit is stripped).
 
     Parameters
     ----------
@@ -165,7 +165,7 @@ def reduce_precision(
 
     Returns
     -------
-    result : jax.Array
+    result : Array
         Array with reduced-precision values.  Unit information from a
         :class:`~saiunit.Quantity` input is not preserved.
 

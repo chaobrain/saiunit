@@ -16,7 +16,8 @@ from __future__ import annotations
 
 from typing import Callable, Union, Sequence
 
-from saiunit._jax_compat import ArrayLike
+from saiunit._jax_compat import HAS_JAX, jax, jnp
+from saiunit._typing import ArrayLike, DTypeLike, Shape
 import numpy as np
 
 from saiunit import _unit_common as uc
@@ -52,7 +53,16 @@ def unit_change(
     return actual_decorator
 
 
-Shape = Sequence[int]
+def _fftfreq_extra_kwargs(xp, dtype):
+    """Forward ``dtype`` to ``xp.fft.fftfreq`` only when the backend supports it.
+
+    ``numpy.fft.fftfreq`` accepts ``dtype``; some other backends do not.
+    Always pass it when set; let the call site surface a backend error if the
+    backend genuinely lacks support.
+    """
+    if dtype is None:
+        return {}
+    return {"dtype": dtype}
 
 
 # return original unit * time unit
@@ -779,6 +789,8 @@ def _validate_time_spacing(d: Quantity) -> None:
 def fftfreq(
     n: int,
     d: Union[Quantity, ArrayLike] = 1.0,  # type: ignore[assignment]
+    *,
+    dtype: DTypeLike | None = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:
     """Return sample frequencies for the discrete Fourier transform.
@@ -827,15 +839,19 @@ def fftfreq(
                                     scale=freq_unit_scale, )
         d_value = d.to_decimal(time_unit)
         xp = get_backend(d_value)
-        return Quantity(xp.fft.fftfreq(n, d=d_value, **kwargs), unit=freq_unit)
+        extra = _fftfreq_extra_kwargs(xp, dtype)
+        return Quantity(xp.fft.fftfreq(n, d=d_value, **extra, **kwargs), unit=freq_unit)
     xp = get_backend(d)
-    return xp.fft.fftfreq(n, d=d, **kwargs)
+    extra = _fftfreq_extra_kwargs(xp, dtype)
+    return xp.fft.fftfreq(n, d=d, **extra, **kwargs)
 
 
 @set_module_as('saiunit.fft')
 def rfftfreq(
     n: int,
     d: Union[Quantity, ArrayLike] = 1.0,  # type: ignore[assignment]
+    *,
+    dtype: DTypeLike | None = None,
     **kwargs,
 ) -> Union[Quantity, ArrayLike]:
     """Return sample frequencies for the real discrete Fourier transform.
@@ -883,6 +899,8 @@ def rfftfreq(
                                     scale=freq_unit_scale, )
         d_value = d.to_decimal(time_unit)
         xp = get_backend(d_value)
-        return Quantity(xp.fft.rfftfreq(n, d=d_value, **kwargs), unit=freq_unit)
+        extra = _fftfreq_extra_kwargs(xp, dtype)
+        return Quantity(xp.fft.rfftfreq(n, d=d_value, **extra, **kwargs), unit=freq_unit)
     xp = get_backend(d)
-    return xp.fft.rfftfreq(n, d=d, **kwargs)
+    extra = _fftfreq_extra_kwargs(xp, dtype)
+    return xp.fft.rfftfreq(n, d=d, **extra, **kwargs)
