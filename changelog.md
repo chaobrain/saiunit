@@ -8,8 +8,26 @@ Version 0.3.1 is a compatibility release that makes ``saiunit.Quantity``
 work with Matplotlib out of the box. Plotting a ``Quantity`` no longer
 requires any setup — the unit converter is registered automatically when
 ``saiunit`` is imported and Matplotlib is installed, so ``ax.plot``,
-``ax.scatter``, axis limits, reference lines, and histograms accept
+``ax.scatter``, axis limits, reference lines, histograms, error bars,
+box/violin plots, stack plots, hex bins, and pie charts accept
 quantities directly and label axes with their units.
+
+### New features
+
+- **Quantity-aware ``errorbar``, ``boxplot``, ``violinplot``,
+  ``stackplot``, ``hexbin``, and ``pie``.** These Axes methods coerce
+  their inputs to arrays *before* Matplotlib's unit converter runs, so a
+  bare ``Quantity`` previously raised. ``enable_matplotlib_support()`` now
+  wraps each one: Quantity arguments are converted to plain magnitudes via
+  the public API and the relevant axis is labeled with the unit, while
+  calls without any ``Quantity`` pass through untouched. Error-bar
+  magnitudes (``xerr``/``yerr``) and stacked series are rescaled into the
+  axis unit; ``pie`` wedge sizes and ``hexbin`` ``C`` colour values, which
+  have no axis-unit meaning, are reduced to their magnitudes. If a future
+  Matplotlib release changes one of these method signatures, the affected
+  wrapper raises a clear error naming the version the first time it is
+  called with a ``Quantity`` (other functions and ``import saiunit`` are
+  unaffected).
 
 ### Bug fixes
 
@@ -34,14 +52,28 @@ quantities directly and label axes with their units.
   per-dataset arrays) flows through to unit processing instead of failing
   the ``numpy.asanyarray`` coercion, and the histogram axis is labeled
   with the quantity's unit.
+- **``ax.axhspan``/``ax.axvspan`` accept quantity bounds.** The converter
+  now passes plain (non-Quantity) values through unchanged, fixing the
+  double-conversion ``ConversionError`` raised when Matplotlib re-converts
+  already-scaled patch coordinates. This also lets callers mix bare numbers
+  onto a unit-bearing axis, matching Matplotlib's own semantics.
+
+### Known limitations
+
+- Two-dimensional scalar-field functions (``imshow``, ``contourf``,
+  ``pcolormesh``, ``quiver``) treat a ``Quantity`` as colour/magnitude
+  data rather than an axis coordinate, and Matplotlib offers no unit hook
+  there. Pass ``.to_decimal(unit)`` and label the colour bar manually.
 
 ### Tests
 
-- Expanded the Matplotlib compatibility suite to 25 tests covering
+- Expanded the Matplotlib compatibility suite to 43 tests covering
   auto-registration, ``plot``/``scatter`` axis-unit inference, scalar
-  axis limits and reference lines, cross-unit conversion and
-  incompatible-unit errors, JAX-backed quantities, and ``hist`` unit
-  preservation.
+  axis limits and reference lines, ``axhspan``/``axvspan`` and
+  plain-number passthrough, cross-unit conversion and incompatible-unit
+  errors, JAX-backed quantities, ``hist`` unit preservation, the
+  ``errorbar``/``boxplot``/``violinplot``/``stackplot``/``hexbin``/``pie``
+  wrappers, non-Quantity identity, and the fail-loud signature guard.
 
 ## Version 0.3.0
 

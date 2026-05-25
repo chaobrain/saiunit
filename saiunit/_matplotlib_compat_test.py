@@ -239,3 +239,188 @@ def test_reshape_2d_patch_delegates_for_plain_arrays():
     result = cbook._reshape_2D(np.arange(6).reshape(3, 2), "x")
     assert len(result) == 2  # columns
     assert all(isinstance(col, np.ndarray) for col in result)
+
+
+# ---------------------------------------------------------------------------
+# Axes-method wrappers: registration
+# ---------------------------------------------------------------------------
+
+def test_axes_wrappers_installed_on_import():
+    assert mpl_compat.matplotlib_axes_patch_installed is True
+
+
+# ---------------------------------------------------------------------------
+# Converter passthrough for plain (non-Quantity) values
+# ---------------------------------------------------------------------------
+
+def test_convert_passes_plain_values_through():
+    # A bare number on a unit-bearing axis is assumed already in axis units.
+    assert mpl_compat.QuantityConverter.convert(2.0, u.meter, axis=None) == 2.0
+    np.testing.assert_allclose(
+        mpl_compat.QuantityConverter.convert([1, 2, 3], u.meter, axis=None),
+        np.asarray([1.0, 2.0, 3.0]),
+    )
+
+
+def test_axhspan_accepts_scalar_quantities(ax):
+    ax.plot(np.arange(3) * u.second, np.arange(3) * u.meter)
+    patch = ax.axhspan(1 * u.meter, 2 * u.meter)
+    assert patch is not None
+
+
+def test_axvspan_accepts_scalar_quantities(ax):
+    ax.plot(np.arange(3) * u.second, np.arange(3) * u.meter)
+    patch = ax.axvspan(0.5 * u.second, 1.5 * u.second)
+    assert patch is not None
+
+
+def test_plain_number_on_quantity_axis(ax):
+    ax.plot(np.arange(3) * u.second, np.arange(3) * u.meter)
+    ax.set_ylim(0, 5)  # plain numbers interpreted as meters
+    lo, hi = ax.get_ylim()
+    np.testing.assert_allclose([lo, hi], [0.0, 5.0])
+
+
+# ---------------------------------------------------------------------------
+# errorbar
+# ---------------------------------------------------------------------------
+
+def test_errorbar_sets_axis_units_and_labels(ax):
+    ax.errorbar(
+        np.arange(5) * u.second,
+        np.arange(5) * u.meter,
+        yerr=np.ones(5) * 50 * u.cmeter,
+        xerr=np.ones(5) * 0.1 * u.second,
+    )
+    assert ax.xaxis.get_units() == u.second
+    assert ax.yaxis.get_units() == u.meter
+    assert ax.yaxis.label.get_text() == u.meter.dispname
+
+
+def test_errorbar_scales_err_into_axis_unit(ax):
+    # y in meters, yerr supplied in cm -> err must be rescaled to meters (0.5 m).
+    container = ax.errorbar(
+        np.arange(3) * u.second,
+        np.arange(3) * u.meter,
+        yerr=np.ones(3) * 50 * u.cmeter,
+    )
+    line = container.lines[0]
+    np.testing.assert_allclose(np.asarray(line.get_ydata()), [0.0, 1.0, 2.0])
+
+
+def test_errorbar_incompatible_err_unit_raises(ax):
+    with pytest.raises(Exception):
+        ax.errorbar(
+            np.arange(3) * u.second,
+            np.arange(3) * u.meter,
+            yerr=np.ones(3) * u.volt,
+        )
+
+
+# ---------------------------------------------------------------------------
+# boxplot / violinplot
+# ---------------------------------------------------------------------------
+
+def test_boxplot_vertical_sets_value_axis_unit(ax):
+    ax.boxplot(np.arange(10) * u.cmeter)
+    assert ax.yaxis.get_units() == u.cmeter
+
+
+def test_boxplot_horizontal_sets_x_axis_unit(ax):
+    try:
+        ax.boxplot(np.arange(10) * u.cmeter, orientation="horizontal")
+    except TypeError:
+        ax.boxplot(np.arange(10) * u.cmeter, vert=False)
+    assert ax.xaxis.get_units() == u.cmeter
+
+
+def test_boxplot_converts_into_existing_axis_unit(ax):
+    # Establish the y-axis as meters, then a cm boxplot must rescale to meters.
+    ax.plot(np.arange(3) * u.second, np.arange(3) * u.meter)
+    result = ax.boxplot(np.array([100.0, 200.0, 300.0]) * u.cmeter)
+    assert ax.yaxis.get_units() == u.meter
+    median = result["medians"][0].get_ydata()
+    np.testing.assert_allclose(np.asarray(median), [2.0, 2.0])  # 200 cm -> 2 m
+
+
+def test_violinplot_sets_value_axis_unit(ax):
+    ax.violinplot(np.linspace(0, 1, 50) * u.volt)
+    assert ax.yaxis.get_units() == u.volt
+
+
+# ---------------------------------------------------------------------------
+# stackplot
+# ---------------------------------------------------------------------------
+
+def test_stackplot_multiple_series_share_unit(ax):
+    ax.stackplot(
+        np.arange(5) * u.second,
+        np.arange(5) * u.meter,
+        np.arange(5) * u.meter,
+    )
+    assert ax.xaxis.get_units() == u.second
+    assert ax.yaxis.get_units() == u.meter
+
+
+# ---------------------------------------------------------------------------
+# hexbin / pie (data stripped where units have no axis meaning)
+# ---------------------------------------------------------------------------
+
+def test_hexbin_sets_axis_units(ax):
+    ax.hexbin(
+        np.linspace(0, 1, 50) * u.second,
+        np.linspace(0, 1, 50) * u.meter,
+        C=np.linspace(0, 1, 50) * u.volt,
+        gridsize=5,
+    )
+    assert ax.xaxis.get_units() == u.second
+    assert ax.yaxis.get_units() == u.meter
+
+
+def test_pie_accepts_quantity_without_crashing(ax):
+    wedges, _ = ax.pie(np.arange(1, 5) * u.meter)
+    assert len(wedges) == 4
+
+
+# ---------------------------------------------------------------------------
+# Non-Quantity inputs must be untouched (fast-path identity)
+# ---------------------------------------------------------------------------
+
+def test_wrappers_leave_plain_inputs_unchanged(ax):
+    ax.boxplot([1, 2, 3, 4, 5])
+    ax.errorbar([0, 1, 2], [0, 1, 2], yerr=[0.1, 0.1, 0.1])
+    ax.pie([1, 2, 3])
+    # No unit attached because nothing was a Quantity.
+    assert ax.yaxis.get_units() is None
+
+
+# ---------------------------------------------------------------------------
+# Fail-loud signature guard
+# ---------------------------------------------------------------------------
+
+def test_signature_guard_detects_missing_params():
+    def good(self, x, y):
+        return None
+
+    def bad(self, a, b):
+        return None
+
+    assert mpl_compat._signature_has_params(good, ("x", "y"))
+    assert not mpl_compat._signature_has_params(bad, ("x", "y"))
+
+
+def test_unsupported_wrapper_raises_on_quantity_only(ax):
+    calls = []
+
+    def fake_original(self, x):
+        calls.append(x)
+        return "called"
+
+    wrapper = mpl_compat._make_axes_wrapper(
+        fake_original, mpl_compat._pre_pie, "pie", supported=False
+    )
+    # Plain input still passes through to the original.
+    assert wrapper(ax, [1, 2, 3]) == "called"
+    # Quantity input raises a clear, actionable error.
+    with pytest.raises(Exception, match="changed its signature"):
+        wrapper(ax, np.arange(3) * u.meter)
