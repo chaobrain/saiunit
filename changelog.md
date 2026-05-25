@@ -4,116 +4,292 @@
 
 ### Highlights
 
-``Quantity.at`` now works on every supported backend. Previously, indexed
-functional updates (``x.at[idx].set(...)``, ``.add(...)``, etc.) required a
-JAX-backed mantissa and raised ``BackendError`` for NumPy and the other
-backends, forcing users to call ``.to_jax()`` first. As of this release the
-same expression works directly on ``numpy``, ``jax``, ``cupy``, ``torch``, and
-``dask`` arrays, with documented scope limits for ``dask`` and a clean
-``BackendError`` for ``ndonnx``.
+Version 0.3.0 completes the multi-backend transition started in 0.2.2. The
+entire public surface of ``saiunit.math``, ``saiunit.linalg``, ``saiunit.fft``,
+and ``Quantity`` (including ``Quantity.at`` and every scatter operation) now
+dispatches through the array-API standard, so the same source code runs
+unchanged on ``numpy``, ``jax``, ``cupy``, ``torch``, ``dask``, and
+``ndonnx``. A centralized argument-adaptation layer handles the
+per-backend signature differences that previously produced ``TypeError``
+on calls that the underlying operation supported.
+
+This release also lands a static-typing pass — ``mypy saiunit/`` reports
+zero errors across 111 source files, the new ``type_check`` CI job blocks
+regressions, and the package ships a PEP 561 ``py.typed`` marker so
+downstream type checkers honor the inline annotations.
 
 ### Breaking changes
 
+- **Removed the ``compatible_with_equinox`` toggle and the
+  ``compat_with_equinox`` global.** The Equinox compatibility shim, the
+  Equinox branch in ``Quantity.__pow__``, and the associated tests, docs,
+  and mypy overrides have been deleted. Equinox now works against saiunit
+  via the same path as every other consumer.
 - **Removed the ``promote_integers`` keyword from ``saiunit.math.sum`` and
-  ``saiunit.math.prod``.** This argument was only accepted by ``jax.numpy``;
-  forwarding it to the active backend caused ``TypeError`` on every
-  non-JAX backend (numpy, torch, dask, ndonnx). Callers that need JAX's
-  integer-promotion behavior should call ``jax.numpy.sum`` /
-  ``jax.numpy.prod`` directly. Passing ``promote_integers=...`` to
-  ``saiunit.math.sum`` / ``saiunit.math.prod`` now raises
-  ``TypeError: unexpected keyword argument`` immediately.
+  ``saiunit.math.prod``** (and the ``**kwargs`` catch-all that smuggled it
+  through). This argument is JAX-only; forwarding it raised ``TypeError``
+  on every non-JAX backend. Callers that need it should call
+  ``jax.numpy.sum`` / ``jax.numpy.prod`` directly.
+- **``Quantity(np.ndarray)`` no longer silently lifts to JAX** in code
+  paths that previously did so. ``Quantity(mantissa, dtype=...)``, the
+  ``Quantity.mantissa`` setter, and ``Quantity([q1, q2, ...])`` all now
+  honor the active backend (or the input's existing backend) instead of
+  defaulting to JAX whenever JAX is installed.
+- **``Quantity.strides`` / ``.flat`` / ``.T`` / ``.mT`` raise
+  ``BackendError`` on lazy mantissas** (``dask``, ``ndonnx``) instead of
+  silently calling ``.compute()`` / ``.unwrap_numpy()``.
+- **``Quantity.at`` on ``ndonnx`` mantissas raises ``BackendError``.**
+  ndonnx builds a symbolic ONNX graph and has no notion of a functional
+  in-place update; call ``.to_numpy()`` first to materialize.
 
 ### New features
 
-- **Multi-backend ``Quantity.at``.** All nine ``.at[idx].<op>(...)``
-  operations — ``get``, ``set``, ``add``, ``multiply``/``mul``,
-  ``divide``/``div``, ``power``, ``min``, ``max``, ``apply`` — work across
-  every supported backend. The unit-tracking semantics are unchanged: the
-  same dimension/magnitude checks fire regardless of backend, and the result
-  preserves the original mantissa backend (a torch-backed Quantity stays
-  torch, a dask-backed Quantity stays dask).
+#### Multi-backend ``Quantity.at`` and scatter dispatch
+
+- **All nine ``.at[idx].<op>(...)`` operations** — ``get``, ``set``,
+  ``add``, ``multiply``/``mul``, ``divide``/``div``, ``power``, ``min``,
+  ``max``, ``apply`` — now work on ``numpy``, ``jax``, ``cupy``, ``torch``,
+  and ``dask``. Unit-tracking semantics are unchanged: the same
+  dimension/magnitude checks fire regardless of backend, and the result
+  preserves the original mantissa backend.
 - **Unified scatter dispatch (``saiunit._scatter``).** ``Quantity.at`` and
   ``Quantity.__setitem__`` / ``scatter_add`` / ``scatter_mul`` /
-  ``scatter_div`` / ``scatter_max`` / ``scatter_min`` now all route through
-  one backend-aware module. This fixes a latent bug where the old in-line
-  ``_scatter`` helper silently called ``jnp.asarray`` on cupy, torch, dask,
-  and ndonnx mantissas.
+  ``scatter_div`` / ``scatter_max`` / ``scatter_min`` all route through
+  one backend-aware module. ``CustomArray.__setitem__`` shares the same
+  path, so user subclasses with non-JAX mantissas work without a JAX
+  install.
 - **Emulated ``mode`` and ``fill_value`` on non-JAX backends.** JAX's
   ``mode`` (``'promise_in_bounds'``/``'clip'``/``'drop'``/``'fill'``) and
-  ``fill_value`` arguments are emulated on ``numpy``/``cupy``/``torch`` for
-  scalar-int and 1D-integer-array indices, so the same code that uses
-  ``x.at[20].get(mode='fill', fill_value=-1 * u.mV)`` on JAX now runs
-  unchanged on NumPy. For more complex index expressions (slices, boolean
-  masks, multi-axis tuples) the native backend semantics apply — these
-  indices don't have an out-of-bounds notion to honor.
+  ``fill_value`` arguments are emulated on ``numpy``/``cupy``/``torch``
+  for scalar-int and 1D-integer-array indices, so
+  ``x.at[20].get(mode='fill', fill_value=-1 * u.mV)`` runs unchanged
+  across backends.
+
+#### Complete multi-backend coverage for ``saiunit.math`` / ``linalg`` / ``fft``
+
+- Every direct ``jnp.*`` / ``jax.tree.*`` / ``jax.lax.*`` call in
+  ``saiunit/math/_fun_{change,keep,remove,array_creation,accept}_unit.py``,
+  ``saiunit/_misc.py``, ``saiunit/fft/``, and ``saiunit/linalg/`` now goes
+  through ``get_backend()`` + ``_resolve_op()`` so the same code path
+  works on numpy/torch/dask/ndonnx in addition to JAX.
+- Mechanical replacements where backends diverge: ``remove_diag`` uses
+  ``~xp.eye`` instead of ``jnp.fill_diagonal`` (which numpy implements
+  in-place returning ``None``); ``meshgrid`` uses
+  ``xp.broadcast_to`` + ``reshape`` instead of ``jax.lax.broadcast_in_dim``;
+  ``compress`` / ``extract`` / ``unique`` / ``where(cond)`` /
+  ``searchsorted`` drop JAX-only kwargs (``size``, ``fill_value``,
+  ``method``) when the backend doesn't accept them.
+
+#### Centralized dispatch layer
+
+- **New ``_dispatch_call`` pipeline in
+  ``saiunit.math._fun_keep_unit``** combines two adaptation layers:
+  ``_filter_unsupported_kwargs`` (signature introspection) and
+  ``_safe_call`` (``TypeError``-message parsing for C-bindings such as
+  torch). All dispatch helpers (``_fun_keep_unit_*``,
+  ``_fun_change_unit_*``, ``_fun_remove_unit_*``, ``_fun_logic_*``,
+  ``_fun_accept_unitless_*``, ``_fun_unitless_binary``) route through it,
+  and the ``_fun_array_creation`` call sites use a matching
+  ``_safe_call_xp`` shim.
+- **Centralized ``None``-kwarg stripping (``_strip_none_kwargs``)** in
+  the same dispatch helpers — wrapper call sites pass kwargs naturally
+  instead of inline ``_drop_none(...)`` plumbing.
+- **Per-wrapper signature fixes** so the generated backend-support
+  matrix reports zero ``TypeError``-style argument mismatches:
+  ``split`` / ``array_split`` forward ``indices_or_sections``
+  positionally; ``transpose`` / ``swapaxes`` / ``tile`` /
+  ``expand_dims`` / ``squeeze`` pass axis arguments in the form each
+  backend accepts; ``cumsum`` / ``nancumsum`` / ``cumprod`` /
+  ``nancumprod`` emulate numpy's ``axis=None`` flatten semantics via a
+  new ``_maybe_flatten`` helper so torch's array-API binding stays
+  happy; ``histogram`` / ``take`` / ``select`` / ``unique`` rewritten to
+  use ``_strip_none_kwargs`` + dispatch helper; ``corrcoef`` / ``cov``
+  dispatch unary when ``y is None``; ``nan_to_num`` routes per-block via
+  numpy on dask; ``eye`` / ``tri`` pass ``k`` as a keyword and
+  materialize a default dtype for dask auto-chunking; ``bincount`` only
+  forwards JAX's ``length=`` when set.
+- **Backend-aware dtype translation (``_translate_dtype``)** in
+  ``saiunit/_backend.py`` maps numpy dtype objects to each backend's
+  native attribute, fixing ``arange``, ``astype``, ``tril_indices``,
+  ``triu_indices``, and the ``Quantity.astype`` method on torch and
+  ndonnx (both of which reject numpy dtypes).
+
+#### Consolidated typing module
+
+- **New ``saiunit/_typing.py`` module** with ``Array``, ``ArrayLike``,
+  ``ScalarOrArrayLike``, ``DTypeLike``, ``Shape``, ``Axis``, ``Axes``,
+  and ``PyTree``. Every ``jax.Array`` / ``jax.typing.DTypeLike``
+  reference in production code (annotations and docstrings) now uses
+  these aliases. ``saiunit.typing`` re-exports the module so the public
+  import path is unchanged.
+- The new ``ArrayLike`` is narrow — it deliberately excludes bare Python
+  scalars (``bool``/``int``/``float``/``complex``) so that
+  ``.shape`` / ``.ndim`` / ``.dtype`` reads do not produce union-attr
+  false positives. Approximately 658 ``jax.typing.ArrayLike`` references
+  across ``lax`` / ``math`` / ``fft`` / ``linalg`` / ``sparse`` have
+  been migrated.
+
+### Improvements
+
+#### ``Quantity`` core
+
+- ``Quantity(mantissa, dtype=...)`` honors ``dtype`` on
+  cupy / torch / dask / ndonnx mantissas (previously silently ignored).
+- ``Quantity.mantissa`` setter coerces the new value to the *existing*
+  backend of the ``Quantity`` rather than silently lifting
+  torch / cupy / dask / ndonnx arrays to JAX.
+- ``_check_units_and_collect_values`` (the helper behind
+  ``Quantity([q1, q2, ...])``) honors ``set_default_backend()`` /
+  ``using_backend()`` instead of always landing on JAX when JAX is
+  installed.
+- ``Quantity.shape`` prefers ``m.shape`` for ``array_api_compat`` backends
+  that do not expose ``xp.shape``; ``Quantity.repeat``, ``round``,
+  ``argmax``, ``argmin``, ``take``, ``nanprod``, ``expand_dims``, and
+  ``unsqueeze`` resolve their backend at call time via ``_xp_attr`` and
+  pick the calling form each backend accepts.
+
+#### Activation functions
+
+- ``relu``, ``sigmoid``, ``softplus``, ``gelu``, … now guard with
+  ``require_jax_backend`` and raise a clean ``BackendError`` on non-JAX
+  inputs (instead of crashing with
+  ``AttributeError: 'NoneType' object has no attribute 'relu'``).
+  ``leaky_relu`` is implemented via ``where`` and remains
+  backend-agnostic.
+- ``Quantity.at`` docstring now ships a per-backend repeated-index
+  semantics table.
+
+#### Lazy / symbolic backends
+
+- ``isnan`` / ``isinf`` / ``isfinite`` / ``isreal`` / ``gradient`` route
+  through ``get_backend(...)`` rather than hard-coded ``jnp.*``, so
+  non-JAX arrays no longer hit a numpy-only path.
+- ``saiunit.fft.fftn`` / ``ifftn`` / ``rfftn`` / ``irfftn`` no longer
+  force Python-scalar / list inputs through ``jnp.asarray`` for the
+  input-ndim probe.
 
 ### Backend-specific notes
 
-- **NumPy / CuPy:** repeated-index updates use ``np.<op>.at`` /
-  ``cupy.<op>.at`` so the JAX "all-updates-applied" semantics carry over.
-- **PyTorch:** ``add`` uses ``index_put_(accumulate=True)`` and matches JAX
-  for repeated indices. ``multiply``/``divide``/``min``/``max``/``apply`` use
-  gather + op + scatter and follow last-write-wins semantics for repeated
-  indices (one of the rare places torch's native semantics differ from JAX).
-- **Dask:** updates are expressed via ``da.where`` over a positional boolean
-  mask, so the task graph stays lazy and chunked. Supported index types:
-  scalar int, 1D integer array, slice, ellipsis, and same-shape boolean
-  mask. Multi-dim fancy integer indexing raises ``NotImplementedError`` —
-  call ``.to_numpy()`` first for those cases.
-- **ndonnx:** raises ``BackendError`` on every ``.at[...].set/get/...``
-  call. ndonnx builds a symbolic ONNX graph; it can't represent a functional
-  in-place update cleanly. Call ``.to_numpy()`` to materialize first.
+- **NumPy / CuPy:** repeated-index updates under ``Quantity.at`` use
+  ``np.<op>.at`` / ``cupy.<op>.at`` so the JAX "all-updates-applied"
+  semantics carry over.
+- **PyTorch:** ``add`` uses ``index_put_(accumulate=True)`` and matches
+  JAX for repeated indices. ``multiply`` / ``divide`` / ``min`` / ``max``
+  / ``apply`` use gather + op + scatter and follow last-write-wins
+  semantics for repeated indices (one of the rare places torch's native
+  semantics differ from JAX).
+- **Dask:** ``Quantity.at`` updates are expressed via ``da.where`` over
+  a positional boolean mask, so the task graph stays lazy and chunked.
+  Supported index types: scalar int, 1D integer array, slice, ellipsis,
+  and same-shape boolean mask.
+- **ndonnx:** ``Quantity.at[...].set/get/...`` raises ``BackendError``;
+  ``saiunit.fft.tril_indices`` / ``triu_indices`` use a static numpy
+  fallback wrapped with ``xp.asarray`` (ndonnx exposes no native
+  ``tril_indices``).
 
 ### Known limitations
 
-- ``mode`` emulation is best-effort on non-JAX backends for scalar-int and
-  1D-integer-array indices only. Slice/boolean/ellipsis indices ignore
-  ``mode`` because they cannot go out of bounds against a same-shape source.
+- ``mode`` emulation on ``.at[...]`` is best-effort on non-JAX backends
+  for scalar-int and 1D-integer-array indices only.
+  Slice/boolean/ellipsis indices ignore ``mode`` because they cannot go
+  out of bounds against a same-shape source.
 - ``dask`` does not yet support multi-dim fancy integer indexing under
   ``.at``; use ``.to_numpy()`` for those patterns.
+- After the dispatch sweep, every remaining non-pass cell in the
+  function-level support matrix traces to a genuine missing-attribute or
+  ``NotImplementedError`` on the backend rather than a saiunit-side
+  argument mismatch. The 11 remaining ndonnx fails are real backend
+  limitations (no ``complex128``; ``NotImplementedError`` for
+  ``copysign`` / ``expm1`` / ``hypot`` / ``log1p`` / ``nextafter`` /
+  ``signbit``).
 
-### Backend-compatibility fixes
+### Documentation
 
-A focused sweep through the rest of the dispatcher closed several silent
-JAX-coercion paths and replaced raw ``AttributeError`` failure modes with
-``BackendError``:
+- **Function-level backend support matrix.** New generated rst page
+  (``docs/backends/feature_support_matrix.rst``) documents per-(function,
+  backend) support across the five locally-installed backends, covering
+  294 mapped + 47 non-dispatched entries in ``saiunit.math``, all 35 in
+  ``saiunit.linalg``, all 16 in ``saiunit.fft``, and 78/79 ``Quantity``
+  methods. Companion tooling (``dev/backend_support_sweep.py``,
+  ``dev/backend_support_render.py``,
+  ``dev/backend_support_data.json``) produces a byte-deterministic,
+  reproducible sweep.
+- **Installation guide rewrite** (``docs/getting_started/installation.rst``).
+  Full reference covering requirements, quick install, per-extra
+  options, combining rules, source/editable install, install
+  verification, upgrade/uninstall, troubleshooting (``BackendError``,
+  CUDA mismatch, CuPy runtime, PyTorch wheel pitfalls), and BrainX
+  ecosystem install. The landing page (``index.rst``) keeps only the
+  two most common install commands and links out to the full reference.
+- Per-backend Jupyter notebooks (``numpy``, ``jax``, ``torch``, ``dask``,
+  ``ndonnx``, ``overview``) refreshed with updated outputs and
+  markdown formatting.
+- Chaobrain ecosystem documentation links (``brainmodeling``,
+  ``brainstate``, ``brainpy-state``, ``brainunit``, ``braincell``,
+  ``brainmass``, ``brainevent``, ``braintrace``, ``braintools``)
+  redirected from ``*.readthedocs.io`` to the new
+  ``brainx.chaobrain.com`` domain. Third-party RTD links remain
+  intact.
+- BrainUnit README header / Sphinx logo serves
+  ``brainunit.webp`` from ``brainx.chaobrain.com`` (~91% bandwidth
+  saving). The top-level SAIUnit README continues to use its local
+  ``logo.png`` identity.
 
-- ``CustomArray.__setitem__`` no longer assumes JAX-style ``.at[idx].set(...)``;
-  it routes through the unified ``saiunit._scatter`` dispatcher so subclasses
-  with numpy / cupy / torch / dask mantissas work without a JAX install.
-- ``Quantity(mantissa, dtype=...)`` now honors ``dtype`` for cupy / torch /
-  dask / ndonnx mantissas. Previously the dtype kwarg was silently ignored
-  for those backends.
-- ``Quantity.mantissa`` setter coerces the new value to the *existing*
-  backend of the Quantity rather than silently lifting torch / cupy / dask /
-  ndonnx arrays to JAX.
-- ``_check_units_and_collect_values`` (the helper behind
-  ``Quantity([q1, q2, ...])``) honors ``set_default_backend()`` /
-  ``using_backend()`` instead of always landing on JAX when JAX is installed.
-- ``Quantity.strides`` / ``.flat`` / ``.T`` / ``.mT`` raise ``BackendError``
-  on lazy mantissas (dask, ndonnx) instead of silently calling
-  ``.compute()`` / ``.unwrap_numpy()`` on them.
-- ``saiunit.fft.fftn`` / ``ifftn`` / ``rfftn`` / ``irfftn`` no longer force
-  Python-scalar / list inputs through ``jnp.asarray`` for the input-ndim
-  probe.
-- ``saiunit.math`` activation functions (``relu``, ``sigmoid``, ``softplus``,
-  ``gelu``, …) now guard with ``require_jax_backend`` and raise a clean
-  ``BackendError`` on non-JAX inputs, instead of crashing with
-  ``AttributeError: 'NoneType' object has no attribute 'relu'`` when JAX
-  isn't installed or when called on a torch / cupy / dask mantissa.
-  ``leaky_relu`` is implemented via ``where`` and remains backend-agnostic.
+### Type checking
+
+- **``mypy saiunit/`` reports zero errors** across 111 source files
+  (down from 2,019 before the cleanup). The new ``type_check`` CI job
+  blocks any regression on PRs.
+- Targeted ``# type: ignore`` comments are limited to documented stub
+  gaps (``jax.lax`` ``Array`` vs the narrow ``ArrayLike``,
+  ``absl-py`` ``parameterized.product`` limitations in tests, missing
+  third-party stubs for ``brainstate`` / ``cupy`` / ``opt_einsum`` /
+  ``jax.util``).
+- ``[[tool.mypy.overrides]]`` in ``pyproject.toml`` carries
+  ``ignore_missing_imports = true`` for optional backend libraries so
+  the CI ``type_check`` job does not need to install ~1 GB of extras.
+
+### Packaging
+
+- **PEP 561 ``py.typed`` marker** shipped in both ``saiunit`` and
+  ``brainunit`` package roots and declared in package-data, so
+  downstream type checkers (mypy, pyright) honor the inline
+  annotations.
+- ``setuptools.packages.find`` now excludes the ``brainunit*`` subtree
+  from the ``saiunit`` wheel — the wheel drops from ~180 to 130 entries
+  with no brainunit references, while ``saiunit/py.typed`` still ships.
 
 ### CI
 
-- Added five per-backend CI jobs (``test_pure_numpy``, ``test_pure_jax``,
-  ``test_pure_torch``, ``test_pure_dask``, ``test_pure_ndonnx``) to
-  ``CI.yml``. Each job installs exactly one array backend and runs the
-  full test suite with that backend set as the saiunit default via the
-  ``SAIUNIT_DEFAULT_BACKEND`` env var (read in ``conftest.py``). This
-  catches accidental JAX-only kwargs leaking through the public API and
-  proves that ``pip install saiunit[<backend>]`` works end-to-end on
-  every PR. ``cupy`` is intentionally excluded — GitHub free runners have
-  no GPU.
+- **Five per-backend isolation jobs** (``test_pure_numpy``,
+  ``test_pure_jax``, ``test_pure_torch``, ``test_pure_dask``,
+  ``test_pure_ndonnx``) on ``CI.yml``. Each installs exactly one array
+  backend on top of ``requirements.txt`` and runs the full suite with
+  ``SAIUNIT_DEFAULT_BACKEND`` set, verifying that
+  ``pip install saiunit[<backend>]`` works end-to-end and that no other
+  backend library leaks in. ``cupy`` is intentionally excluded —
+  GitHub free runners have no GPU.
+- ``conftest.py`` reads ``SAIUNIT_DEFAULT_BACKEND`` at session start,
+  calls ``set_default_backend``, and skip-collects any test file that
+  imports ``jax`` at module level when ``HAS_JAX`` is ``False`` so the
+  no-jax CI variants don't crash during collection.
+- ``test_pure_jax`` installs the in-tree ``brainunit`` over the
+  PyPI-pinned copy via ``make_brainunit_setup.py`` +
+  ``--force-reinstall --no-deps`` so the checkout's API surface (after
+  the Equinox-shim removal) is the one being tested.
+- ``deploy-docs.yml`` drops the ``push:main`` build-only trigger:
+  ``release:released`` and ``workflow_dispatch`` both build and deploy
+  the docs; the redundant build-only path on push is gone.
+
+### Removed
+
+- The ``compatible_with_equinox`` toggle, ``compat_with_equinox``
+  global, the Equinox branch in ``Quantity.__pow__``, the associated
+  tests, the docs reference, and the mypy ignore overrides for the
+  Equinox path.
+- The ``promote_integers`` keyword and ``**kwargs`` catch-all from
+  ``saiunit.math.sum`` and ``saiunit.math.prod`` (see *Breaking
+  changes*).
 
 ## Version 0.2.2
 
