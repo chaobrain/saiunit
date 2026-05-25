@@ -21,7 +21,7 @@ from saiunit._jax_compat import jax, jnp, tree as _tree
 from saiunit._typing import Array, ArrayLike, DTypeLike
 import numpy as np
 
-from saiunit._backend import get_backend, get_default_backend, _xp_for
+from saiunit._backend import get_backend, get_default_backend, _xp_for, _translate_dtype
 from saiunit._base_dimension import UnitMismatchError
 from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import fail_for_unit_mismatch, get_unit, unit_scale_align_to_first
@@ -1008,9 +1008,19 @@ def arange(
     start = start.in_unit(unit).mantissa if isinstance(start, Quantity) else start
     stop = stop.in_unit(unit).mantissa if isinstance(stop, Quantity) else stop
     step = step.in_unit(unit).mantissa if isinstance(step, Quantity) else step
-    # compute
+    # Build positional args without leading/trailing ``None``s. torch / dask /
+    # ndonnx reject a ``None`` ``step`` positional that numpy and jax silently
+    # treat as the default 1, and ndonnx additionally requires a non-``None``
+    # ``stop``. Normalize the single-arg form ``arange(stop)`` to ``(0, stop)``
+    # the way numpy does, then drop ``step`` when not given.
+    if stop is None:
+        stop = start
+        start = 0
+    pos = (start, stop) if step is None else (start, stop, step)
+    xp = _default_xp()
+    kwargs = {} if dtype is None else {"dtype": _translate_dtype(dtype, xp)}
     with jax.ensure_compile_time_eval():
-        r = _default_xp().arange(start, stop, step, dtype=dtype)
+        r = xp.arange(*pos, **kwargs)
     return r if unit.is_unitless else Quantity(r, unit=unit)
 
 
@@ -1379,10 +1389,16 @@ def vander(
 
 def tril_indices(n, k=0, m=None):
     xp = _default_xp()
+    name = getattr(xp, '__name__', '')
     # torch's binding spells the signature ``tril_indices(row, col, offset)``;
     # array-API / numpy / jax / dask spell it ``(n, k=0, m=None)``.
-    if 'torch' in getattr(xp, '__name__', ''):
+    if 'torch' in name:
         return xp.tril_indices(n, n if m is None else m, offset=k)
+    # ndonnx has no ``tril_indices``; compute the static index pair on numpy
+    # and wrap with ``xp.asarray`` so the caller receives backend-native arrays.
+    if 'ndonnx' in name:
+        rows, cols = np.tril_indices(n, k=k, m=m)
+        return (xp.asarray(rows), xp.asarray(cols))
     return _safe_call_xp(xp.tril_indices, (n,), {'k': k, 'm': m})
 
 
@@ -1424,8 +1440,12 @@ def tril_indices_from(
 
 def triu_indices(n, k=0, m=None):
     xp = _default_xp()
-    if 'torch' in getattr(xp, '__name__', ''):
+    name = getattr(xp, '__name__', '')
+    if 'torch' in name:
         return xp.triu_indices(n, n if m is None else m, offset=k)
+    if 'ndonnx' in name:
+        rows, cols = np.triu_indices(n, k=k, m=m)
+        return (xp.asarray(rows), xp.asarray(cols))
     return _safe_call_xp(xp.triu_indices, (n,), {'k': k, 'm': m})
 
 

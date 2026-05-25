@@ -1396,24 +1396,24 @@
     },
     "saiunit.math.arange": {
       "dask": {
-        "detail": "TypeError: An error occurred while calling the arange method registered to the numpy backend.\nOriginal Message: unsupported operand type(s) for /: 'int' and 'NoneType'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "ValueError: 'arange' is not implemented for the provided inputs",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: '>' not supported between instances of 'NoneType' and 'int'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.arccos": {
@@ -1822,16 +1822,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "AttributeError: type object 'numpy.float32' has no attribute '__ndx_cast_from__'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: to() received an invalid combination of arguments - got (copy=bool, dtype=type, ), but expected one of:\n * (torch.device device = None, torch.dtype dtype = None, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n * (torch.dtype dtype, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n * (Tensor tensor, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "saiunit.math.atleast_1d": {
@@ -3310,7 +3310,7 @@
     },
     "saiunit.math.einsum": {
       "dask": {
-        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/scalable-discovering-key/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
+        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/idempotent-seeking-clarke/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
         "status": "skip"
       },
       "jax": {
@@ -3322,7 +3322,7 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/scalable-discovering-key/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
+        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/idempotent-seeking-clarke/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
         "status": "skip"
       },
       "torch": {
@@ -8114,8 +8114,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "AttributeError: module 'ndonnx' has no attribute `tril_indices`",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
@@ -8180,8 +8180,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "AttributeError: module 'ndonnx' has no attribute `triu_indices`",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
@@ -9019,16 +9019,16 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "AttributeError: type object 'numpy.float32' has no attribute '__ndx_cast_from__'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: to() received an invalid combination of arguments - got (copy=bool, dtype=type, ), but expected one of:\n * (torch.device device = None, torch.dtype dtype = None, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n * (torch.dtype dtype, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n * (Tensor tensor, bool non_blocking = False, bool copy = False, *, torch.memory_format memory_format = None)\n",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.clip": {

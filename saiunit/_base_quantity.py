@@ -2414,7 +2414,9 @@ class Quantity:
         if dtype is None:
             return Quantity(self.mantissa, unit=self.unit)
         else:
-            return Quantity(get_backend(self).astype(self.mantissa, dtype), unit=self.unit)
+            from saiunit._backend import _translate_dtype
+            xp = get_backend(self)
+            return Quantity(xp.astype(self.mantissa, _translate_dtype(dtype, xp)), unit=self.unit)
 
     def clip(
         self,
