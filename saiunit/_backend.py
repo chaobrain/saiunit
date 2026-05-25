@@ -300,6 +300,28 @@ def _numpy_to_torch_dtype(np_dtype, torch_mod):
     return getattr(torch_mod, torch_name)
 
 
+def _translate_dtype(dtype, xp):
+    """Translate ``dtype`` (often a numpy dtype) to the equivalent on ``xp``.
+
+    torch and ndonnx reject numpy dtype objects: torch's ``Tensor.to`` raises
+    ``TypeError: received an invalid combination of arguments`` and ndonnx
+    raises ``AttributeError: type object 'numpy.float32' has no attribute
+    '__ndx_cast_from__'``. Both expose array-API dtype attributes
+    (``xp.float32``, ``xp.int64``, …) that match numpy's dtype names, so the
+    safest cross-backend bridge is ``getattr(xp, np.dtype(dtype).name)``.
+
+    Returns ``dtype`` unchanged if it isn't a numpy dtype-like value or if
+    ``xp`` doesn't expose the named attribute.
+    """
+    if dtype is None:
+        return None
+    try:
+        name = np.dtype(dtype).name
+    except (TypeError, ValueError):
+        return dtype
+    return getattr(xp, name, dtype)
+
+
 def to_backend(x, name: BackendName, **kwargs):
     """Convert ``x`` to the given backend; no-op if already there.
 

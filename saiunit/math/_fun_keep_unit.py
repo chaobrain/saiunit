@@ -24,7 +24,7 @@ from saiunit._jax_compat import jax, jnp, tree
 from saiunit._typing import Array, ArrayLike, DTypeLike
 import numpy as np
 
-from saiunit._backend import get_backend
+from saiunit._backend import get_backend, _translate_dtype
 
 
 def _promote_dtypes(*arrays):
@@ -1980,6 +1980,11 @@ def astype(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.astype(a, jnp.float32)
     """
+    # torch and ndonnx reject numpy dtype objects; translate to the
+    # backend's own dtype attribute (``xp.float32`` etc.) before dispatch.
+    x = maybe_custom_array(x)
+    inner = x.mantissa if isinstance(x, Quantity) else x
+    dtype = _translate_dtype(dtype, get_backend(inner))
     return _fun_keep_unit_unary('astype', x, dtype)
 
 
