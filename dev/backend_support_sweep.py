@@ -349,6 +349,34 @@ def _p_eye(fn, backend):
     return fn(3, M=3)
 
 
+def _p_tril_triu_indices(fn, backend):
+    # numpy / jax / dask / ndonnx all spell the second-axis kwarg ``m`` (lower),
+    # not ``M`` (which ``_p_eye`` passes). Keep them on a dedicated pattern.
+    return fn(3, m=3)
+
+
+def _p_astype(fn, backend):
+    # saiunit.math.astype requires the target ``dtype`` as a positional arg.
+    return fn(_arr([1.0, 2.0, 3.0], backend), np.float32)
+
+
+def _p_full_like(fn, backend):
+    # saiunit.math.full_like requires a ``fill_value`` after the prototype.
+    return fn(_arr([1.0, 2.0, 3.0], backend), 7.0)
+
+
+def _p_gather(fn, backend):
+    # saiunit.math.gather signature: gather(input, dim, index).
+    a = _arr([[1.0, 2.0], [3.0, 4.0]], backend)
+    idx = _arr([[0, 0], [1, 0]], backend, dtype=np.int64)
+    return fn(a, 1, idx)
+
+
+def _p_nancumulative(fn, backend):
+    # Dask requires an explicit ``axis`` for nancumprod / nancumsum.
+    return fn(_arr([1.0, 2.0, 3.0], backend), axis=0)
+
+
 def _p_identity(fn, backend):
     return fn(3)
 
@@ -751,7 +779,7 @@ MATH_REGISTRY: dict[str, Callable] = {
     # ---- cumulative ----
     "cumsum": _p_cumulative, "cumprod": _p_cumulative,
     "cumproduct": _p_cumulative,
-    "nancumsum": _p_cumulative, "nancumprod": _p_cumulative,
+    "nancumsum": _p_nancumulative, "nancumprod": _p_nancumulative,
     # ---- products ----
     "dot": _p_dot, "vdot": _p_dot, "vecdot": _p_dot,
     "inner": _p_inner, "outer": _p_outer, "cross": _p_cross,
@@ -763,12 +791,12 @@ MATH_REGISTRY: dict[str, Callable] = {
     "zeros": _p_creation_shape, "ones": _p_creation_shape, "empty": _p_creation_shape,
     "zeros_like": _p_creation_like, "ones_like": _p_creation_like,
     "empty_like": _p_creation_like,
-    "full": _p_creation_full, "full_like": _p_creation_like,
+    "full": _p_creation_full, "full_like": _p_full_like,
     "arange": _p_creation_range, "linspace": _p_creation_linspace,
     "logspace": _p_creation_linspace,
     "eye": _p_eye, "identity": _p_identity, "tri": _p_tri,
     "tril": _p_unary_2d, "triu": _p_unary_2d,
-    "tril_indices": _p_eye, "triu_indices": _p_eye,
+    "tril_indices": _p_tril_triu_indices, "triu_indices": _p_tril_triu_indices,
     "tril_indices_from": _p_tri_index, "triu_indices_from": _p_tri_index,
     "diag": _p_diag, "diagflat": _p_diag, "diagonal": _p_diagonal,
     "vander": _p_vander,
@@ -801,7 +829,7 @@ MATH_REGISTRY: dict[str, Callable] = {
     # ---- indexing / selection ----
     "take": _p_take, "compress": _p_extract, "extract": _p_extract,
     "choose": _p_choose, "select": _p_select, "where": _p_where,
-    "gather": _p_take,
+    "gather": _p_gather,
     "argwhere": _p_argwhere, "nonzero": _p_nonzero,
     "flatnonzero": _p_flatnonzero,
     "argsort": _p_argsort, "sort": _p_sort,
@@ -844,7 +872,7 @@ MATH_REGISTRY: dict[str, Callable] = {
     "result_type": _p_result_type,
     "dtype": _p_dtype, "finfo": _p_finfo, "iinfo": _p_iinfo,
     "issubdtype": _p_issubdtype, "isscalar": _p_isscalar,
-    "astype": _p_unary_float,  # operates on array, dtype param implied
+    "astype": _p_astype,  # operates on array; saiunit requires dtype positional
     "ndim": _p_unary_float, "shape": _p_unary_float, "size": _p_unary_float,
 }
 

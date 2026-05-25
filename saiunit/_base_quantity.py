@@ -2371,7 +2371,18 @@ class Quantity:
             >>> q.round(1)
             Quantity(1.6, "mV")
         """
-        return Quantity(get_backend(self).round(self.mantissa, decimals), unit=self.unit)
+        # ndonnx's ``round`` accepts only a single positional argument and
+        # ignores ``decimals``; torch insists on the keyword form. Falling
+        # back when ``decimals`` is the no-op default lets both pass.
+        xp = get_backend(self)
+        if decimals == 0:
+            r = xp.round(self.mantissa)
+        else:
+            try:
+                r = xp.round(self.mantissa, decimals=decimals)
+            except TypeError:
+                r = xp.round(self.mantissa, decimals)
+        return Quantity(r, unit=self.unit)
 
     def astype(
         self,
@@ -2919,7 +2930,14 @@ class Quantity:
             >>> q.repeat(2)
             Quantity([1. 1. 2. 2.], "mV")
         """
-        r = get_backend(self).repeat(self.mantissa, repeats=repeats, axis=axis)
+        # ``repeats`` is positional-only on torch / ndonnx; ``axis`` is
+        # forwarded only when explicitly requested so backends that reject
+        # ``axis=None`` (torch) stay happy.
+        xp = get_backend(self)
+        if axis is None:
+            r = xp.repeat(self.mantissa, repeats)
+        else:
+            r = xp.repeat(self.mantissa, repeats, axis=axis)
         return Quantity(r, unit=self.unit)
 
     def reshape(self, shape, order='C') -> 'Quantity':
@@ -3514,7 +3532,7 @@ class Quantity:
             >>> q.unsqueeze(0).shape
             (1, 2)
         """
-        return Quantity(get_backend(self).expand_dims(self.mantissa, axis), unit=self.unit)
+        return Quantity(get_backend(self).expand_dims(self.mantissa, axis=axis), unit=self.unit)
 
     def expand_dims(self, axis: int | Sequence[int]) -> 'Quantity':
         """
@@ -3540,7 +3558,7 @@ class Quantity:
             >>> q.expand_dims(0).shape
             (1, 2)
         """
-        return Quantity(get_backend(self).expand_dims(self.mantissa, axis), unit=self.unit)
+        return Quantity(get_backend(self).expand_dims(self.mantissa, axis=axis), unit=self.unit)
 
     def expand_as(self, array: 'Quantity | ArrayLike') -> 'Quantity':
         """

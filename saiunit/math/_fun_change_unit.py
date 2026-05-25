@@ -26,7 +26,7 @@ from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ._fun_array_creation import asarray
-from ._fun_keep_unit import _resolve_op, _strip_none_kwargs
+from ._fun_keep_unit import _resolve_op, _strip_none_kwargs, _dispatch_call, _maybe_flatten
 
 __all__ = [
 
@@ -55,11 +55,11 @@ def _fun_change_unit_unary(val_fun, unit_fun, x, *args, **kwargs):
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
         val_fun = _resolve_op(val_fun, xp)
-        r = Quantity(val_fun(x.mantissa, *args, **kwargs), unit=unit_fun(x.unit))
+        r = Quantity(_dispatch_call(val_fun, (x.mantissa, *args), kwargs), unit=unit_fun(x.unit))
         return maybe_decimal(r)
     xp = get_backend(x)
     val_fun = _resolve_op(val_fun, xp)
-    return val_fun(x, *args, **kwargs)
+    return _dispatch_call(val_fun, (x, *args), kwargs)
 
 
 def unit_change(
@@ -495,12 +495,15 @@ def cumprod(
         >>> u.math.cumprod(q)
     """
     x = maybe_custom_array(x)
+    if axis is None and not isinstance(x, Quantity):
+        x = _maybe_flatten(x)
+        axis = 0
     if isinstance(x, Quantity):
         return x.cumprod(axis=axis, dtype=dtype)
     else:
         xp = get_backend(x)
         extra = _strip_none_kwargs(dict(axis=axis, dtype=dtype))
-        return _resolve_op('cumprod', xp)(x, **extra, **kwargs)
+        return _dispatch_call(_resolve_op('cumprod', xp), (x,), {**extra, **kwargs})
 
 
 @set_module_as('saiunit.math')
@@ -543,12 +546,15 @@ def nancumprod(
         >>> u.math.nancumprod(q)
     """
     x = maybe_custom_array(x)
+    if axis is None and not isinstance(x, Quantity):
+        x = _maybe_flatten(x)
+        axis = 0
     if isinstance(x, Quantity):
         return x.nancumprod(axis=axis, dtype=dtype)
     else:
         xp = get_backend(x)
         extra = _strip_none_kwargs(dict(axis=axis, dtype=dtype))
-        return _resolve_op('nancumprod', xp)(x, **extra, **kwargs)
+        return _dispatch_call(_resolve_op('nancumprod', xp), (x,), {**extra, **kwargs})
 
 
 cumproduct = cumprod
@@ -567,24 +573,24 @@ def _fun_change_unit_binary(val_fun, unit_fun, x, y, *args, **kwargs):
         xp = get_backend(x.mantissa, y.mantissa)
         val_fun = _resolve_op(val_fun, xp)
         return maybe_decimal(
-            Quantity(val_fun(x.mantissa, y.mantissa, *args, **kwargs), unit=unit_fun(x.unit, y.unit))
+            Quantity(_dispatch_call(val_fun, (x.mantissa, y.mantissa, *args), kwargs), unit=unit_fun(x.unit, y.unit))
         )
     elif isinstance(x, Quantity):
         xp = get_backend(x.mantissa, y)
         val_fun = _resolve_op(val_fun, xp)
         return maybe_decimal(
-            Quantity(val_fun(x.mantissa, y, *args, **kwargs), unit=unit_fun(x.unit, UNITLESS))
+            Quantity(_dispatch_call(val_fun, (x.mantissa, y, *args), kwargs), unit=unit_fun(x.unit, UNITLESS))
         )
     elif isinstance(y, Quantity):
         xp = get_backend(x, y.mantissa)
         val_fun = _resolve_op(val_fun, xp)
         return maybe_decimal(
-            Quantity(val_fun(x, y.mantissa, *args, **kwargs), unit=unit_fun(UNITLESS, y.unit))
+            Quantity(_dispatch_call(val_fun, (x, y.mantissa, *args), kwargs), unit=unit_fun(UNITLESS, y.unit))
         )
     else:
         xp = get_backend(x, y)
         val_fun = _resolve_op(val_fun, xp)
-        return val_fun(x, y, *args, **kwargs)
+        return _dispatch_call(val_fun, (x, y, *args), kwargs)
 
 
 @unit_change(lambda ux, uy: ux * uy)

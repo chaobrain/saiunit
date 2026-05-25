@@ -22,7 +22,7 @@ from saiunit._typing import Array, ArrayLike, DTypeLike
 from saiunit._backend import get_backend
 from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
-from ._fun_keep_unit import _resolve_op
+from ._fun_keep_unit import _resolve_op, _strip_none_kwargs, _dispatch_call
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 from ._exprel import exprel as _exprel_impl, set_exprel_order
 
@@ -97,6 +97,7 @@ def _fun_accept_unitless_unary(
     x = maybe_custom_array(x)
     args = maybe_custom_array_tree(args)
     kwargs = maybe_custom_array_tree(kwargs)
+    kwargs = _strip_none_kwargs(kwargs)
 
     if isinstance(x, Quantity):
         if unit_to_scale is None:
@@ -109,13 +110,13 @@ def _fun_accept_unitless_unary(
             x = x.to_decimal(unit_to_scale)
         xp = get_backend(x)
         func = _resolve_op(func, xp)
-        return func(x, *args, **kwargs)  # type: ignore[operator]
+        return _dispatch_call(func, (x, *args), kwargs)
     else:
         if unit_to_scale is not None:
             raise TypeError(_unit_to_scale_without_quantity_message(func, x))  # type: ignore[arg-type]
         xp = get_backend(x)
         func = _resolve_op(func, xp)
-        return func(x, *args, **kwargs)  # type: ignore[operator]
+        return _dispatch_call(func, (x, *args), kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1038,6 +1039,7 @@ def _fun_accept_unitless_binary(
     y = maybe_custom_array(y)
     args = maybe_custom_array_tree(args)
     kwargs = maybe_custom_array_tree(kwargs)
+    kwargs = _strip_none_kwargs(kwargs)
 
     if isinstance(x, Quantity):
         if unit_to_scale is None:
@@ -1059,7 +1061,7 @@ def _fun_accept_unitless_binary(
             y = y.to_decimal(unit_to_scale)
     xp = get_backend(x, y)
     func = _resolve_op(func, xp)
-    return func(x, y, *args, **kwargs)  # type: ignore[operator]
+    return _dispatch_call(func, (x, y, *args), kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1512,6 +1514,7 @@ def _fun_unitless_binary(func, x, y, *args, **kwargs):
     y = maybe_custom_array(y)
     args = maybe_custom_array_tree(args)
     kwargs = maybe_custom_array_tree(kwargs)
+    kwargs = _strip_none_kwargs(kwargs)
 
     if isinstance(x, Quantity):
         if not x.dim.is_dimensionless:
@@ -1523,7 +1526,7 @@ def _fun_unitless_binary(func, x, y, *args, **kwargs):
         y = y.to_decimal()
     xp = get_backend(x, y)
     func = _resolve_op(func, xp)
-    return func(x, y, *args, **kwargs)
+    return _dispatch_call(func, (x, y, *args), kwargs)
 
 
 @set_module_as('saiunit.math')

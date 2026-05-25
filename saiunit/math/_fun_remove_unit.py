@@ -24,7 +24,7 @@ from saiunit._typing import Array, ArrayLike
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
 from saiunit._base_quantity import Quantity
-from ._fun_keep_unit import _resolve_op, _strip_none_kwargs
+from ._fun_keep_unit import _resolve_op, _strip_none_kwargs, _dispatch_call
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
 __all__ = [
@@ -94,11 +94,11 @@ def _fun_remove_unit_unary(func, x, *args, **kwargs):
     if isinstance(x, Quantity):
         xp = get_backend(x.mantissa)
         func = _resolve_op(func, xp)
-        return func(x.mantissa, *args, **kwargs)
+        return _dispatch_call(func, (x.mantissa, *args), kwargs)
     else:
         xp = get_backend(x)
         func = _resolve_op(func, xp)
-        return func(x, *args, **kwargs)
+        return _dispatch_call(func, (x, *args), kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -400,7 +400,7 @@ def _fun_logic_unary(func, x, *args, **kwargs):
         x = x.mantissa
     xp = get_backend(x)
     func = _resolve_op(func, xp)
-    return func(x, *args, **kwargs)
+    return _dispatch_call(func, (x, *args), kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -544,11 +544,12 @@ def _fun_logic_binary(func, x, y, *args, **kwargs):
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
+    kwargs = _strip_none_kwargs(kwargs)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         xm, ym = x.mantissa, y.in_unit(x.unit).mantissa
         xp = get_backend(xm, ym)
         func = _resolve_op(func, xp)
-        return func(xm, ym, *args, **kwargs)
+        return _dispatch_call(func, (xm, ym, *args), kwargs)
     elif isinstance(x, Quantity):
         if not x.is_unitless:
             raise TypeError(
@@ -558,7 +559,7 @@ def _fun_logic_binary(func, x, y, *args, **kwargs):
             )
         xp = get_backend(x.mantissa, y)
         func = _resolve_op(func, xp)
-        return func(x.mantissa, y, *args, **kwargs)
+        return _dispatch_call(func, (x.mantissa, y, *args), kwargs)
     elif isinstance(y, Quantity):
         if not y.is_unitless:
             raise TypeError(
@@ -568,11 +569,11 @@ def _fun_logic_binary(func, x, y, *args, **kwargs):
             )
         xp = get_backend(x, y.mantissa)
         func = _resolve_op(func, xp)
-        return func(x, y.mantissa, *args, **kwargs)
+        return _dispatch_call(func, (x, y.mantissa, *args), kwargs)
     else:
         xp = get_backend(x, y)
         func = _resolve_op(func, xp)
-        return func(x, y, *args, **kwargs)
+        return _dispatch_call(func, (x, y, *args), kwargs)
 
 
 @set_module_as('saiunit.math')
