@@ -146,15 +146,60 @@ def register_quantity_converter(units_module: Any | None = None) -> bool:
 
 matplotlib_installed = _has_matplotlib()
 matplotlib_converter_registered = False
+matplotlib_reshape_patch_installed = False
+
+
+def _install_reshape_2d_patch() -> bool:
+    """Teach Matplotlib's ``_reshape_2D`` helper to accept Quantity inputs.
+
+    Functions such as :meth:`~matplotlib.axes.Axes.hist` massage their data with
+    ``matplotlib.cbook._reshape_2D`` *before* the registered unit converter
+    runs. Because a :class:`~saiunit.Quantity` is not an ``ndarray`` subclass,
+    that step coerces it with ``numpy.asanyarray`` and fails. Wrapping the helper
+    lets Quantity data flow through to ``_process_unit_info``, so the converter
+    can scale values and label the axis while keeping units intact.
+    """
+    global matplotlib_reshape_patch_installed
+    if matplotlib_reshape_patch_installed:
+        return True
+    try:
+        from matplotlib import cbook
+    except Exception:
+        return False
+    original = getattr(cbook, '_reshape_2D', None)
+    if not callable(original):
+        return False
+
+    def _reshape_2D(value: Any, name: str) -> Any:
+        if isinstance(value, Quantity):
+            if value.ndim == 0:
+                return [value.reshape(1)]
+            if value.ndim == 1:
+                return [value]
+            if value.ndim == 2:
+                return [value[:, i] for i in range(value.shape[1])]
+            raise ValueError(f"{name} must have 2 or fewer dimensions")
+        if (
+            isinstance(value, (list, tuple))
+            and len(value) > 0
+            and all(isinstance(item, Quantity) and item.ndim >= 1 for item in value)
+        ):
+            return [item.reshape(-1) for item in value]
+        return original(value, name)
+
+    setattr(cbook, '_reshape_2D', _reshape_2D)
+    matplotlib_reshape_patch_installed = True
+    return True
 
 
 def enable_matplotlib_support(units_module: Any | None = None) -> bool:
     """
-    Opt in to Matplotlib unit support by registering :class:`QuantityConverter`.
+    Register :class:`QuantityConverter` in Matplotlib's unit registry.
 
-    Importing :mod:`saiunit` does not modify Matplotlib's global converter
-    registry on its own — callers that want Quantity values to render on
-    Matplotlib axes must invoke this function once at startup.
+    Importing :mod:`saiunit` registers this converter automatically when
+    Matplotlib is installed, so Quantity values render on Matplotlib axes out of
+    the box. Call this function directly only to re-register after the registry
+    has been cleared, or to register against a custom ``units_module``.
 
     Parameters
     ----------
@@ -170,4 +215,9 @@ def enable_matplotlib_support(units_module: Any | None = None) -> bool:
     registered = register_quantity_converter(units_module)
     if units_module is None and registered:
         matplotlib_converter_registered = True
+        _install_reshape_2d_patch()
     return registered
+
+
+if matplotlib_installed:
+    enable_matplotlib_support()

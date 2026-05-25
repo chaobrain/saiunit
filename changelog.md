@@ -1,5 +1,48 @@
 # Release Notes
 
+## Version 0.3.1
+
+### Highlights
+
+Version 0.3.1 is a compatibility release that makes ``saiunit.Quantity``
+work with Matplotlib out of the box. Plotting a ``Quantity`` no longer
+requires any setup — the unit converter is registered automatically when
+``saiunit`` is imported and Matplotlib is installed, so ``ax.plot``,
+``ax.scatter``, axis limits, reference lines, and histograms accept
+quantities directly and label axes with their units.
+
+### Bug fixes
+
+- **Matplotlib support is now enabled automatically on import.** Earlier
+  releases registered the ``Quantity`` converter only when the caller
+  invoked ``enable_matplotlib_support()`` explicitly; the documented
+  ``examples/matplotlib_quantity_basics.py`` omitted that call and raised
+  ``TypeError: Only dimensionless quantities can be converted to NumPy
+  arrays``. The converter now registers at import time. Calling
+  ``enable_matplotlib_support()`` remains supported for re-registering
+  after the registry is cleared or for targeting a custom units module.
+- **Scalar (0-d) quantities work as axis limits and reference lines.**
+  ``Quantity.__iter__`` now raises eagerly on 0-d inputs, so
+  ``numpy.iterable`` reports ``False`` exactly as it does for a 0-d
+  ``ndarray``. This unblocks ``ax.set_xlim``/``ax.set_ylim``,
+  ``ax.axhline``, and ``ax.axvline`` with scalar quantities, which
+  previously crashed inside Matplotlib's ``_is_natively_supported`` check.
+- **``ax.hist`` accepts quantities and keeps their units.** Histogram and
+  other functions coerce their data with ``matplotlib.cbook._reshape_2D``
+  *before* the unit converter runs. ``enable_matplotlib_support()`` now
+  wraps that helper so ``Quantity`` data (single arrays or lists of
+  per-dataset arrays) flows through to unit processing instead of failing
+  the ``numpy.asanyarray`` coercion, and the histogram axis is labeled
+  with the quantity's unit.
+
+### Tests
+
+- Expanded the Matplotlib compatibility suite to 25 tests covering
+  auto-registration, ``plot``/``scatter`` axis-unit inference, scalar
+  axis limits and reference lines, cross-unit conversion and
+  incompatible-unit errors, JAX-backed quantities, and ``hist`` unit
+  preservation.
+
 ## Version 0.3.0
 
 ### Highlights
