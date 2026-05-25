@@ -1014,9 +1014,10 @@ def arange(
     # ``stop``. Normalize the single-arg form ``arange(stop)`` to ``(0, stop)``
     # the way numpy does, then drop ``step`` when not given.
     if stop is None:
-        stop = start
-        start = 0
-    pos = (start, stop) if step is None else (start, stop, step)
+        head: Tuple[Any, ...] = (0, start)
+    else:
+        head = (start, stop)
+    pos = head if step is None else (*head, step)
     xp = _default_xp()
     kwargs = {} if dtype is None else {"dtype": _translate_dtype(dtype, xp)}
     with jax.ensure_compile_time_eval():
