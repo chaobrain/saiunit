@@ -1594,11 +1594,17 @@ class Quantity:
         - https://github.com/google/jax/issues/7713
         - https://github.com/google/jax/pull/3821
         """
-
+        # Raise eagerly (not from inside the generator) so that ``iter()`` fails
+        # immediately on 0-d inputs and ``np.iterable`` reports False, matching
+        # numpy. Matplotlib's ``_is_natively_supported`` relies on this.
         if self.ndim == 0:
             raise TypeError("iteration over a 0-d Quantity is not allowed")
-        for i in range(self.shape[0]):
-            yield Quantity(self.mantissa[i], unit=self.unit)
+
+        def _generator():
+            for i in range(self.shape[0]):
+                yield Quantity(self.mantissa[i], unit=self.unit)
+
+        return _generator()
 
     def __getitem__(self, index) -> 'Quantity':
 
