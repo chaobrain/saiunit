@@ -582,7 +582,6 @@ def test_added_constant_dimensions():
     # 2 names defined only in saiunit.constants.
     assert constants.electronvolt.dim == joule.dim
     assert constants.gram.dim == kilogram.dim
-    # gram is one-thousandth of a kilogram.
-    assert u.math.isclose(
-        (1.0 * constants.gram).to_decimal(kilogram), 0.001
-    )
+    # gram is one-thousandth of a kilogram. Use a plain-float comparison so the
+    # check stays backend-agnostic (torch/ndonnx have no float ``isclose`` op).
+    assert abs(float((1.0 * constants.gram).to_decimal(kilogram)) - 0.001) < 1e-9
