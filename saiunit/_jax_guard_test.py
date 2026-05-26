@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 import saiunit as u
-from saiunit._jax_guard import require_jax_backend
+from saiunit._jax_guard import require_jax_backend, jax_only
 
 
 def test_require_jax_passes_for_jax():
@@ -102,3 +102,32 @@ def test_require_jax_rejects_bare_ndonnx_array():
     arr = ndonnx.asarray(np.array([1.0]))
     with pytest.raises(u.BackendError, match="ndonnx"):
         require_jax_backend("test_fn", arr)
+
+
+def test_jax_only_passes_for_jax_quantity():
+    @jax_only
+    def f(x):
+        return x
+
+    q = u.Quantity(jnp.array([1.0]), unit=u.meter)
+    assert f(q) is q
+
+
+def test_jax_only_raises_for_numpy_quantity():
+    @jax_only
+    def f(x):
+        return x
+
+    q = u.Quantity(np.array([1.0]), unit=u.meter)
+    with pytest.raises(u.BackendError, match="requires the jax backend"):
+        f(q)
+
+
+def test_jax_only_preserves_metadata():
+    @jax_only
+    def my_func(x):
+        """my docstring"""
+        return x
+
+    assert my_func.__name__ == "my_func"
+    assert my_func.__doc__ == "my docstring"
