@@ -53,6 +53,9 @@ constants_list = [
     'hp',
     # Force
     'dyn', 'lbf', 'kgf', 'IMF',
+    # --- added coverage: dual-defined Quantity constants in constants + _unit_constants ---
+    'arcminute', 'arcsecond', 'astronomical_unit', 'atmosphere', 'calorie_th',
+    'fluid_ounce_US', 'gallon_US', 'horsepower', 'kilogram_force', 'lb',
 ]
 
 
@@ -554,3 +557,32 @@ class TestQuantityConstantRelationships:
             128 * float(c.fluid_ounce.mantissa),
             rtol=1e-8,
         )
+
+
+def test_added_constant_dimensions():
+    import saiunit.constants as constants
+
+    # 10 dual-defined Quantity names (also exercised by the cross-check loop).
+    assert constants.arcminute.dim == u.radian.dim
+    assert constants.arcsecond.dim == u.radian.dim
+    assert constants.astronomical_unit.dim == meter.dim
+    assert constants.atmosphere.dim == (newton / meter2).dim
+    assert constants.calorie_th.dim == joule.dim
+    assert constants.fluid_ounce_US.dim == (meter ** 3).dim
+    assert constants.gallon_US.dim == (meter ** 3).dim
+    assert constants.horsepower.dim == watt.dim
+    assert constants.kilogram_force.dim == newton.dim
+    assert constants.lb.dim == kilogram.dim
+
+    # 3 names exposed as Unit objects in saiunit.constants.
+    assert constants.radian.dim == u.radian.dim
+    assert constants.speed_unit.dim == (meter / second).dim
+    assert constants.watt.dim == watt.dim
+
+    # 2 names defined only in saiunit.constants.
+    assert constants.electronvolt.dim == joule.dim
+    assert constants.gram.dim == kilogram.dim
+    # gram is one-thousandth of a kilogram.
+    assert u.math.isclose(
+        (1.0 * constants.gram).to_decimal(kilogram), 0.001
+    )
