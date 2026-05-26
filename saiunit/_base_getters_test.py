@@ -691,3 +691,16 @@ def test_docstring_example_array_with_unit():
     assert isinstance(q, u.Quantity)
     assert q.unit == u.volt
     assert float(u.get_mantissa(q)) == 5.0
+
+
+def test_is_unit_equal_math_equivalent_units():
+    # A composed unit equivalent to volt converts the same way.
+    assert u.is_unit_equal_math(u.volt, u.amp * u.ohm) is True
+    # Aliases of the same SI unit are mathematically equal.
+    assert u.is_unit_equal_math(u.metre, u.meter) is True
+    # Identity is trivially equal.
+    assert u.is_unit_equal_math(u.volt, u.volt) is True
+
+
+def test_is_unit_equal_math_different_dim():
+    assert u.is_unit_equal_math(u.volt, u.amp) is False
