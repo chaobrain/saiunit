@@ -834,3 +834,19 @@ class TestEinopsWithArrayCustomArray:
         numpy_sum = einreduce(numpy_array, "h w -> h", reduction="sum")
         array_sum = einreduce(array_wrapped, "h w -> h", reduction="sum")
         assert jnp.array_equal(numpy_sum, array_sum)
+
+
+def test_einshape_basic():
+    x = jnp.zeros((2, 3, 5))
+    assert u.math.einshape(x, 'batch _ w') == {'batch': 2, 'w': 5}
+
+
+def test_einshape_with_quantity():
+    x = jnp.zeros((2, 3, 5)) * u.meter
+    assert u.math.einshape(x, 'batch _ w') == {'batch': 2, 'w': 5}
+
+
+def test_einshape_rejects_composite_axes():
+    x = jnp.zeros((6, 4))
+    with pytest.raises(RuntimeError):
+        u.math.einshape(x, '(a b) c')
