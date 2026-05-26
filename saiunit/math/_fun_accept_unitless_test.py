@@ -14,6 +14,7 @@
 # ==============================================================================
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 from absl.testing import parameterized
 
@@ -747,3 +748,26 @@ def test_sin_numpy_backend():
     # sin of unitless returns a raw array
     assert isinstance(r, np.ndarray)
     assert np.allclose(r, [0.0, 1.0])
+
+
+def test_frexp_matches_jnp():
+    x = jnp.array([1.0, 2.0, 4.0])
+    m, e = u.math.frexp(x)
+    jm, je = jnp.frexp(x)
+    assert np.allclose(m, jm)
+    assert np.allclose(e, je)
+
+
+def test_frexp_requires_dimensionless():
+    x = jnp.array([1.0, 2.0]) * u.meter
+    with pytest.raises(TypeError, match="dimensionless"):
+        u.math.frexp(x)
+
+
+def test_frexp_with_unit_to_scale():
+    # Scaling by the same unit makes the input dimensionless first.
+    x = jnp.array([1.0, 2.0, 4.0]) * u.meter
+    m, e = u.math.frexp(x, unit_to_scale=u.meter)
+    jm, je = jnp.frexp(jnp.array([1.0, 2.0, 4.0]))
+    assert np.allclose(m, jm)
+    assert np.allclose(e, je)
