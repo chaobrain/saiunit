@@ -746,3 +746,25 @@ def test_nonzero_numpy_backend_default_kwargs():
     r = u.math.nonzero(q)
     assert isinstance(r, tuple)
     assert np.array_equal(r[0], np.array([1, 3]))
+
+
+def test_iscomplexobj_matches_jnp():
+    real = jnp.array([1.0, 2.0])
+    comp = jnp.array([1.0 + 2.0j])
+    assert bm.iscomplexobj(real) == jnp.iscomplexobj(real)
+    assert bm.iscomplexobj(comp) == jnp.iscomplexobj(comp)
+    # Unit is stripped before the check; result is unaffected by the unit.
+    assert bm.iscomplexobj(real * u.meter) is False
+    assert bm.iscomplexobj(comp * u.meter) is True
+
+
+def test_alltrue_is_all_alias():
+    assert bm.alltrue is bm.all
+    x = jnp.array([True, True, False])
+    assert bool(bm.alltrue(x)) == bool(jnp.all(x))
+
+
+def test_sometrue_is_any_alias():
+    assert bm.sometrue is bm.any
+    x = jnp.array([False, False, True])
+    assert bool(bm.sometrue(x)) == bool(jnp.any(x))
