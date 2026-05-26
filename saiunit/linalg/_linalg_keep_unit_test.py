@@ -251,3 +251,19 @@ def test_norm_numpy_backend():
     assert r.backend == "numpy"
     assert r.unit == meter
     assert np.allclose(np.asarray(r.mantissa), 5.0)
+
+
+def test_svdvals_keeps_unit():
+    m = jnp.array([[1., 2., 3.], [4., 5., 6.]])
+    sv_ref = jnp.linalg.svdvals(m)
+    # unitless input -> unitless singular values
+    assert_quantity(bulinalg.svdvals(m), sv_ref)
+    # dimensioned input -> singular values carry the same unit
+    assert_quantity(bulinalg.svdvals(m * meter), sv_ref, meter)
+
+
+def test_eigvals_keeps_unit():
+    a = jnp.array([[1., 2.], [2., 1.]])
+    ev_ref = jnp.linalg.eigvals(a)
+    assert_quantity(bulinalg.eigvals(a), ev_ref)
+    assert_quantity(bulinalg.eigvals(a * meter), ev_ref, meter)
