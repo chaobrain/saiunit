@@ -13,6 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
+# Top-level jax import flags this module for collect_ignore in the no-JAX CI
+# jobs (see conftest._scan_jax_only_test_files); without JAX the shimmed
+# helpers are stubs that raise, so this module must not be collected.
+import jax  # noqa: F401
 import pytest
 
 import saiunit._compatible_import as ci

@@ -13,6 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
+# Top-level jax import flags this module for collect_ignore in the no-JAX CI
+# jobs (see conftest._scan_jax_only_test_files); importing saiunit.autograd
+# pulls in JAX-only modules, so this module must not be collected without JAX.
+import jax  # noqa: F401
 import pytest
 
 from saiunit.autograd._misc import (

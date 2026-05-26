@@ -13,6 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
+# Top-level jax import flags this module for collect_ignore in the no-JAX CI
+# jobs (see conftest._scan_jax_only_test_files); these smoke tests assume
+# HAS_JAX is True and must not be collected when JAX is absent.
+import jax  # noqa: F401
 import numpy as np
 import pytest
 
