@@ -1267,3 +1267,20 @@ def test_reshape_numpy_backend():
     r = u.math.reshape(q, (2, 3))
     assert r.backend == "numpy"
     assert r.shape == (2, 3)
+
+
+def test_promote_dtypes_common_type_and_unit():
+    a = [1, 2, 3] * u.second          # integer mantissa
+    b = [4.0, 5.0, 6.0] * u.second    # float mantissa
+    out = u.math.promote_dtypes(a, b)
+    assert isinstance(out, list)
+    assert len(out) == 2
+    # Both promoted to the common (float) dtype.
+    assert jnp.issubdtype(out[0].mantissa.dtype, jnp.floating)
+    assert jnp.issubdtype(out[1].mantissa.dtype, jnp.floating)
+    # Unit is preserved on both.
+    assert out[0].unit == u.second
+    assert out[1].unit == u.second
+    # Values are unchanged.
+    assert jnp.allclose(out[0].mantissa, jnp.array([1.0, 2.0, 3.0]))
+    assert jnp.allclose(out[1].mantissa, jnp.array([4.0, 5.0, 6.0]))
