@@ -74,6 +74,14 @@ quantities directly and label axes with their units.
   errors, JAX-backed quantities, ``hist`` unit preservation, the
   ``errorbar``/``boxplot``/``violinplot``/``stackplot``/``hexbin``/``pie``
   wrappers, non-Quantity identity, and the fail-loud signature guard.
+- **Closed test-coverage gaps across the public surface.** Added colocated
+  test files for previously untested modules and functions: ``linalg``
+  ``svdvals``/``eigvals`` unit propagation; ``math`` ``frexp``,
+  ``promote_dtypes``, ``iscomplexobj``, the ``alltrue``/``sometrue``/
+  ``cumproduct`` aliases, and ``einshape`` parsing; the ``jax_only``
+  decorator guard; ``is_unit_equal``; 15 previously-untested physical
+  constants; every unit shortcut and ``_alias`` re-export; and smoke tests
+  for the ``_jax_compat``, ``_compatible_import``, and ``_typing`` shims.
 
 ## Version 0.3.0
 
