@@ -652,3 +652,9 @@ def test_convolve_numpy_backend_default_kwargs():
     r = u.math.convolve(a, v)
     assert r.backend == "numpy"
     assert r.unit == meter * second
+
+
+def test_cumproduct_is_cumprod_alias():
+    assert u.math.cumproduct is u.math.cumprod
+    x = jnp.array([1.0, 2.0, 3.0, 4.0])
+    assert jnp.allclose(u.math.cumproduct(x), u.math.cumprod(x))
