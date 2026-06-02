@@ -17,6 +17,23 @@
 
 import glob
 import os
+import re
+
+# The brainunit docs don't ship the multi-backend section, so drop its toctree
+# block from the index when generating the brainunit version of the docs.
+_BACKENDS_TOCTREE = re.compile(
+    r'^\.\. toctree::\n'            # the toctree directive
+    r'(?:[ \t]+:[^\n]*\n)*?'       # option lines (:hidden:, :maxdepth:, ...)
+    r'[ \t]+:caption: Backends\n'  # ...specifically the Backends section
+    r'(?:[^\n]*\n)*?'              # blank lines + entry lines
+    r'(?=\.\. toctree::)',         # stop before the next toctree
+    re.MULTILINE,
+)
+
+
+def _remove_backends_section(content):
+    """Remove the 'Backends' toctree block from index content (brainunit only)."""
+    return _BACKENDS_TOCTREE.sub('', content)
 
 
 def make(root_dir):
@@ -47,6 +64,10 @@ def make(root_dir):
 
             # Replace occurrences of 'saiunit' with 'brainunit'
             modified_content = content.replace('saiunit', 'brainunit')
+
+            # The brainunit docs have no Backends section; strip it from the index.
+            if os.path.basename(file_path) == 'index.rst':
+                modified_content = _remove_backends_section(modified_content)
 
             # Define the destination file path
             relative_path = os.path.relpath(file_path, source_dir)
