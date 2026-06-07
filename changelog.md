@@ -1,5 +1,35 @@
 # Release Notes
 
+## Version 0.3.2
+
+### Highlights
+
+Version 0.3.2 is a maintenance release that restores clean compatibility
+with recent JAX releases and tidies the generated ``brainunit``
+documentation. There are no API changes; upgrading is a drop-in
+replacement for 0.3.1.
+
+### Bug fixes
+
+- **Stop emitting a JAX ``DeprecationWarning`` on import.** ``saiunit``
+  imports ``concrete_or_error`` from JAX, which moved to
+  ``jax.extend.core`` in JAX 0.10. The previous ``try: from jax.core
+  import concrete_or_error`` branch still succeeded on JAX ≥ 0.10 — the
+  old alias is deprecated, not removed — so it kept firing and surfaced a
+  ``DeprecationWarning`` to every downstream user while the intended
+  fallback shim never ran. The import now prefers
+  ``jax.extend.core.concrete_or_error`` (JAX ≥ 0.10), falls back to
+  ``jax.core`` for older JAX, and only then to the minimal internal shim
+  (#103).
+
+### Documentation
+
+- **Drop the saiunit-specific *Backends* section from the brainunit doc
+  build.** The ``Backends`` toctree applies to ``saiunit`` only;
+  ``make_brainunit_doc`` now strips it from ``index.rst`` when generating
+  the ``brainunit`` documentation, leaving the ``saiunit`` index
+  unchanged (#104).
+
 ## Version 0.3.1
 
 ### Highlights
