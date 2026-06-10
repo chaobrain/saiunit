@@ -280,6 +280,14 @@ class TestGetOrCreateDimension:
         assert d.get_dimension("kg") == 1
         assert d.get_dimension("s") == -2
 
+    def test_fractional_exponent_by_keyword(self):
+        # Fractional exponents passed by keyword must be preserved, not
+        # truncated to int. The list-form and ** paths already do this.
+        d = get_or_create_dimension(metre=0.5)
+        assert not d.is_dimensionless
+        assert d.get_dimension("m") == 0.5
+        assert d == get_or_create_dimension([0.5, 0, 0, 0, 0, 0, 0])
+
     def test_singleton_by_list(self):
         d1 = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         d2 = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])

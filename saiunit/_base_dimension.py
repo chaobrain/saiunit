@@ -759,7 +759,9 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
             raise TypeError("Need a sequence of exactly 7 items")
     else:
         # initialisation by keywords
-        dims = np.asarray([0, 0, 0, 0, 0, 0, 0])
+        # Use a plain list (not an int array) so fractional exponents such
+        # as metre=0.5 are preserved; np.asarray below picks the dtype.
+        dims = [0, 0, 0, 0, 0, 0, 0]
         for k in kwds:
             # _dim2index stores the index of the dimension with name 'k'
             dims[_dim2index[k]] = kwds[k]
