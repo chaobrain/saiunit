@@ -311,11 +311,21 @@ def _exprel_deriv(x, order: Optional[int] = None):
     dtype = x.dtype
     threshold = _get_threshold(dtype)
     abs_x = jnp.abs(x)
+    is_small = abs_x <= threshold
+
+    # Guard the direct branch against ``x == 0``. ``_exprel_deriv_direct`` is
+    # ``((x-1)*exp(x)+1)/x**2`` — a removable ``0/0`` at ``x = 0``. ``where``
+    # masks the *value*, but under differentiation (e.g. ``grad(grad(exprel))``)
+    # the unselected branch's gradient is still evaluated, and ``d/dx`` of the
+    # direct form is NaN at 0, poisoning the result via ``0 * NaN``. Feeding the
+    # direct branch a safe non-zero ``x`` wherever the Taylor branch is selected
+    # keeps that gradient finite; the outer ``where`` discards the value anyway.
+    safe_x = jnp.where(is_small, jnp.ones_like(x), x)
 
     return jnp.where(
-        abs_x <= threshold,
+        is_small,
         _exprel_deriv_taylor(x, order),
-        _exprel_deriv_direct(x)
+        _exprel_deriv_direct(safe_x)
     )
 
 

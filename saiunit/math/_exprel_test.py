@@ -407,6 +407,21 @@ class TestExprelSecondOrder:
         assert not jnp.any(jnp.isnan(hessian)), "Hessian contains NaN"
         assert not jnp.any(jnp.isinf(hessian)), "Hessian contains Inf"
 
+    def test_grad_of_grad_at_zero(self):
+        """Reverse-over-reverse second derivative at exactly 0 must be finite.
+
+        ``jax.grad(jax.grad(exprel))`` differentiates ``_exprel_deriv``, which
+        selects between a Taylor branch and the direct branch
+        ``((x-1)*exp(x)+1)/x**2`` — the latter is ``0/0`` at ``x=0``. The
+        ``where`` masks the value, but the unselected direct branch's gradient
+        is NaN and poisons the result via ``0 * NaN``. (The forward-over-reverse
+        ``jax.hessian`` path above happens to avoid it; reverse-over-reverse
+        does not.) The limit is ``f''(0) = 1/3``.
+        """
+        d2 = jax.grad(jax.grad(exprel))(jnp.asarray(0.0))
+        assert not jnp.isnan(d2), f"second derivative at 0 is NaN: {d2}"
+        assert jnp.allclose(d2, 1.0 / 3.0, rtol=1e-4), f"expected 1/3, got {d2}"
+
 
 class TestExprelBatching:
     """Tests for vmap batching."""
