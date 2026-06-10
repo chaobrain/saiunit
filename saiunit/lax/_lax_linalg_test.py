@@ -80,6 +80,20 @@ class TestLaxLinalg(parameterized.TestCase):
         assert_quantity(vl, vl_e)
         assert_quantity(vr, vr_e)
 
+    def test_eig_no_eigenvectors(self):
+        # With both eigenvector flags off, jax.lax.linalg.eig returns a
+        # one-element sequence holding the eigenvalues with shape (n,). The
+        # Quantity path must preserve that shape, not wrap the sequence and
+        # add a spurious leading axis.
+        x = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+        (w_e,) = lax.linalg.eig(x, compute_left_eigenvectors=False,
+                                compute_right_eigenvectors=False)
+
+        (w,) = ulax.eig(x * u.second, compute_left_eigenvectors=False,
+                        compute_right_eigenvectors=False)
+        self.assertEqual(w.mantissa.shape, w_e.shape)
+        assert_quantity(w, w_e, u.second)
+
     def test_cholesky(self):
         x = jnp.array([[1.0, 2.0], [3.0, 4.0]])
 

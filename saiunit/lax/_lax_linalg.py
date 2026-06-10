@@ -169,8 +169,8 @@ def eig(
                                   compute_right_eigenvectors=compute_right_eigenvectors)
     else:
         if isinstance(x, Quantity):
-            w = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,  # type: ignore[assignment]
-                               compute_right_eigenvectors=compute_right_eigenvectors)
+            (w,) = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
+                                  compute_right_eigenvectors=compute_right_eigenvectors)
             return (maybe_decimal(Quantity(w, unit=x.unit)),)
         else:
             return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
