@@ -725,7 +725,7 @@ def tridiagonal(
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         arr, d, e, taus = lax.linalg.tridiagonal(a.mantissa, lower=lower)
-        return maybe_decimal(Quantity(a, unit=a.unit)), maybe_decimal(Quantity(d, unit=a.unit)), \
+        return maybe_decimal(Quantity(arr, unit=a.unit)), maybe_decimal(Quantity(d, unit=a.unit)), \
             maybe_decimal(Quantity(e, unit=a.unit)), taus
     else:
         return lax.linalg.tridiagonal(a, lower=lower)
