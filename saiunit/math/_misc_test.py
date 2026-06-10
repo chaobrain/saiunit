@@ -321,6 +321,17 @@ def test_gradient_quantity_no_spacing_returns_quantity():
     assert_quantity(g, jnp.gradient(f.mantissa), unit=meter)
 
 
+def test_gradient_1d_with_unit_spacing_returns_single_quantity():
+    # 1-D input with a single spacing: numpy returns ONE array, so the result
+    # must be a single Quantity of the same shape as f — not a list of scalar
+    # Quantities (which is what iterating the single array element-wise yields).
+    f = jnp.array([1.0, 2.0, 4.0], dtype=jnp.float32) * meter
+    dx = 1.0 * second
+    g = u.math.gradient(f, dx)
+    assert isinstance(g, u.Quantity), f"expected a single Quantity, got {type(g).__name__}"
+    assert_quantity(g, jnp.gradient(f.mantissa, dx.mantissa), unit=meter / second)
+
+
 def test_gradient_with_unit_spacing_and_multi_axis():
     f = jnp.arange(12.0, dtype=jnp.float64).reshape(3, 4) * meter
     dy = 0.5 * second
