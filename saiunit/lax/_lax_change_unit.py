@@ -456,6 +456,7 @@ def rem(
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
+        y = y.in_unit(x.unit)
         return maybe_decimal(Quantity(lax.rem(x.mantissa, y.mantissa, **kwargs), unit=x.unit))
     elif isinstance(x, Quantity):
         return maybe_decimal(Quantity(lax.rem(x.mantissa, y, **kwargs), unit=x.unit))  # type: ignore[arg-type]
