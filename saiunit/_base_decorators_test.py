@@ -266,6 +266,27 @@ class TestCheckUnits:
         with pytest.raises(UnitMismatchError):
             f()
 
+    def test_result_callable(self):
+        # Documented usage: the result unit is derived from the input unit.
+        # The callable must receive the argument *unit* (not its dimension),
+        # otherwise the unit comparison spuriously fails.
+        @check_units(result=lambda un: un ** 2)
+        def square(x):
+            return x ** 2
+
+        q = Quantity(3.0, unit=_metre)
+        result = square(q)
+        assert result.unit == _metre ** 2
+        assert jnp.allclose(result.mantissa, 9.0)
+
+    def test_result_callable_mismatch_raises(self):
+        @check_units(result=lambda un: un ** 2)
+        def bad(x):
+            return x  # wrong: returns metre, not metre**2
+
+        with pytest.raises(UnitMismatchError):
+            bad(Quantity(3.0, unit=_metre))
+
     def test_stores_metadata(self):
         @check_units(x=_metre, result=_metre)
         def f(x):

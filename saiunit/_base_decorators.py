@@ -488,7 +488,10 @@ def check_units(**au):
             result = f(*args, **kwds)
             if "result" in au:
                 if isinstance(au["result"], Callable) and au["result"] != bool:
-                    expected_result = au["result"](*[get_dim(a) for a in args])
+                    # Pass the argument *units* (not dimensions): the result is
+                    # validated by unit with ``_check_unit`` below, so a Dimension
+                    # here would always mismatch the returned Quantity's unit.
+                    expected_result = au["result"](*[get_unit(a) for a in args])
                 else:
                     expected_result = au["result"]
 
