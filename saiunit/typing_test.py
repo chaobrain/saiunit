@@ -368,6 +368,22 @@ class TestValidateUnits:
         result = f(1.0 * u.meter)
         assert result.mantissa == 1.0
 
+    def test_strict_mode_rejects_wrong_dimension(self):
+        # Strict mode must still reject a dimension mismatch even when the
+        # offending unit shares scale/base/factor with the target — every
+        # coherent SI unit has scale 0, base 10, factor 1, so a pure
+        # magnitude comparison would wrongly accept metre/ohm for a volt.
+        @validate_units(strict=True)
+        def f(V: u.Quantity[u.volt]):
+            return V
+
+        with pytest.raises(Exception):
+            f(5.0 * u.meter)
+        with pytest.raises(Exception):
+            f(5.0 * u.ohm)
+        # the correct unit still passes
+        assert f(5.0 * u.volt).mantissa == 5.0
+
     def test_physical_type_annotation(self):
         @validate_units
         def f(x: u.Quantity["length"]):  # type: ignore[name-defined]

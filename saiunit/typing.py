@@ -595,7 +595,11 @@ def validate_units(func=None, *, strict: bool = False):
                 )
 
             if check_kind == "unit" and strict:
-                if not value.unit.has_same_magnitude(ref):
+                # Exact unit match: same dimension AND same scale/base/factor.
+                # has_same_magnitude alone ignores dimension, so without the
+                # dimension guard every coherent SI unit (scale 0) would be
+                # accepted regardless of dimension.
+                if not (value.unit.has_same_dim(ref) and value.unit.has_same_magnitude(ref)):
                     raise UnitMismatchError(
                         f"Argument {param_name!r} of {func.__name__!r} "
                         f"expected unit {ref}, got {value.unit}."
