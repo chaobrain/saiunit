@@ -216,6 +216,20 @@ def test_power_integer(backend):
     assert r.unit == meter ** 2
 
 
+def test_power_repeated_indices_accumulates(backend):
+    # JAX applies the power once per index occurrence, so a repeated index
+    # raises that element multiple times: ((x**2)**2) at idx 0. numpy/cupy must
+    # match. (torch/dask are documented last-write-wins / mask-based.)
+    if backend in ("ndonnx", "torch", "dask"):
+        pytest.skip("repeated-index power accumulation is a documented limitation here")
+    q = _make_quantity([2.0, 3.0, 4.0, 5.0], meter, backend)
+    idx = np.asarray([0, 0])
+    r = q.at[idx].power(2)
+    # (2**2)**2 == 16 at idx 0; others unchanged.
+    np.testing.assert_allclose(_to_numpy(r), [16.0, 3.0, 4.0, 5.0])
+    assert r.unit == meter ** 2
+
+
 def test_power_non_integer_raises(backend):
     if backend == "ndonnx":
         pytest.skip()

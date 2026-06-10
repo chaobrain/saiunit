@@ -283,22 +283,31 @@ def _scatter_npy_like(xp, mantissa, index, value, op: str, *, mode, fill_value):
             out[sub_safe] = value(out[sub_safe])
         return out
 
-    # power: gather + pow + scatter (np.power.at doesn't exist)
+    # power: raise the indexed elements via the ``power`` ufunc's ``.at`` so
+    # repeated indices accumulate (JAX applies the power once per occurrence,
+    # e.g. ``.at[[0,0]].power(2)`` yields ``(x**2)**2``). Plain
+    # ``out[idx] = out[idx] ** value`` would be last-write-wins for repeated
+    # indices — applying the power only once. ``power`` is a ufunc on both numpy
+    # and cupy, so ``xp.power.at`` exists, mirroring the add/multiply paths below.
     if op == "power":
         if not isinstance(value, (int, np.integer)):
             raise TypeError(f"power exponent must be an integer, but got {type(value).__name__}")
         out = mantissa.copy()
         if not _is_simple_int_index(index) or mode == "clip":
-            out[index] = out[index] ** value
+            if mode == "clip" and _is_simple_int_index(index):
+                safe, _ = _normalize_simple_int(index, mantissa.shape[0], "clip")
+                xp.power.at(out, safe, value)
+            else:
+                xp.power.at(out, index, value)
             return out
         safe, valid = _normalize_simple_int(index, mantissa.shape[0], mode)
         if valid is None or (isinstance(valid, np.bool_) and bool(valid)):
-            out[safe] = out[safe] ** value
+            xp.power.at(out, safe, value)
         elif isinstance(valid, np.bool_):
             pass
         else:
             sub_safe = safe[valid]
-            out[sub_safe] = out[sub_safe] ** value
+            xp.power.at(out, sub_safe, value)
         return out
 
     out = mantissa.copy()
