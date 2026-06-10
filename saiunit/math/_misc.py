@@ -712,10 +712,16 @@ def gradient(
             return xp.gradient(f)  # type: ignore[arg-type]
     elif len(varargs) == 1:
         unit = get_unit(f) / get_unit(varargs[0])
+        grad = xp.gradient(f_mantissa, varargs_mantissa[0], axis=axis)  # type: ignore[arg-type]
         if isinstance(unit, Unit) and unit.is_unitless:
-            return xp.gradient(f_mantissa, varargs_mantissa[0], axis=axis)  # type: ignore[arg-type]
-        else:
-            return [Quantity(r, unit=unit) for r in xp.gradient(f_mantissa, varargs_mantissa[0], axis=axis)]
+            return grad
+        # ``xp.gradient`` returns a single array when differentiating along one
+        # axis (1-D input, or a scalar ``axis``) and a list of arrays for
+        # multiple axes. Wrap accordingly: iterating a single array would
+        # erroneously wrap each scalar element as its own Quantity.
+        if isinstance(grad, list):
+            return [Quantity(r, unit=unit) for r in grad]
+        return Quantity(grad, unit=unit)
     else:
         unit_list = [get_unit(f) / get_unit(v) for v in varargs]
         result_list = xp.gradient(f_mantissa, *varargs_mantissa, axis=axis)  # type: ignore[arg-type]
