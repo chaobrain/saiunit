@@ -91,6 +91,8 @@ all = ["saiunit[jax,cupy,torch,dask,ndonnx]"]
 # core requirements (numpy + jax) installed.
 [[tool.mypy.overrides]]
 module = [
+    "array_api_compat",
+    "array_api_compat.*",
     "brainstate",
     "brainstate.*",
     "cupy",
