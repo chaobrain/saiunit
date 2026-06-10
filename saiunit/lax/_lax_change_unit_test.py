@@ -277,10 +277,9 @@ class TestLaxChangeUnit(parameterized.TestCase):
     @parameterized.product(
         value=[((1.0, 2.0), (1.23, 2.34)),
                ((1.0, 2.0), (3.0, 4.0))],
-        unit1=[meter, second],
-        unit2=[volt, second]
+        unit=[meter, second]
     )
-    def test_lax_change_unit_rem(self, value, unit1, unit2):
+    def test_lax_change_unit_rem(self, value, unit):
         bulax_fun_list = [getattr(bulax, fun) for fun in lax_change_unit_rem]
         lax_fun_list = [getattr(lax, fun) for fun in lax_change_unit_rem]
 
@@ -292,11 +291,22 @@ class TestLaxChangeUnit(parameterized.TestCase):
             expected = lax_fun(jnp.array(value1), jnp.array(value2))
             assert_quantity(result, expected)
 
-            q1 = value1 * unit1
-            q2 = value2 * unit2
+            # Remainder requires matching dimensions; the result keeps x's unit.
+            q1 = value1 * unit
+            q2 = value2 * unit
             result = bulax_fun(q1, q2)
             expected = lax_fun(jnp.array(value1), jnp.array(value2))
-            assert_quantity(result, expected, unit=u.get_unit(unit1))
+            assert_quantity(result, expected, unit=u.get_unit(unit))
+
+    def test_lax_change_unit_rem_alignment(self):
+        # ``y`` must be rescaled to ``x``'s unit before the remainder is taken:
+        # 200 cm == 2 m, so 7 m % 200 cm == 7 m % 2 m == 1 m (not 7 m).
+        result = bulax.rem(jnp.array(7.0) * u.meter, jnp.array(200.0) * u.cm)
+        assert_quantity(result, jnp.array(1.0), unit=u.meter)
+
+        # Mismatched dimensions cannot be reduced and must raise.
+        with self.assertRaises(u.UnitMismatchError):
+            bulax.rem(jnp.array(7.0) * u.meter, jnp.array(2.0) * u.second)
 
     @parameterized.product(
         value=[(1.0, 2.0), (1.23, 2.34, 3.45)],
