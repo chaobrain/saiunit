@@ -215,6 +215,17 @@ class TestUnitCreate:
         assert scaled.dispname == "mtlm"
         assert scaled.scale == -3
 
+    def test_create_scaled_unit_preserves_factor(self):
+        # Scaling a unit with a non-unit conversion factor (e.g. calorie =
+        # 4.184 J) must keep the factor; otherwise the scaled unit's
+        # magnitude is wrong (kcal would convert as 1000, not 4184).
+        energy = get_or_create_dimension([2, 1, -2, 0, 0, 0, 0])
+        cal = Unit.create(energy, name="testcalorie", dispname="tcal", factor=4.184)
+        kcal = Unit.create_scaled_unit(cal, "k")
+        assert kcal.factor == 4.184
+        assert kcal.scale == 3
+        assert kcal.magnitude == 4.184 * 1e3
+
     def test_create_scaled_unit_invalid_prefix(self):
         base = Unit(DIMENSIONLESS, name="x", dispname="x")
         with pytest.raises(ValueError, match="Unknown SI prefix"):

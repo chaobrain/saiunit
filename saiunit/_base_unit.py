@@ -1426,6 +1426,7 @@ class Unit:
             dispname=dispname,
             scale=scale,
             base=baseunit.base,
+            factor=baseunit.factor,
             is_fullname=True,
         )
         add_standard_unit(u)
