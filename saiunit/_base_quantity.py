@@ -2457,9 +2457,14 @@ class Quantity:
             >>> q.clip(min=u.Quantity(1.5, unit=u.mV), max=u.Quantity(2.5, unit=u.mV))
             Quantity([1.5 2.  2.5], "mV")
         """
-        _, min = unit_scale_align_to_first(self, min)
-        _, max = unit_scale_align_to_first(self, max)
-        return Quantity(get_backend(self, min, max).clip(self.mantissa, min.mantissa, max.mantissa), unit=self.unit)  # type: ignore[union-attr]
+        if min is None and max is None:
+            raise ValueError("clip requires at least one of `min` or `max` to be specified.")
+        # Align only the bounds that are given; a missing bound stays ``None``
+        # and is passed straight to the backend ``clip`` (numpy/jax accept
+        # ``None`` for an unbounded side). Aligning ``None`` previously crashed.
+        min_val = None if min is None else unit_scale_align_to_first(self, min)[1].mantissa
+        max_val = None if max is None else unit_scale_align_to_first(self, max)[1].mantissa
+        return Quantity(get_backend(self).clip(self.mantissa, min_val, max_val), unit=self.unit)
 
     def conj(self) -> 'Quantity':
         """

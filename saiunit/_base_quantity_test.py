@@ -577,6 +577,13 @@ class TestQuantityIntegration:
         b = Quantity([1, 2.])
         assert u.math.allclose(b.clip(1.5, 2.5), u.math.asarray([1.5, 2.]))
 
+    def test_clip_one_sided(self):
+        # The docstring states at least one of min/max suffices (numpy/jax
+        # allow one-sided clipping). Passing only one bound must not crash.
+        a = [1., 2., 3.] * u.ms
+        assert u.math.allclose(a.clip(min=1.5 * u.ms), [1.5, 2., 3.] * u.ms)
+        assert u.math.allclose(a.clip(max=2.5 * u.ms), [1., 2., 2.5] * u.ms)
+
     def test_round(self):
         for unit in [u.ms, u.joule, u.mV]:
             a = [1.1, 2.2] * unit
