@@ -522,6 +522,23 @@ class TestArrayWithCustomArrayIntegration:
         arr_squeezable = SimpleArray(np.array([[[1, 2, 3]]]))
         np.testing.assert_array_equal(arr_squeezable.squeeze(), np.array([1, 2, 3]))
 
+    def test_array_sort(self):
+        # sort() must leave ``data`` sorted in place for every backend.
+        # numpy's ndarray.sort() sorts in place and returns None, so a naive
+        # ``self.data = self.data.sort()`` corrupts the wrapped array to None.
+        arr = SimpleArray(np.array([3, 1, 2]))
+        arr.sort()
+        np.testing.assert_array_equal(arr.data, np.array([1, 2, 3]))
+
+        jarr = SimpleArray(jnp.array([3.0, 1.0, 2.0]))
+        jarr.sort()
+        np.testing.assert_array_equal(jarr.data, jnp.array([1.0, 2.0, 3.0]))
+
+        # 2-D along an explicit axis
+        arr2d = SimpleArray(np.array([[3, 1], [2, 4]]))
+        arr2d.sort(axis=0)
+        np.testing.assert_array_equal(arr2d.data, np.array([[2, 1], [3, 4]]))
+
     def test_array_indexing_and_slicing(self):
         arr = SimpleArray(np.array([10, 20, 30, 40, 50]))
 
