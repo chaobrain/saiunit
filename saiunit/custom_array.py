@@ -613,7 +613,11 @@ class CustomArray:
             When ``a`` is an array with fields defined, this argument specifies
             which fields to compare first, second, etc.
         """
-        self.data = self.data.sort(axis=axis, stable=stable, order=order)
+        # Use the backend-agnostic ``math.sort`` (returns a new sorted array on
+        # every backend). numpy's ``ndarray.sort`` sorts in place and returns
+        # None, so assigning ``self.data = self.data.sort(...)`` would corrupt
+        # a numpy-backed array to None.
+        self.data = math.sort(self.data, axis=axis, stable=stable, order=order)
 
     def squeeze(self, axis=None):
         """Remove axes of length one from ``a``."""
