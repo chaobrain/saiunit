@@ -212,6 +212,19 @@ class TestLaxLinalg(parameterized.TestCase):
         assert_quantity(e, e_e, u.second)
         assert_quantity(taus, taus_e)
 
+    def test_tridiagonal_matches_jax(self):
+        # Use a 3x3 (a 2x2 is already tridiagonal, so the reduced matrix would
+        # coincide with the input and hide the bug). The first output is the
+        # reduced matrix, NOT the original input.
+        x = jnp.array([[2.0, 1.0, 0.5], [1.0, 3.0, 0.7], [0.5, 0.7, 4.0]])
+        arr_ref, d_ref, e_ref, taus_ref = lax.linalg.tridiagonal(x, lower=True)
+
+        arr, d, e, taus = ulax.tridiagonal(x * u.second, lower=True)
+        assert_quantity(arr, arr_ref, u.second)
+        assert_quantity(d, d_ref, u.second)
+        assert_quantity(e, e_ref, u.second)
+        assert_quantity(taus, taus_ref)
+
     def test_householder_product(self):
         a = jnp.array([[1.0, 2.0], [3.0, 4.0]])
         taus = jnp.array([1.0])
