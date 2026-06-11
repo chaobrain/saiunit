@@ -18,7 +18,6 @@ from __future__ import annotations
 import functools
 import numbers
 import operator
-import re
 from collections.abc import Callable, Sequence
 from copy import deepcopy
 from typing import Any
@@ -1159,9 +1158,12 @@ class Quantity:
             # Prefer ``jnp.asarray`` when JAX is installed so the precision
             # matches JAX's x32 default (test fixtures key off this); fall
             # back to NumPy when JAX is unavailable.
+            # OverflowError: Python ints that exceed the backend integer
+            # dtype (e.g. 2**40 under JAX's x32 default). Keep the raw
+            # value; the fallback below prints it via ``str``.
             try:
                 value = jnp.asarray(m) if HAS_JAX else np.asarray(m)
-            except TypeError:
+            except (TypeError, OverflowError):
                 value = m
         else:
             # cupy / torch / dask / ndonnx arrays: don't lift to JAX (that
@@ -1560,8 +1562,11 @@ class Quantity:
     def __format__(self, format_spec) -> str:
         if not format_spec:
             return str(self)
-        # Block '%' format on quantities with units — "50% mV" is meaningless
-        if '%' in format_spec and not self.unit.is_unitless:
+        # Block '%'-type format on quantities whose unit is displayed —
+        # "50% mV" (or "50% rad") is meaningless. The format type is always
+        # the last character of the spec, so a '%' used as a fill character
+        # (e.g. '%>10') is not rejected.
+        if format_spec.endswith('%') and self.unit.should_display_unit:
             raise ValueError(
                 f"'%' format is not supported for Quantity with unit {str(self.unit)!r}. "
                 f"Convert to a dimensionless value first."
@@ -1569,22 +1574,37 @@ class Quantity:
         unit_str = str(self.unit)
         show_unit = self.unit.should_display_unit
         if self.shape == ():
-            formatted_value = format(self.mantissa, format_spec)
+            try:
+                formatted_value = format(self.mantissa, format_spec)
+            except TypeError:
+                # Mantissas that don't implement format specs (JAX tracers,
+                # lazy/symbolic backends): degrade to the plain display.
+                return str(self)
             if not show_unit:
                 return formatted_value
             return f"{formatted_value} {unit_str}"
         else:
-            # Parse precision from standard format specs like .2f, .3e, .4g,
-            # 10.2f, +.2f, etc.  Use a regex to extract the precision field.
-            m = re.match(r'^[^.]*\.(\d+)[feEgGn%]?$', format_spec)
-            if m is not None:
-                precision = int(m.group(1))
-                value = np.asarray(self.mantissa)
-                s = np.array_str(np.round(value, precision), precision=precision)
-                if not show_unit:
-                    return s
-                return f"{s} {unit_str}"
-            return str(self)
+            # Apply the spec per element so 'e'/'g'/'%' types keep their
+            # Python semantics. Traced / lazy / symbolic mantissas cannot
+            # be converted to numpy without crashing or materializing —
+            # degrade to the plain display, exactly like ``repr`` does.
+            from saiunit._backend import is_dask_array, is_ndonnx_array
+            mantissa = self.mantissa
+            if _is_tracer(mantissa) or is_dask_array(mantissa) or is_ndonnx_array(mantissa):
+                return str(self)
+            try:
+                value = np.asarray(mantissa)
+            except (TypeError, ValueError, RuntimeError):
+                # e.g. torch tensors with requires_grad refuse __array__
+                return str(self)
+            try:
+                s = np.array2string(value, formatter={'all': lambda x: format(x, format_spec)})
+            except (TypeError, ValueError):
+                # Spec not applicable element-wise — fall back to str()
+                return str(self)
+            if not show_unit:
+                return s
+            return f"{s} {unit_str}"
 
     def __iter__(self):
         """Solve the issue of DeviceArray.__iter__.
