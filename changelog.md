@@ -1,5 +1,83 @@
 # Release Notes
 
+## Version 0.4.0
+
+### Highlights
+
+Version 0.4.0 is a comprehensive correctness and robustness release. Following
+a systematic, library-wide audit, it resolves more than 150 bugs spanning the
+core ``Quantity``, ``Unit``, and ``Dimension`` types and every numerical
+subpackage — ``saiunit.math``, ``saiunit.lax``, ``saiunit.linalg``,
+``saiunit.fft``, ``saiunit.sparse``, and ``saiunit.autograd``. The fixes tighten
+unit propagation, dimensional checking, dtype handling, and a long tail of
+edge-case behaviour throughout the library. The public API is unchanged, so
+0.4.0 is a drop-in upgrade from any 0.3.x release.
+
+### Core: ``Quantity``, ``Unit``, and ``Dimension``
+
+- **Harden the ``Quantity`` API against 20 edge-case bugs.** A focused audit of
+  ``Quantity`` fixed a batch of incorrect results and crashes across
+  construction, arithmetic, indexing, and reduction paths (#120).
+- **Fix ``Quantity`` ``repr``/``format`` crashes and format-spec semantics.**
+  ``repr`` and ``__format__`` no longer raise on certain values, and format
+  specifications are now applied with the correct semantics (#119).
+- **Support one-sided ``Quantity.clip``.** ``clip`` now accepts a ``min``-only
+  or ``max``-only bound instead of requiring both (#109).
+- **Harden the ``Dimension`` and ``Unit`` APIs against 19 audited bugs.** A
+  dedicated audit corrected dimensional-analysis and unit-handling edge cases
+  across the two core types (#123).
+- **Preserve fractional exponents in ``get_or_create_dimension``.** The keyword
+  form of ``get_or_create_dimension`` no longer drops fractional exponents
+  (#106).
+- **Correct the scaled-unit factor for base units.** Fixes an incorrect scale
+  factor when deriving scaled units from a base unit (#107).
+- **Fix ``CustomArray.sort()`` corrupting NumPy-backed data.** ``sort()`` no
+  longer overwrites NumPy-backed storage with ``None`` (#112).
+- **Resolve 16 further audited issues across core, math, and ``brainunit``
+  packaging** (#125).
+
+### Decorators and validation
+
+- **``check_units`` result callables now receive units, not dimensions.** A
+  result-validation callable passed to ``check_units`` is invoked with the
+  actual units, matching the documented contract (#110).
+- **``validate_units(strict=True)`` checks dimension, not just magnitude.**
+  Strict validation now compares dimensions rather than only the numeric
+  magnitude (#111).
+- **Improve Array API type-checking compatibility** for non-JAX array backends
+  (#108).
+
+### ``saiunit.math``
+
+- **Resolve 48 audited bugs across the ``saiunit.math`` APIs.** A broad audit of
+  the math subpackage corrected unit propagation and numerical edge cases across
+  dozens of functions (#122).
+- **Fix scatter ``power`` with repeated indices on NumPy/CuPy.** Repeated target
+  indices now apply the power for every contribution instead of only once
+  (#113).
+- **Fix ``exprel`` second derivative at ``x = 0``.** The reverse-over-reverse
+  second derivative of ``exprel`` is now finite at exactly ``x = 0`` instead of
+  ``NaN`` (#114).
+- **Fix ``math.gradient`` on a 1-D ``Quantity`` with ``spacing``.** It now
+  returns a single ``Quantity`` array rather than a list of scalars (#115).
+
+### ``saiunit.lax``, ``linalg``, ``fft``, and ``sparse``
+
+- **Resolve 42 audited bugs across the ``lax``, ``fft``, ``linalg``, and
+  ``sparse`` APIs** (#124).
+- **Fix ``lax.rem`` between two ``Quantity`` operands.** ``rem`` no longer
+  ignores the unit scale and dimension of its operands (#116).
+- **Fix ``lax.tridiagonal``.** It now returns the reduced tridiagonal form
+  instead of echoing the input matrix (#117).
+- **Fix ``lax.eig`` eigenvalue shape.** ``eig`` no longer adds a spurious axis
+  to the eigenvalues when eigenvectors are not requested (#118).
+
+### ``saiunit.autograd``
+
+- **Correct unit propagation and dtype handling in ``saiunit.autograd``.**
+  Differentiation now propagates units and preserves dtypes correctly through
+  the autograd wrappers (#121).
+
 ## Version 0.3.2
 
 ### Highlights
