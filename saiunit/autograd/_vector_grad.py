@@ -19,6 +19,7 @@ from functools import wraps
 from typing import Callable, Sequence
 
 import jax
+import numpy as np
 from jax import numpy as jnp
 
 from saiunit._base_getters import get_mantissa, get_unit, maybe_decimal
@@ -42,10 +43,11 @@ def vector_grad(
     Unit-aware element-wise gradient of a vector-valued function.
 
     Unlike :func:`grad` (which requires scalar outputs), ``vector_grad``
-    computes element-wise gradients for vector-valued functions by
-    using a VJP with an all-ones tangent vector. This is equivalent to
-    the diagonal of the Jacobian when the output has the same shape as
-    the input.
+    computes gradients for vector-valued functions by using a VJP with an
+    all-ones cotangent vector. The result is the column-wise sum of the
+    Jacobian (i.e. ``ones @ J``); this coincides with the element-wise
+    derivative — the diagonal of the Jacobian — only when ``func`` is
+    applied element-wise.
 
     Parameters
     ----------
@@ -130,12 +132,28 @@ def vector_grad(
             y, vjp_fn, aux = jax.vjp(f_partial, *dyn_args, has_aux=True)
         else:
             y, vjp_fn = jax.vjp(f_partial, *dyn_args)
+        # ``leaves``/``tree`` flatten through Quantity (raw arrays) and are used
+        # to build a cotangent matching ``y``'s structure. ``out_leaves`` treats
+        # each Quantity as a single leaf so the output unit and arity are read
+        # from the quantities themselves, not from a (unitless) container.
         leaves, tree = jax.tree.flatten(y)
+        out_leaves, _ = jax.tree.flatten(y, is_leaf=lambda x: isinstance(x, Quantity))
+
+        # Differentiating a non-inexact (e.g. integer or boolean) output yields
+        # meaningless zero gradients; reject it like ``jax.grad`` does.
+        for leaf in out_leaves:
+            dtype = getattr(get_mantissa(leaf), 'dtype', None)
+            if dtype is not None and not jax.dtypes.issubdtype(dtype, np.inexact):
+                raise TypeError(
+                    f'vector_grad requires real- or complex-valued (inexact) outputs, '
+                    f'but got {np.dtype(dtype).name}.'
+                )
+
         if unit_aware:
-            if len(leaves) != 1:
+            if len(out_leaves) != 1:
                 raise ValueError(
                     f'vector_grad with unit_aware=True requires the function to return a single '
-                    f'array, but got {len(leaves)} outputs.'
+                    f'array, but got {len(out_leaves)} outputs.'
                 )
         tangents = jax.tree.unflatten(tree, [jnp.ones(l.shape, dtype=l.dtype) for l in leaves])
         grads = vjp_fn(tangents)
@@ -143,12 +161,20 @@ def vector_grad(
             grads = grads[0]
         if unit_aware:
             args_to_grad = jax.tree.map(lambda i: args[i], argnums_)
-            r_unit = get_unit(y)
+            r_unit = get_unit(out_leaves[0])
             grads = jax.tree.map(
                 lambda arg, grad: maybe_decimal(
                     Quantity(get_mantissa(grad), unit=r_unit / get_unit(arg))
                 ),
                 args_to_grad,
+                grads,
+                is_leaf=lambda x: isinstance(x, Quantity)
+            )
+        else:
+            # Without unit awareness, strip any unit the VJP carried back from
+            # unit-ful inputs so the gradient does not advertise a wrong unit.
+            grads = jax.tree.map(
+                get_mantissa,
                 grads,
                 is_leaf=lambda x: isinstance(x, Quantity)
             )

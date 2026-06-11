@@ -26,7 +26,7 @@ from saiunit._base_getters import get_magnitude, get_unit, maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import safe_map
 from saiunit._misc import maybe_custom_array_tree
-from ._misc import _ensure_index, _check_callable, _argnums_partial
+from ._misc import _ensure_index, _check_callable, _argnums_partial, _is_float0
 
 __all__ = [
     'jacrev',
@@ -43,21 +43,90 @@ def _is_quantity(x):
     return isinstance(x, Quantity)
 
 
-def _check_dtype(x, *, holomorphic: bool, allowed_dtype=np.floating, name: str = ""):
-    """Validate leaf dtype for Jacobian computation."""
+def _leaf_dtype(x):
     try:
-        dtype = x.dtype
+        return x.dtype
     except AttributeError:
-        dtype = np.result_type(x)
+        return np.result_type(x)
+
+
+def _dtype_name(dtype) -> str:
+    try:
+        return np.dtype(dtype).name
+    except TypeError:
+        return str(dtype)
+
+
+# The four checkers below mirror jax's own input/output dtype validation for
+# reverse- and forward-mode differentiation. ``jax.dtypes.issubdtype`` is used
+# (not ``np.issubdtype``) so that extended dtypes such as ``bfloat16`` are
+# recognised as floating-point.
+
+def _check_input_dtype_revderiv(x, *, holomorphic: bool, allow_int: bool, name: str):
+    dtype = _leaf_dtype(x)
     if holomorphic:
-        if not np.issubdtype(dtype, np.complexfloating):
+        if not jax.dtypes.issubdtype(dtype, np.complexfloating):
             raise TypeError(
-                f"{name} with holomorphic=True requires complex dtype, got {dtype}."
+                f"{name} with holomorphic=True requires inputs with complex dtype, "
+                f"but got {_dtype_name(dtype)}."
             )
-    elif allowed_dtype is not None and not np.issubdtype(dtype, allowed_dtype):
+    elif not allow_int and not jax.dtypes.issubdtype(dtype, np.inexact):
         raise TypeError(
-            f"{name} requires {allowed_dtype.__name__} inputs, got {dtype}."
+            f"{name} requires real- or complex-valued inputs (input dtype that is a "
+            f"sub-dtype of np.inexact), but got {_dtype_name(dtype)}. If you want to "
+            f"use Boolean- or integer-valued inputs, set allow_int to True."
         )
+
+
+def _check_output_dtype_revderiv(x, *, holomorphic: bool, name: str):
+    dtype = _leaf_dtype(x)
+    if holomorphic:
+        if not jax.dtypes.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                f"{name} with holomorphic=True requires outputs with complex dtype, "
+                f"but got {_dtype_name(dtype)}."
+            )
+    elif jax.dtypes.issubdtype(dtype, np.complexfloating):
+        raise TypeError(
+            f"{name} requires real-valued outputs (output dtype that is a sub-dtype "
+            f"of np.floating), but got {_dtype_name(dtype)}. For holomorphic "
+            f"differentiation, pass holomorphic=True. For differentiation of "
+            f"non-holomorphic functions involving complex outputs, use jax.vjp directly."
+        )
+    elif not jax.dtypes.issubdtype(dtype, np.floating):
+        raise TypeError(
+            f"{name} requires real-valued outputs (output dtype that is a sub-dtype "
+            f"of np.floating), but got {_dtype_name(dtype)}. For differentiation of "
+            f"functions with integer outputs, use jax.vjp directly."
+        )
+
+
+def _check_input_dtype_jacfwd(x, *, holomorphic: bool, name: str = "jacfwd"):
+    dtype = _leaf_dtype(x)
+    if holomorphic:
+        if not jax.dtypes.issubdtype(dtype, np.complexfloating):
+            raise TypeError(
+                f"{name} with holomorphic=True requires inputs with complex dtype, "
+                f"but got {_dtype_name(dtype)}."
+            )
+    elif not jax.dtypes.issubdtype(dtype, np.floating):
+        raise TypeError(
+            f"{name} requires real-valued inputs (input dtype that is a sub-dtype of "
+            f"np.floating), but got {_dtype_name(dtype)}. For holomorphic "
+            f"differentiation, pass holomorphic=True. For differentiation of "
+            f"non-holomorphic functions involving complex or integer inputs, use "
+            f"jax.jvp directly."
+        )
+
+
+def _check_output_dtype_jacfwd(x, *, holomorphic: bool, name: str = "jacfwd"):
+    dtype = _leaf_dtype(x)
+    if holomorphic and not jax.dtypes.issubdtype(dtype, np.complexfloating):
+        raise TypeError(
+            f"{name} with holomorphic=True requires outputs with complex dtype, "
+            f"but got {_dtype_name(dtype)}."
+        )
+    # Non-holomorphic jacfwd imposes no constraint on the output dtype.
 
 
 def _split(x, indices, axis):
@@ -121,11 +190,17 @@ def _assign_jacobian_units(outputs, inputs, jac_tree):
     for i in range(len(out_leaves)):
         for j in range(inner_size):
             leaf = out_paths_leaves[i * inner_size + j]
-            new_leaves.append(
-                maybe_decimal(
-                    Quantity(get_magnitude(leaf), unit=out_units[i] / in_units[j])
+            mantissa = get_magnitude(leaf)
+            if _is_float0(mantissa):
+                # Gradient w.r.t. an integer/boolean input: leave float0 as-is
+                # rather than wrapping it in a void-dtype Quantity.
+                new_leaves.append(mantissa)
+            else:
+                new_leaves.append(
+                    maybe_decimal(
+                        Quantity(mantissa, unit=out_units[i] / in_units[j])
+                    )
                 )
-            )
     return jax.tree.unflatten(out_treedef, new_leaves)
 
 
@@ -237,18 +312,17 @@ def jacrev(
     """
     _check_callable(fun)
     argnums = _ensure_index(argnums)
-    input_dtype = None if allow_int else np.floating
 
     @wraps(fun)
     def jacfun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
         argnums_, f_partial, dyn_args = _argnums_partial(fun, argnums, args, kwargs)
-        jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, allowed_dtype=input_dtype, name="jacrev"), dyn_args)
+        jax.tree.map(partial(_check_input_dtype_revderiv, holomorphic=holomorphic, allow_int=allow_int, name="jacrev"), dyn_args)
         if not has_aux:
             y, pullback = jax.vjp(f_partial, *dyn_args)
         else:
             y, pullback, aux = jax.vjp(f_partial, *dyn_args, has_aux=True)
-        jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, name="jacrev"), y)
+        jax.tree.map(partial(_check_output_dtype_revderiv, holomorphic=holomorphic, name="jacrev"), y)
         jac = jax.vmap(pullback)(_std_basis(y))
         jac = jac[0] if isinstance(argnums_, int) else jac
         jac_tree = jax.tree.map(
@@ -420,14 +494,14 @@ def jacfwd(
     def jacfun(*args, **kwargs):
         args, kwargs = maybe_custom_array_tree((args, kwargs))
         argnums_, f_partial, dyn_args = _argnums_partial(fun, argnums, args, kwargs)
-        jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, allowed_dtype=np.inexact, name="jacfwd"), dyn_args)
+        jax.tree.map(partial(_check_input_dtype_jacfwd, holomorphic=holomorphic, name="jacfwd"), dyn_args)
         if not has_aux:
             pushfwd: Callable = partial(jax.jvp, f_partial, dyn_args)
             y, jac = jax.vmap(pushfwd, out_axes=(None, -1))(_std_basis(dyn_args))
         else:
             pushfwd: Callable = partial(jax.jvp, f_partial, dyn_args, has_aux=True)
             y, jac, aux = jax.vmap(pushfwd, out_axes=(None, -1, None))(_std_basis(dyn_args))
-        jax.tree.map(partial(_check_dtype, holomorphic=holomorphic, name="jacfwd"), y)
+        jax.tree.map(partial(_check_output_dtype_jacfwd, holomorphic=holomorphic, name="jacfwd"), y)
         example_args = dyn_args[0] if isinstance(argnums_, int) else dyn_args
         jac_tree = jax.tree.map(
             lambda arr: _unravel_array_into_pytree(example_args, -1, arr, is_leaf=_is_quantity),
