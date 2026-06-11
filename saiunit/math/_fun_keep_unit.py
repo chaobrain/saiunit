@@ -184,16 +184,24 @@ def _accepted_kwargs(fn) -> Optional[frozenset]:
 
 
 def _filter_unsupported_kwargs(fn, kwargs):
-    """Drop kwargs the backend ``fn`` doesn't accept.
+    """Reject kwargs the backend ``fn`` doesn't accept.
 
-    Best-effort: returns ``kwargs`` unchanged when ``fn``'s signature
-    can't be introspected (C-extensions such as torch's bindings). Pair
-    with :func:`_safe_call` to also handle the un-introspectable case.
+    Raises :class:`TypeError` when ``fn``'s signature does not accept a
+    kwarg — silently dropping it would change semantics (e.g. a typo'd
+    ``axes=`` instead of ``axis=`` would transform the default axis).
+    Returns ``kwargs`` unchanged when ``fn``'s signature can't be
+    introspected (C-extensions such as torch's bindings); pair with
+    :func:`_safe_call` to also handle the un-introspectable case.
     """
     accepted = _accepted_kwargs(fn)
     if accepted is None:
         return kwargs
-    return {k: v for k, v in kwargs.items() if k in accepted}
+    for k in kwargs:
+        if k not in accepted:
+            raise TypeError(
+                f"{getattr(fn, '__name__', fn)!r} got an unexpected keyword argument {k!r}"
+            )
+    return kwargs
 
 
 _UNEXPECTED_KW_RE = re.compile(

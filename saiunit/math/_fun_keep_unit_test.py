@@ -1549,3 +1549,22 @@ def test_nan_to_num_plain_array_quantity_replacement_raises():
         u.math.nan_to_num(x, posinf=1 * u.meter)
     with pytest.raises(TypeError, match='nan_to_num'):
         u.math.nan_to_num(x, neginf=1 * u.meter)
+
+
+def test_filter_unsupported_kwargs_raises_on_unknown():
+    """Unknown kwargs must raise, not be silently dropped."""
+    from saiunit.math._fun_keep_unit import _filter_unsupported_kwargs
+
+    def fn(a, axis=-1):
+        return a
+
+    with pytest.raises(TypeError, match="unexpected keyword argument 'axes'"):
+        _filter_unsupported_kwargs(fn, {'axes': 0})
+    # accepted kwargs pass through unchanged
+    assert _filter_unsupported_kwargs(fn, {'axis': 0}) == {'axis': 0}
+
+    def fn_varkw(a, **kw):
+        return a
+
+    # **kwargs / un-introspectable functions are left for _safe_call
+    assert _filter_unsupported_kwargs(fn_varkw, {'whatever': 1}) == {'whatever': 1}

@@ -1019,3 +1019,90 @@ def test_lax_entry_raises_on_numpy_quantity(call):
     q = u.Quantity(np.arange(4.0), unit=meter)
     with pytest.raises(u.BackendError, match="requires the jax backend"):
         call(q)
+
+
+# --- Regression tests for audited findings ---
+
+
+def _scatter_1d_dnums():
+    return lax.ScatterDimensionNumbers(
+        update_window_dims=(), inserted_window_dims=(0,),
+        scatter_dims_to_operand_dims=(0,))
+
+
+def test_scatter_mul_plain_updates_on_quantity_operand():
+    """Regression LXA-7: scatter_mul takes dimensionless updates and keeps the operand unit."""
+    values = jnp.array([1.0, 2.0, 3.0])
+    indices = jnp.array([[0], [2]])
+    updates = jnp.array([2.0, 10.0])
+    dnums = _scatter_1d_dnums()
+    expected = lax.scatter_mul(values, indices, updates, dimension_numbers=dnums)
+
+    result = ulax.scatter_mul(values * u.mV, indices, updates, dimension_numbers=dnums)
+    assert_quantity(result, expected, u.mV)
+
+    # Scale-consistent with the volt-equivalent call.
+    result_v = ulax.scatter_mul((values * u.mV).in_unit(u.volt), indices, updates,
+                                dimension_numbers=dnums)
+    assert jnp.allclose(result_v.to_decimal(u.mV), result.to_decimal(u.mV))
+
+
+def test_scatter_mul_unitless_quantity_updates():
+    """Regression LXA-7: dimensionless-Quantity updates are accepted."""
+    values = jnp.array([1.0, 2.0, 3.0])
+    indices = jnp.array([[0], [2]])
+    updates = jnp.array([2.0, 10.0])
+    dnums = _scatter_1d_dnums()
+    expected = lax.scatter_mul(values, indices, updates, dimension_numbers=dnums)
+
+    result = ulax.scatter_mul(values * u.mV, indices, updates * u.UNITLESS,
+                              dimension_numbers=dnums)
+    assert_quantity(result, expected, u.mV)
+
+
+def test_scatter_mul_rejects_dimensioned_updates():
+    """Regression LXA-7: dimensioned updates are dimensionally wrong for scatter_mul."""
+    values = jnp.array([1.0, 2.0, 3.0])
+    indices = jnp.array([[0], [2]])
+    updates = jnp.array([2.0, 10.0])
+    dnums = _scatter_1d_dnums()
+
+    with pytest.raises(TypeError):
+        ulax.scatter_mul(values * u.mV, indices, updates * u.mV, dimension_numbers=dnums)
+
+    with pytest.raises(TypeError):
+        ulax.scatter_mul(values, indices, updates * u.mV, dimension_numbers=dnums)
+
+
+def test_scatter_add_converts_compatible_units():
+    """Regression LXA-8: volt updates are converted into the mV operand's unit."""
+    operand = jnp.array([1.0, 2.0, 3.0]) * u.mV
+    indices = jnp.array([[1]])
+    updates = jnp.array([0.001]) * u.volt
+    dnums = _scatter_1d_dnums()
+
+    result = ulax.scatter_add(operand, indices, updates, dimension_numbers=dnums)
+    assert_quantity(result, jnp.array([1.0, 3.0, 3.0]), u.mV)
+
+
+def test_scatter_add_forwards_kwargs():
+    """Regression LXA-9: kwargs reach the underlying lax.scatter* call."""
+    operand = jnp.array([1.0, 2.0, 3.0]) * u.mV
+    indices = jnp.array([[1]])
+    updates = jnp.array([1.0]) * u.mV
+    dnums = _scatter_1d_dnums()
+
+    result = ulax.scatter_add(operand, indices, updates, dimension_numbers=dnums,
+                              indices_are_sorted=True)
+    assert_quantity(result, jnp.array([1.0, 3.0, 3.0]), u.mV)
+
+    # An unknown kwarg must produce jax's own TypeError, not _fun_lax_scatter's.
+    with pytest.raises(TypeError, match="scatter_add"):
+        ulax.scatter_add(operand, indices, updates, dimension_numbers=dnums,
+                         not_a_real_kwarg=True)
+
+
+def test_clamp_unitless_quantity_with_plain_bounds():
+    """Regression LXA-12: plain bounds with a dimensionless-Quantity operand work."""
+    result = ulax.clamp(0.0, jnp.array([-0.5, 0.5, 3.0]) * u.UNITLESS, 2.0)
+    assert jnp.allclose(result, jnp.array([0.0, 0.5, 2.0]))

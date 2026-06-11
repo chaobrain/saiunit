@@ -26,7 +26,7 @@ from saiunit._typing import Array, ArrayLike, DTypeLike
 # Used purely for type-hint clarity in this module.
 Shape = Sequence[Union[int, Any]]
 
-from saiunit._base_getters import has_same_unit, maybe_decimal
+from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._jax_guard import require_jax_backend
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
@@ -977,21 +977,19 @@ def _fun_lax_scatter(
     dimension_numbers,
     indices_are_sorted,
     unique_indices,
-    mode
+    mode,
+    **kwargs,
 ) -> Union[Quantity, Array]:
     fun_name = getattr(fun, "__name__", "scatter")
     require_jax_backend(f"saiunit.lax.{fun_name}", operand, updates)
     operand = maybe_custom_array(operand)
     updates = maybe_custom_array(updates)
     if isinstance(operand, Quantity) and isinstance(updates, Quantity):
-        if not has_same_unit(operand, updates):
-            raise TypeError(
-                f'operand(unit:{operand.unit}) and updates(unit:{updates.unit}) must have the same unit.'
-            )
+        updates = updates.in_unit(operand.unit)
         return maybe_decimal(Quantity(fun(operand.mantissa, scatter_indices, updates.mantissa, dimension_numbers,
                                           indices_are_sorted=indices_are_sorted,
                                           unique_indices=unique_indices,
-                                          mode=mode), unit=operand.unit))
+                                          mode=mode, **kwargs), unit=operand.unit))
     elif isinstance(operand, Quantity) or isinstance(updates, Quantity):
         raise TypeError(
             f'operand and updates should both be `Quantity` or Array, now we got {type(operand)} and {type(updates)}')
@@ -999,7 +997,7 @@ def _fun_lax_scatter(
         return fun(operand, scatter_indices, updates, dimension_numbers,
                    indices_are_sorted=indices_are_sorted,
                    unique_indices=unique_indices,
-                   mode=mode)
+                   mode=mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1231,10 +1229,29 @@ def scatter_mul(
               implementation-defined.
 
     Returns:
-        An array containing the sum of `operand` and the scattered updates.
+        An array containing the product of `operand` and the scattered updates.
     """
-    return _fun_lax_scatter(lax.scatter_mul, operand, scatter_indices, updates, dimension_numbers, indices_are_sorted,
-                            unique_indices, mode, **kwargs)
+    require_jax_backend("saiunit.lax.scatter_mul", operand, updates)
+    operand = maybe_custom_array(operand)
+    updates = maybe_custom_array(updates)
+    # ``new = old * update`` keeps the operand's unit only if the updates are
+    # dimensionless, so dimensioned updates are rejected.
+    if isinstance(updates, Quantity):
+        if not updates.is_unitless:
+            raise TypeError(
+                f'scatter_mul multiplies updates into the operand, so updates must be '
+                f'dimensionless, but got unit {updates.unit}.'
+            )
+        updates = updates.to_decimal()
+    if isinstance(operand, Quantity):
+        return maybe_decimal(Quantity(lax.scatter_mul(operand.mantissa, scatter_indices, updates, dimension_numbers,
+                                                      indices_are_sorted=indices_are_sorted,
+                                                      unique_indices=unique_indices,
+                                                      mode=mode, **kwargs), unit=operand.unit))
+    return lax.scatter_mul(operand, scatter_indices, updates, dimension_numbers,
+                           indices_are_sorted=indices_are_sorted,
+                           unique_indices=unique_indices,
+                           mode=mode, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1594,6 +1611,11 @@ def clamp(
     min = maybe_custom_array(min)
     x = maybe_custom_array(x)
     max = maybe_custom_array(max)
+    # Dimensionless Quantities are equivalent to plain arrays; fold their
+    # scale so they can be mixed freely with plain inputs.
+    min = min.to_decimal() if isinstance(min, Quantity) and min.is_unitless else min
+    x = x.to_decimal() if isinstance(x, Quantity) and x.is_unitless else x
+    max = max.to_decimal() if isinstance(max, Quantity) and max.is_unitless else max
     if all(isinstance(i, Quantity) for i in (min, x, max)):
         unit = min.unit  # type: ignore[union-attr]
         return maybe_decimal(Quantity(lax.clamp(min.mantissa, x.to_decimal(unit), max.to_decimal(unit), **kwargs), unit=unit))  # type: ignore[union-attr]
@@ -1601,7 +1623,8 @@ def clamp(
              (min, x, max)):
         return lax.clamp(min, x, max, **kwargs)  # type: ignore[arg-type]
     else:
-        raise TypeError('All inputs must be Quantity or ArrayLike')
+        raise TypeError('Mixing dimensioned Quantities with plain arrays is not allowed in clamp; '
+                        'min, x and max must either all carry units or all be plain arrays.')
 
 
 # math funcs keep unit (return Quantity and index)

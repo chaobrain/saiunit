@@ -16,6 +16,7 @@
 
 import jax.lax as lax
 import jax.numpy as jnp
+import pytest
 from absl.testing import parameterized
 
 import saiunit as u
@@ -165,10 +166,47 @@ def test_docstring_example_reduce_precision():
     expected = lax.reduce_precision(x, exponent_bits=5, mantissa_bits=10)
     assert jnp.allclose(result, expected)
 
-    # Example 2: Quantity input (mantissa extracted, unit stripped)
+    # Example 2: Quantity input (precision reduced on the mantissa, unit kept)
     q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * u.meter
     result_q = sulax.reduce_precision(q, exponent_bits=5, mantissa_bits=10)
-    assert jnp.allclose(result_q, expected)
+    assert_quantity(result_q, expected, unit=u.meter)
+
+
+# --- Regression tests for audited bugs ---
+
+
+def test_reduce_quantity_init_converted_to_operand_unit():
+    # LXB-6: a Quantity init is converted into the operand's unit before reducing.
+    q = jnp.array([1.0, 2.0, 3.0]) * u.mV
+    result = ulax.reduce(q, jnp.float32(0) * u.volt, lax.add, [0])
+    assert not isinstance(result, u.Quantity)
+    assert float(result) == 6.0
+
+
+def test_reduce_quantity_operand_plain_init():
+    # LXB-6: a dimensioned operand with a plain init must not crash.
+    q = jnp.array([1.0, 2.0, 3.0]) * meter
+    result = ulax.reduce(q, jnp.float32(0), lax.add, [0])
+    assert not isinstance(result, u.Quantity)
+    assert float(result) == 6.0
+
+
+def test_reduce_init_dimension_mismatch_raises():
+    # LXB-6: a dimensioned init incompatible with the operand must raise.
+    q = jnp.array([1.0, 2.0, 3.0]) * u.mV
+    with pytest.raises(u.UnitMismatchError):
+        ulax.reduce(q, jnp.float32(0) * meter, lax.add, [0])
+    with pytest.raises(u.UnitMismatchError):
+        ulax.reduce(jnp.array([1.0, 2.0, 3.0]), jnp.float32(0) * meter, lax.add, [0])
+
+
+def test_reduce_precision_preserves_unit():
+    # LXB-7: reduce_precision is a mantissa-only transformation; the unit survives.
+    q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * meter
+    result = ulax.reduce_precision(q, exponent_bits=5, mantissa_bits=10)
+    assert isinstance(result, u.Quantity)
+    expected = lax.reduce_precision(jnp.array([1.123456, 2.123456], dtype=jnp.float32), 5, 10)
+    assert_quantity(result, expected, unit=meter)
 
 
 def test_docstring_example_broadcast_shapes():

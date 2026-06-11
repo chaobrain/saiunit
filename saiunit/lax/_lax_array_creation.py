@@ -178,15 +178,11 @@ def broadcasted_iota(
         Array([[0., 1., 2.],
                [0., 1., 2.]], dtype=float32)
     """
+    if _sharding is not None:
+        kwargs['out_sharding'] = _sharding
     if unit is not None:
         if not isinstance(unit, Unit):
             raise TypeError('unit must be an instance of Unit.')
-        try:
-            return lax.broadcasted_iota(dtype, shape, dimension, _sharding, **kwargs) * unit  # type: ignore[arg-type,misc,return-value]
-        except TypeError:
-            return lax.broadcasted_iota(dtype, shape, dimension, **kwargs) * unit  # type: ignore[arg-type,return-value]
+        return lax.broadcasted_iota(dtype, shape, dimension, **kwargs) * unit  # type: ignore[arg-type,return-value]
     else:
-        try:
-            return lax.broadcasted_iota(dtype, shape, dimension, _sharding, **kwargs)  # type: ignore[arg-type,misc]
-        except TypeError:
-            return lax.broadcasted_iota(dtype, shape, dimension, **kwargs)  # type: ignore[arg-type]
+        return lax.broadcasted_iota(dtype, shape, dimension, **kwargs)  # type: ignore[arg-type]

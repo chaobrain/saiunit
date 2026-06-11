@@ -25,7 +25,7 @@ from saiunit._backend import get_backend
 from saiunit._base_dimension import get_or_create_dimension
 from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
-from saiunit._misc import set_module_as
+from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit._unit_common import second
 from saiunit.math._fun_change_unit import _fun_change_unit_unary
 
@@ -457,8 +457,6 @@ def fftn(
     input_ndim = a.ndim if hasattr(a, 'ndim') else np.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u * (second ** n)
-    # TODO: may cause computation overhead?
-    fftn._unit_change_fun = _unit_change_fun
     return _fun_change_unit_unary('fft.fftn',
                                   _unit_change_fun,
                                   a, s=s, axes=axes, norm=norm, **kwargs)
@@ -511,8 +509,6 @@ def rfftn(
     input_ndim = a.ndim if hasattr(a, 'ndim') else np.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u * (second ** n)
-    # TODO: may cause computation overhead?
-    rfftn._unit_change_fun = _unit_change_fun
     return _fun_change_unit_unary('fft.rfftn',
                                   _unit_change_fun,
                                   a, s=s, axes=axes, norm=norm, **kwargs)
@@ -670,8 +666,6 @@ def ifftn(
     input_ndim = a.ndim if hasattr(a, 'ndim') else np.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u / (second ** n)
-    # TODO: may cause computation overhead?
-    ifftn._unit_change_fun = _unit_change_fun
     return _fun_change_unit_unary('fft.ifftn',
                                   _unit_change_fun,
                                   a, s=s, axes=axes, norm=norm, **kwargs)
@@ -726,8 +720,6 @@ def irfftn(
     input_ndim = a.ndim if hasattr(a, 'ndim') else np.asarray(a).ndim
     n = _calculate_fftn_dimension(input_ndim, s=s, axes=axes)
     _unit_change_fun = lambda u: u / (second ** n)
-    # TODO: may cause computation overhead?
-    irfftn._unit_change_fun = _unit_change_fun
     return _fun_change_unit_unary('fft.irfftn',
                                   _unit_change_fun,
                                   a, s=s, axes=axes, norm=norm, **kwargs)
@@ -825,6 +817,10 @@ def fftfreq(
         >>> import saiunit.fft as sufft
         >>> freqs = sufft.fftfreq(4, 1.0 * u.second)
     """
+    d = maybe_custom_array(d)
+    if isinstance(d, Quantity) and d.dim.is_dimensionless:
+        # dimensionless Quantities behave like plain numbers (scale folded in)
+        d = d.to_decimal()
     if isinstance(d, Quantity):
         _validate_time_spacing(d)
         time_scale = _find_closest_scale(d.unit.scale)
@@ -836,7 +832,9 @@ def fftfreq(
             freq_unit = Unit.create(get_or_create_dimension(s=-1),
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
-                                    scale=freq_unit_scale, )
+                                    scale=freq_unit_scale,
+                                    base=d.unit.base,
+                                    factor=1.0 / d.unit.factor)
         d_value = d.to_decimal(time_unit)
         xp = get_backend(d_value)
         extra = _fftfreq_extra_kwargs(xp, dtype)
@@ -885,6 +883,10 @@ def rfftfreq(
         >>> import saiunit.fft as sufft
         >>> freqs = sufft.rfftfreq(4, 1.0 * u.second)
     """
+    d = maybe_custom_array(d)
+    if isinstance(d, Quantity) and d.dim.is_dimensionless:
+        # dimensionless Quantities behave like plain numbers (scale folded in)
+        d = d.to_decimal()
     if isinstance(d, Quantity):
         _validate_time_spacing(d)
         time_scale = _find_closest_scale(d.unit.scale)
@@ -896,7 +898,9 @@ def rfftfreq(
             freq_unit = Unit.create(get_or_create_dimension(s=-1),
                                     name=f'10^{freq_unit_scale} hertz',
                                     dispname=f'10^{freq_unit_scale} Hz',
-                                    scale=freq_unit_scale, )
+                                    scale=freq_unit_scale,
+                                    base=d.unit.base,
+                                    factor=1.0 / d.unit.factor)
         d_value = d.to_decimal(time_unit)
         xp = get_backend(d_value)
         extra = _fftfreq_extra_kwargs(xp, dtype)

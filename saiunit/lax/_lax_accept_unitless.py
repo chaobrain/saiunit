@@ -18,11 +18,13 @@ from __future__ import annotations
 from typing import Union, Optional, Callable, Sequence
 
 import jax
+import jax.numpy as jnp
 from jax import lax
 
 from saiunit._base_unit import Unit
+from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
-from saiunit._misc import set_module_as
+from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit.math._fun_accept_unitless import _fun_accept_unitless_unary, _fun_accept_unitless_binary, _fun_unitless_binary
 from saiunit._typing import Array, ArrayLike
 
@@ -47,9 +49,6 @@ __all__ = [
 
     # fft
     'fft',
-
-    # misc
-    'collapse',
 ]
 
 
@@ -212,7 +211,7 @@ def collapse(
     stop_dimension: Optional[int] = None,
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> Array:
+) -> Union[Quantity, Array]:
     """Collapses dimensions of an array into a single dimension.
 
     For example, if ``operand`` is an array with shape ``[2, 3, 4]``,
@@ -220,23 +219,41 @@ def collapse(
     dimension are laid out major-to-minor, i.e., with the lowest-numbered
     dimension as the slowest varying dimension.
 
+    Since collapsing is a pure reshape, the unit of a ``Quantity`` input is
+    preserved by default.
+
     Args:
-        x: an input array.
+        x: an input array or Quantity.
         start_dimension: the start of the dimensions to collapse (inclusive).
         stop_dimension: the end of the dimensions to collapse (exclusive). Pass None
           to collapse all the dimensions after start.
-        unit_to_scale: the unit to scale the input to. If None, the input should be
-            dimensionless.
+        unit_to_scale: if provided, a ``Quantity`` input is converted to this unit
+            and the result is returned as a plain array (legacy behavior). If None,
+            the unit of ``x`` is preserved.
 
     Returns:
-        An array where dimensions ``[start_dimension, stop_dimension)`` have been
-        collapsed (raveled) into a single dimension.
+        An array (or Quantity with the unit of ``x``) where dimensions
+        ``[start_dimension, stop_dimension)`` have been collapsed (raveled) into a
+        single dimension.
     """
-    return _fun_accept_unitless_unary(lax.collapse,
-                                      x,
-                                      start_dimension=start_dimension,
-                                      stop_dimension=stop_dimension,
-                                      unit_to_scale=unit_to_scale, **kwargs)
+    x = maybe_custom_array(x)
+    if isinstance(x, Quantity):
+        if unit_to_scale is not None:
+            if not isinstance(unit_to_scale, Unit):
+                raise TypeError(f'unit_to_scale should be a Unit instance. Got {unit_to_scale}')
+            return lax.collapse(jnp.asarray(x.to_decimal(unit_to_scale)),
+                                start_dimension, stop_dimension, **kwargs)
+        return maybe_decimal(
+            Quantity(lax.collapse(jnp.asarray(x.mantissa), start_dimension, stop_dimension, **kwargs),
+                     unit=x.unit)
+        )
+    if unit_to_scale is not None:
+        raise TypeError(
+            f'collapse received "unit_to_scale" but input "x" is not a Quantity '
+            f'(got type {type(x).__name__}). '
+            f'Remove "unit_to_scale" or pass a Quantity input.'
+        )
+    return lax.collapse(jnp.asarray(x), start_dimension, stop_dimension, **kwargs)
 
 
 @set_module_as('saiunit.lax')
@@ -692,6 +709,11 @@ def _fun_accept_unitless_nary(
 ):
     if not isinstance(quantity_num, int):
         raise TypeError(f'quantity_num should be an integer. Got {quantity_num}')
+    if unit_to_scale is not None and not any(isinstance(arg, Quantity) for arg in args):
+        raise TypeError(
+            f'{func.__name__} received "unit_to_scale" but none of the inputs is a Quantity. '
+            f'Remove "unit_to_scale" or pass a Quantity input.'
+        )
     new_args = []
     for arg in args:
         if isinstance(arg, Quantity):

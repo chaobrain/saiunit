@@ -16,6 +16,7 @@
 
 import jax.lax as lax
 import jax.numpy as jnp
+import pytest
 from absl.testing import parameterized
 
 import saiunit.lax as bulax
@@ -99,3 +100,20 @@ class TestLaxArrayCreationDocstringExamples:
         result = bulax.broadcasted_iota(float, (2, 3), 1, unit=meter)
         expected = lax.broadcasted_iota(float, (2, 3), 1)
         assert_quantity(result, expected, unit=meter)
+
+
+class TestLaxArrayCreationRegressions:
+    """Regression tests for audited bugs in array-creation lax functions."""
+
+    def test_broadcasted_iota_invalid_sharding_raises(self):
+        # LXB-5: an invalid _sharding must propagate the backend error, not be ignored.
+        with pytest.raises(TypeError):
+            bulax.broadcasted_iota(float, (2, 3), 1, _sharding='GARBAGE')
+        with pytest.raises(TypeError):
+            bulax.broadcasted_iota(float, (2, 3), 1, _sharding='GARBAGE', unit=meter)
+
+    def test_broadcasted_iota_default_call_works(self):
+        # LXB-5: the default call (no _sharding) keeps working, with unit attached.
+        result = bulax.broadcasted_iota(float, (2, 3), 1, unit=second)
+        expected = lax.broadcasted_iota(float, (2, 3), 1)
+        assert_quantity(result, expected, unit=second)

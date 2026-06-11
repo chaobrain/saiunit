@@ -1696,7 +1696,7 @@ def det(
             msg = "Argument to _det() must have shape [..., n, n], got {}"
             raise ValueError(msg.format(a_shape))
         xp = get_backend(a.mantissa)
-        return Quantity(_resolve_op('linalg.det', xp)(a.mantissa, **kwargs), unit=new_unit)
+        return maybe_decimal(Quantity(_resolve_op('linalg.det', xp)(a.mantissa, **kwargs), unit=new_unit))
     else:
         xp = get_backend(a)
         return _resolve_op('linalg.det', xp)(a, **kwargs)

@@ -18,10 +18,11 @@ from __future__ import annotations
 from typing import Union, Callable, Any
 
 import jax
+import jax.numpy as jnp
 from jax import lax, Array
 
 from saiunit.lax._lax_change_unit import unit_change
-from saiunit._base_getters import fail_for_unit_mismatch, maybe_decimal
+from saiunit._base_getters import get_unit, maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from saiunit.math._fun_change_unit import _fun_change_unit_unary
@@ -96,7 +97,8 @@ def cholesky(
 def eig(
     x: Union[Quantity, ArrayLike],
     compute_left_eigenvectors: bool = True,
-    compute_right_eigenvectors: bool = True
+    compute_right_eigenvectors: bool = True,
+    **kwargs,
 ) -> tuple[Array | Quantity, Array, Array] | list[Array] | tuple[Array | Quantity, Array] | tuple[Array | Quantity]:
     """Eigendecomposition of a general matrix.
 
@@ -145,36 +147,36 @@ def eig(
     if compute_left_eigenvectors and compute_right_eigenvectors:
         if isinstance(x, Quantity):
             w, vl, vr = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
-                                       compute_right_eigenvectors=compute_right_eigenvectors)
+                                       compute_right_eigenvectors=compute_right_eigenvectors, **kwargs)
             return maybe_decimal(Quantity(w, unit=x.unit)), vl, vr
         else:
             return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
-                                  compute_right_eigenvectors=compute_right_eigenvectors)
+                                  compute_right_eigenvectors=compute_right_eigenvectors, **kwargs)
     elif compute_left_eigenvectors:
         if isinstance(x, Quantity):
             w, vl = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
-                                   compute_right_eigenvectors=compute_right_eigenvectors)
+                                   compute_right_eigenvectors=compute_right_eigenvectors, **kwargs)
             return maybe_decimal(Quantity(w, unit=x.unit)), vl
         else:
             return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
-                                  compute_right_eigenvectors=compute_right_eigenvectors)
+                                  compute_right_eigenvectors=compute_right_eigenvectors, **kwargs)
 
     elif compute_right_eigenvectors:
         if isinstance(x, Quantity):
             w, vr = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
-                                   compute_right_eigenvectors=compute_right_eigenvectors)
+                                   compute_right_eigenvectors=compute_right_eigenvectors, **kwargs)
             return maybe_decimal(Quantity(w, unit=x.unit)), vr
         else:
             return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
-                                  compute_right_eigenvectors=compute_right_eigenvectors)
+                                  compute_right_eigenvectors=compute_right_eigenvectors, **kwargs)
     else:
         if isinstance(x, Quantity):
             (w,) = lax.linalg.eig(x.mantissa, compute_left_eigenvectors=compute_left_eigenvectors,
-                                  compute_right_eigenvectors=compute_right_eigenvectors)
+                                  compute_right_eigenvectors=compute_right_eigenvectors, **kwargs)
             return (maybe_decimal(Quantity(w, unit=x.unit)),)
         else:
             return lax.linalg.eig(x, compute_left_eigenvectors=compute_left_eigenvectors,
-                                  compute_right_eigenvectors=compute_right_eigenvectors)
+                                  compute_right_eigenvectors=compute_right_eigenvectors, **kwargs)
 
 
 @set_module_as('saiunit.lax')
@@ -184,6 +186,7 @@ def eigh(
     symmetrize_input: bool = True,
     sort_eigenvalues: bool = True,
     subset_by_index: tuple[int, int] | None = None,
+    **kwargs,
 ) -> tuple[Quantity | Array, Array]:
     r"""Eigendecomposition of a Hermitian matrix.
 
@@ -232,11 +235,11 @@ def eigh(
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
         v, w = lax.linalg.eigh(x.mantissa, lower=lower, symmetrize_input=symmetrize_input,  # type: ignore[arg-type]
-                               sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index)
+                               sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index, **kwargs)
         return v, maybe_decimal(Quantity(w, unit=x.unit))
     else:
         return lax.linalg.eigh(x, lower=lower, symmetrize_input=symmetrize_input,  # type: ignore[arg-type]
-                               sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index)
+                               sort_eigenvalues=sort_eigenvalues, subset_by_index=subset_by_index, **kwargs)
 
 
 @set_module_as('saiunit.lax')
@@ -394,6 +397,7 @@ def householder_product(
 @set_module_as('saiunit.lax')
 def qdwh(
     x: Union[Quantity, ArrayLike],
+    **kwargs,
 ) -> tuple[Array, Quantity | Array, int, bool]:
     r"""Polar decomposition via QR-based dynamically weighted Halley iteration.
 
@@ -432,16 +436,20 @@ def qdwh(
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
-        u, h, num_iters, is_converged = lax.linalg.qdwh(x.mantissa)
+        u, h, num_iters, is_converged = lax.linalg.qdwh(x.mantissa, **kwargs)
         return u, maybe_decimal(Quantity(h, unit=x.unit)), num_iters, is_converged
     else:
-        return lax.linalg.qdwh(x)
+        return lax.linalg.qdwh(x, **kwargs)
 
 
 @set_module_as('saiunit.lax')
 def qr(
     x: Union[Quantity, ArrayLike],
-) -> tuple[Array, Quantity | Array]:
+    *,
+    pivoting: bool = False,
+    full_matrices: bool = True,
+    use_magma: bool | None = None,
+) -> tuple[Array, Quantity | Array] | tuple[Array, Quantity | Array, Array]:
     r"""QR decomposition.
 
     Compute the QR decomposition :math:`A = Q \cdot R` where :math:`Q` is
@@ -451,14 +459,28 @@ def qr(
     ----------
     x : array_like or Quantity
         A batch of matrices with shape ``[..., m, n]``.
+    pivoting : bool, optional
+        If ``True``, compute a column-pivoted decomposition
+        :math:`A[:, P] = Q \cdot R` and additionally return the pivot
+        indices ``p``. Default is ``False``.
+    full_matrices : bool, optional
+        If ``True``, compute the full-size ``q`` and ``r``; if ``False``,
+        only the leading ``min(m, n)`` columns of ``q`` are returned.
+        Default is ``True``.
+    use_magma : bool or None, optional
+        Whether to use MAGMA for the pivoted decomposition on GPU.
+        Default is ``None``.
 
     Returns
     -------
     q : Array
-        The unitary factor (unitless) with shape ``[..., m, min(m, n)]``.
+        The unitary factor (unitless).
     r : Array or Quantity
         The upper-triangular factor with shape ``[..., min(m, n), n]``.
         If ``x`` has a unit, ``r`` preserves that unit.
+    p : Array
+        Column pivot indices (plain integers).  Only returned when
+        ``pivoting`` is ``True``.
 
     Examples
     --------
@@ -474,10 +496,13 @@ def qr(
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
-        q, r = lax.linalg.qr(x.mantissa)
+        q, r, *rest = lax.linalg.qr(x.mantissa, pivoting=pivoting, full_matrices=full_matrices,
+                                    use_magma=use_magma)
+        if pivoting:
+            return q, maybe_decimal(Quantity(r, unit=x.unit)), rest[0]
         return q, maybe_decimal(Quantity(r, unit=x.unit))
     else:
-        return lax.linalg.qr(x)
+        return lax.linalg.qr(x, pivoting=pivoting, full_matrices=full_matrices, use_magma=use_magma)
 
 
 @set_module_as('saiunit.lax')
@@ -486,7 +511,7 @@ def schur(
     compute_schur_vectors: bool = True,
     sort_eig_vals: bool = False,
     select_callable: Callable[..., Any] | None = None
-) -> tuple[Array, Quantity | Array]:
+) -> tuple[Quantity | Array, Array] | list[Array] | tuple[Quantity | Array]:
     r"""Schur decomposition.
 
     Compute the Schur decomposition :math:`A = Q \cdot T \cdot Q^H` where
@@ -507,10 +532,11 @@ def schur(
 
     Returns
     -------
-    t : Array
-        The Schur form (unitless).
-    q : Array or Quantity
-        The Schur vectors.  If ``x`` has a unit, ``q`` preserves that unit.
+    t : Array or Quantity
+        The Schur form.  If ``x`` has a unit, ``t`` preserves that unit.
+    q : Array
+        The Schur vectors (unitless).  Only returned when
+        ``compute_schur_vectors`` is ``True``.
 
     Examples
     --------
@@ -521,14 +547,20 @@ def schur(
         >>> import saiunit.lax as sulax
         >>> A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
         >>> t, q = sulax.schur(A)
-        >>> u.get_unit(q) == u.second
+        >>> u.get_unit(t) == u.second
         True
     """
     x = maybe_custom_array(x)
     if isinstance(x, Quantity):
-        t, q = lax.linalg.schur(x.mantissa, compute_schur_vectors=compute_schur_vectors,
-                                sort_eig_vals=sort_eig_vals, select_callable=select_callable)
-        return t, maybe_decimal(Quantity(q, unit=x.unit))
+        if compute_schur_vectors:
+            t, q = lax.linalg.schur(x.mantissa, compute_schur_vectors=compute_schur_vectors,
+                                    sort_eig_vals=sort_eig_vals, select_callable=select_callable)
+            return maybe_decimal(Quantity(t, unit=x.unit)), q
+        else:
+            # jax returns a one-element sequence when the Schur vectors are off.
+            t = lax.linalg.schur(x.mantissa, compute_schur_vectors=compute_schur_vectors,
+                                 sort_eig_vals=sort_eig_vals, select_callable=select_callable)[0]
+            return (maybe_decimal(Quantity(t, unit=x.unit)),)
     else:
         return lax.linalg.schur(x, compute_schur_vectors=compute_schur_vectors,
                                 sort_eig_vals=sort_eig_vals, select_callable=select_callable)
@@ -639,8 +671,9 @@ def triangular_solve(
     Returns
     -------
     X : Array or Quantity
-        The solution with the same shape and dtype as ``b``.  If ``b``
-        carries a unit, ``X`` preserves that unit.
+        The solution with the same shape and dtype as ``b``.  The result
+        unit is ``unit(b) / unit(a)``; the result is a plain array when
+        neither input carries a unit.
 
     Examples
     --------
@@ -657,24 +690,14 @@ def triangular_solve(
     """
     a = maybe_custom_array(a)
     b = maybe_custom_array(b)
-    if isinstance(a, Quantity) and isinstance(b, Quantity):
-        return maybe_decimal(Quantity(lax.linalg.triangular_solve(a.mantissa, b.mantissa, left_side=left_side,
-                                                                  lower=lower, transpose_a=transpose_a,
-                                                                  conjugate_a=conjugate_a,
-                                                                  unit_diagonal=unit_diagonal), unit=b.unit))
-    elif isinstance(a, Quantity):
-        return lax.linalg.triangular_solve(a.mantissa, b, left_side=left_side,  # type: ignore[arg-type]
-                                           lower=lower, transpose_a=transpose_a, conjugate_a=conjugate_a,
-                                           unit_diagonal=unit_diagonal)
-    elif isinstance(b, Quantity):
-        return maybe_decimal(Quantity(lax.linalg.triangular_solve(a, b.mantissa, left_side=left_side,
-                                                                  lower=lower, transpose_a=transpose_a,
-                                                                  conjugate_a=conjugate_a,
-                                                                  unit_diagonal=unit_diagonal), unit=b.unit))
-    else:
-        return lax.linalg.triangular_solve(a, b, left_side=left_side,
-                                           lower=lower, transpose_a=transpose_a, conjugate_a=conjugate_a,
-                                           unit_diagonal=unit_diagonal)
+    a_mantissa = a.mantissa if isinstance(a, Quantity) else a
+    b_mantissa = b.mantissa if isinstance(b, Quantity) else b
+    r = lax.linalg.triangular_solve(a_mantissa, b_mantissa, left_side=left_side,
+                                    lower=lower, transpose_a=transpose_a, conjugate_a=conjugate_a,
+                                    unit_diagonal=unit_diagonal)
+    if isinstance(a, Quantity) or isinstance(b, Quantity):
+        return maybe_decimal(Quantity(r, unit=get_unit(b) / get_unit(a)))
+    return r
 
 
 @set_module_as('saiunit.lax')
@@ -737,6 +760,7 @@ def tridiagonal_solve(
     d: Union[Quantity, ArrayLike],
     du: Union[Quantity, ArrayLike],
     b: Union[Quantity, ArrayLike],
+    **kwargs,
 ) -> Quantity | Array:
     r"""Solve a tridiagonal linear system.
 
@@ -749,27 +773,28 @@ def tridiagonal_solve(
     dl : array_like or Quantity
         Lower diagonal with shape ``[..., m]``.
         ``dl[i] = A[i, i-1]``; ``dl[0]`` is unused.  Must have the same
-        unit as ``d`` and ``du``.
+        dimension as ``d`` and ``du``.
     d : array_like or Quantity
         Main diagonal with shape ``[..., m]``.
         ``d[i] = A[i, i]``.
     du : array_like or Quantity
         Upper diagonal with shape ``[..., m]``.
         ``du[i] = A[i, i+1]``; ``du[m-1]`` is unused.  Must have the same
-        unit as ``dl`` and ``d``.
+        dimension as ``dl`` and ``d``.
     b : array_like or Quantity
         Right-hand-side matrix.
 
     Returns
     -------
     X : Array or Quantity
-        The solution of the tridiagonal system.  If ``b`` has a unit, ``X``
-        preserves that unit.
+        The solution of the tridiagonal system.  The result unit is
+        ``unit(b) / unit(d)``; the result is a plain array when no input
+        carries a unit.
 
     Raises
     ------
-    saiunit.DimensionMismatchError
-        If ``dl``, ``d``, and ``du`` do not share the same unit.
+    saiunit.UnitMismatchError
+        If ``dl``, ``d``, and ``du`` do not share the same dimension.
 
     Examples
     --------
@@ -790,16 +815,15 @@ def tridiagonal_solve(
     d = maybe_custom_array(d)
     du = maybe_custom_array(du)
     b = maybe_custom_array(b)
-    fail_for_unit_mismatch(dl, d)
-    fail_for_unit_mismatch(dl, du)
-    if isinstance(b, Quantity):
-        try:
-            return maybe_decimal(
-                Quantity(lax.linalg.tridiagonal_solve(dl.mantissa, d.mantissa, du.mantissa, b.mantissa), unit=b.unit))  # type: ignore[arg-type,union-attr]
-        except:
-            return Quantity(lax.linalg.tridiagonal_solve(dl, d, du, b.mantissa), unit=b.unit)  # type: ignore[arg-type]
-    else:
-        try:
-            return lax.linalg.tridiagonal_solve(dl.mantissa, d.mantissa, du.mantissa, b)  # type: ignore[arg-type,union-attr]
-        except:
-            return lax.linalg.tridiagonal_solve(dl, d, du, b)  # type: ignore[arg-type]
+    # Express both off-diagonals in the main diagonal's unit; ``in_unit``
+    # raises on a true dimension mismatch.
+    ref_unit = get_unit(d)
+    dl_mantissa = dl.in_unit(ref_unit).mantissa if isinstance(dl, Quantity) else dl
+    d_mantissa = d.mantissa if isinstance(d, Quantity) else d
+    du_mantissa = du.in_unit(ref_unit).mantissa if isinstance(du, Quantity) else du
+    b_mantissa = b.mantissa if isinstance(b, Quantity) else b
+    r = lax.linalg.tridiagonal_solve(jnp.asarray(dl_mantissa), jnp.asarray(d_mantissa),
+                                     jnp.asarray(du_mantissa), jnp.asarray(b_mantissa), **kwargs)
+    if any(isinstance(i, Quantity) for i in (dl, d, du, b)):
+        return maybe_decimal(Quantity(r, unit=get_unit(b) / ref_unit))
+    return r

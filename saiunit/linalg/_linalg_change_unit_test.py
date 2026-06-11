@@ -626,3 +626,58 @@ def test_docstring_example_det():
     assert result.unit == u.meter ** 2
     expected = jnp.linalg.det(jnp.array([[1., 2.], [3., 4.]]))
     assert jnp.allclose(result.mantissa, expected)
+
+
+def test_lstsq_residuals_and_s_carry_units():
+    """Regression: lstsq must wrap residuals (b.unit**2) and s (a.unit)."""
+    a_v = jnp.array([[1., 2.], [3., 4.], [5., 6.]])
+    b_v = jnp.array([1., 2., 4.])
+    x1, res1, rank1, s1 = bulinalg.lstsq(a_v * u.ms, b_v * u.mV)
+    assert isinstance(res1, u.Quantity) and res1.unit.dim == (u.mV ** 2).dim
+    assert isinstance(s1, u.Quantity) and s1.unit.dim == u.ms.dim
+    assert not isinstance(rank1, u.Quantity)
+    # the same physical system expressed in different display units
+    x2, res2, rank2, s2 = bulinalg.lstsq(
+        u.Quantity(a_v / 1000.0, unit=u.second),
+        u.Quantity(b_v / 1000.0, unit=u.volt),
+    )
+    assert u.math.allclose(x1, x2, rtol=1e-3)
+    assert u.math.allclose(res1, res2, rtol=1e-3)
+    assert u.math.allclose(s1, s2, rtol=1e-3)
+    assert int(rank1) == int(rank2)
+    # one-sided branches
+    x3, res3, rank3, s3 = bulinalg.lstsq(a_v * u.ms, b_v)
+    assert isinstance(s3, u.Quantity) and s3.unit.dim == u.ms.dim
+    assert not isinstance(res3, u.Quantity)
+    x4, res4, rank4, s4 = bulinalg.lstsq(a_v, b_v * u.mV)
+    assert isinstance(res4, u.Quantity) and res4.unit.dim == (u.mV ** 2).dim
+    assert not isinstance(s4, u.Quantity)
+
+
+def test_cholesky_symmetrize_input_consistent_across_backends():
+    """Regression: numpy backend must symmetrize like jax instead of silently
+    dropping ``symmetrize_input``."""
+    import numpy as np
+    a_v = np.array([[4.0, 2.0], [0.0, 3.0]])  # asymmetric input
+    expected = jnp.linalg.cholesky((jnp.asarray(a_v) + jnp.asarray(a_v).T) / 2)
+    r_jax = u.linalg.cholesky(jnp.asarray(a_v) * u.meter2)
+    r_np = u.linalg.cholesky(u.Quantity(a_v, unit=u.meter2))
+    assert r_jax.unit == meter
+    assert r_np.unit == meter
+    np.testing.assert_allclose(np.asarray(r_jax.mantissa), np.asarray(expected), rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(r_np.mantissa), np.asarray(expected), rtol=1e-6)
+
+
+def test_cholesky_symmetrize_input_false():
+    """``symmetrize_input=False`` keeps jax semantics and must not crash numpy."""
+    import numpy as np
+    a_v = jnp.array([[4.0, 2.0], [0.0, 3.0]])
+    expected = jnp.linalg.cholesky(a_v, symmetrize_input=False)
+    r_jax = u.linalg.cholesky(a_v * u.meter2, symmetrize_input=False)
+    np.testing.assert_allclose(np.asarray(r_jax.mantissa), np.asarray(expected),
+                               rtol=1e-6, equal_nan=True)
+    # numpy backend: the kwarg must not be forwarded (np.linalg.cholesky lacks it)
+    sym = np.array([[4.0, 1.0], [1.0, 3.0]])
+    r_np = u.linalg.cholesky(u.Quantity(sym, unit=u.meter2), symmetrize_input=False)
+    np.testing.assert_allclose(np.asarray(r_np.mantissa),
+                               np.linalg.cholesky(sym), rtol=1e-6)
