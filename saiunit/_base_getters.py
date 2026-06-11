@@ -162,6 +162,10 @@ def get_dim(obj) -> Dimension:
         return obj
     if isinstance(obj, Quantity):
         return obj.dim
+    if isinstance(obj, (str, bytes)):
+        # Quantity() rejects str/bytes mantissas, but get_dim keeps its
+        # duck-typing contract: anything without units is dimensionless.
+        return DIMENSIONLESS
     try:
         return Quantity(obj).dim
     except TypeError:
@@ -207,6 +211,10 @@ def get_unit(obj) -> 'Unit':
         return obj
     if isinstance(obj, Quantity):
         return obj.unit
+    if isinstance(obj, (str, bytes)):
+        # Quantity() rejects str/bytes mantissas, but get_unit keeps its
+        # duck-typing contract: anything without units is unitless.
+        return UNITLESS
     try:
         return Quantity(obj).unit
     except TypeError:
@@ -736,7 +744,10 @@ def unit_scale_align_to_first(*args) -> 'list[Quantity]':
                 items[i] = Quantity(items[i])
     else:
         for i in range(1, len(items)):
-            items[i] = items[i].in_unit(first_unit)
+            # Route through _to_quantity so raw values (plain numbers, bare
+            # arrays, Unit objects) raise a proper UnitMismatchError instead
+            # of an AttributeError on ``.in_unit``.
+            items[i] = _to_quantity(items[i]).in_unit(first_unit)
     return items
 
 

@@ -361,13 +361,16 @@ def test_add_requires_compatible_unit(backend):
         q.at[0].add(5.0)  # plain number, but quantity is not unitless
 
 
-def test_multiply_changes_unit(backend):
+def test_multiply_unit_bearing_factor_raises(backend):
     if backend == "ndonnx":
         pytest.skip()
     q = _make_quantity([2.0, 4.0, 8.0], mV, backend)
-    r = q.at[1].multiply(3.0 * meter)
-    # Unit of the whole array becomes mV*m (JAX semantics)
-    assert r.unit == mV * meter
+    # A unit-bearing factor would silently re-label the untouched elements
+    # (e.g. 2 mV -> 2 mV*m), so it must be rejected.
+    with pytest.raises(TypeError, match="dimensionless"):
+        q.at[1].multiply(3.0 * meter)
+    with pytest.raises(TypeError, match="dimensionless"):
+        q.at[1].divide(3.0 * meter)
 
 
 # ---------------------------------------------------------------------------
