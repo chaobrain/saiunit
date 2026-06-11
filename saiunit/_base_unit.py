@@ -15,14 +15,16 @@
 
 from __future__ import annotations
 
+import math
+import numbers
 import re
+import threading
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ._base_dimension import (
     Dimension,
     DIMENSIONLESS,
-    _is_tracer,
 )
 from ._typing import ArrayLike
 
@@ -145,38 +147,6 @@ def _format_dim_parser_compatible(dim: Dimension, python_code: bool = False) -> 
     return _format_display_parts(parts)
 
 
-def _find_a_name(dim: Dimension, base, scale, factor) -> tuple[str | None, bool]:
-    if dim == DIMENSIONLESS:
-        u_name = f"Unit({base}^{scale})"
-        return u_name, False
-
-    if isinstance(base, (int, float)):
-        if isinstance(scale, (int, float)):
-            if isinstance(factor, (int, float)):
-                key = (dim, scale, base, factor)
-                if key in _standard_units:
-                    u_name = _standard_units[key].name
-                    return u_name, True
-
-        if isinstance(factor, (int, float)):
-            key = (dim, 0, base, factor)
-            if key in _standard_units:
-                u_name = _standard_units[key].name
-                if factor == 1.:
-                    return f"{base}^{scale} * {u_name}", False
-                else:
-                    return f"{factor} * {base}^{scale} * {u_name}", False
-
-        key = (dim, 0, base, 1.)
-        if key in _standard_units:
-            u_name = _standard_units[key].name
-            if _is_tracer(scale):
-                return u_name, False
-            else:
-                return f"{base}^{scale} * {u_name}", False
-    return None, True
-
-
 _standard_units: 'dict[tuple, Unit]' = {}
 _standard_unit_aliases: 'dict[tuple, list[Unit]]' = {}
 _unit_name_registry: 'dict[str, Unit]' = {}
@@ -186,6 +156,10 @@ _unit_name_registry: 'dict[str, Unit]' = {}
 # user-added aliases for the same physical key.
 _unit_registration_index: 'dict[int, int]' = {}
 _next_registration_index: 'list[int]' = [0]
+# Guards all registry mutation in ``add_standard_unit`` so concurrent
+# registration (e.g. user threads importing unit-defining modules) cannot
+# interleave alias-list updates with preferred-unit selection.
+_registry_lock = threading.Lock()
 
 # ---------------------------------------------------------------------------
 # Ambiguous-key detection
@@ -277,29 +251,36 @@ def add_standard_unit(u: 'Unit'):
         isinstance(u.scale, (int, float)) and
         isinstance(u.factor, (int, float))
     ):
-        key = (u.dim, u.scale, u.base, u.factor)
-        aliases = _standard_unit_aliases.setdefault(key, [])
-        # Dedup by identity: a Unit instance is registered at most once.
-        # Without this, repeated calls grow the alias list unboundedly
-        # and poison the ambiguity heuristic below.
-        if not any(existing is u for existing in aliases):
-            aliases.append(u)
-            # Stamp a monotonic registration index so that later
-            # additions cannot hijack the canonical display.
-            _unit_registration_index[id(u)] = _next_registration_index[0]
-            _next_registration_index[0] += 1
-        _standard_units[key] = _select_preferred_standard_unit(aliases)
+        with _registry_lock:
+            key = (u.dim, u.scale, u.base, u.factor)
+            aliases = _standard_unit_aliases.setdefault(key, [])
+            # Dedup by identity *and* by (name, dispname): re-running the
+            # same ``Unit.create(...)`` call produces a new instance each
+            # time; without value-based dedup, repeated registration grows
+            # the alias list unboundedly and poisons the ambiguity
+            # heuristic below.
+            if not any(
+                existing is u
+                or (existing.name == u.name and existing.dispname == u.dispname)
+                for existing in aliases
+            ):
+                aliases.append(u)
+                # Stamp a monotonic registration index so that later
+                # additions cannot hijack the canonical display.
+                _unit_registration_index[id(u)] = _next_registration_index[0]
+                _next_registration_index[0] += 1
+            _standard_units[key] = _select_preferred_standard_unit(aliases)
 
-        # Auto-detect ambiguity: >=2 distinct display names → ambiguous
-        dispnames = {a.dispname for a in aliases if isinstance(a.dispname, str)}
-        if len(dispnames) >= 2:
-            _ambiguous_keys.add(key)
+            # Auto-detect ambiguity: >=2 distinct display names → ambiguous
+            dispnames = {a.dispname for a in aliases if isinstance(a.dispname, str)}
+            if len(dispnames) >= 2:
+                _ambiguous_keys.add(key)
 
-        # Register by dispname and name for string-based lookup
-        if isinstance(u.dispname, str) and u.dispname:
-            _unit_name_registry.setdefault(u.dispname, u)
-        if isinstance(u.name, str) and u.name:
-            _unit_name_registry.setdefault(u.name, u)
+            # Register by dispname and name for string-based lookup
+            if isinstance(u.dispname, str) and u.dispname:
+                _unit_name_registry.setdefault(u.dispname, u)
+            if isinstance(u.name, str) and u.name:
+                _unit_name_registry.setdefault(u.name, u)
 
 
 def _get_display_parts(unit: 'Unit'):
@@ -408,49 +389,32 @@ def _format_display_parts(parts) -> str:
 # String → Unit parser
 # ---------------------------------------------------------------------------
 
-def _split_fraction(s: str):
-    """Split ``'A / B'`` into ``('A', 'B')``, respecting parentheses.
-
-    Returns ``(s, None)`` when there is no top-level ``/``.
-    """
-    depth = 0
-    i = 0
-    while i < len(s):
-        ch = s[i]
-        if ch == '(':
-            depth += 1
-        elif ch == ')':
-            depth -= 1
-        elif depth == 0 and s[i:i + 3] == ' / ':
-            num = s[:i].strip()
-            den = s[i + 3:].strip()
-            if den.startswith('(') and den.endswith(')'):
-                den = den[1:-1].strip()
-            return num, den
-        i += 1
-    return s, None
-
-
-def _split_product(s: str):
-    """Split on ``' * '`` respecting parentheses."""
+def _split_top_level(s: str, sep: str):
+    """Split *s* on every top-level occurrence of *sep* (outside parens)."""
     parts = []
     depth = 0
     start = 0
     i = 0
+    n = len(sep)
     while i < len(s):
         ch = s[i]
         if ch == '(':
             depth += 1
         elif ch == ')':
             depth -= 1
-        elif depth == 0 and s[i:i + 3] == ' * ':
+        elif depth == 0 and s[i:i + n] == sep:
             parts.append(s[start:i])
-            start = i + 3
+            start = i + n
             i = start
             continue
         i += 1
     parts.append(s[start:])
     return parts
+
+
+def _split_product(s: str):
+    """Split on ``' * '`` respecting parentheses."""
+    return _split_top_level(s, ' * ')
 
 
 def _parse_product(s: str):
@@ -460,6 +424,19 @@ def _parse_product(s: str):
     for term in terms:
         u = _parse_term(term.strip())
         result = u if result is None else result * u
+    return result
+
+
+def _parse_expression(s: str):
+    """Parse a full expression with left-associative top-level division.
+
+    ``'a / b / c'`` parses as ``(a / b) / c``, matching ordinary
+    mathematical convention.
+    """
+    segments = _split_top_level(s.strip(), ' / ')
+    result = _parse_product(segments[0].strip())
+    for seg in segments[1:]:
+        result = result / _parse_product(seg.strip())
     return result
 
 
@@ -487,11 +464,7 @@ def _parse_term(s: str):
             inner = s[1:-1].strip()
             if not inner:
                 raise ValueError(f"Empty parenthesised group in {s!r}")
-            num_str, den_str = _split_fraction(inner)
-            numerator = _parse_product(num_str)
-            if den_str is not None:
-                return numerator / _parse_product(den_str)
-            return numerator
+            return _parse_expression(inner)
     caret_idx = s.rfind('^')
     if caret_idx > 0:
         atom = s[:caret_idx].strip()
@@ -508,11 +481,15 @@ def _parse_term(s: str):
         # in ``scale`` (when base_num==10) or in ``factor``.
         try:
             base_num = float(atom)
-            if base_num == 10.0:
-                return Unit(DIMENSIONLESS, scale=exp)
-            return Unit(DIMENSIONLESS, factor=float(base_num) ** exp)
         except ValueError:
             pass
+        else:
+            # Outside the ``try`` so that Unit's own validation errors
+            # (e.g. non-positive factor) surface instead of being
+            # swallowed and reported as "unknown unit".
+            if base_num == 10.0:
+                return Unit(DIMENSIONLESS, scale=exp)
+            return Unit(DIMENSIONLESS, factor=base_num ** exp)
 
         if atom in _unit_name_registry:
             return _unit_name_registry[atom] ** exp
@@ -525,9 +502,10 @@ def _parse_term(s: str):
     # Numeric literal (rare: anonymous factor)
     try:
         num = float(s)
-        return Unit(DIMENSIONLESS, scale=0, base=10., factor=num)
     except ValueError:
         pass
+    else:
+        return Unit(DIMENSIONLESS, scale=0, base=10., factor=num)
 
     raise ValueError(
         f"Unknown unit: {s!r}. Use a registered unit name or display name."
@@ -579,17 +557,68 @@ def parse_unit(s: str) -> 'Unit':
     if s == '1':
         return UNITLESS
 
-    # Fast path: direct registry lookup
+    # Fast path: direct registry lookup (also covers registered names
+    # containing spaces, e.g. "troy pound", before any normalisation)
     if s in _unit_name_registry:
         return _unit_name_registry[s]
 
-    # Compound expression
-    num_str, den_str = _split_fraction(s)
-    numerator = _parse_product(num_str)
-    if den_str is not None:
-        denominator = _parse_product(den_str)
-        return numerator / denominator
-    return numerator
+    # Normalise spacing so users may write "J/kg" or "mS*nA" in addition
+    # to the canonical "J / kg" / "mS * nA".  ``**`` (Python power, not
+    # part of the canonical grammar) is deliberately left untouched.
+    s = ' '.join(s.split())
+    s = re.sub(r'\s*/\s*', ' / ', s)
+    s = re.sub(r'(?<!\*)\s*\*\s*(?!\*)', ' * ', s)
+
+    if s in _unit_name_registry:
+        return _unit_name_registry[s]
+
+    # Compound expression (left-associative division)
+    return _parse_expression(s)
+
+
+def _normalise_scalar(x: Any) -> Any:
+    """Coerce numpy/generic real scalars to plain ``int``/``float``.
+
+    Standard-unit registration and lookup require plain Python numbers,
+    so e.g. ``np.int64(3)`` must behave the same as ``3``.  Non-Real
+    objects (JAX tracers, arrays) pass through untouched.
+    """
+    if isinstance(x, (int, float)):
+        return x
+    if isinstance(x, numbers.Integral):
+        return int(x)
+    if isinstance(x, numbers.Real):
+        return float(x)
+    return x
+
+
+def _validate_scale_and_factor(scale: Any, factor: Any) -> None:
+    """Reject scale/factor values that poison Unit arithmetic.
+
+    Non-finite scales break ``__eq__``/``__hash__`` (NaN is unequal to
+    itself) and display; non-positive factors cannot represent a physical
+    conversion and crash ``reverse()``/division (factor 0) or produce
+    complex factors under fractional powers (negative factor).  Values
+    that are not plain real numbers (e.g. JAX tracers) are not checked.
+    """
+    if isinstance(scale, complex) or isinstance(factor, complex):
+        raise TypeError(
+            f"Unit scale and factor must be real numbers; "
+            f"got scale={scale!r}, factor={factor!r}."
+        )
+    if isinstance(scale, (int, float)) and not math.isfinite(scale):
+        raise ValueError(
+            f"Unit scale must be a finite real number; got scale={scale!r}."
+        )
+    if isinstance(factor, (int, float)):
+        if not math.isfinite(factor):
+            raise ValueError(
+                f"Unit factor must be a finite real number; got factor={factor!r}."
+            )
+        if factor <= 0:
+            raise ValueError(
+                f"Unit factor must be positive; got factor={factor!r}."
+            )
 
 
 class Unit:
@@ -625,9 +654,10 @@ class Unit:
     scale : array_like, optional
         The scale exponent, e.g. 3 for a "k" (kilo) prefix. Defaults to 0.
     base : array_like, optional
-        The base of the exponent, e.g. 10 for SI prefixes. Defaults to 10.
+        The base of the exponent. Must be 10 (the only supported base);
+        other values raise ``ValueError``.
     factor : array_like, optional
-        The conversion factor of the unit. Defaults to 1.
+        The conversion factor of the unit. Must be positive. Defaults to 1.
     name : str, optional
         The full name of the unit, e.g. ``'volt'``.
     dispname : str, optional
@@ -790,6 +820,8 @@ class Unit:
                 extras.append("name")
             if dispname is not None:
                 extras.append("dispname")
+            if is_fullname is not True:
+                extras.append("is_fullname")
             if display_parts is not None:
                 extras.append("display_parts")
             if extras:
@@ -820,14 +852,9 @@ class Unit:
                 "Encode non-decimal scales in ``factor`` instead."
             )
 
-        # Reject NaN/inf factors — these poison arithmetic downstream and
-        # cannot represent a valid physical conversion.
-        if isinstance(factor, (int, float)):
-            import math
-            if math.isnan(factor) or math.isinf(factor):
-                raise ValueError(
-                    f"Unit factor must be a finite real number; got factor={factor!r}."
-                )
+        scale = _normalise_scalar(scale)
+        factor = _normalise_scalar(factor)
+        _validate_scale_and_factor(scale, factor)
 
         self._base = base
         self._scale = scale
@@ -976,7 +1003,9 @@ class Unit:
         Returns
         -------
         float
-            The absolute magnitude of the unit.
+            The absolute magnitude of the unit.  Extreme scales whose
+            magnitude exceeds the float range yield ``inf`` (IEEE-754
+            overflow semantics) rather than raising.
 
         Examples
         --------
@@ -989,7 +1018,13 @@ class Unit:
             1000.0
         """
         # magnitude = factor * base ** scale
-        return self.factor * self.base ** self.scale
+        try:
+            return self.factor * self.base ** self.scale
+        except OverflowError:
+            # Python float pow raises on overflow instead of following
+            # IEEE-754; treat extreme scales as infinity like every other
+            # float operation in the library.
+            return float('inf')
 
     @magnitude.setter
     def magnitude(self, scale):
@@ -1145,24 +1180,36 @@ class Unit:
 
     def factorless(self) -> 'Unit':
         """
-        Return a copy of this Unit with the factor set to 1.
+        Return an equivalent Unit with the factor set to 1.
+
+        If this unit already has ``factor == 1``, the unit itself is
+        returned unchanged.  (Substituting a registry-preferred alias
+        here would silently rename units, e.g. becquerel → hertz or
+        steradian → radian.)
 
         Returns
         -------
         Unit
-            A new Unit object with the factor set to 1.
+            This unit if its factor is already 1, otherwise a Unit with
+            the factor set to 1 (the registered standard unit for the
+            same dimension/scale when one exists).
 
         Examples
         --------
         .. code-block:: python
 
             >>> import saiunit as u
-            >>> u = u.Unit.create(u.Dimension(kg=1), 'pound', 'lb', factor=0.453592)
-            >>> u.factor
+            >>> pound = u.Unit.create(
+            ...     u.get_or_create_dimension(kg=1), 'pound', 'lb', factor=0.453592)
+            >>> pound.factor
             0.453592
-            >>> u.factorless().factor
+            >>> pound.factorless().factor
             1.0
         """
+        # Already factorless — nothing to strip.
+        if isinstance(self.factor, (int, float)) and self.factor == 1.:
+            return self
+
         # using standard units
         key = (self.dim, self.scale, self.base, 1.)
         if key in _standard_units:
@@ -1194,10 +1241,10 @@ class Unit:
         .. code-block:: python
 
             >>> import saiunit as u
-            >>> u = u.volt.copy()
-            >>> u == u.volt
+            >>> v = u.volt.copy()
+            >>> v == u.volt
             True
-            >>> u is u.volt
+            >>> v is u.volt
             False
         """
         return Unit(
@@ -1246,7 +1293,10 @@ class Unit:
         Whether this Unit has the same magnitude as another Unit.
 
         Two units have the same magnitude when they share the same
-        ``scale``, ``base``, and ``factor``.
+        ``scale``, ``base``, and ``factor``.  Note that the comparison is
+        component-wise, not on the computed product ``factor * base**scale``:
+        a unit encoded as ``scale=3`` and one encoded as ``factor=1000.``
+        have equal magnitude products but compare unequal here.
 
         Parameters
         ----------
@@ -1348,8 +1398,8 @@ class Unit:
             The scale of this unit as an exponent of 10, e.g. -3 for a unit that
             is 1/1000 of the base scale. Defaults to 0 (i.e. a base unit).
         base: float, optional
-            The base for this unit (as the base of the exponent), i.e.
-            a base of 10 means 10^3, for a "k" prefix. Defaults to 10.
+            The base for this unit (as the base of the exponent). Must be 10,
+            the only supported base; other values raise ``ValueError``.
         factor: float, optional
             The factor for this unit (as the conversion factor), e.g.
             a factor of 1 cal = 4.18400 J, where 4.18400 is the factor.
@@ -1567,7 +1617,7 @@ class Unit:
     def __imul__(self, other):
         raise NotImplementedError("Units cannot be modified in-place")
 
-    def __div__(self, other) -> 'Unit':
+    def __div__(self, other) -> 'Unit | Quantity':
         # self / other
         if isinstance(other, Unit):
             _assert_same_base(self, other)
@@ -1628,8 +1678,17 @@ class Unit:
                 is_fullname=is_fullname,
             )
 
+        elif isinstance(other, Dimension):
+            raise TypeError(f"unit {self} cannot divide by a Dimension {other}.")
+
         else:
-            raise TypeError(f"unit {self} cannot divide by a non-unit {other}")
+            # Mirror ``__mul__``: dividing a unit by a number or quantity
+            # yields a Quantity (e.g. ``mV / 2`` == 0.5 mV), keeping the
+            # operator surface consistent with ``mV * 2`` and ``2 / mV``.
+            from ._base_quantity import Quantity
+            if isinstance(other, Quantity):
+                return Quantity(1.0 / other.mantissa, unit=(self / other.unit))
+            return Quantity(1.0 / other, unit=self)
 
     def __rdiv__(self, other) -> 'Unit | Quantity':
         # other / self
@@ -1830,14 +1889,22 @@ class Unit:
         raise NotImplementedError("Units cannot be modified in-place")
 
     def __eq__(self, other) -> bool:
-        # Two Units are equal when they represent the same physical
-        # quantity (matching dim/scale/base/factor).  Names and display
-        # strings are *not* part of equality: spelling aliases such as
-        # ``metre`` vs ``meter`` and registry-canonical compounds such
-        # as ``A * ohm`` vs ``V`` compare equal, and the corresponding
-        # hashes collide as required by the ``__hash__`` contract.
+        # Two Units are equal when they have the same dim/scale/base/factor
+        # *components*.  Names and display strings are not part of equality:
+        # spelling aliases such as ``metre`` vs ``meter`` and
+        # registry-canonical compounds such as ``A * ohm`` vs ``V`` compare
+        # equal, and the corresponding hashes collide as required by the
+        # ``__hash__`` contract.  Note the comparison is component-wise,
+        # not magnitude-based: ``Unit(scale=3)`` and ``Unit(factor=1000.)``
+        # have the same magnitude but compare unequal.  Factor-1
+        # dimensionless units (radian, steradian) compare equal to
+        # ``UNITLESS`` — physically they are 1.
+        #
+        # Non-Unit operands return ``NotImplemented`` so that the other
+        # operand's reflected comparison runs (e.g. Quantity.__eq__),
+        # keeping ``unit == quantity`` and ``quantity == unit`` symmetric.
         if not isinstance(other, Unit):
-            return False
+            return NotImplemented
         return (
             (other.dim == self.dim)
             and (other.scale == self.scale)
@@ -1846,7 +1913,10 @@ class Unit:
         )
 
     def __ne__(self, other) -> bool:
-        return not self.__eq__(other)
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return result
+        return not result
 
     def __abs__(self) -> 'Unit':
         """Return the unit itself — units are always non-negative."""

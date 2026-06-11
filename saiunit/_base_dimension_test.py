@@ -504,3 +504,77 @@ def test_docstring_example_unit_mismatch_error():
     import saiunit as u
     e = u.UnitMismatchError("Addition", u.mvolt, u.volt)
     assert 'Addition' in str(e)
+
+
+# =========================================================================
+# Regression tests: audited Dimension API fixes (2026-06)
+# =========================================================================
+
+class TestDimensionHashEqContract:
+    def test_int_vs_float_dims_hash_consistent(self):
+        # Direct construction is public API; equal Dimensions must hash
+        # equal regardless of the dtype of the exponent array.
+        d_int = Dimension(np.array([1, 0, 0, 0, 0, 0, 0]))
+        d_flt = Dimension(np.array([1., 0., 0., 0., 0., 0., 0.]))
+        assert d_int == d_flt
+        assert hash(d_int) == hash(d_flt)
+
+    def test_negative_zero_hash_consistent(self):
+        d_pos = Dimension(np.array([1., 0., 0., 0., 0., 0., 0.]))
+        d_neg = Dimension(np.array([1., -0., 0., 0., 0., 0., 0.]))
+        assert d_pos == d_neg
+        assert hash(d_pos) == hash(d_neg)
+
+    def test_eq_non_dimension_returns_notimplemented(self):
+        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+        assert d.__eq__(5) is NotImplemented
+        assert (d == 5) is False
+        assert (d != 5) is True
+
+
+class TestDimensionPowGuards:
+    def test_pow_nan_raises(self):
+        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+        with pytest.raises(ValueError, match="finite"):
+            d ** float('nan')
+
+    def test_pow_inf_raises(self):
+        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+        with pytest.raises(ValueError, match="finite"):
+            d ** float('inf')
+
+    def test_pow_nan_does_not_grow_cache(self):
+        # A NaN exponent must not leak NaN-keyed entries into the
+        # singleton cache (NaN != NaN would make every lookup miss).
+        from saiunit._base_dimension import _dimension_cache
+        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+        n0 = len(_dimension_cache)
+        for _ in range(3):
+            with pytest.raises(ValueError):
+                d ** float('nan')
+        assert len(_dimension_cache) == n0
+
+    def test_pow_empty_array_raises(self):
+        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+        with pytest.raises(TypeError, match="empty"):
+            d ** np.array([])
+
+
+class TestFactoryValidation:
+    def test_positional_and_kwargs_raises(self):
+        with pytest.raises(TypeError, match="not both"):
+            get_or_create_dimension([1, 0, 0, 0, 0, 0, 0], length=5)
+
+    def test_unknown_kwarg_raises_typeerror(self):
+        with pytest.raises(TypeError, match="Unknown dimension name"):
+            get_or_create_dimension(bad_kw=1)
+
+    def test_non_numeric_string_raises(self):
+        # A 7-character string passes the len() check but is not a
+        # sequence of exponents.
+        with pytest.raises(TypeError, match="numeric"):
+            get_or_create_dimension("abcdefg")
+
+    def test_non_numeric_sequence_raises(self):
+        with pytest.raises(TypeError, match="numeric"):
+            get_or_create_dimension(['a'] * 7)
