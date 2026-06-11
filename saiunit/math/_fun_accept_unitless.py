@@ -21,6 +21,7 @@ from saiunit._typing import Array, ArrayLike, DTypeLike
 
 from saiunit._backend import get_backend
 from saiunit._base_unit import Unit
+from saiunit._base_getters import get_mantissa, get_unit, maybe_decimal
 from saiunit._base_quantity import Quantity
 from ._fun_keep_unit import _resolve_op, _strip_none_kwargs, _dispatch_call
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
@@ -847,6 +848,15 @@ def deg2rad(
         >>> u.math.deg2rad(jnp.array([0.0, 90.0, 180.0]))
         Array([0.       , 1.5707964, 3.1415927], dtype=float32)
     """
+    # A Quantity carrying a scaled angle unit (e.g. ``degree``) stores its
+    # dimensionless value in radians, so stripping it with the default
+    # (UNITLESS) scale and then converting "degrees" to radians again would
+    # double-convert. Scale such inputs by ``degree`` instead; plain unitless
+    # quantities keep the documented "input is in degrees" contract.
+    if isinstance(x, Quantity) and unit_to_scale is None \
+            and x.dim.is_dimensionless and not x.unit.is_unitless:
+        from saiunit._unit_constants import degree
+        unit_to_scale = degree
     return _fun_accept_unitless_unary('deg2rad', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
@@ -946,6 +956,12 @@ def radians(
         >>> u.math.radians(jnp.array([0.0, 180.0]))
         Array([0.       , 3.1415927], dtype=float32)
     """
+    # See ``deg2rad``: default the scale to ``degree`` to avoid double
+    # conversion of scaled-angle-unit Quantities.
+    if isinstance(x, Quantity) and unit_to_scale is None \
+            and x.dim.is_dimensionless and not x.unit.is_unitless:
+        from saiunit._unit_constants import degree
+        unit_to_scale = degree
     return _fun_accept_unitless_unary('radians', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
@@ -958,12 +974,17 @@ def angle(
     """
     Return the angle of the complex argument, element-wise.
 
+    The phase of a complex value is invariant under multiplication by a
+    positive real scale, so ``x`` may carry any physical unit; the unit is
+    simply discarded.
+
     Parameters
     ----------
     x : array_like or Quantity
-        Complex-valued input.
+        Complex-valued input. May carry any unit.
     unit_to_scale : Unit, optional
-        Unit used to convert ``x`` to a dimensionless number first.
+        Unit used to convert ``x`` to a dimensionless number first
+        (kept for backwards compatibility; the result is the same).
 
     Returns
     -------
@@ -979,6 +1000,10 @@ def angle(
         >>> u.math.angle(jnp.array([1.0 + 1.0j, 1.0 + 0.0j]))
         Array([0.7853982, 0.       ], dtype=float32)
     """
+    x = maybe_custom_array(x)
+    if isinstance(x, Quantity) and unit_to_scale is None:
+        # unit factors/scales are positive reals and cannot change the phase
+        x = x.mantissa
     return _fun_accept_unitless_unary('angle', x, unit_to_scale=unit_to_scale, **kwargs)
 
 
@@ -1305,13 +1330,34 @@ def correlate(
       accumulation type for the input types, or a datatype, indicating to
       accumulate results to and return a result with that datatype.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+      When provided, both inputs are converted to dimensionless values with
+      this unit before correlating (kept for backwards compatibility).
+      When omitted, units are propagated like :func:`convolve`: the result
+      unit is ``a.unit * v.unit``.
 
     Returns
     -------
-    out : ndarray
-      Discrete cross-correlation of `a` and `v`.
+    out : ndarray or Quantity
+      Discrete cross-correlation of `a` and `v`. The resulting unit is
+      ``a.unit * v.unit``.
     """
+    if unit_to_scale is None:
+        # correlate is a sum of products, exactly like convolve: propagate
+        # units multiplicatively instead of rejecting them.
+        from ._fun_change_unit import _fun_change_unit_binary
+        extra = {}
+        if precision is not None:
+            extra['precision'] = precision
+        if preferred_element_type is not None:
+            extra['preferred_element_type'] = preferred_element_type
+        return _fun_change_unit_binary(
+            'correlate',
+            lambda ux, uy: ux * uy,
+            a, v,
+            mode=mode,
+            **extra,
+            **kwargs,
+        )
     return _fun_accept_unitless_binary(
         'correlate', a, v,
         mode=mode, precision=precision,
@@ -1378,13 +1424,30 @@ def cov(
       observations considered less "important". If ``ddof=0`` the array of
       weights can be used to assign probabilities to observation vectors.
     unit_to_scale : Unit, optional
-      The unit to scale the ``x``.
+      When provided, the inputs are converted to dimensionless values with
+      this unit before the computation (kept for backwards compatibility).
+      When omitted, units are propagated: the result unit is
+      ``m.unit * y.unit`` (or ``m.unit ** 2`` without ``y``), matching
+      ``Quantity.var``.
 
     Returns
     -------
-    out : ndarray
+    out : ndarray or Quantity
       The covariance matrix of the variables.
     """
+    if unit_to_scale is None and (isinstance(m, Quantity) or isinstance(y, Quantity)):
+        # covariance is an averaged product of (centred) inputs: propagate
+        # units multiplicatively, consistent with ``Quantity.var`` (unit**2).
+        m_unit = get_unit(m)
+        y_unit = get_unit(y) if y is not None else m_unit
+        result_unit = m_unit * y_unit
+        r = cov(
+            get_mantissa(m),
+            get_mantissa(y) if y is not None else None,
+            rowvar=rowvar, bias=bias, ddof=ddof, fweights=fweights,
+            aweights=aweights, **kwargs,
+        )
+        return maybe_decimal(Quantity(r, unit=result_unit))
     # ``y=None`` differs across backends: numpy/jax accept it, torch raises on
     # the extra positional arg. Route through the unary helper when no ``y``.
     if y is None:
@@ -1417,26 +1480,30 @@ def ldexp(
     Parameters
     ----------
     x : array_like, Quantity
-      Array of multipliers.
+      Array of multipliers. May carry any unit; the result keeps it, since
+      ``x * 2**y`` only rescales the magnitude.
     y : array_like, Quantity
       Array of twos exponents. Must be dimensionless with integral values.
       If ``x.shape != y.shape``, they must be broadcastable to a common
       shape (which becomes the shape of the output).
     unit_to_scale : Unit, optional
-      Unit used to convert ``x`` (not ``y``) to a dimensionless number first.
+      Unit used to convert ``x`` (not ``y``) to a dimensionless number first
+      (kept for backwards compatibility; the result is then a plain array).
 
     Returns
     -------
-    out : Array
-      The result of ``x * 2**y``.
+    out : Array or Quantity
+      The result of ``x * 2**y``, carrying ``x``'s unit when ``x`` is a
+      Quantity and ``unit_to_scale`` is not given.
       This is a scalar if both `x` and `y` are scalars.
     """
     x, y = maybe_custom_array_tree((x, y))
+    x_unit = None
     if isinstance(x, Quantity):
         if unit_to_scale is None:
-            if not x.dim.is_dimensionless:
-                raise TypeError(_dimensionless_required_message('ldexp', x, arg_name='x'))
-            x = x.to_decimal()
+            # ``x * 2**y`` is a pure rescaling, so the unit is preserved.
+            x_unit = x.unit
+            x = x.mantissa
         else:
             if not isinstance(unit_to_scale, Unit):
                 raise TypeError(_invalid_unit_to_scale_type_message('ldexp', unit_to_scale))
@@ -1456,7 +1523,10 @@ def ldexp(
             if yp.isdtype(y.dtype, 'real floating'):
                 y = yp.astype(y, yp.int32)
     xp = get_backend(x, y)
-    return _resolve_op('ldexp', xp)(x, y, **kwargs)
+    res = _resolve_op('ldexp', xp)(x, y, **kwargs)
+    if x_unit is not None and not x_unit.is_unitless:
+        return maybe_decimal(Quantity(res, unit=x_unit))
+    return res
 
 
 # Elementwise bit operations (unary)

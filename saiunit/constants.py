@@ -151,11 +151,13 @@ __all__ = [
     'Btu_th', 'carat', 'calorie', 'calorie_IT', 'calorie_th', 'day', 'degree',
     'dyn', 'dyne', 'eV', 'electron_mass', 'electric', 'electronvolt', 'elementary_charge', 'erg',
     'faraday', 'fermi', 'fluid_ounce', 'fluid_ounce_US', 'fluid_ounce_imp', 'foot', 'gas', 'grain',
-    'gallon', 'gallon_US', 'gallon_imp', 'gram', 'hectare', 'hour', 'hp', 'horsepower', 'IMF',
+    'gallon', 'gallon_US', 'gallon_imp', 'gram', 'gravitational_constant', 'hbar', 'hectare', 'hour',
+    'hp', 'horsepower', 'IMF',
     'inch', 'julian_year', 'kelvin', 'kgf', 'kilogram_force', 'kmh', 'knot', 'lb', 'lbf', 'light_year',
     'long_ton', 'mach', 'magnetic', 'meter', 'metric_ton', 'micron', 'mil', 'mile', 'minute', 'mmHg',
     'molar_mass', 'month', 'mph', 'nautical_mile', 'newton', 'ounce', 'oz', 'parsec', 'pica',
-    'point', 'pound', 'pound_force', 'psi', 'radian', 'second', 'short_ton', 'slug', 'slinch', 'speed_unit',
+    'planck', 'point', 'pound', 'pound_force', 'psi', 'radian', 'second', 'short_ton', 'slug', 'slinch',
+    'speed_of_light', 'speed_unit', 'standard_gravity', 'stefan_boltzmann',
     'stone', 'survey_foot', 'survey_mile', 'torr', 'troy_ounce', 'troy_pound', 'ton_TNT', 'week',
     'watt', 'yard', 'year', 'zero_celsius'
 ]
@@ -179,6 +181,18 @@ gas = np.asarray(8.314462618153240) * (joule / mole / kelvin)
 magnetic = np.asarray(1.25663706127e-6) * (newton / amp ** 2)
 #: Molar mass constant (http://physics.nist.gov/cgi-bin/cuu/Value?mu)
 molar_mass = np.asarray(1e-3) * (kilogram / mole)
+#: Speed of light in vacuum (exact)
+speed_of_light = np.asarray(2.99792458e8) * speed_unit
+#: Planck constant (CODATA 2018, exact)
+planck = np.asarray(6.62607015e-34) * (joule * second)
+#: Reduced Planck constant, h / (2 pi)
+hbar = np.asarray(1.054571817e-34) * (joule * second)
+#: Newtonian constant of gravitation (CODATA 2018)
+gravitational_constant = np.asarray(6.67430e-11) * (meter3 / kilogram / second ** 2)
+#: Standard acceleration of gravity (exact)
+standard_gravity = np.asarray(9.80665) * (meter / second ** 2)
+#: Stefan-Boltzmann constant (CODATA 2018, exact)
+stefan_boltzmann = np.asarray(5.670374419e-8) * (watt / meter2 / kelvin ** 4)
 #: zero degree Celsius
 zero_celsius = np.asarray(273.15) * kelvin
 
@@ -247,9 +261,9 @@ fluid_ounce_imp = np.asarray(2.84130625e-5) * meter3  # Imperial fluid ounce
 bbl = barrel = np.asarray(1.58987294928e-1) * meter3  # Barrel (oil)
 
 # ----- Speed -----
-kmh = np.asarray(2.77777778e-1) * speed_unit  # Kilometer per hour
+kmh = np.asarray(1000.0 / 3600.0) * speed_unit  # Kilometer per hour (exact)
 mph = np.asarray(4.4704e-1) * speed_unit  # Mile per hour
-knot = np.asarray(5.14444444e-1) * speed_unit  # Knot
+knot = np.asarray(1852.0 / 3600.0) * speed_unit  # Knot (exact)
 mach = np.asarray(3.405e2) * speed_unit  # Mach
 
 # ----- Energy -----

@@ -10,8 +10,6 @@ exclude = [
     "dist*",
     "dev*",
     "brainunit.egg-info*",
-    "brainunit/__pycache__*",
-    "brainunit/__init__.py"
 ]
 
 [tool.setuptools.package-data]
@@ -53,9 +51,6 @@ dependencies = [
     'typing_extensions',
     'saiunit==',
 ]
-
-[tool.flit.module]
-name = "brainunit"
 
 [project.urls]
 homepage = 'https://github.com/chaobrain/brainunit'

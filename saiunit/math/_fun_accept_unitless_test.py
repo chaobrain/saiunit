@@ -81,8 +81,13 @@ class TestFunAcceptUnitless(parameterized.TestCase):
                 expected = jnp_fun(q.to_decimal(unit2scale))
                 assert_quantity(result, expected)
 
-                with pytest.raises(TypeError, match='requires a dimensionless "x"'):
-                    result = fun(q)
+                if fun_name == 'angle':
+                    # angle is scale-invariant: unit-ful inputs are accepted and
+                    # the unit is ignored
+                    assert_quantity(fun(q), jnp_fun(q.mantissa))
+                else:
+                    with pytest.raises(TypeError, match='requires a dimensionless "x"'):
+                        result = fun(q)
 
                 with pytest.raises(u.UnitMismatchError):
                     result = fun(q, unit_to_scale=u.nS)
@@ -109,8 +114,14 @@ class TestFunAcceptUnitless(parameterized.TestCase):
             expected = jnp_fun(q1.to_decimal(u.dametre), q2.to_decimal(u.dametre))
             assert_quantity(result, expected)
 
-            with pytest.raises(TypeError, match='requires a dimensionless "x"'):
-                result = bm_fun(q1, q2)
+            if bm_fun.__name__ in ('correlate', 'cov'):
+                # correlate/cov now propagate units: result unit = unit1 * unit2
+                r = bm_fun(q1, q2)
+                assert isinstance(r, u.Quantity)
+                assert r.unit.has_same_dim(meter * meter)
+            else:
+                with pytest.raises(TypeError, match='requires a dimensionless "x"'):
+                    result = bm_fun(q1, q2)
 
             with pytest.raises(u.UnitMismatchError):
                 result = bm_fun(q1, q2, unit_to_scale=u.second)
@@ -139,7 +150,8 @@ class TestFunAcceptUnitless(parameterized.TestCase):
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
             assert_quantity(result, expected)
 
-            with pytest.raises(TypeError, match='requires a dimensionless "x"'):
+            # ldexp now keeps x's unit; the exponent y must still be dimensionless
+            with pytest.raises(TypeError, match='requires a dimensionless'):
                 result = bm_fun(q1, q2)
 
     @parameterized.product(
@@ -267,8 +279,12 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
             pass
 
         # Test that Array with units raises error without unit_to_scale
-        with pytest.raises((TypeError, u.UnitMismatchError)):
-            fun(self.meter_array)
+        # (angle is scale-invariant and now accepts unit-ful inputs)
+        if fun_name == 'angle':
+            assert_quantity(fun(self.meter_array), jnp_fun(self.meter_array.mantissa))
+        else:
+            with pytest.raises((TypeError, u.UnitMismatchError)):
+                fun(self.meter_array)
 
     def test_exp_functions_with_array_custom_array(self):
         """Test exponential functions specifically with Array."""
@@ -424,8 +440,14 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
             pass
 
         # Test that Arrays with units raise error without unit_to_scale
-        with pytest.raises((TypeError, u.UnitMismatchError)):
-            fun(meter1, meter2)
+        # (correlate/cov now propagate units instead)
+        if fun_name in ('correlate', 'cov'):
+            r = fun(meter1, meter2)
+            assert isinstance(r, u.Quantity)
+            assert r.unit.has_same_dim(meter * meter)
+        else:
+            with pytest.raises((TypeError, u.UnitMismatchError)):
+                fun(meter1, meter2)
 
     def test_hypot_with_array_custom_array(self):
         """Test hypot function specifically with Array."""
@@ -836,3 +858,82 @@ def test_binary_unit_to_scale_with_only_y_quantity():
     y = jnp.array([4.0]) * u.meter
     result = u.math.hypot(jnp.array([3.0]), y, unit_to_scale=u.meter)
     assert np.allclose(result, 5.0)
+
+
+class TestAngleUnitRecategorization:
+    """Regression tests: deg2rad/radians, angle, ldexp, correlate, cov with units."""
+
+    def test_deg2rad_degree_quantity_no_double_conversion(self):
+        r = um.deg2rad(jnp.array([180.0]) * u.degree)
+        np.testing.assert_allclose(np.asarray(r), [np.pi], rtol=1e-6)
+
+    def test_radians_degree_quantity(self):
+        r = um.radians(jnp.array([90.0]) * u.degree)
+        np.testing.assert_allclose(np.asarray(r), [np.pi / 2], rtol=1e-6)
+
+    def test_deg2rad_arcminute_quantity(self):
+        # 60 arcmin == 1 degree
+        r = um.deg2rad(jnp.array([60.0]) * u.arcminute)
+        np.testing.assert_allclose(np.asarray(r), [np.pi / 180], rtol=1e-6)
+
+    def test_deg2rad_plain_inputs_unchanged(self):
+        np.testing.assert_allclose(np.asarray(um.deg2rad(180.0)), np.pi, rtol=1e-6)
+        r = um.deg2rad(u.Quantity(jnp.array([180.0])))
+        np.testing.assert_allclose(np.asarray(r), [np.pi], rtol=1e-6)
+
+    def test_deg2rad_explicit_unit_to_scale_still_works(self):
+        r = um.deg2rad(jnp.array([180.0]) * u.degree, unit_to_scale=u.degree)
+        np.testing.assert_allclose(np.asarray(r), [np.pi], rtol=1e-6)
+
+    def test_deg2rad_dimensional_quantity_rejected(self):
+        with pytest.raises(TypeError):
+            um.deg2rad(jnp.array([1.0]) * u.mV)
+
+    def test_angle_accepts_units(self):
+        r = um.angle(jnp.array([1.0 + 1.0j]) * u.mV)
+        np.testing.assert_allclose(np.asarray(r), [np.pi / 4], rtol=1e-6)
+
+    def test_angle_unit_invariant(self):
+        z = jnp.array([3.0 + 4.0j])
+        np.testing.assert_allclose(
+            np.asarray(um.angle(z * u.mV)), np.asarray(um.angle(z)), rtol=1e-6
+        )
+
+    def test_ldexp_keeps_unit(self):
+        r = um.ldexp(jnp.array([1.5]) * u.mV, jnp.array([2]))
+        assert_quantity(r, jnp.array([6.0]), u.mV)
+
+    def test_ldexp_raw_unchanged(self):
+        r = um.ldexp(jnp.array([1.5]), jnp.array([2]))
+        np.testing.assert_allclose(np.asarray(r), [6.0])
+
+    def test_correlate_multiplies_units(self):
+        a = jnp.array([1.0, 2.0]) * u.mV
+        v = jnp.array([1.0, 1.0]) * u.second
+        r = um.correlate(a, v, mode='full')
+        assert isinstance(r, u.Quantity)
+        assert r.unit.has_same_dim(u.mV * u.second)
+        np.testing.assert_allclose(np.asarray(r.mantissa), [1.0, 3.0, 2.0])
+
+    def test_correlate_raw_unchanged(self):
+        r = um.correlate(jnp.array([1.0, 2.0]), jnp.array([1.0, 1.0]))
+        np.testing.assert_allclose(np.asarray(r), [3.0])
+
+    def test_cov_single_input_squares_unit(self):
+        q = jnp.array([1.0, 2.0, 3.0]) * u.mV
+        r = um.cov(q)
+        assert isinstance(r, u.Quantity)
+        assert r.unit.has_same_dim(u.mV ** 2)
+        # matches Quantity.var with ddof=1
+        np.testing.assert_allclose(np.asarray(r.mantissa), np.asarray(q.var(ddof=1).mantissa))
+
+    def test_cov_two_inputs_multiplies_units(self):
+        m = jnp.array([1.0, 2.0, 3.0]) * u.mV
+        y = jnp.array([1.0, 2.0, 3.0]) * u.volt
+        r = um.cov(m, y)
+        assert isinstance(r, u.Quantity)
+        assert r.unit.has_same_dim(u.mV * u.volt)
+
+    def test_cov_raw_unchanged(self):
+        r = um.cov(jnp.array([1.0, 2.0, 3.0]))
+        np.testing.assert_allclose(np.asarray(r), 1.0)

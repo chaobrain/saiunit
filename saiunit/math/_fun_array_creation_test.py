@@ -850,3 +850,29 @@ class TestLinspaceRetstep:
 def test_vander_unit_error_message_suggests_to_decimal():
     with pytest.raises(TypeError, match='to_decimal'):
         um.vander(jnp.array([1.0, 2.0, 3.0]) * meter, 3)
+
+
+class TestAsarrayBackendDispatch:
+    """asarray must keep the input's backend instead of forcing the default."""
+
+    def test_numpy_array_stays_numpy(self):
+        r = um.asarray(np.array([1.0, 2.0]))
+        assert isinstance(r, np.ndarray)
+
+    def test_numpy_array_with_dtype_stays_numpy(self):
+        r = um.asarray(np.array([1.0, 2.0]), dtype=np.float16)
+        assert isinstance(r, np.ndarray)
+        assert r.dtype == np.float16
+
+    def test_numpy_quantity_stays_numpy(self):
+        r = um.asarray(np.array([1.0, 2.0]) * u.mV)
+        assert isinstance(r, u.Quantity)
+        assert isinstance(r.mantissa, np.ndarray)
+
+    def test_jax_array_stays_jax(self):
+        r = um.asarray(jnp.array([1.0, 2.0]))
+        assert isinstance(r, jnp.ndarray)
+
+    def test_list_uses_default_backend(self):
+        r = um.asarray([1.0, 2.0])
+        assert isinstance(r, jnp.ndarray)

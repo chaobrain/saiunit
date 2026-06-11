@@ -717,3 +717,27 @@ class TestInternalConsistency:
 
     def test_imperial_fluid_ounce_equals_gallon_imp_over_160(self):
         np.testing.assert_allclose(fluid_ounce_imp.magnitude, gallon_imp.magnitude / 160, rtol=1e-9)
+
+
+class TestExactConversionFactors:
+    """Regression tests: kmh/knot/kcal_per_h factors must be exact, not truncated."""
+
+    def test_kmh_exact(self):
+        assert float(kmh.factor) == 1000.0 / 3600.0 * 10.0
+
+    def test_knot_exact(self):
+        assert float(knot.factor) == 1852.0 / 3600.0 * 10.0
+
+    def test_kcal_per_h_exact(self):
+        assert float(kcal_per_h.factor) == 4184.0 / 3600.0
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="scipy not installed")
+    def test_kmh_knot_vs_scipy(self):
+        np.testing.assert_allclose(
+            float(u.Quantity(1.0, unit=kmh).to_decimal(u.meter / u.second)),
+            sc.kmh, rtol=1e-12
+        )
+        np.testing.assert_allclose(
+            float(u.Quantity(1.0, unit=knot).to_decimal(u.meter / u.second)),
+            sc.knot, rtol=1e-12
+        )

@@ -32,7 +32,6 @@ def make(root_dir):
     # pyproject
     with open(os.path.join(brainunit_dir, 'pyproject.toml.template'), 'r') as f:
         pyproject = f.read()
-    pyproject = pyproject.replace('version = ""', f'version = "{saiunit_version}"')
     pyproject = pyproject.replace('saiunit==', f'saiunit=={saiunit_version}')
     pyproject = pyproject.replace('version = &', f'version = "{saiunit_version}"')
     with open(os.path.join(brainunit_dir, 'pyproject.toml'), 'w') as f:

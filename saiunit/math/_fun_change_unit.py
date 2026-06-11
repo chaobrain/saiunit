@@ -37,7 +37,7 @@ __all__ = [
     # math funcs change unit (binary)
     'multiply', 'divide', 'power', 'cross',
     'true_divide', 'floor_divide', 'float_power',
-    'divmod', 'convolve',
+    'divmod', 'convolve', 'trapezoid',
 
     # linear algebra
     'dot', 'multi_dot', 'vdot', 'vecdot', 'inner', 'outer', 'kron', 'matmul', 'tensordot',
@@ -922,6 +922,71 @@ def convolve(
         **extra,
         **kwargs,
     )
+
+
+@set_module_as('saiunit.math')
+def trapezoid(
+    y: Union[Quantity, ArrayLike],
+    x: Optional[Union[Quantity, ArrayLike]] = None,
+    dx: Union[Quantity, ArrayLike, float] = 1.0,
+    axis: int = -1,
+) -> Union[Quantity, ArrayLike]:
+    """
+    Integrate along the given axis using the composite trapezoidal rule.
+
+    The resulting unit is ``y.unit * x.unit`` (or ``y.unit * dx.unit`` when
+    ``x`` is not given), as expected for an integral of ``y`` over ``x``.
+
+    Parameters
+    ----------
+    y : array_like or Quantity
+        Input array to integrate.
+    x : array_like or Quantity, optional
+        The sample points corresponding to the `y` values. If ``None``
+        (default), the sample points are assumed to be evenly spaced ``dx``
+        apart.
+    dx : scalar, array_like or Quantity, optional
+        The spacing between sample points when `x` is ``None``. Default 1.
+    axis : int, optional
+        The axis along which to integrate. Default -1.
+
+    Returns
+    -------
+    out : ndarray or Quantity
+        Definite integral as approximated by the trapezoidal rule, with unit
+        ``y.unit * x.unit`` (or ``y.unit * dx.unit``).
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+        >>> y = jnp.array([1.0, 2.0, 3.0]) * u.mV
+        >>> x = jnp.array([0.0, 1.0, 2.0]) * u.second
+        >>> u.math.trapezoid(y, x)  # unit is mV * s
+    """
+    y = maybe_custom_array(y)
+    x = maybe_custom_array(x)
+    dx = maybe_custom_array(dx)
+
+    y_unit = y.unit if isinstance(y, Quantity) else UNITLESS
+    y_val = y.mantissa if isinstance(y, Quantity) else y
+    if x is not None:
+        spacing_unit = x.unit if isinstance(x, Quantity) else UNITLESS
+        x_val = x.mantissa if isinstance(x, Quantity) else x
+        xp = get_backend(y_val, x_val)
+        r = _resolve_op('trapezoid', xp)(y_val, x=x_val, axis=axis)
+    else:
+        spacing_unit = dx.unit if isinstance(dx, Quantity) else UNITLESS
+        dx_val = dx.mantissa if isinstance(dx, Quantity) else dx
+        xp = get_backend(y_val)
+        r = _resolve_op('trapezoid', xp)(y_val, dx=dx_val, axis=axis)
+    result_unit = y_unit * spacing_unit
+    assert isinstance(result_unit, Unit)  # Unit * Unit always yields a Unit
+    if result_unit.is_unitless:
+        return r
+    return maybe_decimal(Quantity(r, unit=result_unit))
 
 
 @set_module_as('saiunit.math')
