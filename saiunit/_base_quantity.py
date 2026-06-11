@@ -221,8 +221,11 @@ def _check_units_and_collect_values(lst) -> tuple[ArrayLike, Unit]:
         if isinstance(item, (list, tuple)):
             val, unit = _check_units_and_collect_values(item)
             values.append(val)
-            if unit != UNITLESS:
-                units.append(unit)
+            # Always record the sub-unit (UNITLESS included): skipping
+            # UNITLESS desynchronizes ``values`` and ``units``, turning the
+            # unit-mismatch TypeError below into an AssertionError in
+            # ``_zoom_values_with_units``.
+            units.append(unit)
         elif isinstance(item, Quantity):
             values.append(item.mantissa)
             units.append(item.unit)
@@ -278,6 +281,50 @@ def _reduction_count_from_shape(shape, axis) -> int:
     for a in axis:
         n *= int(shape[int(a)])
     return n
+
+
+def _is_comparable_operand(oc) -> bool:
+    """True if ``oc`` is numeric / array-like and may be compared with a
+    Quantity.
+
+    Non-numeric objects (None, str, dict, …) must make the comparison
+    dunders return ``NotImplemented`` — Python then falls back to identity
+    for ``==`` / ``!=`` and raises a plain TypeError for orderings —
+    instead of leaking a misleading ``UnitMismatchError``.
+    """
+    if isinstance(oc, (Quantity, Unit, numbers.Number, np.ndarray,
+                       np.generic, _JaxArray, list, tuple)):
+        return True
+    from saiunit._misc import maybe_custom_array
+    if maybe_custom_array(oc) is not oc:
+        return True
+    from saiunit._backend import (
+        is_cupy_array, is_torch_array, is_dask_array, is_ndonnx_array,
+    )
+    return (
+        is_cupy_array(oc) or is_torch_array(oc)
+        or is_dask_array(oc) or is_ndonnx_array(oc)
+    )
+
+
+def _cast_mantissa_dtype(mantissa, dtype):
+    """Cast ``mantissa`` to ``dtype``, preserving its backend.
+
+    Plain Python / NumPy scalars are promoted through the active default
+    backend (mirroring the list/tuple constructor path).
+    """
+    if isinstance(mantissa, np.ndarray):
+        return mantissa if mantissa.dtype == dtype else mantissa.astype(dtype)
+    if HAS_JAX and isinstance(mantissa, _JaxArray):
+        return jnp.asarray(mantissa, dtype=dtype)
+    if isinstance(mantissa, np.generic):
+        return np.asarray(mantissa, dtype=dtype)
+    if isinstance(mantissa, numbers.Number):
+        from saiunit._backend import _xp_for, get_default_backend
+        xp = _xp_for(get_default_backend() or ("jax" if HAS_JAX else "numpy"))
+        return xp.asarray(mantissa, dtype=dtype)
+    from saiunit._backend import get_backend as _gb
+    return _gb(mantissa).asarray(mantissa, dtype=dtype)
 
 
 def _is_concrete_zero(mantissa) -> bool:
@@ -549,6 +596,15 @@ class Quantity:
                 unit = UNITLESS
             assert isinstance(unit, Unit), f"Expected a Unit, got {type(unit).__name__}: {unit!r}"
 
+            # str/bytes are unambiguous user errors (e.g. a unit string passed
+            # positionally); accepting them as "pytree leaves" only defers the
+            # crash to the first arithmetic op with a confusing message.
+            if isinstance(mantissa, (str, bytes)):
+                raise TypeError(
+                    f"Cannot create a Quantity from a {type(mantissa).__name__} "
+                    f"mantissa: {mantissa!r}. Did you mean Quantity(value, unit={mantissa!r})?"
+                )
+
             # Handle custom arrays in the mantissa tree structure
             mantissa = maybe_custom_array_tree(mantissa)
 
@@ -588,6 +644,8 @@ class Quantity:
                     raise ValueError("Cannot create a Quantity object with a different unit.")
                 mantissa = mantissa.in_unit(unit)
                 mantissa = mantissa.mantissa
+                if dtype is not None:
+                    mantissa = _cast_mantissa_dtype(mantissa, dtype)
 
             elif isinstance(mantissa, (np.ndarray, _JaxArray)):
                 # Preserve the input backend: NumPy stays NumPy, JAX stays JAX.
@@ -599,7 +657,10 @@ class Quantity:
                 # skip if dtype matches or is not provided
 
             elif isinstance(mantissa, ((jnp.number,) if HAS_JAX else ()) + (numbers.Number,)):
-                pass  # keep as-is; jnp.array conversion deferred to use-site
+                # keep as-is; jnp.array conversion deferred to use-site —
+                # unless an explicit dtype was requested.
+                if dtype is not None:
+                    mantissa = _cast_mantissa_dtype(mantissa, dtype)
 
             else:
                 # cupy / torch / dask / ndonnx mantissas: preserve the input's
@@ -832,10 +893,12 @@ class Quantity:
             from saiunit._backend import get_backend as _gb
             xp = _gb(self_value)
             mantissa = xp.asarray(mantissa, dtype=self.dtype)
-        # check
-        if mantissa.shape != self_value.shape:
-            raise ValueError(f"The shape of the original data is {self_value.shape}, "
-                             f"while we got {mantissa.shape}.")
+        # check (``np.shape`` also handles plain-scalar mantissas)
+        if mantissa.shape != np.shape(self_value):
+            raise ValueError(f"The shape of the original data is {np.shape(self_value)}, "
+                             f"while we got {mantissa.shape}. In-place updates cannot "
+                             f"change the shape of a Quantity; use the functional form "
+                             f"(e.g. Quantity(new_mantissa, unit=q.unit)) instead.")
         # Dtype check: use numpy-canonical comparison for numpy-backed Quantity,
         # otherwise apply jax's result-type (which may downcast under x32 mode).
         expected_dtype = self_value.dtype if is_numpy_array(self_value) else _result_type(self_value)
@@ -1455,9 +1518,13 @@ class Quantity:
     def flat(self):
         """1-D iterator over the mantissa elements, unit preserved."""
         m = self._mantissa
-        if hasattr(m, "flat"):
+        try:
+            # JAX arrays *define* ``.flat`` but raise NotImplementedError on
+            # access (which also leaks straight through ``hasattr``).
             flat = m.flat
-        else:
+        except NotImplementedError:
+            flat = iter(get_backend(self).reshape(m, (-1,)))
+        except AttributeError:
             _reject_lazy_materialization(m, "Quantity.flat")
             flat = np.asarray(m).flat
         for v in flat:
@@ -1958,10 +2025,29 @@ class Quantity:
         return Quantity(abs(self.mantissa), unit=self.unit)
 
     def __invert__(self) -> 'Quantity':
+        # Bitwise NOT of a unit-bearing value is meaningless; the other
+        # bitwise operators (&, |, ^) reject units as well.
+        if not self.unit.is_unitless:
+            raise NotImplementedError(
+                "Bitwise operations are not supported for quantities with units"
+            )
         return Quantity(~self.mantissa, unit=self.unit)  # type: ignore[operator]
 
     def _comparison(self, other: Any, operator_str: str, operation: Callable):
+        if not _is_comparable_operand(other):
+            return NotImplemented
         other = _to_quantity(other)
+        # 0-as-any-dimension: a concrete zero compares with any dimension,
+        # matching the convention already used by addition/subtraction
+        # (so e.g. ``3*mV > 0`` works like ``0 + 3*mV`` does).
+        if (other.unit.is_unitless
+                and not self.unit.is_unitless
+                and _is_concrete_zero(other.mantissa)):
+            other = Quantity(other.mantissa, unit=self.unit)
+        elif (self.unit.is_unitless
+                and not other.unit.is_unitless
+                and _is_concrete_zero(self.mantissa)):
+            self = Quantity(self.mantissa, unit=other.unit)
         try:
             other_value = other.in_unit(self.unit).mantissa
         except UnitMismatchError as e:
@@ -2059,9 +2145,11 @@ class Quantity:
 
         # update the mantissa in-place or not
         if inplace:
-            if _is_tracer(self.mantissa):
-                # Under JIT/vmap/grad, mutation isn't supported; degrade to the
-                # functional form so `q += x` still works (Python rebinds the name).
+            if _is_tracer(self.mantissa) or isinstance(self.mantissa, numbers.Number):
+                # Under JIT/vmap/grad, mutation isn't supported; for plain
+                # Python scalars there is nothing to mutate either. Degrade to
+                # the functional form so `q += x` still works (Python rebinds
+                # the name).
                 return r
             self.update_mantissa(r.mantissa)
             return self
@@ -2220,6 +2308,11 @@ class Quantity:
             powered = m ** oc
         else:
             powered = get_backend(self).asarray(m) ** oc
+        if self.unit.is_unitless:
+            # A dimensionless base stays dimensionless for any exponent —
+            # including array exponents, which ``unit ** oc`` cannot express.
+            # (maybe_decimal would strip the Quantity wrapper here anyway.)
+            return powered
         r = Quantity(powered, unit=self.unit ** oc)
         return maybe_decimal(r)
 
@@ -2288,7 +2381,15 @@ class Quantity:
 
     def __ilshift__(self, oc) -> 'Quantity':
         # self <<= oc
-        r = self.__lshift__(oc)
+        # Do not route through __lshift__: maybe_decimal strips the Quantity
+        # wrapper for unitless results, which broke the in-place form.
+        if isinstance(oc, Quantity):
+            if not oc.is_unitless:
+                raise ValueError("The shift amount must be dimensionless")
+            oc = oc.mantissa
+        r = Quantity(self.mantissa << oc, unit=self.unit)
+        if _is_tracer(self.mantissa) or isinstance(self.mantissa, numbers.Number):
+            return r
         self.update_mantissa(r.mantissa)
         return self
 
@@ -2309,7 +2410,15 @@ class Quantity:
 
     def __irshift__(self, oc) -> 'Quantity':
         # self >>= oc
-        r = self.__rshift__(oc)
+        # Do not route through __rshift__: maybe_decimal strips the Quantity
+        # wrapper for unitless results, which broke the in-place form.
+        if isinstance(oc, Quantity):
+            if not oc.is_unitless:
+                raise ValueError("The shift amount must be dimensionless")
+            oc = oc.mantissa
+        r = Quantity(self.mantissa >> oc, unit=self.unit)
+        if _is_tracer(self.mantissa) or isinstance(self.mantissa, numbers.Number):
+            return r
         self.update_mantissa(r.mantissa)
         return self
 
@@ -2320,7 +2429,12 @@ class Quantity:
         :param ndigits: The number of decimals to round to.
         :return: The rounded Quantity.
         """
-        return Quantity(round(self.mantissa, ndigits), unit=self.unit)  # type: ignore[arg-type,call-overload]
+        # ``round(mantissa, ndigits)`` requires a ``__round__`` on the
+        # mantissa, which numpy arrays do not define. Scalars keep the
+        # builtin behaviour; everything else goes through the backend round.
+        if isinstance(self.mantissa, numbers.Number):
+            return Quantity(round(self.mantissa, ndigits), unit=self.unit)  # type: ignore[arg-type,call-overload]
+        return self.round(0 if ndigits is None else ndigits)
 
     def __reduce__(self):
         """
@@ -2710,9 +2824,14 @@ class Quantity:
         return maybe_decimal(r)
 
     def searchsorted(self, v, side: str = 'left', sorter=None) -> Array:
-        """Find indices where elements should be inserted to maintain order."""
-        if isinstance(v, Quantity):
-            v = v.in_unit(self.unit).mantissa
+        """Find indices where elements should be inserted to maintain order.
+
+        ``v`` must be compatible with the unit of ``self``: a plain number
+        against a unit-bearing array raises :class:`UnitMismatchError`
+        (consistent with comparison operators) instead of being silently
+        interpreted in ``self``'s unit.
+        """
+        v = _to_quantity(v).in_unit(self.unit).mantissa
         return get_backend(self, v).searchsorted(self.mantissa, v, side=side, sorter=sorter)
 
     def fill(self, value: 'Quantity') -> 'Quantity':
@@ -2766,7 +2885,12 @@ class Quantity:
             >>> q.item(0)
             Quantity(10., "mV")
         """
-        return Quantity(self.mantissa.item(*args), unit=self.unit)
+        m = self.mantissa
+        if isinstance(m, numbers.Number):
+            # Python scalars have no ``.item``; promote through numpy so the
+            # optional flat-index arguments keep numpy semantics.
+            return Quantity(np.asarray(m).item(*args), unit=self.unit)
+        return Quantity(m.item(*args), unit=self.unit)
 
     def prod(self, *args, **kwds) -> 'Quantity':
         """
@@ -2798,7 +2922,7 @@ class Quantity:
         # reduction axis. Derive it from the static shape so the computation
         # is JIT-safe (no `bool(traced_array)` or traced unit exponents).
         axis = args[0] if args else kwds.get('axis', None)
-        dim_exponent = _reduction_count_from_shape(self.mantissa.shape, axis)
+        dim_exponent = _reduction_count_from_shape(self.shape, axis)
         r = Quantity(prod_res, unit=self.unit ** dim_exponent)
         return maybe_decimal(r)
 
@@ -2838,7 +2962,7 @@ class Quantity:
         # Unit exponent is the count of elements along the reduction axis.
         # Use the static shape so the result is JIT-safe.
         axis = args[0] if args else kwds.get('axis', None)
-        dim_exponent = _reduction_count_from_shape(self.mantissa.shape, axis)
+        dim_exponent = _reduction_count_from_shape(self.shape, axis)
 
         # Eager (non-traced) inputs: verify NaN counts are uniform along the
         # reduction axis. Otherwise different output elements would carry
@@ -3007,11 +3131,14 @@ class Quantity:
             return Quantity(xp.reshape(self.mantissa, shape), unit=self.unit)
 
     def resize(self, new_shape) -> 'Quantity':
-        """Change shape and size of array in-place."""
+        """Change shape and size of array in-place (``numpy.resize`` semantics:
+        the data is repeated or truncated to fill the new shape)."""
         # ``resize`` is not in the array-API spec; both numpy and jax expose it.
+        # Rebind the mantissa directly: ``update_mantissa`` rejects any shape
+        # change, which made this method unusable for actual resizes.
         xp = get_backend(self)
         resize_fn = getattr(xp, "resize", None) or np.resize
-        self.update_mantissa(resize_fn(self.mantissa, new_shape))
+        self._mantissa = resize_fn(self.mantissa, new_shape)
         return self
 
     def sort(self, axis=-1, stable=True, order=None) -> 'Quantity':
@@ -3042,6 +3169,11 @@ class Quantity:
             >>> q.sort()
             Quantity([1. 2. 3.], "mV")
         """
+        if order is not None:
+            raise NotImplementedError(
+                "The `order` parameter (structured-array field ordering) is "
+                "not supported by Quantity.sort."
+            )
         xp = get_backend(self)
         # array-API sort has different kw names; try the standard first, fall back to numpy/jnp.
         try:
@@ -3189,8 +3321,42 @@ class Quantity:
             if not self.is_unitless:
                 raise TypeError(f"fill_value must be a Quantity when the unit {self.unit}. But got {fill_value}")
         if is_numpy_array(self._mantissa):
-            # NumPy ``take`` has a different signature; emulate the saiunit semantics.
-            taken = np.take(self.mantissa, indices, axis=axis, mode=mode if mode else 'raise')
+            # NumPy ``take`` only understands 'raise'/'wrap'/'clip'. Translate
+            # the JAX-style modes ('promise_in_bounds', 'fill', 'drop') and
+            # emulate ``fill_value`` for the fill/drop modes.
+            if mode is None or mode in ('raise', 'wrap'):
+                taken = np.take(self.mantissa, indices, axis=axis, mode=mode if mode else 'raise')
+                return Quantity(taken, unit=self.unit)
+            if mode not in ('clip', 'promise_in_bounds', 'fill', 'drop'):
+                raise ValueError(f"Invalid mode {mode!r} for Quantity.take")
+            arr = self.mantissa
+            n = arr.size if axis is None else arr.shape[axis]
+            idx = np.asarray(indices)
+            # Wrap valid negative indices once (numpy 'raise' semantics), then
+            # clamp so the gather itself is always in-bounds.
+            idx_norm = np.where(idx < 0, idx + n, idx)
+            oob = (idx_norm < 0) | (idx_norm >= n)
+            idx_clipped = np.clip(idx_norm, 0, max(n - 1, 0))
+            taken = np.take(arr, idx_clipped, axis=axis)
+            if mode in ('fill', 'drop') and np.any(oob):
+                fv = fill_value
+                if fv is None:
+                    # Mirror jnp.take's documented defaults.
+                    dt = taken.dtype
+                    if np.issubdtype(dt, np.inexact):
+                        fv = np.nan
+                    elif dt == np.bool_:
+                        fv = True
+                    elif np.issubdtype(dt, np.unsignedinteger):
+                        fv = np.iinfo(dt).max
+                    else:
+                        fv = np.iinfo(dt).min
+                if axis is None:
+                    mask = oob.reshape(idx.shape)
+                else:
+                    ax = axis % arr.ndim
+                    mask = oob.reshape((1,) * ax + idx.shape + (1,) * (arr.ndim - ax - 1))
+                taken = np.where(mask, np.asarray(fv, dtype=taken.dtype), taken)
             return Quantity(taken, unit=self.unit)
         if is_jax_array(self._mantissa):
             return Quantity(
@@ -3611,7 +3777,10 @@ class Quantity:
         if isinstance(array, Quantity):
             fail_for_dimension_mismatch(self, array, "expand_as (Quantity)")
             array = array.mantissa
-        return Quantity(get_backend(self).broadcast_to(self.mantissa, array), unit=self.unit)
+        # Accept either an actual array (use its shape) or a raw shape tuple;
+        # passing the array itself to ``broadcast_to`` crashed.
+        shape = array.shape if hasattr(array, "shape") else array
+        return Quantity(get_backend(self).broadcast_to(self.mantissa, shape), unit=self.unit)
 
     def pow(self, oc) -> 'Quantity':
         """
@@ -3862,8 +4031,17 @@ class _IndexUpdateRef:
         Returns the value of ``x`` that would result from the NumPy-style
         :mod:indexed assignment <numpy.doc.indexing>` ``x[idx] *= y``.
 
+        ``values`` must be dimensionless: a partial update cannot change the
+        unit of the whole array (the untouched elements would silently be
+        re-labelled with the new unit).
         """
         values = Quantity(values)
+        if not values.is_unitless:
+            raise TypeError(
+                f"at[...].multiply requires a dimensionless scale factor, "
+                f"but got {values}. Use Quantity.__mul__ for unit-changing "
+                f"multiplication."
+            )
         return Quantity(
             self._scatter(
                 "multiply", values.mantissa,
@@ -3871,7 +4049,7 @@ class _IndexUpdateRef:
                 unique_indices=unique_indices,
                 mode=mode,
             ),
-            unit=self.unit * values.unit,
+            unit=self.unit,
         )
 
     mul = multiply
@@ -3888,8 +4066,17 @@ class _IndexUpdateRef:
         Returns the value of ``x`` that would result from the NumPy-style
         :mod:indexed assignment <numpy.doc.indexing>` ``x[idx] /= y``.
 
+        ``values`` must be dimensionless: a partial update cannot change the
+        unit of the whole array (the untouched elements would silently be
+        re-labelled with the new unit).
         """
         values = Quantity(values)
+        if not values.is_unitless:
+            raise TypeError(
+                f"at[...].divide requires a dimensionless scale factor, "
+                f"but got {values}. Use Quantity.__truediv__ for unit-changing "
+                f"division."
+            )
         return Quantity(
             self._scatter(
                 "divide", values.mantissa,
@@ -3897,7 +4084,7 @@ class _IndexUpdateRef:
                 unique_indices=unique_indices,
                 mode=mode,
             ),
-            unit=self.unit / values.unit,
+            unit=self.unit,
         )
 
     div = divide
