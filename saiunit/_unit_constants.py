@@ -160,11 +160,12 @@ bbl = barrel = Unit.create(meter3.dim, name="barrel", dispname="bbl", scale=mete
 # ----- Speed -----
 speed_unit = meter / second
 kmh = Unit.create(speed_unit.dim, name="kilometer per hour", dispname="km/h", scale=speed_unit.scale - 1,
-                  factor=2.77777778)
+                  factor=1000.0 / 3600.0 * 10.0)  # exact: 1 km/h = 1000/3600 m/s
 mph = Unit.create(speed_unit.dim, name="mile per hour", dispname="mph", scale=speed_unit.scale - 1, factor=4.4704)
 mach = speed_of_sound = Unit.create(speed_unit.dim, name="speed of sound", dispname="mach", scale=speed_unit.scale + 2,
                                     factor=3.405)
-knot = Unit.create(speed_unit.dim, name="knot", dispname="kn", scale=speed_unit.scale - 1, factor=5.14444444)
+knot = Unit.create(speed_unit.dim, name="knot", dispname="kn", scale=speed_unit.scale - 1,
+                   factor=1852.0 / 3600.0 * 10.0)  # exact: 1 kn = 1852/3600 m/s
 
 # ----- Energy -----
 eV = electron_volt = Unit.create(joule.dim, name="electronvolt", dispname="eV", scale=joule.scale - 19, factor=1.602176634)
@@ -182,7 +183,7 @@ ton_TNT = Unit.create(joule.dim, name="ton of TNT", dispname="ton TNT", scale=jo
 hp = horsepower = Unit.create(watt.dim, name="horsepower", dispname="hp", scale=watt.scale + 2,
                               factor=7.4569987158227022)
 kcal_per_h = Unit.create(watt.dim, name="kcal per hour", dispname="kcal/h", scale=watt.scale,
-                         factor=1.162222)
+                         factor=4184.0 / 3600.0)  # exact: 1 kcal/h = 4184/3600 W
 
 # ----- Force -----
 dyn = dyne = Unit.create(newton.dim, name="dyne", dispname="dyn", scale=newton.scale - 5, factor=1.)

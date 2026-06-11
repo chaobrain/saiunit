@@ -585,3 +585,52 @@ def test_added_constant_dimensions():
     # gram is one-thousandth of a kilogram. Use a plain-float comparison so the
     # check stays backend-agnostic (torch/ndonnx have no float ``isclose`` op).
     assert abs(float((1.0 * constants.gram).to_decimal(kilogram)) - 0.001) < 1e-9
+
+
+class TestNewPhysicalConstants:
+    """Regression tests for newly added constants: c, h, hbar, G, g_n, sigma."""
+
+    def test_speed_of_light(self):
+        c = u.constants.speed_of_light
+        assert c.unit.has_same_dim(u.meter / u.second)
+        assert float(c.to_decimal(u.meter / u.second)) == 2.99792458e8
+
+    def test_planck(self):
+        h = u.constants.planck
+        assert h.unit.has_same_dim(u.joule * u.second)
+        assert float(h.to_decimal(u.joule * u.second)) == 6.62607015e-34
+
+    def test_hbar(self):
+        hbar = u.constants.hbar
+        assert hbar.unit.has_same_dim(u.joule * u.second)
+        np.testing.assert_allclose(
+            float(hbar.to_decimal(u.joule * u.second)), 1.054571817e-34, rtol=1e-12
+        )
+
+    def test_hbar_is_h_over_2pi(self):
+        h = float(u.constants.planck.to_decimal(u.joule * u.second))
+        hbar = float(u.constants.hbar.to_decimal(u.joule * u.second))
+        np.testing.assert_allclose(hbar, h / (2 * np.pi), rtol=1e-9)
+
+    def test_gravitational_constant(self):
+        G = u.constants.gravitational_constant
+        assert G.unit.has_same_dim(u.meter ** 3 / u.kilogram / u.second ** 2)
+        assert float(G.to_decimal(u.meter ** 3 / u.kilogram / u.second ** 2)) == 6.67430e-11
+
+    def test_standard_gravity(self):
+        g = u.constants.standard_gravity
+        assert g.unit.has_same_dim(u.meter / u.second ** 2)
+        assert float(g.to_decimal(u.meter / u.second ** 2)) == 9.80665
+
+    def test_stefan_boltzmann(self):
+        sigma = u.constants.stefan_boltzmann
+        assert sigma.unit.has_same_dim(u.watt / u.meter2 / u.kelvin ** 4)
+        assert float(sigma.to_decimal(u.watt / u.meter2 / u.kelvin ** 4)) == 5.670374419e-8
+
+    @pytest.mark.skipif(not HAS_SCIPY, reason="scipy not installed")
+    def test_against_scipy(self):
+        assert float(u.constants.speed_of_light.to_decimal(u.meter / u.second)) == sc.c
+        assert float(u.constants.planck.to_decimal(u.joule * u.second)) == sc.h
+        assert float(u.constants.gravitational_constant.to_decimal(
+            u.meter ** 3 / u.kilogram / u.second ** 2)) == sc.G
+        assert float(u.constants.standard_gravity.to_decimal(u.meter / u.second ** 2)) == sc.g

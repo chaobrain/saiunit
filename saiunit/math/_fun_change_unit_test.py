@@ -816,3 +816,30 @@ def test_det_dimensionless_quantity_returns_plain():
     r = u.linalg.det(u.Quantity(jnp.array([[2.0, 1.0], [1.0, 2.0]])))
     assert not isinstance(r, u.Quantity)
     assert_quantity(r, 3.0)
+
+
+class TestTrapezoid:
+    def test_trapezoid_with_x_units(self):
+        y = jnp.array([1.0, 2.0, 3.0]) * u.mV
+        x = jnp.array([0.0, 1.0, 2.0]) * second
+        r = um.trapezoid(y, x)
+        assert isinstance(r, u.Quantity)
+        assert r.unit.has_same_dim(u.mV * second)
+        assert_quantity(r, 4.0, u.mV * second)
+
+    def test_trapezoid_with_dx_units(self):
+        y = jnp.array([1.0, 2.0, 3.0]) * u.mV
+        r = um.trapezoid(y, dx=0.5 * second)
+        assert_quantity(r, 2.0, u.mV * second)
+
+    def test_trapezoid_raw(self):
+        import numpy as np
+        r = um.trapezoid(jnp.array([1.0, 2.0, 3.0]))
+        np.testing.assert_allclose(np.asarray(r), 4.0)
+
+    def test_trapezoid_unitless_y_with_x_units(self):
+        y = jnp.array([1.0, 2.0, 3.0])
+        x = jnp.array([0.0, 1.0, 2.0]) * second
+        r = um.trapezoid(y, x)
+        assert isinstance(r, u.Quantity)
+        assert r.unit.has_same_dim(second)

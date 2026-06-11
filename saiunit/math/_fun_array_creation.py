@@ -911,6 +911,7 @@ def asarray(
 
     # get leaves
     leaves, treedef = _tree.flatten(a, is_leaf=lambda x: isinstance(x, Quantity))
+    mantissa_leaves: list = []
     if leaves:
         leaves = unit_scale_align_to_first(*leaves)
 
@@ -924,10 +925,14 @@ def asarray(
             unit = leaves[0].unit
 
         # reconstruct mantissa
-        a = treedef.unflatten([leaf.mantissa for leaf in leaves])  # type: ignore[attr-defined]
+        mantissa_leaves = [leaf.mantissa for leaf in leaves]
+        a = treedef.unflatten(mantissa_leaves)  # type: ignore[attr-defined]
     # with no leaves (e.g. ``asarray([])``) there are no units to align;
     # the backend builds the empty array and ``unit`` (when given) wraps it.
-    xp = _default_xp()
+    # Dispatch on the input's own backend (like ``sort``/``ones_like``) so a
+    # numpy-backed input stays numpy; fall back to the default backend for
+    # python scalars/lists.
+    xp = get_backend(*mantissa_leaves) if mantissa_leaves else _default_xp()
     # ``order`` is a numpy/jax-only kwarg; torch / dask / ndonnx ``asarray``
     # reject it. Only forward when explicitly provided.
     extra = {}

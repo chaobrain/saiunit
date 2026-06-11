@@ -131,13 +131,12 @@ __all__ = [
               '__version__',
               '__version_info__',
 
-              # submodules
+              # submodules ('autograd', 'lax' and 'sparse' are appended below
+              # together with the lazy-loading machinery)
               'math',
               'linalg',
-              'autograd',
               'fft',
               'constants',
-              'sparse',
               'typing',
 
               # misc

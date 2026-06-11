@@ -177,6 +177,17 @@ def check_dims(**au):
                             )
                 newkeyset[n] = v
 
+            # validate default values of parameters the caller did not
+            # supply, so a default that violates the specification does not
+            # silently bypass the check
+            defaults = f.__defaults__ or ()
+            for n, v in zip(arg_names[len(arg_names) - len(defaults):], defaults):
+                if n not in newkeyset and n in au:
+                    newkeyset[n] = v
+            for n, v in (f.__kwdefaults__ or {}).items():
+                if n not in newkeyset and n in au:
+                    newkeyset[n] = v
+
             for k in newkeyset:
                 # string variables are allowed to pass, the presumption is they
                 # name another variable. None is also allowed, useful for
@@ -307,7 +318,13 @@ def _check_dim(f, val, dim):
 @set_module_as('saiunit')
 def check_units(**au):
     """
-    Decorator to check units of arguments passed to a function
+    Decorator to check units of arguments passed to a function.
+
+    The check is **exact**: the argument must carry the very unit given in
+    the specification, including its scale. ``1 * mV`` does *not* pass a
+    ``volt`` specification even though both are voltages. Use
+    :func:`check_dims` if you only want to constrain the physical dimension
+    and accept any scaled unit of that dimension.
 
     Examples
     --------
@@ -319,12 +336,12 @@ def check_units(**au):
     You don't have to check the units of every variable in the function, and
     you can define what the units should be for variables that aren't
     explicitly named in the definition of the function. For example, the code
-    above checks that the variable wibble should be a length, so writing
+    above checks that the variable wibble should be in metre, so writing
 
     >>> getvoltage(1*amp, 1*ohm, wibble=1)  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
-    DimensionMismatchError: Function "getvoltage" variable "wibble" has wrong dimensions, dimensions were (1) (m)
+    UnitMismatchError: Function 'getvoltage' expected a array with unit Unit("m") for argument 'wibble' but got '1'
 
     fails, but
 
@@ -360,7 +377,7 @@ def check_units(**au):
     a function that takes the units of all the arguments as its inputs (in the
     order specified in the function header):
 
-    >>> @check_units(result=lambda d: d**2)
+    >>> @check_units(result=lambda u: u**2)
     ... def square(value):
     ...     return value**2
 
@@ -379,14 +396,17 @@ def check_units(**au):
     >>> multiply_sum(3*nA, 4*mV, 5*nA)  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
     ...
-    DimensionMismatchError: Function 'multiply_sum' expected the same arguments for arguments 'summand_1', 'summand_2', but argument 'summand_1' has unit V, while argument 'summand_2' has unit A.
+    UnitMismatchError: Function 'multiply_sum' expected the argument 'summand_2' to have the same units as argument 'summand_1', but argument 'summand_2' has unit nA, while argument 'summand_1' has unit mV.
+
+    Default values of parameters that the caller does not supply are
+    validated as well.
 
     Raises
     ------
 
-    DimensionMismatchError
+    UnitMismatchError
         In case the input arguments or the return value do not have the
-        expected dimensions.
+        expected units.
     TypeError
         If an input argument or return value was expected to be a boolean but
         is not.
@@ -431,6 +451,17 @@ def check_units(**au):
                                 f"{au[n]}"
                             )
                 newkeyset[n] = v
+
+            # validate default values of parameters the caller did not
+            # supply, so a default that violates the specification does not
+            # silently bypass the check
+            defaults = f.__defaults__ or ()
+            for n, v in zip(arg_names[len(arg_names) - len(defaults):], defaults):
+                if n not in newkeyset and n in au:
+                    newkeyset[n] = v
+            for n, v in (f.__kwdefaults__ or {}).items():
+                if n not in newkeyset and n in au:
+                    newkeyset[n] = v
 
             for k in newkeyset:
                 # string variables are allowed to pass, the presumption is they

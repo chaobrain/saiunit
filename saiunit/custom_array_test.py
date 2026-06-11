@@ -694,3 +694,42 @@ def test_docstring_example_custom_array_class():
 
     result = square(jax_arr)
     np.testing.assert_array_equal(result, jnp.array([1.0, 4.0, 9.0]))
+
+
+class TestCustomArrayBackendMethods:
+    """Regression tests for ptp/choose/argpartition/byteswap backend compatibility."""
+
+    def test_ptp_numpy(self):
+        arr = SimpleArray(np.array([1.0, 5.0, 3.0]))
+        assert float(arr.ptp()) == 4.0
+
+    def test_ptp_jax(self):
+        arr = SimpleArray(jnp.array([1.0, 5.0, 3.0]))
+        assert float(arr.ptp()) == 4.0
+
+    def test_ptp_axis_keepdims(self):
+        arr = SimpleArray(np.array([[1.0, 5.0], [2.0, 3.0]]))
+        r = arr.ptp(axis=1, keepdims=True)
+        np.testing.assert_array_equal(np.asarray(r), [[4.0], [1.0]])
+
+    def test_choose_numpy(self):
+        arr = SimpleArray(np.array([0, 1, 0]))
+        r = arr.choose([np.array([10, 20, 30]), np.array([40, 50, 60])])
+        np.testing.assert_array_equal(np.asarray(r), [10, 50, 30])
+
+    def test_argpartition_numpy(self):
+        arr = SimpleArray(np.array([3.0, 1.0, 2.0]))
+        idx = np.asarray(arr.argpartition(1))
+        assert np.asarray(arr.data)[idx[1]] == 2.0
+
+    def test_argpartition_jax(self):
+        arr = SimpleArray(jnp.array([3.0, 1.0, 2.0]))
+        idx = np.asarray(arr.argpartition(1))
+        assert float(jnp.asarray(arr.data)[idx[1]]) == 2.0
+
+    def test_byteswap_numpy(self):
+        arr = SimpleArray(np.array([1, 256], dtype=np.int32))
+        r = arr.byteswap()
+        np.testing.assert_array_equal(
+            np.asarray(r), np.array([1, 256], dtype=np.int32).byteswap()
+        )

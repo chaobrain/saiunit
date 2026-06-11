@@ -455,7 +455,14 @@ class CustomArray:
 
     def argpartition(self, kth, axis: int = -1, kind: str = 'introselect', order=None):
         """Returns the indices that would partition this array."""
-        return self.data.argpartition(kth=kth, axis=axis, kind=kind, order=order)
+        # JAX's ``argpartition`` accepts neither ``kind`` nor ``order``;
+        # forward them only when they deviate from numpy's defaults.
+        kwargs = {}
+        if kind != 'introselect':
+            kwargs['kind'] = kind
+        if order is not None:
+            kwargs['order'] = order
+        return self.data.argpartition(kth, axis, **kwargs)
 
     def argsort(self, axis=-1, kind=None, order=None):
         """Returns the indices that would sort this array."""
@@ -481,11 +488,16 @@ class CustomArray:
         returning a byteswapped array, optionally swapped in-place.
         Arrays of byte-strings are not swapped. The real and imaginary
         parts of a complex number are swapped individually."""
-        return self.data.byteswap(inplace=inplace)
+        # JAX's ``byteswap`` does not accept the ``inplace`` keyword.
+        if inplace:
+            return self.data.byteswap(inplace=True)
+        return self.data.byteswap()
 
     def choose(self, choices, mode='raise'):
         """Use an index array to construct a new array from a set of choices."""
-        return self.data.choose(choices=choices, mode=mode)
+        # numpy's C-implemented ``ndarray.choose`` rejects keyword arguments
+        # for ``choices``; pass it positionally so both backends work.
+        return self.data.choose(choices, mode=mode)
 
     def clip(self, min=None, max=None):
         """Return an array whose datas are limited to [min, max]. One of max or min must be given."""
@@ -561,7 +573,9 @@ class CustomArray:
 
     def ptp(self, axis=None, keepdims=False):
         """Peak to peak (maximum - minimum) data along a given axis."""
-        r = self.data.ptp(axis=axis, keepdims=keepdims)
+        # ``ndarray.ptp`` was removed in NumPy 2.0; go through the
+        # backend-dispatched function instead of the method.
+        r = math.ptp(self.data, axis=axis, keepdims=keepdims)
         return r
 
     def put(self, indices, datas):
@@ -589,7 +603,11 @@ class CustomArray:
         return self.data.reshape(*shape, order=order)
 
     def resize(self, new_shape):
-        """Change shape and size of array in-place."""
+        """Reshape the array in-place to ``new_shape``.
+
+        Unlike ``numpy.ndarray.resize``, the total number of elements must
+        stay the same; growing or shrinking the array is not supported.
+        """
         self.data = self.data.reshape(new_shape)
 
     def round(self, decimals=0):

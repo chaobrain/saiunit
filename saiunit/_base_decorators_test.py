@@ -933,3 +933,53 @@ class TestDocstringExampleAssignUnits:
         assert v.unit == u.volt
         assert jnp.allclose(t.mantissa, 5.0)
         assert jnp.allclose(v.mantissa, 3.0)
+
+
+class TestDefaultValueValidation:
+    """Default values must be validated like explicitly passed arguments."""
+
+    def test_check_units_bad_default_rejected(self):
+        @check_units(v=_volt)
+        def f(v=1 * _msecond):
+            return v
+
+        with pytest.raises(UnitMismatchError):
+            f()
+
+    def test_check_units_good_default_passes(self):
+        @check_units(v=_volt)
+        def f(v=1 * _volt):
+            return v
+
+        assert f() == 1 * _volt
+
+    def test_check_units_none_default_passes(self):
+        @check_units(v=_volt)
+        def f(v=None):
+            return v
+
+        assert f() is None
+
+    def test_check_units_kwonly_default_rejected(self):
+        @check_units(w=_volt)
+        def f(*, w=2 * _second):
+            return w
+
+        with pytest.raises(UnitMismatchError):
+            f()
+        assert f(w=1 * _volt) == 1 * _volt
+
+    def test_check_dims_bad_default_rejected(self):
+        @check_dims(v=_voltage_dim)
+        def f(v=1 * _second):
+            return v
+
+        with pytest.raises(DimensionMismatchError):
+            f()
+
+    def test_check_dims_scaled_default_passes(self):
+        @check_dims(v=_time_dim)
+        def f(v=1 * _msecond):
+            return v
+
+        assert f() == 1 * _msecond

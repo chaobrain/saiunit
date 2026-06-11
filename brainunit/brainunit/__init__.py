@@ -101,6 +101,7 @@ __all__ = [
               'autograd',
               'fft',
               'constants',
+              'lax',
               'sparse',
               'typing',
 

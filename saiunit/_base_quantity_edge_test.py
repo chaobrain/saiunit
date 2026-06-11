@@ -333,3 +333,25 @@ class TestSortOrder:
         q = Quantity(jnp.array([3.0, 1.0, 2.0]), unit=u.mV)
         q.sort()
         np.testing.assert_allclose(np.asarray(q.mantissa), [1.0, 2.0, 3.0])
+
+
+class TestBoolTruthiness:
+    """bool() must follow the mantissa's NumPy/JAX value semantics, not len()."""
+
+    def test_single_element_zero_is_false(self):
+        assert bool(Quantity(jnp.array([0.0]), unit=u.mV)) is False
+
+    def test_single_element_nonzero_is_true(self):
+        assert bool(Quantity(jnp.array([1.0]), unit=u.mV)) is True
+
+    def test_zero_dim(self):
+        assert bool(Quantity(2.5, unit=u.mV)) is True
+        assert bool(Quantity(0.0, unit=u.mV)) is False
+
+    def test_multi_element_is_ambiguous(self):
+        with pytest.raises((ValueError, TypeError)):
+            bool(Quantity(jnp.array([1.0, 2.0]), unit=u.mV))
+
+    def test_len_zero_dim_raises_cleanly(self):
+        with pytest.raises(TypeError, match="0-d"):
+            len(Quantity(2.5, unit=u.mV))

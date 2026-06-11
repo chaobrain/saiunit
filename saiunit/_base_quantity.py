@@ -2013,7 +2013,17 @@ class Quantity:
     # ---------- #
 
     def __len__(self) -> int:
-        return len(self.mantissa)  # type: ignore[arg-type]
+        try:
+            return len(self.mantissa)  # type: ignore[arg-type]
+        except TypeError:
+            raise TypeError("len() of a 0-d Quantity is not allowed.") from None
+
+    def __bool__(self) -> bool:
+        # Truthiness must follow the mantissa's NumPy/JAX semantics (value
+        # based for 0-d and single-element arrays, ambiguity error for
+        # multi-element arrays). Without this, Python falls back to
+        # ``__len__`` and e.g. ``bool(Quantity([0.]) * mV)`` would be True.
+        return bool(self.mantissa)
 
     def __neg__(self) -> 'Quantity':
         return Quantity(-self.mantissa, unit=self.unit)  # type: ignore[operator]
