@@ -70,7 +70,7 @@ def _dimensionless_required_message(func: Union[Callable, str], x: Quantity, arg
     )
 
 
-def _invalid_unit_to_scale_type_message(func: Callable, unit_to_scale: Any) -> str:
+def _invalid_unit_to_scale_type_message(func: Union[Callable, str], unit_to_scale: Any) -> str:
     name = _func_name(func)
     return (
         f'{name} expects "unit_to_scale" to be a Unit instance, but got '
@@ -78,7 +78,7 @@ def _invalid_unit_to_scale_type_message(func: Callable, unit_to_scale: Any) -> s
     )
 
 
-def _unit_to_scale_without_quantity_message(func: Callable, x: Any) -> str:
+def _unit_to_scale_without_quantity_message(func: Union[Callable, str], x: Any) -> str:
     name = _func_name(func)
     return (
         f'{name} received "unit_to_scale" but input "x" is not a Quantity '
@@ -1041,6 +1041,8 @@ def _fun_accept_unitless_binary(
     kwargs = maybe_custom_array_tree(kwargs)
     kwargs = _strip_none_kwargs(kwargs)
 
+    if unit_to_scale is not None and not isinstance(x, Quantity) and not isinstance(y, Quantity):
+        raise TypeError(_unit_to_scale_without_quantity_message(func, x))
     if isinstance(x, Quantity):
         if unit_to_scale is None:
             if not x.dim.is_dimensionless:
@@ -1402,9 +1404,10 @@ def cov(
 @set_module_as('saiunit.math')
 def ldexp(
     x: Union[Quantity, ArrayLike],
-    y: ArrayLike,
+    y: Union[Quantity, ArrayLike],
+    unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> Union[Quantity, ArrayLike]:
+) -> Array:
     """
     Returns x * 2**y, element-wise.
 
@@ -1415,24 +1418,43 @@ def ldexp(
     ----------
     x : array_like, Quantity
       Array of multipliers.
-    y : array_like, int
-      Array of twos exponents.
+    y : array_like, Quantity
+      Array of twos exponents. Must be dimensionless with integral values.
       If ``x.shape != y.shape``, they must be broadcastable to a common
       shape (which becomes the shape of the output).
+    unit_to_scale : Unit, optional
+      Unit used to convert ``x`` (not ``y``) to a dimensionless number first.
 
     Returns
     -------
-    out : ndarray, quantity or scalar
+    out : Array
       The result of ``x * 2**y``.
       This is a scalar if both `x` and `y` are scalars.
-
-      This is a Quantity if the product of the square of the unit of `x` and the unit of `y` is not dimensionless.
     """
     x, y = maybe_custom_array_tree((x, y))
     if isinstance(x, Quantity):
-        if not x.dim.is_dimensionless:
-            raise TypeError(_dimensionless_required_message('ldexp', x, arg_name='x'))
-        x = x.mantissa
+        if unit_to_scale is None:
+            if not x.dim.is_dimensionless:
+                raise TypeError(_dimensionless_required_message('ldexp', x, arg_name='x'))
+            x = x.to_decimal()
+        else:
+            if not isinstance(unit_to_scale, Unit):
+                raise TypeError(_invalid_unit_to_scale_type_message('ldexp', unit_to_scale))
+            x = x.to_decimal(unit_to_scale)
+    elif unit_to_scale is not None:
+        raise TypeError(_unit_to_scale_without_quantity_message('ldexp', x))
+    if isinstance(y, Quantity):
+        if not y.dim.is_dimensionless:
+            raise TypeError(_dimensionless_required_message('ldexp', y, arg_name='y'))
+        y = y.to_decimal()
+        # ``ldexp`` requires an integral exponent, but ``to_decimal`` yields
+        # floats when the unit carries a scale factor (e.g. ``mV / volt``).
+        if isinstance(y, float):
+            y = int(y)
+        elif hasattr(y, 'dtype'):
+            yp = get_backend(y)
+            if yp.isdtype(y.dtype, 'real floating'):
+                y = yp.astype(y, yp.int32)
     xp = get_backend(x, y)
     return _resolve_op('ldexp', xp)(x, y, **kwargs)
 

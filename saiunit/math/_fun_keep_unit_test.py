@@ -728,9 +728,15 @@ class TestFunKeepUnitArrayManipulation(parameterized.TestCase):
         result = u.math.choose(jnp.array([0, 1, 2]), choices)
         self.assertTrue(jnp.all(result == jnp.choose(jnp.array([0, 1, 2]), choices)))
 
+        # the unit lives on the choices, not on the index; a dimensioned
+        # Quantity index is rejected
         q = [0, 1, 2] * u.second
         q = q.astype(jnp.int64)
-        result_q = u.math.choose(q, choices)
+        with pytest.raises(TypeError):
+            u.math.choose(q, choices)
+
+        q_choices = [c * u.second for c in choices]
+        result_q = u.math.choose(jnp.array([0, 1, 2]), q_choices)
         expected_q = jnp.choose(jnp.array([0, 1, 2]), choices)
         assert_quantity(result_q, expected_q, u.second)
 
@@ -1284,3 +1290,262 @@ def test_promote_dtypes_common_type_and_unit():
     # Values are unchanged.
     assert jnp.allclose(out[0].mantissa, jnp.array([1.0, 2.0, 3.0]))
     assert jnp.allclose(out[1].mantissa, jnp.array([4.0, 5.0, 6.0]))
+
+
+# ---------------------------------------------------------------
+# Regression tests (math audit)
+# ---------------------------------------------------------------
+
+
+def test_unit_scale_align_to_first_unitless_first_rescales():
+    # A scaled-dimensionless Quantity following a plain first item must be
+    # rescaled onto the (unitless) first unit, not passed through raw.
+    aligned = u.unit_scale_align_to_first(jnp.array([1., 2.]), jnp.array([1., 2.]) * (u.mV / u.volt))
+    assert jnp.allclose(aligned[1].mantissa, jnp.array([0.001, 0.002]))
+
+    r = u.math.concatenate([jnp.array([1., 2.]), jnp.array([1., 2.]) * (u.mV / u.volt)])
+    assert not isinstance(r, u.Quantity)
+    assert jnp.allclose(r, jnp.array([1., 2., 0.001, 0.002]))
+
+    r = u.math.stack([jnp.array([1., 2.]), jnp.array([1., 2.]) * (u.mV / u.volt)])
+    assert not isinstance(r, u.Quantity)
+    assert jnp.allclose(r, jnp.array([[1., 2.], [0.001, 0.002]]))
+
+    # a dimensioned later item still raises
+    with pytest.raises(u.UnitMismatchError):
+        u.unit_scale_align_to_first(jnp.array([1., 2.]), jnp.array([1., 2.]) * u.meter)
+
+
+def test_unit_scale_align_to_first_all_plain_unchanged():
+    aligned = u.unit_scale_align_to_first(jnp.array([1, 2]), jnp.array([3, 4]))
+    assert all(isinstance(q, u.Quantity) for q in aligned)
+    assert jnp.array_equal(aligned[1].mantissa, jnp.array([3, 4]))
+    # consumers still unwrap plain inputs to plain arrays
+    r = u.math.concatenate([jnp.array([1, 2]), jnp.array([3, 4])])
+    assert not isinstance(r, u.Quantity)
+    assert jnp.array_equal(r, jnp.array([1, 2, 3, 4]))
+
+
+def test_choose_quantity_choices():
+    index = jnp.array([0, 1, 0])
+    choices = [jnp.array([1., 2., 3.]) * u.meter, jnp.array([4., 5., 6.]) * u.meter]
+    result = u.math.choose(index, choices)
+    assert isinstance(result, u.Quantity)
+    assert_quantity(result, jnp.array([1., 5., 3.]), u.meter)
+
+
+def test_choose_dimensioned_index_raises():
+    choices = [jnp.array([1., 2., 3.]), jnp.array([4., 5., 6.])]
+    with pytest.raises(TypeError, match='choose'):
+        u.math.choose(jnp.array([0, 1, 0]) * u.meter, choices)
+
+
+def test_choose_unitless_quantity_index():
+    index = u.Quantity(jnp.array([0, 1, 0]))
+    choices = [jnp.array([1., 2., 3.]) * u.meter, jnp.array([4., 5., 6.]) * u.meter]
+    result = u.math.choose(index, choices)
+    assert_quantity(result, jnp.array([1., 5., 3.]), u.meter)
+
+
+def test_interp_left_right_use_fp_unit():
+    x = jnp.array([0.5, 2.5]) * u.second
+    xs = jnp.array([1., 2.]) * u.second
+    fp = jnp.array([10., 20.]) * u.meter
+    result = u.math.interp(x, xs, fp, left=0 * u.meter, right=30 * u.meter)
+    assert_quantity(result, jnp.array([0., 30.]), u.meter)
+
+
+def test_interp_left_scaled_fp_unit():
+    # x and fp share the dimension at different scales: left must be
+    # converted into fp's unit, not x's.
+    x = jnp.array([0.5]) * u.meter
+    xs = jnp.array([1., 2.]) * u.meter
+    fp = jnp.array([10., 20.]) * u.kmeter
+    result = u.math.interp(x, xs, fp, left=1 * u.kmeter)
+    assert_quantity(result, jnp.array([1.]), u.kmeter)
+
+
+def test_average_returned_tuple():
+    a = jnp.array([1., 2., 3.]) * u.meter
+    avg, wsum = u.math.average(a, weights=jnp.array([1., 1., 2.]), returned=True)
+    assert isinstance(avg, u.Quantity)
+    assert_quantity(avg, 2.25, u.meter)
+    assert not isinstance(wsum, u.Quantity)
+    assert jnp.allclose(wsum, 4.0)
+
+    # 2-D shapes survive
+    a2 = jnp.array([[1., 2.], [3., 4.]]) * u.meter
+    avg2, wsum2 = u.math.average(a2, axis=0, returned=True)
+    assert avg2.shape == (2,)
+    assert wsum2.shape == (2,)
+    assert_quantity(avg2, jnp.array([2., 3.]), u.meter)
+
+    # plain input stays plain
+    avg3, wsum3 = u.math.average(jnp.array([1., 2., 3.]), returned=True)
+    assert not isinstance(avg3, u.Quantity)
+    assert jnp.allclose(avg3, 2.0)
+    assert jnp.allclose(wsum3, 3.0)
+
+
+def test_average_quantity_weights():
+    a = jnp.array([1., 2., 3.]) * u.meter
+    result = u.math.average(a, weights=u.Quantity(jnp.array([1., 1., 2.])))
+    assert_quantity(result, 2.25, u.meter)
+    # the weights' unit cancels in a weighted average
+    result = u.math.average(a, weights=jnp.array([1., 1., 2.]) * u.second)
+    assert_quantity(result, 2.25, u.meter)
+
+
+def test_max_min_quantity_initial():
+    a = jnp.array([1., 2.]) * u.meter
+    assert_quantity(u.math.max(a, initial=5 * u.meter), 5.0, u.meter)
+    assert_quantity(u.math.min(a, initial=0 * u.meter), 0.0, u.meter)
+    # plain data + plain initial still works
+    r = u.math.max(jnp.array([1., 2.]), initial=5.0)
+    assert not isinstance(r, u.Quantity)
+    assert r == 5.0
+
+
+def test_max_min_plain_initial_on_unitful_data_raises():
+    a = jnp.array([1., 2.]) * u.meter
+    with pytest.raises(u.UnitMismatchError):
+        u.math.max(a, initial=5.0)
+    with pytest.raises(u.UnitMismatchError):
+        u.math.min(a, initial=5.0)
+
+
+def test_unflatten_negative_axis():
+    a = jnp.arange(6.) * u.meter
+    result = u.math.unflatten(a, -1, (2, 3))
+    assert result.shape == (2, 3)
+    assert_quantity(result, jnp.arange(6.).reshape(2, 3), u.meter)
+
+    result = u.math.unflatten(jnp.array([5.]) * u.meter, -1, (1, 1))
+    assert result.shape == (1, 1)
+
+
+def test_unflatten_axis_out_of_bounds():
+    a = jnp.arange(6.) * u.meter
+    with pytest.raises(ValueError):
+        u.math.unflatten(a, 1, (2, 3))
+    with pytest.raises(ValueError):
+        u.math.unflatten(a, -2, (2, 3))
+
+
+def test_concatenate_axis_none_flattens():
+    a = jnp.array([[1., 2.], [3., 4.]]) * u.meter
+    b = jnp.array([5., 6.]) * u.meter
+    result = u.math.concatenate([a, b], axis=None)
+    expected = jnp.concatenate([jnp.array([[1., 2.], [3., 4.]]), jnp.array([5., 6.])], axis=None)
+    assert_quantity(result, expected, u.meter)
+
+    r = u.math.concatenate([jnp.array([[1, 2], [3, 4]]), jnp.array([5, 6])], axis=None)
+    assert jnp.array_equal(r, jnp.array([1, 2, 3, 4, 5, 6]))
+
+    # the default stays axis=0
+    result = u.math.concatenate([a, a])
+    assert result.shape == (4, 2)
+
+
+def test_concatenate_empty_raises_value_error():
+    with pytest.raises(ValueError, match='at least one array'):
+        u.math.concatenate([])
+
+
+def test_repeat_total_repeat_length_numpy_backend():
+    import numpy as np
+    # truncation, as jnp.repeat does
+    r = u.math.repeat(np.array([1, 2]), 3, total_repeat_length=4)
+    assert r.shape == (4,)
+    assert np.array_equal(r, np.array([1, 1, 1, 2]))
+    # padding with the final element, as jnp.repeat does
+    r = u.math.repeat(np.array([1, 2]), 3, total_repeat_length=8)
+    assert np.array_equal(r, np.array([1, 1, 1, 2, 2, 2, 2, 2]))
+    # along an axis
+    r = u.math.repeat(np.array([[1, 2], [3, 4]]), 2, axis=1, total_repeat_length=3)
+    assert np.array_equal(r, np.array([[1, 1, 2], [3, 3, 4]]))
+    # Quantity input keeps the unit
+    q = u.Quantity(np.array([1., 2.]), unit=meter)
+    rq = u.math.repeat(q, 3, total_repeat_length=4)
+    assert isinstance(rq, u.Quantity)
+    assert rq.unit == meter
+    assert np.array_equal(rq.mantissa, np.array([1., 1., 1., 2.]))
+    # the jax path is unchanged
+    rj = u.math.repeat(jnp.array([1, 2]) * meter, 3, total_repeat_length=4)
+    assert_quantity(rj, jnp.array([1, 1, 1, 2]), meter)
+
+
+def test_select_quantity_default():
+    conds = [jnp.array([True, False, False])]
+    choices = [jnp.array([1., 2., 3.]) * u.mV]
+    result = u.math.select(conds, choices, default=5 * u.mV)
+    assert_quantity(result, jnp.array([1., 5., 5.]), u.mV)
+    # a default in another scale of the same dimension is rescaled
+    result = u.math.select(conds, choices, default=0.005 * u.volt)
+    assert_quantity(result, jnp.array([1., 5., 5.]), u.mV)
+
+
+def test_select_plain_default_with_unitful_choices():
+    conds = [jnp.array([True, False])]
+    choices = [jnp.array([1., 2.]) * u.mV]
+    # a plain non-zero default would silently acquire the choicelist's unit
+    with pytest.raises(TypeError):
+        u.math.select(conds, choices, default=5.0)
+    # plain zero stays allowed (jnp's documented default, unit-neutral)
+    result = u.math.select(conds, choices, default=0)
+    assert_quantity(result, jnp.array([1., 0.]), u.mV)
+
+
+def test_histogram_quantity_bins_and_weights():
+    x = jnp.array([1., 2., 3.]) * u.second
+    hist, edges = u.math.histogram(x, bins=jnp.array([0., 2., 4.]) * u.second)
+    assert jnp.array_equal(hist, jnp.array([1., 2.]))
+    assert isinstance(edges, u.Quantity)
+    assert_quantity(edges, jnp.array([0., 2., 4.]), u.second)
+    # bins in a different scale of the same dimension are rescaled
+    hist, edges = u.math.histogram(x, bins=jnp.array([0., 2000., 4000.]) * u.ms)
+    assert jnp.array_equal(hist, jnp.array([1., 2.]))
+    # Quantity weights are unwrapped
+    hist, _ = u.math.histogram(x, bins=jnp.array([0., 2., 4.]) * u.second,
+                               weights=u.Quantity(jnp.array([1., 1., 2.])))
+    assert jnp.allclose(hist, jnp.array([1., 3.]))
+
+
+def test_gather_index_smaller_than_input():
+    a = jnp.arange(1., 10.).reshape(3, 3) * u.mV
+    index = jnp.array([[0, 1], [2, 0]])
+    result = u.math.gather(a, 1, index)
+    assert isinstance(result, u.Quantity)
+    assert_quantity(result, jnp.array([[1., 2.], [6., 4.]]), u.mV)
+
+    result = u.math.gather(a, 0, index)
+    assert_quantity(result, jnp.array([[1., 5.], [7., 2.]]), u.mV)
+
+
+def test_intersect1d_scaled_dimensionless_vs_plain():
+    q = jnp.array([1., 2., 3.]) * (u.mV / u.volt)   # values 0.001, 0.002, 0.003
+    plain = jnp.array([0.001, 0.002, 5.0])
+    result = u.math.intersect1d(q, plain)
+    assert isinstance(result, u.Quantity)
+    assert jnp.allclose(result.to_decimal(u.mV / u.volt), jnp.array([1., 2.]))
+    # symmetric: plain first
+    result2 = u.math.intersect1d(plain, q)
+    assert not isinstance(result2, u.Quantity)
+    assert jnp.allclose(result2, jnp.array([0.001, 0.002]))
+
+
+def test_remove_diag_non_square_raises():
+    with pytest.raises(ValueError, match='square'):
+        u.math.remove_diag(jnp.arange(6.).reshape(3, 2) * u.second)
+    with pytest.raises(ValueError, match='square'):
+        u.math.remove_diag(jnp.arange(6.).reshape(2, 3))
+
+
+def test_nan_to_num_plain_array_quantity_replacement_raises():
+    x = jnp.array([1.0, jnp.nan])
+    with pytest.raises(TypeError, match='nan_to_num'):
+        u.math.nan_to_num(x, nan=1 * u.meter)
+    with pytest.raises(TypeError, match='nan_to_num'):
+        u.math.nan_to_num(x, posinf=1 * u.meter)
+    with pytest.raises(TypeError, match='nan_to_num'):
+        u.math.nan_to_num(x, neginf=1 * u.meter)

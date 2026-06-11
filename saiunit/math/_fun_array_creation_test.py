@@ -15,6 +15,7 @@
 
 
 import jax.numpy as jnp
+import numpy as np
 import pytest
 from absl.testing import parameterized
 
@@ -739,3 +740,113 @@ def test_ones_respects_default_backend():
     with u.using_backend("numpy"):
         q = u.math.ones((3,), unit=meter)
         assert q.backend == "numpy"
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for audit fixes.
+# ---------------------------------------------------------------------------
+
+
+class TestFillDiagonalNumpyBackend:
+    """``fill_diagonal`` on numpy-backed arrays must be functional by default."""
+
+    def test_fill_diagonal_numpy_returns_copy(self):
+        a = np.zeros((3, 3))
+        result = um.fill_diagonal(a, 5.0)
+        expected = np.zeros((3, 3))
+        np.fill_diagonal(expected, 5.0)
+        assert result is not None
+        assert_quantity(result, expected)
+        # inplace=False must leave the input untouched
+        assert (a == 0).all()
+
+    def test_fill_diagonal_numpy_inplace_mutates_and_returns(self):
+        a = np.zeros((3, 3))
+        result = um.fill_diagonal(a, 5.0, inplace=True)
+        expected = np.zeros((3, 3))
+        np.fill_diagonal(expected, 5.0)
+        assert_quantity(result, expected)
+        assert (a == expected).all()
+
+    def test_fill_diagonal_numpy_quantity(self):
+        aq = np.zeros((3, 3)) * u.mV
+        result = um.fill_diagonal(aq, 5.0 * u.mV)
+        expected = np.zeros((3, 3))
+        np.fill_diagonal(expected, 5.0)
+        assert_quantity(result, expected, unit=u.mV)
+        # inplace=False must leave the input untouched
+        assert (aq.mantissa == 0).all()
+
+
+def test_fill_diagonal_plain_array_quantity_val_raises():
+    with pytest.raises(TypeError):
+        um.fill_diagonal(jnp.zeros((3, 3)), 5.0 * u.mV)
+
+
+def test_empty_like_quantity_forwards_shape():
+    q = jnp.array([1.0, 2.0, 3.0]) * meter
+    result = um.empty_like(q, shape=(5,))
+    assert result.shape == (5,)
+    assert u.get_unit(result) == meter
+
+
+class TestAsarrayUnitStrictness:
+    """``asarray(..., unit=...)`` must honour the requested unit."""
+
+    def test_asarray_unit_on_dimensionless_input_raises(self):
+        with pytest.raises(u.UnitMismatchError):
+            um.asarray([1, 2, 3], unit=meter)
+
+    def test_asarray_unit_converts_matching_dimension(self):
+        result = um.asarray([1.0, 2.0] * u.mV, unit=u.volt)
+        assert_quantity(result, jnp.asarray([0.001, 0.002]), unit=u.volt)
+
+
+class TestAsarrayEmpty:
+    """``asarray([])`` must build an empty array instead of crashing."""
+
+    def test_asarray_empty_list(self):
+        result = um.asarray([])
+        expected = jnp.asarray([])
+        assert_quantity(result, expected)
+
+    def test_asarray_empty_list_with_unit(self):
+        result = um.asarray([], unit=meter)
+        assert isinstance(result, u.Quantity)
+        assert result.shape == (0,)
+        assert u.get_unit(result) == meter
+
+
+class TestArangeNoneHandling:
+    """``arange`` keyword-only forms must mirror numpy's semantics."""
+
+    def test_arange_stop_keyword_only(self):
+        result = um.arange(stop=5)
+        assert_quantity(result, jnp.arange(5))
+
+    def test_arange_stop_and_step_with_units(self):
+        result = um.arange(stop=3 * meter, step=1 * meter)
+        assert_quantity(result, jnp.arange(0, 3, 1), unit=meter)
+
+    def test_arange_step_only_raises(self):
+        with pytest.raises(TypeError):
+            um.arange(step=2)
+
+
+class TestLinspaceRetstep:
+    """``linspace(..., retstep=True)`` must wrap samples and step separately."""
+
+    def test_linspace_retstep_with_units(self):
+        samples, step = um.linspace(0 * meter, 10 * meter, 5, retstep=True)
+        assert_quantity(samples, jnp.linspace(0, 10, 5), unit=meter)
+        assert_quantity(step, jnp.asarray(2.5), unit=meter)
+
+    def test_linspace_retstep_plain(self):
+        samples, step = um.linspace(0, 10, 5, retstep=True)
+        assert_quantity(samples, jnp.linspace(0, 10, 5))
+        assert_quantity(step, jnp.asarray(2.5))
+
+
+def test_vander_unit_error_message_suggests_to_decimal():
+    with pytest.raises(TypeError, match='to_decimal'):
+        um.vander(jnp.array([1.0, 2.0, 3.0]) * meter, 3)

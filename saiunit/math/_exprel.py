@@ -131,6 +131,35 @@ def _get_threshold(dtype) -> float:
         return 1e-4
 
 
+def _get_deriv_threshold(dtype) -> float:
+    """
+    Get the Taylor/direct switch-over threshold for the *derivative* of exprel.
+
+    The derivative's direct form cancels catastrophically near zero (its
+    numerator behaves like x²/2 while the terms being subtracted are O(1)),
+    so it needs a much larger Taylor region than the value path. With a
+    Taylor order of at least ``_DERIV_MIN_TAYLOR_ORDER`` the truncation error
+    inside these thresholds is negligible at the respective precision.
+    """
+    if dtype == jnp.float64:
+        return 0.05
+    elif dtype == jnp.float32:
+        return 0.1
+    elif dtype == jnp.float16:
+        return 0.5
+    elif dtype == jnp.bfloat16:
+        return 0.5
+    else:
+        return 0.1
+
+
+# Minimum Taylor order used in the derivative's small-|x| branch. The
+# derivative thresholds above are much larger than the value-path ones, so a
+# low user-selected order would truncate too early (e.g. order 2 at |x|=0.1
+# has ~7e-5 relative error). Order 10 keeps truncation below ~1e-13 there.
+_DERIV_MIN_TAYLOR_ORDER = 10
+
+
 def _exprel_coefficients(order: int):
     """
     Generate Taylor coefficients for exprel using Horner's method.
@@ -280,16 +309,21 @@ def _exprel_deriv_taylor(x, order: Optional[int] = None):
     return result
 
 
-def _exprel_deriv_direct(x):
+def _exprel_deriv_direct(x, order: Optional[int] = None):
     """
     Direct computation of d/dx[(exp(x) - 1) / x].
 
-    f'(x) = [(x-1)*exp(x) + 1] / x²
-          = [exp(x) - (exp(x) - 1)/x] / x
-          = [exp(x) - exprel(x)] / x
+    Substituting exp(x) = x * exprel(x) + 1 into
+    f'(x) = [(x-1)*exp(x) + 1] / x² gives
+
+    f'(x) = [(x-1) * exprel(x) + 1] / x
+
+    which loses only one power of x to cancellation near zero (instead of
+    two for the naive form, whose numerator ≈ x²/2 while the subtracted
+    terms are O(1)). Building on the exprel primitive also keeps this
+    expression differentiable to arbitrary order with the same stability.
     """
-    exp_x = jnp.exp(x)
-    return ((x - 1) * exp_x + 1) / (x * x)
+    return ((x - 1) * exprel(x, order=order) + 1) / x
 
 
 def _exprel_deriv(x, order: Optional[int] = None):
@@ -309,12 +343,19 @@ def _exprel_deriv(x, order: Optional[int] = None):
         exprel'(x) computed in a numerically stable way.
     """
     dtype = x.dtype
-    threshold = _get_threshold(dtype)
+    threshold = _get_deriv_threshold(dtype)
     abs_x = jnp.abs(x)
     is_small = abs_x <= threshold
 
+    # The derivative threshold is far larger than the value-path one, so the
+    # Taylor branch must use a high enough order regardless of the (value)
+    # order requested by the caller.
+    if order is None:
+        order = _current_order
+    taylor_order = max(order, _DERIV_MIN_TAYLOR_ORDER)
+
     # Guard the direct branch against ``x == 0``. ``_exprel_deriv_direct`` is
-    # ``((x-1)*exp(x)+1)/x**2`` — a removable ``0/0`` at ``x = 0``. ``where``
+    # ``((x-1)*exprel(x)+1)/x`` — a removable ``0/0`` at ``x = 0``. ``where``
     # masks the *value*, but under differentiation (e.g. ``grad(grad(exprel))``)
     # the unselected branch's gradient is still evaluated, and ``d/dx`` of the
     # direct form is NaN at 0, poisoning the result via ``0 * NaN``. Feeding the
@@ -324,12 +365,12 @@ def _exprel_deriv(x, order: Optional[int] = None):
 
     return jnp.where(
         is_small,
-        _exprel_deriv_taylor(x, order),
-        _exprel_deriv_direct(safe_x)
+        _exprel_deriv_taylor(x, taylor_order),
+        _exprel_deriv_direct(safe_x, order)
     )
 
 
-def exprel(x, /, order: int = 2):
+def exprel(x, /, order: Optional[int] = None):
     """Compute ``(exp(x) - 1) / x`` in a numerically stable way.
 
     This function handles the removable singularity at ``x = 0`` by
@@ -344,7 +385,9 @@ def exprel(x, /, order: int = 2):
         Input array.
     order : int, optional
         The order of the Taylor series expansion to use for small
-        ``|x|``. Default is 2.
+        ``|x|``. Must be an integer in the range [2, 20]. If not given,
+        the module-level default set by :func:`set_exprel_order` is used
+        (initially 5).
 
     Returns
     -------
@@ -369,7 +412,16 @@ def exprel(x, /, order: int = 2):
         Array([1.        , 1.7182819 , 0.63212055], dtype=float32)
     """
     require_jax("saiunit.math.exprel (custom JAX primitive)")
+    if order is None:
+        order = _current_order
+    if not isinstance(order, int) or order < 2 or order > 20:
+        raise ValueError(f"order must be an integer between 2 and 20, got {order}")
     x = jnp.asarray(x)
+    if not jnp.issubdtype(x.dtype, jnp.inexact):
+        # Promote integer/bool inputs: the implementation always produces a
+        # floating result, so binding with an integer aval would make the
+        # abstract eval (and hence JIT lowering) inconsistent with the impl.
+        x = x.astype(jnp.result_type(float, x.dtype))
     return exprel_p.bind(x, order=order)
 
 

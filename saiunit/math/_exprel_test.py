@@ -29,6 +29,8 @@ Tests cover:
 # import os
 # os.environ['JAX_ENABLE_X64'] = 'True'
 
+from math import factorial
+
 import brainstate  # type: ignore[import-untyped]
 import jax
 import jax.numpy as jnp
@@ -206,6 +208,90 @@ class TestExprelGradients:
         assert grads.shape == x.shape
         assert not jnp.any(jnp.isnan(grads))
         assert not jnp.any(jnp.isinf(grads))
+
+
+def _grad_reference(x):
+    """Float64 numpy reference for d/dx exprel.
+
+    Uses the direct expression ``((x-1)*exp(x)+1)/x**2`` for ``|x| > 0.01``
+    (no catastrophic cancellation there in float64) and a high-order Taylor
+    series below.
+    """
+    x = np.asarray(x, dtype=np.float64)
+    out = np.empty_like(x)
+    small = np.abs(x) <= 0.01
+    xs = x[small]
+    # f'(x) = sum_{n>=0} (n+1)/(n+2)! x^n, Horner with order 12
+    acc = np.zeros_like(xs)
+    for n in range(12, -1, -1):
+        acc = acc * xs + (n + 1) / factorial(n + 2)
+    out[small] = acc
+    xl = x[~small]
+    out[~small] = ((xl - 1.0) * np.exp(xl) + 1.0) / (xl * xl)
+    return out
+
+
+def _second_deriv_reference(x):
+    """Float64 numpy reference for d²/dx² exprel.
+
+    f''(x) = ((x² - 2x + 2)·exp(x) - 2) / x³ for ``|x| > 0.01``,
+    Taylor series ``sum_{m>=0} (m+1)(m+2)/(m+3)! x^m`` below (f''(0) = 1/3).
+    """
+    x = float(x)
+    if abs(x) <= 0.01:
+        acc = 0.0
+        for m in range(12, -1, -1):
+            acc = acc * x + (m + 1) * (m + 2) / factorial(m + 3)
+        return acc
+    return ((x * x - 2.0 * x + 2.0) * np.exp(x) - 2.0) / x ** 3
+
+
+class TestExprelGradientAccuracy:
+    """Regression tests for gradient accuracy just above the value-path Taylor threshold.
+
+    The value path switches from Taylor to ``expm1(x)/x`` at a tiny threshold
+    (1e-4 for float32). Reusing that threshold for the derivative is wrong:
+    the direct derivative ``((x-1)*exp(x)+1)/x²`` cancels catastrophically for
+    small ``|x|`` (numerator ≈ x²/2), e.g. float32 grad at 1.2e-4 evaluated to
+    0.0 instead of ~0.5. The derivative needs its own, much larger threshold.
+    """
+
+    def test_float32_grad_accuracy_sweep(self):
+        """float32 jax.grad(exprel) over ±logspace(-8, 1) vs float64 reference."""
+        xs = np.logspace(-8, 1, 200)
+        xs = np.concatenate([-xs[::-1], xs]).astype(np.float32)
+        grads = jax.vmap(jax.grad(exprel))(jnp.asarray(xs))
+        ref = _grad_reference(xs)
+        rel_err = np.abs(np.asarray(grads, dtype=np.float64) - ref) / np.abs(ref)
+        assert np.max(rel_err) < 1e-5, \
+            f"max rel err {np.max(rel_err):.3e} at x={xs[np.argmax(rel_err)]}"
+
+    def test_float64_grad_accuracy_spot_checks(self):
+        """float64 gradients above the old 1e-7 threshold must be accurate."""
+        with brainstate.environ.context(precision=64):
+            for val in [2e-7, 1e-6, 1e-4, 1e-3, 1e-2, 0.1, 1.0]:
+                for sign in (1.0, -1.0):
+                    x = jnp.float64(sign * val)
+                    grad = jax.grad(exprel)(x)
+                    ref = _grad_reference(np.array([sign * val]))[0]
+                    rel_err = abs(float(grad) - ref) / abs(ref)
+                    assert rel_err < 1e-12, \
+                        f"float64 grad at x={sign * val}: got {float(grad)}, " \
+                        f"expected {ref}, rel err {rel_err:.3e}"
+
+    def test_grad_of_grad_spot_checks(self):
+        """Second derivative spot checks; f''(0) = 1/3.
+
+        Previously broken: float32 grad-of-grad at 1.2e-4 evaluated to 8336.0.
+        """
+        for val in [0.0, 1.2e-4, 1e-3, 0.1, 1.0]:
+            d2 = jax.grad(jax.grad(exprel))(jnp.float32(val))
+            ref = _second_deriv_reference(val)
+            assert not jnp.isnan(d2), f"grad-of-grad at x={val} is NaN"
+            rel_err = abs(float(d2) - ref) / abs(ref)
+            assert rel_err < 1e-3, \
+                f"grad-of-grad at x={val}: got {float(d2)}, expected {ref}, " \
+                f"rel err {rel_err:.3e}"
 
 
 class TestExprelDtypes:
@@ -488,6 +574,30 @@ class TestExprelTaylorOrder:
         with pytest.raises(ValueError):
             set_exprel_order(3.5)  # Not an integer
 
+    def test_set_exprel_order_affects_default_call(self):
+        """set_exprel_order must change the order bound when order isn't given."""
+        original_order = get_exprel_order()
+        try:
+            set_exprel_order(8)
+            jaxpr = jax.make_jaxpr(exprel)(jnp.float32(0.1))
+            orders = [eqn.params['order'] for eqn in jaxpr.jaxpr.eqns
+                      if eqn.primitive.name == 'exprel']
+            assert orders == [8], f"expected bound order [8], got {orders}"
+
+            # Explicit order= must still take precedence.
+            jaxpr = jax.make_jaxpr(lambda v: exprel(v, order=3))(jnp.float32(0.1))
+            orders = [eqn.params['order'] for eqn in jaxpr.jaxpr.eqns
+                      if eqn.primitive.name == 'exprel']
+            assert orders == [3], f"expected bound order [3], got {orders}"
+        finally:
+            set_exprel_order(original_order)
+
+    def test_exprel_invalid_order_argument(self):
+        """exprel must validate order with the same rules as set_exprel_order."""
+        for bad_order in [-1, 0, 1, 21, 3.5]:
+            with pytest.raises(ValueError):
+                exprel(jnp.float32(0.0), order=bad_order)
+
     def test_higher_order_improves_accuracy(self):
         """Test that higher order improves accuracy."""
         original_order = get_exprel_order()
@@ -654,6 +764,24 @@ class TestExprelJIT:
         # Allow small tolerance for numerical differences between JIT and eager
         assert jnp.allclose(result, expected, rtol=1e-4), \
             f"JIT grad differs from eager grad: {result} vs {expected}"
+
+    def test_jit_integer_input(self):
+        """JIT-compiled exprel must accept integer input (promote to float)."""
+        x = jnp.arange(3)
+        eager = exprel(x)
+        jitted = jax.jit(exprel)(x)
+        assert jnp.issubdtype(jitted.dtype, jnp.floating)
+        assert jitted.dtype == eager.dtype
+        np.testing.assert_allclose(jitted, eager, rtol=1e-6)
+
+    def test_jit_bool_input(self):
+        """JIT-compiled exprel must accept bool input (promote to float)."""
+        x = jnp.array([True, False, True])
+        eager = exprel(x)
+        jitted = jax.jit(exprel)(x)
+        assert jnp.issubdtype(jitted.dtype, jnp.floating)
+        assert jitted.dtype == eager.dtype
+        np.testing.assert_allclose(jitted, eager, rtol=1e-6)
 
     def test_jit_multiple_calls(self):
         """Test that JIT produces consistent results across multiple calls."""

@@ -323,7 +323,7 @@ def _fun_keep_unit_sequence(
 @set_module_as('saiunit.math')
 def concatenate(
     arrays: Union[Sequence[ArrayLike], Sequence[Quantity]],
-    axis: Optional[int] = None,
+    axis: Optional[int] = 0,
     dtype: Optional[DTypeLike] = None,
     **kwargs,
 ) -> Union[Array, Quantity]:
@@ -337,6 +337,7 @@ def concatenate(
       to `axis` (the first, by default).
     axis : int, optional
       The axis along which the arrays will be joined.  Default is 0.
+      If ``None``, the arrays are flattened before being concatenated.
     dtype : dtype, optional
       If provided, the concatenation will be done using this dtype. Otherwise, the
       array with the highest precision will be used.
@@ -356,8 +357,14 @@ def concatenate(
       >>> b = [3, 4] * u.second
       >>> u.math.concatenate([a, b])
     """
-    if axis is not None:
-        kwargs["axis"] = axis
+    if len(arrays) == 0:
+        raise ValueError('need at least one array to concatenate')
+    if axis is None:
+        # numpy/jax semantics: ``axis=None`` flattens every input before
+        # concatenating them along axis 0.
+        arrays = [_maybe_flatten(a) for a in arrays]
+        axis = 0
+    kwargs["axis"] = axis
     if dtype is not None:
         kwargs["dtype"] = dtype
     return _fun_keep_unit_sequence('concatenate', arrays, **kwargs)
@@ -1291,6 +1298,25 @@ def repeat(
       >>> a = [1, 2, 3] * u.second
       >>> u.math.repeat(a, 2)
     """
+    if total_repeat_length is not None:
+        a = maybe_custom_array(a)
+        mantissa = a.mantissa if isinstance(a, Quantity) else a
+        xp = get_backend(mantissa)
+        if xp is not jnp:
+            # Backends other than JAX don't accept ``total_repeat_length``
+            # (it would be silently dropped). Emulate ``jnp.repeat``:
+            # truncate when too long, pad with the final element when short.
+            r = _dispatch_call(
+                _resolve_op('repeat', xp), (mantissa, repeats),
+                _strip_none_kwargs(dict(axis=axis, **kwargs)),
+            )
+            gather_axis = 0 if axis is None else axis
+            length = r.shape[gather_axis]
+            indices = xp.clip(xp.arange(total_repeat_length), 0, length - 1)
+            r = _resolve_op('take', xp)(r, indices, axis=gather_axis)
+            if isinstance(a, Quantity):
+                return Quantity(r, unit=a.unit)
+            return r
     return _fun_keep_unit_unary('repeat', a, repeats, axis=axis, total_repeat_length=total_repeat_length, **kwargs)
 
 
@@ -1547,7 +1573,7 @@ def max(
     a: Union[Array, Quantity],
     axis: Optional[int] = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float, Quantity]] = None,
+    initial: Union[ArrayLike, Quantity, None] = None,
     where: Optional[Array] = None,
     **kwargs,
 ) -> Union[Array, Quantity]:
@@ -1584,6 +1610,8 @@ def max(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.max(a)
     """
+    if initial is not None:
+        initial = Quantity(initial).in_unit(get_unit(a)).mantissa
     return _fun_keep_unit_unary(
         'max', a, axis=axis, keepdims=keepdims,
         initial=initial, where=where, **kwargs,
@@ -1595,7 +1623,7 @@ def min(
     a: Union[Array, Quantity],
     axis: Optional[int] = None,
     keepdims: bool = False,
-    initial: Optional[Union[int, float, Quantity]] = None,
+    initial: Union[ArrayLike, Quantity, None] = None,
     where: Optional[Array] = None,
     **kwargs,
 ) -> Union[Array, Quantity]:
@@ -1632,6 +1660,8 @@ def min(
       >>> a = [1, 2, 3] * u.meter
       >>> u.math.min(a)
     """
+    if initial is not None:
+        initial = Quantity(initial).in_unit(get_unit(a)).mantissa
     return _fun_keep_unit_unary(
         'min', a, axis=axis, keepdims=keepdims,
         initial=initial, where=where, **kwargs,
@@ -1807,9 +1837,11 @@ def unflatten(
       >>> a = [1, 2, 3, 4, 5, 6] * u.meter
       >>> u.math.unflatten(a, 0, (2, 3))
     """
-    if x.ndim <= axis:
+    if axis < 0:
+        axis += x.ndim
+    if axis < 0 or axis >= x.ndim:
         raise ValueError(
-            f'unflatten requires "axis" to be less than x.ndim, '
+            f'unflatten requires "axis" to be a valid dimension of x, '
             f'but got axis={axis} and x.ndim={x.ndim}.'
         )
     shape = x.shape
@@ -1824,12 +1856,12 @@ def remove_diag(x: ArrayLike | Quantity, **kwargs) -> Array | Quantity:
     Parameters
     ----------
     x: Array, Quantity
-      The matrix with the shape of `(M, N)`.
+      The square matrix with the shape of `(N, N)`.
 
     Returns
     -------
     arr: Array, Quantity
-      The matrix without diagonal which has the shape of `(M, N-1)`.
+      The matrix without diagonal which has the shape of `(N, N-1)`.
 
     Examples
     --------
@@ -1847,6 +1879,11 @@ def remove_diag(x: ArrayLike | Quantity, **kwargs) -> Array | Quantity:
 
     if x.ndim != 2:
         raise ValueError(f'Only support 2D matrix, while we got a {x.ndim}D array.')
+    if x.shape[0] != x.shape[1]:
+        raise ValueError(
+            f'remove_diag only supports a square matrix of shape (N, N), '
+            f'while we got shape {x.shape}.'
+        )
     xp = get_backend(x)
     mask = ~xp.eye(x.shape[0], x.shape[1], dtype=bool)
     masked = x[mask]  # type: ignore[index]
@@ -1899,7 +1936,24 @@ def choose(
       >>> choices = [jnp.array([1, 2, 3]), jnp.array([4, 5, 6])]
       >>> u.math.choose(jnp.array([0, 1, 0]), choices)
     """
-    return _fun_keep_unit_unary('choose', a, choices=choices, mode=mode, **kwargs)
+    # The result's unit comes from ``choices``; the index must be unitless.
+    a = maybe_custom_array(a)
+    if isinstance(a, Quantity):
+        if not a.unit.is_unitless:
+            raise TypeError(
+                f'choose requires "a" to be a plain integer index array, '
+                f'but got a Quantity with unit={a.unit}. '
+                f'Strip the unit from the index before passing it to choose.'
+            )
+        index = a.mantissa
+    else:
+        index = a
+    leaves = unit_scale_align_to_first(*maybe_custom_array_tree(list(choices)))
+    unit = leaves[0].unit
+    mantissas = [c.mantissa for c in leaves]
+    xp = get_backend(index, *mantissas)
+    r = _dispatch_call(_resolve_op('choose', xp), (index, mantissas), dict(mode=mode, **kwargs))
+    return maybe_decimal(Quantity(r, unit=unit))
 
 
 @set_module_as('saiunit.math')
@@ -2700,11 +2754,11 @@ def ptp(
 def average(
     x: Union[Quantity, ArrayLike],
     axis: Union[int, Sequence[int], None] = None,
-    weights: Union[ArrayLike, None] = None,
+    weights: Union[ArrayLike, Quantity, None] = None,
     returned: bool = False,
     keepdims: bool = False,
     **kwargs,
-) -> Union[Quantity, Array]:
+) -> Union[Quantity, Array, Tuple[Union[Quantity, Array], Array]]:
     """
     Return the weighted average of the array elements.
 
@@ -2756,6 +2810,25 @@ def average(
       >>> a = [1.0, 2.0, 3.0] * u.second
       >>> u.math.average(a)
     """
+    if isinstance(weights, Quantity):
+        # The weights' unit cancels between the numerator and denominator
+        # of a weighted average; only the mantissa matters.
+        weights = weights.mantissa
+    if returned:
+        # ``returned=True`` makes the backend return ``(average, sum_of_weights)``.
+        # Routing that tuple through ``_fun_keep_unit_unary`` would stamp the
+        # data unit onto both elements; dispatch on the mantissa and wrap
+        # only the average.
+        x = maybe_custom_array(x)
+        call_kwargs = _strip_none_kwargs(
+            dict(axis=axis, weights=weights, returned=True, keepdims=keepdims, **kwargs)
+        )
+        if isinstance(x, Quantity):
+            xp = get_backend(x.mantissa)
+            avg, sum_of_weights = _dispatch_call(_resolve_op('average', xp), (x.mantissa,), call_kwargs)
+            return Quantity(avg, unit=x.unit), sum_of_weights
+        xp = get_backend(x)
+        return _dispatch_call(_resolve_op('average', xp), (x,), call_kwargs)
     return _fun_keep_unit_unary('average', x, axis=axis, weights=weights, returned=returned, keepdims=keepdims, **kwargs)
 
 
@@ -3205,8 +3278,15 @@ def intersect1d(
     unit = UNITLESS
     if isinstance(ar1, Quantity):
         unit = ar1.unit
-    ar1 = ar1.in_unit(unit).mantissa if isinstance(ar1, Quantity) else ar1
-    ar2 = ar2.in_unit(unit).mantissa if isinstance(ar2, Quantity) else ar2
+        ar1 = ar1.in_unit(unit).mantissa
+    if isinstance(ar2, Quantity):
+        ar2 = ar2.in_unit(unit).mantissa
+    elif not unit.is_unitless:
+        # ``ar1`` carries a scaled unit while ``ar2`` is a plain array; a
+        # scaled-dimensionless unit (e.g. mV/volt) passes the dimension
+        # check above but the plain side still needs the scale applied
+        # before the mantissas are compared.
+        ar2 = Quantity(ar2).in_unit(unit).mantissa
     xp = get_backend(ar1, ar2)
     result = _resolve_op('intersect1d', xp)(ar1, ar2, assume_unique=assume_unique, return_indices=return_indices, **kwargs)
     if return_indices:
@@ -3300,6 +3380,12 @@ def nan_to_num(
         r = _call(x.mantissa, xp)
         return r if x_unit.is_unitless else Quantity(r, unit=x_unit)
     else:
+        for name, val in (('nan', nan), ('posinf', posinf), ('neginf', neginf)):
+            if isinstance(val, Quantity):
+                raise TypeError(
+                    f'nan_to_num requires "{name}" to be dimensionless when x is a '
+                    f'plain array, but got a Quantity with unit={val.unit}.'
+                )
         nan_v = 0.0 if nan is None else nan
         posinf_v = posinf
         neginf_v = neginf
@@ -4181,12 +4267,14 @@ def interp(
     """
     x_unit = get_unit(x)
     fp, y_unit = split_mantissa_unit(fp)
+    # ``left`` / ``right`` are y-values, so they convert with fp's unit;
+    # ``period`` applies to the x-coordinates and keeps the x unit.
     x, xp, fp, left, right, period = (
         x.mantissa if isinstance(x, Quantity) else x,
         Quantity(xp).in_unit(x_unit).mantissa,
         fp,
-        Quantity(left).in_unit(x_unit).mantissa if left is not None else left,
-        Quantity(right).in_unit(x_unit).mantissa if right is not None else right,
+        Quantity(left).in_unit(y_unit).mantissa if left is not None else left,
+        Quantity(right).in_unit(y_unit).mantissa if right is not None else right,
         Quantity(period).in_unit(x_unit).mantissa if period is not None else period
     )
     backend = get_backend(x, xp, fp)
@@ -4237,9 +4325,9 @@ def clip(
 @set_module_as('saiunit.math')
 def histogram(
     x: Union[Array, Quantity],
-    bins: ArrayLike = 10,  # type: ignore[assignment]
+    bins: ArrayLike | Quantity = 10,  # type: ignore[assignment]
     range: Optional[Sequence[ArrayLike | Quantity]] = None,
-    weights: Optional[ArrayLike] = None,
+    weights: Optional[ArrayLike | Quantity] = None,
     density: Optional[bool] = None,
     **kwargs,
 ) -> Tuple[Array, Array | Quantity]:
@@ -4300,6 +4388,10 @@ def histogram(
     if isinstance(x, Quantity):
         unit = x.unit
         x = x.mantissa  # type: ignore[assignment]
+    if isinstance(bins, Quantity):
+        bins = bins.in_unit(unit).mantissa
+    if isinstance(weights, Quantity):
+        weights = weights.mantissa
     if range is not None:
         range = (
             Quantity(range[0]).in_unit(unit).mantissa,
@@ -4559,7 +4651,7 @@ def take(
 def select(
     condlist: list[Union[ArrayLike]],
     choicelist: Union[Quantity, ArrayLike],
-    default: int = 0,
+    default: Union[Quantity, ArrayLike, int, float] = 0,
     **kwargs,
 ) -> Union[Quantity, Array]:
     """
@@ -4606,6 +4698,17 @@ def select(
     leaves, treedef = tree.flatten(choicelist, is_leaf=lambda x: isinstance(x, Quantity))
     leaves = unit_scale_align_to_first(*leaves)
     unit = leaves[0].unit
+    if isinstance(default, Quantity):
+        default = default.in_unit(unit).mantissa
+    elif not unit.is_unitless:
+        # ``0`` is jnp.select's documented default and is unit-neutral; any
+        # other plain default would silently acquire the choicelist's unit.
+        if not (isinstance(default, (int, float)) and default == 0):
+            raise TypeError(
+                f'select requires "default" to carry the same unit as "choicelist" '
+                f'(unit={unit}) when the choices are Quantities; a plain default '
+                f'of 0 is allowed. Got default={default!r}.'
+            )
     mantissas = [x.mantissa for x in leaves]
     xp = get_backend(*mantissas)
     new_choicelist = treedef.unflatten(mantissas)  # type: ignore[attr-defined]
@@ -5100,15 +5203,13 @@ def gather(input: Array | Quantity, dim: int, index: Array, **kwargs):
             # Use the provided index for the gather dimension
             indices.append(index)
         else:
-            # Create meshgrid indices for other dimensions
+            # Create meshgrid indices for other dimensions, ranging over the
+            # extent of ``index`` (which may be smaller than ``input``).
             shape = [1] * ndim
-            shape[i] = idx_shape[i] if i < len(idx_shape) else input.shape[i]
-            idx = xp.arange(input.shape[i], **kwargs).reshape(shape)
+            shape[i] = idx_shape[i]
+            idx = xp.arange(idx_shape[i]).reshape(shape)
             # Broadcast to match index shape
-            broadcast_shape = list(idx_shape)
-            if i < len(idx_shape):
-                broadcast_shape[i] = input.shape[i]
-            indices.append(xp.broadcast_to(idx, idx_shape, **kwargs))
+            indices.append(xp.broadcast_to(idx, idx_shape))
 
     result = input[tuple(indices)]
     if unit.is_unitless:

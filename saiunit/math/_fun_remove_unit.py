@@ -14,6 +14,7 @@
 # ==============================================================================
 from __future__ import annotations
 
+import functools
 from typing import (Union, Optional, Sequence)
 
 import numpy as np
@@ -24,6 +25,7 @@ from saiunit._typing import Array, ArrayLike
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
 from saiunit._base_quantity import Quantity
+from saiunit._base_unit import UNITLESS
 from ._fun_keep_unit import _resolve_op, _strip_none_kwargs, _dispatch_call
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 
@@ -83,7 +85,12 @@ def get_promote_dtypes(
     # dtype-like inputs (unlike ``np.promote_types`` which is binary).
     leaves, _ = tree.flatten(args)
     if HAS_JAX:
-        return jnp.promote_types(*leaves, **kwargs)  # type: ignore[return-value]
+        # ``jnp.promote_types`` is binary; reduce over the leaves so any
+        # number of inputs works (it is preferred over ``jnp.result_type``
+        # because it does not canonicalize dtypes under x64-disabled mode).
+        if len(leaves) == 1:
+            return jnp.promote_types(leaves[0], leaves[0])  # type: ignore[return-value]
+        return functools.reduce(jnp.promote_types, leaves)  # type: ignore[return-value]
     return np.result_type(*leaves, **kwargs)  # type: ignore[return-value]
 
 
@@ -917,13 +924,11 @@ def isclose(
                 f'Either pass a Quantity for x with matching units, or strip the unit from y.'
             )
         y = y.mantissa
-    if rtol is None:
-        rtol = 1e-5 * unit
-    if atol is None:
-        atol = 1e-8 * unit
-    atol = Quantity(atol).in_unit(unit).mantissa  # type: ignore[assignment]
-    rtol = Quantity(rtol).in_unit(unit).mantissa  # type: ignore[assignment]
-    return _fun_logic_binary('isclose', x, y, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)
+    # rtol multiplies |y| so it is mathematically dimensionless; atol is
+    # compared against the data and therefore carries the data's unit.
+    rtol_val = 1e-5 if rtol is None else Quantity(rtol).in_unit(UNITLESS).mantissa
+    atol_val = 1e-8 if atol is None else Quantity(atol).in_unit(unit).mantissa
+    return _fun_logic_binary('isclose', x, y, rtol=rtol_val, atol=atol_val, equal_nan=equal_nan, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1004,14 +1009,12 @@ def allclose(
     else:
         x_val = x
         y_val = y
-    if rtol is None:
-        rtol = 1e-5 * unit
-    if atol is None:
-        atol = 1e-8 * unit
-    rtol = Quantity(rtol).in_unit(unit).mantissa  # type: ignore[assignment]
-    atol = Quantity(atol).in_unit(unit).mantissa  # type: ignore[assignment]
+    # rtol multiplies |y| so it is mathematically dimensionless; atol is
+    # compared against the data and therefore carries the data's unit.
+    rtol_val = 1e-5 if rtol is None else Quantity(rtol).in_unit(UNITLESS).mantissa
+    atol_val = 1e-8 if atol is None else Quantity(atol).in_unit(unit).mantissa
     xp = get_backend(x_val, y_val)
-    return xp.allclose(x_val, y_val, rtol=rtol, atol=atol, equal_nan=equal_nan, **kwargs)  # type: ignore[arg-type]
+    return xp.allclose(x_val, y_val, rtol=rtol_val, atol=atol_val, equal_nan=equal_nan, **kwargs)  # type: ignore[arg-type]
 
 
 @set_module_as('saiunit.math')
@@ -1482,15 +1485,18 @@ def flatnonzero(
         >>> u.math.flatnonzero(jnp.array([0, 1, 0, 2]), size=2)
         Array([1, 3], dtype=int32)
     """
-    a = maybe_custom_array(a)
     fill_value = maybe_custom_array(fill_value)
-    a_unit = get_unit(a)
+    if isinstance(fill_value, Quantity):
+        raise TypeError(
+            f'flatnonzero returns an index array, so "fill_value" must be a plain '
+            f'(unitless) value, but got a Quantity with unit={fill_value.unit}.'
+        )
     # ``size`` and ``fill_value`` are JAX-only; suppress them when on NumPy.
     extra = {}
     if size is not None:
         extra['size'] = size
     if fill_value is not None:
-        extra['fill_value'] = Quantity(fill_value).in_unit(a_unit).mantissa  # type: ignore[assignment]
+        extra['fill_value'] = fill_value  # type: ignore[assignment]
     return _fun_remove_unit_unary('flatnonzero', a, **extra, **kwargs)
 
 

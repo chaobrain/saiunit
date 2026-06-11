@@ -771,3 +771,68 @@ def test_frexp_with_unit_to_scale():
     jm, je = jnp.frexp(jnp.array([1.0, 2.0, 4.0]))
     assert np.allclose(m, jm)
     assert np.allclose(e, je)
+
+
+def test_ldexp_scaled_dimensionless_x():
+    # A scale-carrying dimensionless unit (mV / volt = 1e-3) must be
+    # applied, not silently dropped.
+    x = u.Quantity(1., unit=u.mV / u.volt)
+    result = u.math.ldexp(x, 2)
+    expected = jnp.ldexp(0.001, 2)
+    assert np.allclose(result, expected)
+
+
+def test_ldexp_quantity_exponent():
+    result = u.math.ldexp(jnp.array([1.0]), u.Quantity(2))
+    expected = jnp.ldexp(jnp.array([1.0]), 2)
+    assert np.allclose(result, expected)
+
+
+def test_ldexp_scaled_dimensionless_exponent():
+    # mV / volt carries a 1e-3 scale: 2000 * 1e-3 == 2.
+    y = u.Quantity(2000., unit=u.mV / u.volt)
+    result = u.math.ldexp(jnp.array([1.0]), y)
+    expected = jnp.ldexp(jnp.array([1.0]), 2)
+    assert np.allclose(result, expected)
+
+
+def test_ldexp_scaled_dimensionless_exponent_array():
+    y = u.Quantity(jnp.array([1000., 2000.]), unit=u.mV / u.volt)
+    result = u.math.ldexp(jnp.array([1.0, 1.0]), y)
+    expected = jnp.ldexp(jnp.array([1.0, 1.0]), jnp.array([1, 2]))
+    assert np.allclose(result, expected)
+
+
+def test_ldexp_dimensionful_exponent_raises():
+    with pytest.raises(TypeError, match='requires a dimensionless "y"'):
+        u.math.ldexp(jnp.array([1.0]), 2 * u.meter)
+
+
+def test_ldexp_with_unit_to_scale():
+    x = jnp.array([1.0, 2.0]) * u.meter
+    result = u.math.ldexp(x, 2, unit_to_scale=u.cm)
+    expected = jnp.ldexp(jnp.array([100.0, 200.0]), 2)
+    assert np.allclose(result, expected)
+
+
+def test_ldexp_unit_to_scale_mismatch_raises():
+    x = jnp.array([1.0]) * u.meter
+    with pytest.raises(u.UnitMismatchError):
+        u.math.ldexp(x, 2, unit_to_scale=u.second)
+
+
+def test_ldexp_unit_to_scale_without_quantity_raises():
+    with pytest.raises(TypeError, match='received "unit_to_scale"'):
+        u.math.ldexp(jnp.array([1.0]), 2, unit_to_scale=u.meter)
+
+
+def test_binary_unit_to_scale_without_quantity_raises():
+    with pytest.raises(TypeError, match='received "unit_to_scale"'):
+        u.math.hypot(jnp.array([3.0]), jnp.array([4.0]), unit_to_scale=u.meter)
+
+
+def test_binary_unit_to_scale_with_only_y_quantity():
+    # unit_to_scale must still be accepted when only one input is a Quantity.
+    y = jnp.array([4.0]) * u.meter
+    result = u.math.hypot(jnp.array([3.0]), y, unit_to_scale=u.meter)
+    assert np.allclose(result, 5.0)
