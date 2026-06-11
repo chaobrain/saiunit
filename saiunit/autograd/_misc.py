@@ -20,7 +20,20 @@ import operator
 from functools import partial
 from typing import Any, Callable, Sequence
 
+import jax
+
 from .._compatible_import import concrete_or_error
+
+
+def _is_float0(x: Any) -> bool:
+    """Return ``True`` if ``x`` is a JAX ``float0`` array.
+
+    ``float0`` is the (void) tangent dtype JAX produces for the gradient of
+    an integer- or boolean-valued input under ``allow_int=True``. Such leaves
+    must not be wrapped in a :class:`~saiunit.Quantity`, which would yield a
+    void-dtype quantity that crashes on any arithmetic.
+    """
+    return getattr(x, "dtype", None) == jax.dtypes.float0
 
 
 def _ensure_index(x: Any) -> int | tuple[int, ...]:

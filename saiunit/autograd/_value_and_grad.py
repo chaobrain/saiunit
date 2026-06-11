@@ -24,7 +24,7 @@ from saiunit._base_getters import get_mantissa, get_unit, maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
 from saiunit._misc import maybe_custom_array_tree
-from ._misc import _ensure_index
+from ._misc import _ensure_index, _check_callable, _is_float0
 
 __all__ = [
     'value_and_grad',
@@ -107,11 +107,18 @@ def value_and_grad(
         3.0 * msecond
     """
 
+    _check_callable(fun)
     argnums = concrete_or_error(_ensure_index, argnums)
 
     def fun_return_unitless_loss(*args, **kwargs):
         if has_aux:
-            loss, aux = fun(*args, **kwargs)
+            result = fun(*args, **kwargs)
+            if not (isinstance(result, (tuple, list)) and len(result) == 2):
+                raise TypeError(
+                    "value_and_grad with has_aux=True requires fun to return a "
+                    f"(loss, aux) pair, but got {type(result)}."
+                )
+            loss, aux = result
         else:
             loss = fun(*args, **kwargs)
             aux = None
@@ -135,10 +142,17 @@ def value_and_grad(
         # gradient Quantity conversion
         args_to_grad = jax.tree.map(lambda i: args[i], argnums)
         loss_unit = get_unit(loss)
+
+        def _to_grad_quantity(arg, grads):
+            mantissa = get_mantissa(grads)
+            if _is_float0(mantissa):
+                # Gradient w.r.t. an integer/boolean input (allow_int=True):
+                # keep float0 instead of building a void-dtype Quantity.
+                return mantissa
+            return maybe_decimal(Quantity(mantissa, unit=loss_unit / get_unit(arg)))
+
         gradient = jax.tree.map(
-            lambda arg, grads: maybe_decimal(
-                Quantity(get_mantissa(grads), unit=loss_unit / get_unit(arg))
-            ),
+            _to_grad_quantity,
             args_to_grad,
             gradient,
             is_leaf=lambda x: isinstance(x, Quantity)
