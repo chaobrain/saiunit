@@ -162,7 +162,7 @@ class Dimension:
 
         This property memoizes the hash value for efficiency. Once calculated,
         the hash value is stored in the `_hash` attribute for future access.
-        The hash is based on the binary representation of the dimensions array.
+        The hash is based on the values of the dimension exponents.
 
         Returns
         -------
@@ -176,7 +176,12 @@ class Dimension:
         their use as dictionary keys and in sets.
         """
         if self._hash is None:
-            self._hash = hash(self._dims.tobytes())
+            # Hash by *value*, not by byte representation: ``tobytes()``
+            # differs between dtypes (int vs float dims) and between 0.0
+            # and -0.0, while ``__eq__`` (np.array_equal) treats those as
+            # equal.  Python scalar hashing guarantees hash(1) == hash(1.0)
+            # and hash(0.0) == hash(-0.0), keeping the hash/eq contract.
+            self._hash = hash(tuple(self._dims.tolist()))
         return self._hash
 
     @hash.setter
@@ -463,6 +468,14 @@ class Dimension:
         value = np.array(value)
         if value.size > 1:
             raise TypeError("Too many exponents")
+        if value.size == 0:
+            raise TypeError("Expected a scalar exponent, got an empty array")
+        if not np.all(np.isfinite(value)):
+            # A NaN/inf exponent would create NaN dimension entries; NaN
+            # compares unequal to itself, so every such Dimension would
+            # miss the singleton cache, growing it unboundedly and
+            # breaking the ``is``-identity the library relies on.
+            raise ValueError(f"Dimension exponent must be finite, got {value!r}")
         return get_or_create_dimension(self._dims * value)
 
     def __imul__(self, value):  # type: ignore[misc]
@@ -563,17 +576,19 @@ class Dimension:
         -------
         bool
             True if the dimensions are equal (have the same exponents),
-            False otherwise or if the provided value is not a Dimension object.
+            False otherwise.
 
         Notes
         -----
         The comparison uses ``numpy.array_equal``. Equal Dimensions are
         produced by ``get_or_create_dimension`` from the same exponent tuple,
         so callers that round their exponents identically observe equal
-        instances. If value is not a Dimension object, returns False.
+        instances. If value is not a Dimension object, ``NotImplemented``
+        is returned so that the other operand's reflected comparison is
+        attempted before Python falls back to ``False``.
         """
         if not isinstance(value, Dimension):
-            return False
+            return NotImplemented
         try:
             return np.array_equal(self._dims, value._dims)
         except (AttributeError, _TracerArrayConversionError):
@@ -597,7 +612,10 @@ class Dimension:
         bool
             True if the dimensions are not equal, False otherwise.
         """
-        return not self.__eq__(value)
+        result = self.__eq__(value)
+        if result is NotImplemented:
+            return result
+        return not result
 
     # MAKE DIMENSION PICKABLE #
     def __getstate__(self):
@@ -750,6 +768,11 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
     if len(args):
         if len(args) != 1:
             raise TypeError(f"get_or_create_dimension() takes at most 1 positional argument, got {len(args)}")
+        if kwds:
+            raise TypeError(
+                "get_or_create_dimension() accepts either a positional sequence "
+                "or keyword arguments, not both"
+            )
         # initialisation by list
         dims = args[0]
         try:
@@ -764,9 +787,20 @@ def get_or_create_dimension(*args, **kwds) -> Dimension:
         dims = [0, 0, 0, 0, 0, 0, 0]
         for k in kwds:
             # _dim2index stores the index of the dimension with name 'k'
-            dims[_dim2index[k]] = kwds[k]
+            try:
+                index = _dim2index[k]
+            except KeyError:
+                raise TypeError(
+                    f"Unknown dimension name {k!r}. Valid names are: "
+                    f"{sorted(_dim2index)}"
+                ) from None
+            dims[index] = kwds[k]
 
     dims = np.asarray(dims)
+    if not np.issubdtype(dims.dtype, np.number):
+        raise TypeError(
+            f"Dimension exponents must be numeric, got dtype {dims.dtype!r}"
+        )
     key = tuple(dims)
     cached = _dimension_cache.get(key)
     if cached is not None:

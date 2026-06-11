@@ -23,7 +23,6 @@ from saiunit._base_unit import (
     UNITLESS,
     Unit,
     _assert_same_base,
-    _find_a_name,
     _find_standard_unit,
     _fmt_exp,
     _format_display_parts,
@@ -335,10 +334,18 @@ class TestUnitArithmetic:
         result = u1 / u2
         assert result.dim == d1 / d2
 
-    def test_div_by_non_unit_raises(self):
+    def test_div_by_scalar_returns_quantity(self):
+        # Unit / number mirrors Unit * number: ``mV / 2`` == 0.5 mV.
+        from saiunit._base_quantity import Quantity
+        u = Unit()
+        result = u / 4
+        assert isinstance(result, Quantity)
+        assert result.mantissa == 0.25
+
+    def test_div_by_dimension_raises(self):
         u = Unit()
         with pytest.raises(TypeError, match="cannot divide"):
-            u / 3
+            u / DIMENSIONLESS
 
     def test_rdiv_scalar(self):
         from saiunit._base_quantity import Quantity
@@ -660,7 +667,7 @@ class TestDisplayParts:
         _assert_same_base(u1, u2)  # should not raise
 
 # =========================================================================
-# _find_standard_unit / _find_a_name / add_standard_unit
+# _find_standard_unit / add_standard_unit
 # =========================================================================
 
 class TestStandardUnitLookup:
@@ -674,11 +681,6 @@ class TestStandardUnitLookup:
         name, disp, is_full, is_dimless = _find_standard_unit(d, "non-numeric", 0, 1.)
         assert name is None
         assert not is_dimless
-
-    def test_find_a_name_dimensionless(self):
-        name, is_full = _find_a_name(DIMENSIONLESS, 10., 0, 1.)
-        assert "Unit" in name
-        assert not is_full
 
     def test_add_standard_unit_registers(self):
         from saiunit._base_unit import _standard_unit_aliases, _unit_name_registry, _ambiguous_keys
@@ -1491,9 +1493,10 @@ class TestParseUnit:
     # --- user alias does not hijack canonical display (#6) ---
     def test_user_alias_does_not_hijack_canonical(self):
         """A user-registered alias must not displace the built-in canonical."""
-        before = repr(u.metre.factorless())
+        key = (u.metre.dim, 0, 10., 1.)
+        before = repr(_standard_units[key])
         add_standard_unit(Unit(u.metre.dim, name="aaaa_meter", dispname="aaaa_m"))
-        after = repr(u.metre.factorless())
+        after = repr(_standard_units[key])
         assert before == after, (
             f"User alias hijacked canonical: {before!r} -> {after!r}"
         )
@@ -1511,3 +1514,146 @@ class TestParseUnit:
         anon = Unit(u.joule.dim, factor=4.184)
         parsed = parse_unit(repr(anon))
         assert parsed == anon
+
+
+# =========================================================================
+# Regression tests: audited Unit API fixes (2026-06)
+# =========================================================================
+
+class TestFactorlessIdentity:
+    def test_becquerel_keeps_identity(self):
+        # The registry prefers hertz for s^-1; factorless() must not
+        # substitute it when the factor is already 1.
+        assert u.becquerel.factorless() is u.becquerel
+
+    def test_steradian_keeps_identity(self):
+        assert u.steradian.factorless() is u.steradian
+
+    def test_unitless_stays_unitless(self):
+        assert UNITLESS.factorless() is UNITLESS
+        assert str(UNITLESS.factorless()) == '1'
+
+    def test_factor_unit_still_resolves_standard(self):
+        # Units with factor != 1 still resolve to the registered
+        # factor-1 standard unit for the same dimension/scale.
+        assert u.degree.factorless().name == 'radian'
+
+
+class TestUnitQuantityEqSymmetry:
+    def test_eq_symmetric(self):
+        q = 1. * u.mV
+        assert bool(u.mV == q) is True
+        assert bool(q == u.mV) is True
+
+    def test_ne_symmetric(self):
+        q = 1. * u.mV
+        assert bool(u.mV != q) is False
+        assert bool(q != u.mV) is False
+
+    def test_eq_non_unit_returns_notimplemented(self):
+        assert u.mV.__eq__(5) is NotImplemented
+        assert (u.mV == 5) is False
+        assert (u.mV != 5) is True
+
+
+class TestUnitConstructorValidation:
+    def test_nan_scale_rejected(self):
+        with pytest.raises(ValueError, match="scale must be a finite"):
+            Unit(u.volt.dim, scale=float('nan'))
+
+    def test_inf_scale_rejected(self):
+        with pytest.raises(ValueError, match="scale must be a finite"):
+            Unit(u.volt.dim, scale=float('inf'))
+
+    def test_zero_factor_rejected(self):
+        with pytest.raises(ValueError, match="factor must be positive"):
+            Unit(u.volt.dim, factor=0.)
+
+    def test_negative_factor_rejected(self):
+        with pytest.raises(ValueError, match="factor must be positive"):
+            Unit(u.volt.dim, factor=-3.)
+
+    def test_complex_scale_rejected(self):
+        with pytest.raises(TypeError, match="real"):
+            Unit(u.volt.dim, scale=1 + 2j)
+
+    def test_numpy_scalar_scale_normalised(self):
+        # np.int64 is not an ``int`` instance and previously skipped
+        # standard-unit registration silently; it must normalise to int.
+        # (np.float64 already subclasses ``float`` and passes through.)
+        w = Unit(u.volt.dim, scale=np.int64(3))
+        assert type(w.scale) is int
+        w2 = Unit(u.volt.dim, scale=np.float64(1.5))
+        assert isinstance(w2.scale, float)
+
+    def test_numpy_int_scale_registers_as_standard_alias(self):
+        from saiunit._base_unit import _standard_unit_aliases
+        w = Unit.create(u.joule.dim, 'testnpscale', 'tnps', scale=np.int64(3))
+        key = (u.joule.dim, 3, 10., 1.)
+        assert any(a.name == 'testnpscale' for a in _standard_unit_aliases[key])
+
+    def test_string_ctor_rejects_is_fullname(self):
+        with pytest.raises(TypeError, match="is_fullname"):
+            Unit("mV", is_fullname=False)
+
+
+class TestUnitPowGuards:
+    def test_pow_non_finite_raises_and_cache_stable(self):
+        from saiunit._base_dimension import _dimension_cache
+        n0 = len(_dimension_cache)
+        with pytest.raises(ValueError, match="finite"):
+            u.mV ** float('inf')
+        with pytest.raises(ValueError, match="finite"):
+            u.mV ** float('nan')
+        assert len(_dimension_cache) == n0
+
+
+class TestUnitScalarDivision:
+    def test_unit_div_scalar(self):
+        # mV / 2 mirrors mV * 0.5 (and 2 / mV, which already worked).
+        result = u.mV / 2
+        assert isinstance(result, Quantity)
+        assert result.unit == u.mV
+        assert result.mantissa == 0.5
+
+    def test_unit_div_quantity(self):
+        result = u.mV / (2. * u.ms)
+        assert isinstance(result, Quantity)
+        assert result.mantissa == 0.5
+        assert result.unit == u.mV / u.ms
+
+
+class TestAliasDedup:
+    def test_repeated_equal_registration_does_not_grow_aliases(self):
+        from saiunit._base_unit import _standard_unit_aliases
+        key = (u.volt.dim, 0, 10., 1.)
+        before = len(_standard_unit_aliases[key])
+        # Re-registering an equal (same name/dispname) unit is a no-op.
+        Unit.create_scaled_unit(u.volt, '')
+        Unit.create_scaled_unit(u.volt, '')
+        after = len(_standard_unit_aliases[key])
+        assert before == after
+
+
+class TestParserImprovements:
+    def test_parse_no_space_division(self):
+        assert parse_unit("J/kg") == u.joule / u.kilogram
+
+    def test_parse_no_space_product(self):
+        assert parse_unit("mS*nA") == u.mS * u.nA
+
+    def test_parse_chained_division_left_associative(self):
+        assert parse_unit("mV / s / s") == u.mV / u.second / u.second
+
+    def test_parse_division_by_parenthesised_products(self):
+        assert parse_unit("m / (s) * (A)") == u.metre / (u.second * u.amp)
+
+    def test_parse_negative_number_rejected(self):
+        with pytest.raises(ValueError, match="positive"):
+            parse_unit("-3")
+
+
+class TestMagnitudeOverflow:
+    def test_huge_scale_magnitude_is_inf(self):
+        w = Unit(u.volt.dim, scale=400)
+        assert w.magnitude == float('inf')
