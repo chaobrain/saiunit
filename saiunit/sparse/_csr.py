@@ -31,7 +31,7 @@ from saiunit._base_getters import (
 )
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
-from saiunit._sparse_base import SparseMatrix, _same_sparsity_pattern
+from saiunit._sparse_base import SparseMatrix, _HashableIndex, _same_sparsity_pattern
 from saiunit._typing import Array, DTypeLike
 from saiunit.math._fun_array_creation import asarray
 from saiunit.math._fun_keep_unit import promote_dtypes
@@ -87,6 +87,13 @@ class CSR(SparseMatrix):
     csr_fromdense : Create a CSR matrix from a dense array.
     csr_todense : Convert a CSR matrix to a dense array.
 
+    Notes
+    -----
+    Element-wise operations (``+``, ``-``, ``*``, ``/``, ``%`` and their
+    reflected variants) apply ONLY to the explicitly stored entries;
+    implicit zeros are unaffected. For example, ``csr + 2`` does NOT add 2
+    to absent entries, unlike dense arrays.
+
     Examples
     --------
     .. code-block:: python
@@ -116,8 +123,6 @@ class CSR(SparseMatrix):
 
     @classmethod
     def fromdense(cls, mat, *, nse=None, index_dtype=np.int32):
-        from saiunit._jax_guard import require_jax_backend
-        require_jax_backend("CSR.fromdense", mat)
         if nse is None:
             nse = (get_mantissa(mat) != 0).sum()
         return csr_fromdense(mat, nse=nse, index_dtype=index_dtype)
@@ -233,7 +238,10 @@ class CSR(SparseMatrix):
         return CSR((self.data.__pos__(), self.indices, self.indptr), shape=self.shape)
 
     def _binary_op(self, other, op):
+        """Apply ``op`` to the explicitly stored entries only (see class Notes)."""
         if isinstance(other, CSR):
+            if self.shape != other.shape:
+                raise ValueError(f"shape mismatch: {self.shape} vs {other.shape}")
             if _same_sparsity_pattern(self.indices, other.indices) and _same_sparsity_pattern(self.indptr, other.indptr):
                 return CSR(
                     (op(self.data, other.data),
@@ -246,6 +254,7 @@ class CSR(SparseMatrix):
 
         other = asarray(other)
         if other.size == 1:
+            other = other.reshape(())
             return CSR(
                 (op(self.data, other), self.indices, self.indptr),
                 shape=self.shape
@@ -263,7 +272,10 @@ class CSR(SparseMatrix):
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
     def _binary_rop(self, other, op):
+        """Apply ``op`` to the explicitly stored entries only (see class Notes)."""
         if isinstance(other, CSR):
+            if self.shape != other.shape:
+                raise ValueError(f"shape mismatch: {self.shape} vs {other.shape}")
             if _same_sparsity_pattern(self.indices, other.indices) and _same_sparsity_pattern(self.indptr, other.indptr):
                 return CSR(
                     (op(other.data, self.data),
@@ -276,6 +288,7 @@ class CSR(SparseMatrix):
 
         other = asarray(other)
         if other.size == 1:
+            other = other.reshape(())
             return CSR(
                 (op(other, self.data),
                  self.indices,
@@ -383,7 +396,11 @@ class CSR(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def tree_flatten(self):
-        return (self.data,), {"shape": self.shape, "indices": self.indices, "indptr": self.indptr}
+        return (self.data,), {
+            "shape": self.shape,
+            "indices": _HashableIndex(self.indices),
+            "indptr": _HashableIndex(self.indptr),
+        }
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
@@ -392,8 +409,8 @@ class CSR(SparseMatrix):
         if aux_data.keys() != {'shape', 'indices', 'indptr'}:
             raise ValueError(f"CSR.tree_unflatten: invalid {aux_data=}")
         obj.shape = aux_data['shape']
-        obj.indices = aux_data['indices']
-        obj.indptr = aux_data['indptr']
+        obj.indices = aux_data['indices'].value
+        obj.indptr = aux_data['indptr'].value
         return obj
 
 
@@ -434,6 +451,13 @@ class CSC(SparseMatrix):
     CSR : Unit-aware Compressed Sparse Row matrix.
     csc_fromdense : Create a CSC matrix from a dense array.
     csc_todense : Convert a CSC matrix to a dense array.
+
+    Notes
+    -----
+    Element-wise operations (``+``, ``-``, ``*``, ``/``, ``%`` and their
+    reflected variants) apply ONLY to the explicitly stored entries;
+    implicit zeros are unaffected. For example, ``csc + 2`` does NOT add 2
+    to absent entries, unlike dense arrays.
 
     Examples
     --------
@@ -577,7 +601,10 @@ class CSC(SparseMatrix):
         return CSC((self.data.__pos__(), self.indices, self.indptr), shape=self.shape)
 
     def _binary_op(self, other, op):
+        """Apply ``op`` to the explicitly stored entries only (see class Notes)."""
         if isinstance(other, CSC):
+            if self.shape != other.shape:
+                raise ValueError(f"shape mismatch: {self.shape} vs {other.shape}")
             if _same_sparsity_pattern(self.indices, other.indices) and _same_sparsity_pattern(self.indptr, other.indptr):
                 return CSC(
                     (op(self.data, other.data),
@@ -590,6 +617,7 @@ class CSC(SparseMatrix):
 
         other = asarray(other)
         if other.size == 1:
+            other = other.reshape(())
             return CSC(
                 (op(self.data, other),
                  self.indices,
@@ -609,7 +637,10 @@ class CSC(SparseMatrix):
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
     def _binary_rop(self, other, op):
+        """Apply ``op`` to the explicitly stored entries only (see class Notes)."""
         if isinstance(other, CSC):
+            if self.shape != other.shape:
+                raise ValueError(f"shape mismatch: {self.shape} vs {other.shape}")
             if _same_sparsity_pattern(self.indices, other.indices) and _same_sparsity_pattern(self.indptr, other.indptr):
                 return CSC(
                     (op(other.data, self.data),
@@ -622,6 +653,7 @@ class CSC(SparseMatrix):
 
         other = asarray(other)
         if other.size == 1:
+            other = other.reshape(())
             return CSC(
                 (op(other, self.data),
                  self.indices,
@@ -730,7 +762,11 @@ class CSC(SparseMatrix):
             raise NotImplementedError(f"matmul with object of shape {other.shape}")
 
     def tree_flatten(self):
-        return (self.data,), {"shape": self.shape, "indices": self.indices, "indptr": self.indptr}
+        return (self.data,), {
+            "shape": self.shape,
+            "indices": _HashableIndex(self.indices),
+            "indptr": _HashableIndex(self.indptr),
+        }
 
     @classmethod
     def tree_unflatten(cls, aux_data, children):
@@ -739,8 +775,8 @@ class CSC(SparseMatrix):
         if aux_data.keys() != {'shape', 'indices', 'indptr'}:
             raise ValueError(f"CSC.tree_unflatten: invalid {aux_data=}")
         obj.shape = aux_data['shape']
-        obj.indices = aux_data['indices']
-        obj.indptr = aux_data['indptr']
+        obj.indices = aux_data['indices'].value
+        obj.indptr = aux_data['indptr'].value
         return obj
 
 
@@ -787,6 +823,8 @@ def csr_fromdense(
         Array([[1., 0., 0.],
                [0., 2., 3.]], dtype=float32)
     """
+    from saiunit._jax_guard import require_jax_backend
+    require_jax_backend("csr_fromdense", mat)
     if nse is None:
         nse = int((get_mantissa(mat) != 0).sum())
     nse_int = concrete_or_error(operator.index, nse, "csr_fromdense nse argument")
@@ -906,6 +944,8 @@ def csc_fromdense(
         Array([[1., 0., 0.],
                [0., 2., 3.]], dtype=float32)
     """
+    from saiunit._jax_guard import require_jax_backend
+    require_jax_backend("csc_fromdense", mat)
     if nse is not None:
         nse = concrete_or_error(operator.index, nse, "csc_fromdense nse argument")
     return CSC.fromdense(mat, nse=nse, index_dtype=index_dtype)

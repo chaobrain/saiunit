@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import jax.numpy as jnp
+import pytest
 from absl.testing import parameterized
 from jax import lax
 
@@ -191,8 +192,8 @@ class TestLaxLinalg(parameterized.TestCase):
 
         x = x * u.second
         t, q = ulax.schur(x)
-        assert_quantity(t, t_e)
-        assert_quantity(q, q_e, u.second)
+        assert_quantity(t, t_e, u.second)
+        assert_quantity(q, q_e)
 
     def test_svd(self):
         x = jnp.array([[1.0, 2.0], [3.0, 4.0]])
@@ -262,10 +263,10 @@ class TestLaxLinalg(parameterized.TestCase):
 
         a = a * u.second
         result_q = ulax.triangular_solve(a, b)
-        assert_quantity(result_q, expected)
+        assert_quantity(result_q, expected, u.second ** -1)
         b = b * u.second
         result_q = ulax.triangular_solve(a, b)
-        assert_quantity(result_q, expected, u.second)
+        assert_quantity(result_q, expected)
 
     def test_tridiagonal_solve(self):
         dl = jnp.array([0.0, 1.0, 1.0])
@@ -343,10 +344,10 @@ def test_docstring_example_qr():
 
 
 def test_docstring_example_schur():
-    """Verify schur docstring: Schur vectors preserve unit."""
+    """Verify schur docstring: the Schur form preserves the input unit."""
     A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
     t, q = ulax.schur(A)
-    assert u.get_unit(q) == u.second
+    assert u.get_unit(t) == u.second
 
 
 def test_docstring_example_svd():
@@ -379,3 +380,171 @@ def test_docstring_example_tridiagonal_solve():
     b = jnp.array([[1.0], [2.0], [3.0]]) * u.meter
     X = ulax.tridiagonal_solve(dl, d, du, b)
     assert u.get_unit(X) == u.meter
+
+
+# --- Regression tests for audited findings ---
+
+
+def test_schur_unit_on_t_not_q():
+    """Regression LXA-1: A = Q.T.Q^H, so T carries A's unit and Q is plain."""
+    x = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+    t_e, q_e = lax.linalg.schur(x)
+
+    t, q = ulax.schur(x * u.second)
+    assert isinstance(t, u.Quantity)
+    assert_quantity(t, t_e, u.second)
+    assert not isinstance(q, u.Quantity)
+    assert_quantity(q, q_e)
+    # Q is orthogonal (unitary), hence dimensionless
+    assert jnp.allclose(q @ q.T, jnp.eye(2), atol=1e-5)
+
+
+def test_schur_no_vectors_quantity():
+    """Regression LXA-2: compute_schur_vectors=False must not crash for Quantity."""
+    x = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+    (t_e,) = lax.linalg.schur(x, compute_schur_vectors=False)
+
+    (t,) = ulax.schur(x * u.second, compute_schur_vectors=False)
+    assert_quantity(t, t_e, u.second)
+
+
+def test_triangular_solve_unit_ratio():
+    """Regression LXA-3: result unit is unit(b) / unit(a)."""
+    a = jnp.array([[2.0, 0.0], [1.0, 3.0]])
+    b = jnp.array([[4.0], [7.0]])
+    expected = lax.linalg.triangular_solve(a, b, left_side=True, lower=True)
+
+    x = ulax.triangular_solve(a * u.ohm, b * u.volt, left_side=True, lower=True)
+    assert u.get_unit(x).dim == (u.volt / u.ohm).dim
+    assert_quantity(x, expected, u.volt / u.ohm)
+
+    # The same physical system expressed in kohm gives a physically equal result.
+    x_k = ulax.triangular_solve((a * u.ohm).in_unit(u.kohm), b * u.volt,
+                                left_side=True, lower=True)
+    assert jnp.allclose(x_k.to_decimal(u.amp), x.to_decimal(u.amp))
+
+
+def test_triangular_solve_a_only_quantity():
+    """Regression LXA-3: a-only Quantity must not drop the unit."""
+    a = jnp.array([[2.0, 0.0], [1.0, 3.0]])
+    b = jnp.array([[4.0], [7.0]])
+    expected = lax.linalg.triangular_solve(a, b, left_side=True, lower=True)
+
+    x = ulax.triangular_solve(a * u.ohm, b, left_side=True, lower=True)
+    assert isinstance(x, u.Quantity)
+    assert_quantity(x, expected, u.ohm ** -1)
+
+
+def test_tridiagonal_solve_mixed_scale_diagonals():
+    """Regression LXA-4: mV main diagonal with volt off-diagonals must agree with all-volt."""
+    dl = jnp.array([0.0, 1.0, 1.0])
+    d = jnp.array([2.0, 2.0, 2.0])
+    du = jnp.array([1.0, 1.0, 0.0])
+    b = jnp.array([[1.0], [2.0], [3.0]])
+    expected = lax.linalg.tridiagonal_solve(dl, d, du, b)
+
+    x = ulax.tridiagonal_solve(dl * u.volt, (d * u.volt).in_unit(u.mV),
+                               du * u.volt, b * u.meter)
+    assert jnp.allclose(x.to_decimal(u.meter / u.volt), expected, atol=1e-6)
+
+    x_all_volt = ulax.tridiagonal_solve(dl * u.volt, d * u.volt, du * u.volt, b * u.meter)
+    assert jnp.allclose(x_all_volt.to_decimal(u.meter / u.volt), expected, atol=1e-6)
+
+
+def test_tridiagonal_solve_unit_ratio():
+    """Regression LXA-5: result unit is unit(b) / unit(d)."""
+    dl = jnp.array([0.0, 1.0, 1.0])
+    d = jnp.array([2.0, 2.0, 2.0])
+    du = jnp.array([1.0, 1.0, 0.0])
+    b = jnp.array([[1.0], [2.0], [3.0]])
+    expected = lax.linalg.tridiagonal_solve(dl, d, du, b)
+
+    x = ulax.tridiagonal_solve(dl * u.ohm, d * u.ohm, du * u.ohm, b * u.volt)
+    assert u.get_unit(x).dim == (u.volt / u.ohm).dim
+    assert_quantity(x, expected, u.volt / u.ohm)
+
+
+def test_tridiagonal_solve_quantity_diagonals_plain_b():
+    """Regression LXA-5: plain b with Quantity diagonals returns unit 1 / unit(d)."""
+    dl = jnp.array([0.0, 1.0, 1.0])
+    d = jnp.array([2.0, 2.0, 2.0])
+    du = jnp.array([1.0, 1.0, 0.0])
+    b = jnp.array([[1.0], [2.0], [3.0]])
+    expected = lax.linalg.tridiagonal_solve(dl, d, du, b)
+
+    x = ulax.tridiagonal_solve(dl * u.ohm, d * u.ohm, du * u.ohm, b)
+    assert isinstance(x, u.Quantity)
+    assert_quantity(x, expected, u.ohm ** -1)
+
+
+def test_tridiagonal_solve_unitless_quantity_dl():
+    """Regression LXA-6: UNITLESS-Quantity dl with plain d/du must work."""
+    dl = jnp.array([0.0, 1.0, 1.0])
+    d = jnp.array([2.0, 2.0, 2.0])
+    du = jnp.array([1.0, 1.0, 0.0])
+    b = jnp.array([[1.0], [2.0], [3.0]])
+    expected = lax.linalg.tridiagonal_solve(dl, d, du, b)
+
+    x = ulax.tridiagonal_solve(dl * u.UNITLESS, d, du, b)
+    assert_quantity(x, expected)
+
+
+def test_tridiagonal_solve_dimension_mismatch_raises():
+    """Regression LXA-4/6: a true dimension mismatch among diagonals raises."""
+    dl = jnp.array([0.0, 1.0, 1.0])
+    d = jnp.array([2.0, 2.0, 2.0])
+    du = jnp.array([1.0, 1.0, 0.0])
+    b = jnp.array([[1.0], [2.0], [3.0]])
+    with pytest.raises(u.UnitMismatchError):
+        ulax.tridiagonal_solve(dl * u.meter, d * u.volt, du * u.volt, b)
+
+
+def test_qr_full_matrices_false():
+    """Regression LXA-10: full_matrices must be forwarded."""
+    x = jnp.arange(6.0).reshape(3, 2)
+    q_e, r_e = lax.linalg.qr(x, full_matrices=False)
+
+    q, r = ulax.qr(x * u.meter, full_matrices=False)
+    assert q.shape == q_e.shape
+    assert_quantity(q, q_e)
+    assert_quantity(r, r_e, u.meter)
+
+
+def test_qr_pivoting():
+    """Regression LXA-10: pivoting=True returns (q, r, p) with p plain ints."""
+    x = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+    q_e, r_e, p_e = lax.linalg.qr(x, pivoting=True)
+
+    q, r, p = ulax.qr(x * u.meter, pivoting=True)
+    assert not isinstance(q, u.Quantity)
+    assert not isinstance(p, u.Quantity)
+    assert jnp.issubdtype(p.dtype, jnp.integer)
+    assert_quantity(q, q_e)
+    assert_quantity(r, r_e, u.meter)
+    assert_quantity(p, p_e)
+
+    q2, r2, p2 = ulax.qr(x, pivoting=True)
+    assert_quantity(r2, r_e)
+    assert_quantity(p2, p_e)
+
+
+def test_linalg_kwargs_forwarding():
+    """Regression LXA-11: extra jax kwargs are forwarded by the wrappers."""
+    A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
+    H = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * u.second
+
+    u_mat, h, num_iters, is_converged = ulax.qdwh(A, is_hermitian=False)
+    assert u.get_unit(h) == u.second
+
+    w, vl, vr = ulax.eig(A, implementation=None)
+    assert u.get_unit(w) == u.second
+
+    v, w2 = ulax.eigh(H, implementation=None)
+    assert u.get_unit(w2) == u.second
+
+    dl = jnp.array([0.0, 1.0, 1.0])
+    d = jnp.array([2.0, 2.0, 2.0])
+    du = jnp.array([1.0, 1.0, 0.0])
+    b = jnp.array([[1.0], [2.0], [3.0]]) * u.meter
+    x = ulax.tridiagonal_solve(dl, d, du, b, perturb_singular=True)
+    assert u.get_unit(x) == u.meter

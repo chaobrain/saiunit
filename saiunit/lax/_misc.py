@@ -21,6 +21,7 @@ from jax import lax
 
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
+from saiunit._base_unit import UNITLESS
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit._typing import Array, ArrayLike
 
@@ -73,7 +74,12 @@ def reduce(
         :class:`~saiunit.CustomArray`, its ``.data`` attribute is unwrapped.
     init_values : array_like or Quantity
         The initial value(s) for the reduction.  Must be an identity element
-        of ``computation``.  Accepts the same types as ``operands``.
+        of ``computation``.  Accepts the same types as ``operands``.  If a
+        :class:`~saiunit.Quantity`, it is converted into the unit of
+        ``operands`` before its mantissa is extracted (raising
+        :class:`~saiunit.UnitMismatchError` if the dimensions are
+        incompatible, or if ``init_values`` carries a dimension while
+        ``operands`` is a plain array).
     computation : callable
         A binary function used to combine elements (e.g. ``jax.lax.add``).
     dimensions : sequence of int
@@ -131,15 +137,23 @@ def reduce(
     """
     operands = maybe_custom_array(operands)
     init_values = maybe_custom_array(init_values)
+    if isinstance(operands, Quantity):
+        op_unit = operands.unit
+        operands = operands.mantissa
+    else:
+        op_unit = UNITLESS
+    if isinstance(init_values, Quantity):
+        init_values = init_values.in_unit(op_unit).mantissa
     return lax.reduce(operands, init_values, computation, dimensions, **kwargs)
 
 
+@set_module_as('saiunit.lax')
 def reduce_precision(
     operand: Union[ArrayLike, Quantity, float],
     exponent_bits: int,
     mantissa_bits: int,
     **kwargs,
-) -> ArrayLike:
+) -> Union[Quantity, ArrayLike]:
     """Reduce the precision of array elements.
 
     Wraps XLA's `ReducePrecision
@@ -147,15 +161,15 @@ def reduce_precision(
     operator.
 
     When the input is a :class:`~saiunit.Quantity`, the precision reduction
-    is applied to the mantissa and the result is returned as a plain
-    :class:`Array` (the unit is stripped).
+    is applied to the mantissa and the result is a ``Quantity`` with the
+    same unit.
 
     Parameters
     ----------
     operand : array_like, Quantity, or float
         The input values whose precision will be reduced.  If a
         :class:`~saiunit.Quantity`, the precision reduction is applied to its
-        mantissa and the result is a plain array.  If a
+        mantissa and the unit is preserved.  If a
         :class:`~saiunit.CustomArray`, its ``.data`` attribute is unwrapped
         first.
     exponent_bits : int
@@ -165,9 +179,9 @@ def reduce_precision(
 
     Returns
     -------
-    result : Array
-        Array with reduced-precision values.  Unit information from a
-        :class:`~saiunit.Quantity` input is not preserved.
+    result : Array or Quantity
+        Array with reduced-precision values.  A :class:`~saiunit.Quantity`
+        input yields a ``Quantity`` with the same unit.
 
     See Also
     --------
@@ -196,7 +210,7 @@ def reduce_precision(
         >>> sulax.reduce_precision(x, exponent_bits=5, mantissa_bits=10)
         Array([1.123047, 2.123047], dtype=float32)
 
-    Reducing precision of a ``Quantity`` (mantissa is extracted, unit is stripped):
+    Reducing precision of a ``Quantity`` (mantissa is reduced, unit is kept):
 
     .. code-block:: python
 
@@ -204,12 +218,18 @@ def reduce_precision(
         >>> import saiunit.lax as sulax
         >>> import jax.numpy as jnp
         >>> q = jnp.array([1.123456, 2.123456], dtype=jnp.float32) * u.meter
-        >>> sulax.reduce_precision(q, exponent_bits=5, mantissa_bits=10)
+        >>> result = sulax.reduce_precision(q, exponent_bits=5, mantissa_bits=10)
+        >>> result.mantissa
         Array([1.123047, 2.123047], dtype=float32)
+        >>> result.unit
+        meter
     """
     operand = maybe_custom_array(operand)
     if isinstance(operand, Quantity):
-        return maybe_decimal(lax.reduce_precision(operand.mantissa, exponent_bits, mantissa_bits, **kwargs))
+        return maybe_decimal(
+            Quantity(lax.reduce_precision(operand.mantissa, exponent_bits, mantissa_bits, **kwargs),
+                     unit=operand.unit)
+        )
     return lax.reduce_precision(operand, exponent_bits, mantissa_bits, **kwargs)
 
 

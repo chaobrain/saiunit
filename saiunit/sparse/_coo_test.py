@@ -388,3 +388,94 @@ class TestCOODocstringExamples(unittest.TestCase):
         dense = jnp.array([[1., 0.], [0., 2.]])
         coo = susparse.COO.fromdense(dense)
         self.assertIsInstance(coo, susparse.SparseMatrix)
+
+
+def test_coo_jit_repeated_calls():
+    import jax.numpy as jnp
+
+    @jax.jit
+    def f(sp, x):
+        return sp @ x
+
+    x = jnp.ones(3)
+    dense1 = jnp.array([[1., 0., 2.], [0., 3., 0.]]) * u.mV
+    dense2 = jnp.array([[4., 0., 5.], [0., 6., 0.]]) * u.mV
+    dense3 = jnp.array([[0., 7., 0.], [8., 0., 9.]]) * u.mV
+
+    coo1 = u.sparse.COO.fromdense(dense1)
+    # Same unit and same sparsity pattern, different values.
+    coo2 = u.sparse.COO.fromdense(dense2)
+    # Different sparsity pattern.
+    coo3 = u.sparse.COO.fromdense(dense3)
+
+    assert u.math.allclose(f(coo1, x), dense1 @ x)
+    assert u.math.allclose(f(coo2, x), dense2 @ x)  # crashed before fix
+    assert u.math.allclose(f(coo1, x), dense1 @ x)  # cache hit
+    assert u.math.allclose(f(coo3, x), dense3 @ x)  # recompile
+
+
+def test_coo_binary_op_with_1x1_operand():
+    import jax.numpy as jnp
+
+    dense = jnp.array([[1., 0., 2.], [0., 3., 0.]])
+    coo = u.sparse.COO.fromdense(dense)
+
+    out = coo * jnp.array([[3.0]])
+    assert out.data.ndim == 1
+    assert u.math.allclose(out.todense(), dense * 3.0)
+
+    out = jnp.array([[3.0]]) * coo
+    assert out.data.ndim == 1
+    assert u.math.allclose(out.todense(), dense * 3.0)
+
+    out = coo * (jnp.array([[3.0]]) * u.mV)
+    assert out.data.ndim == 1
+    assert u.math.allclose(out.todense(), dense * (3.0 * u.mV))
+
+
+def test_coo_add_shape_mismatch_raises():
+    import jax.numpy as jnp
+    import pytest
+
+    c1 = u.sparse.COO.fromdense(jnp.array([[1., 2., 3.]]))
+    c2 = u.sparse.COO.fromdense(jnp.array([[1., 2., 3., 0.]]))
+    with pytest.raises(ValueError, match="shape mismatch"):
+        c1 + c2
+    with pytest.raises(ValueError, match="shape mismatch"):
+        c1 - c2
+
+
+def test_numpy_left_operands_defer_to_coo():
+    import jax.numpy as jnp
+    import numpy as np
+
+    dense = jnp.array([[1., 0., 2.], [0., 3., 0.]])
+    coo = u.sparse.COO.fromdense(dense)
+
+    expected = jnp.ones(2) @ coo
+    out = np.ones(2) @ coo
+    assert u.math.allclose(out, expected)
+
+    out = np.float64(3.0) * coo
+    assert isinstance(out, u.sparse.COO)
+    assert u.math.allclose(out.todense(), dense * 3.0)
+
+
+def test_coo_block_until_ready_with_quantity():
+    import jax.numpy as jnp
+
+    dense = jnp.array([[1., 0.], [0., 2.]]) * u.mV
+    coo = u.sparse.COO.fromdense(dense)
+    assert coo.block_until_ready() is coo
+
+
+def test_coo_fromdense_raises_on_numpy_quantity():
+    import numpy as np
+    import pytest
+    from saiunit import meter
+
+    q = u.Quantity(np.array([[1.0, 0.0], [0.0, 2.0]]), unit=meter)
+    with pytest.raises(u.BackendError, match="requires the jax backend"):
+        u.sparse.COO.fromdense(q)
+    with pytest.raises(u.BackendError, match="requires the jax backend"):
+        u.sparse.coo_fromdense(q)

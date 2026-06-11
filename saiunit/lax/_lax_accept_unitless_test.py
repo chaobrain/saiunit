@@ -187,8 +187,10 @@ class TestLaxAcceptUnitless(parameterized.TestCase):
         expected = lax_fun(q1.to_decimal(u.dametre), value2)
         assert_quantity(result, expected)
 
-        with pytest.raises(TypeError):
-            result = bulax_fun(q1, value2)
+        # collapse is a pure reshape: without unit_to_scale the unit is kept.
+        result = bulax_fun(q1, value2)
+        expected = lax_fun(jnp.asarray(value1, dtype=q1.dtype), value2)
+        assert_quantity(result, expected, unit=meter)
 
         with pytest.raises(u.UnitMismatchError):
             result = bulax_fun(q1, value2, unit_to_scale=u.second)
@@ -224,5 +226,50 @@ class TestLaxAcceptUnitlessDocstringExamples:
     def test_betainc_unitless(self):
         """Docstring example: betainc on unitless arrays."""
         result = bulax.betainc(jnp.array([1.0]), jnp.array([1.0]), jnp.array([0.5]))
+        expected = lax.betainc(jnp.array([1.0]), jnp.array([1.0]), jnp.array([0.5]))
+        assert_quantity(result, expected)
+
+
+class TestLaxAcceptUnitlessRegressions:
+    """Regression tests for audited bugs in accept-unitless lax functions."""
+
+    def test_all_has_no_duplicate_collapse(self):
+        # LXB-8: 'collapse' was listed twice in __all__.
+        import saiunit.lax
+        assert saiunit.lax.__all__.count('collapse') == 1
+
+    def test_collapse_preserves_unit(self):
+        # LXB-9: collapse is a pure reshape and must keep the unit.
+        q = jnp.ones((2, 3, 4)) * u.mV
+        result = bulax.collapse(q, 0, 2)
+        assert isinstance(result, u.Quantity)
+        expected = lax.collapse(jnp.ones((2, 3, 4)), 0, 2)
+        assert result.shape == (6, 4)
+        assert_quantity(result, expected, unit=u.mV)
+
+    def test_collapse_unit_to_scale_returns_plain(self):
+        # LXB-9: the legacy unit_to_scale escape hatch still returns a plain array.
+        q = jnp.ones((2, 3, 4)) * u.mV
+        result = bulax.collapse(q, 0, 2, unit_to_scale=u.mV)
+        assert not isinstance(result, u.Quantity)
+        expected = lax.collapse(jnp.ones((2, 3, 4)), 0, 2)
+        assert_quantity(result, expected)
+
+    def test_collapse_plain_input_stays_plain(self):
+        x = jnp.ones((2, 3, 4))
+        result = bulax.collapse(x, 0, 2)
+        assert not isinstance(result, u.Quantity)
+        assert_quantity(result, lax.collapse(x, 0, 2))
+
+    def test_betainc_unit_to_scale_without_quantity_raises(self):
+        # LXB-10: unit_to_scale with all-plain inputs must raise, not be ignored.
+        with pytest.raises(TypeError):
+            bulax.betainc(jnp.array([1.0]), jnp.array([1.0]), jnp.array([0.5]),
+                          unit_to_scale=u.mV)
+
+    def test_betainc_unit_to_scale_with_quantity_still_works(self):
+        # LXB-10: with at least one Quantity input, unit_to_scale keeps working.
+        a = jnp.array([1.0]) * u.mV
+        result = bulax.betainc(a, jnp.array([1.0]), jnp.array([0.5]), unit_to_scale=u.mV)
         expected = lax.betainc(jnp.array([1.0]), jnp.array([1.0]), jnp.array([0.5]))
         assert_quantity(result, expected)

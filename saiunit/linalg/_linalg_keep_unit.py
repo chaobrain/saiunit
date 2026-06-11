@@ -18,21 +18,35 @@ from __future__ import annotations
 from typing import Union
 
 from saiunit._jax_compat import HAS_JAX, jax, jnp, require_jax
-from saiunit._typing import Array, ArrayLike
+from saiunit._typing import Array, ArrayLike, DTypeLike
 
 from saiunit._backend import get_backend
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
-from saiunit.math._fun_keep_unit import (
-    _fun_keep_unit_unary, trace, diagonal
-)
+from saiunit.math._fun_keep_unit import _fun_keep_unit_unary
 
 
 def _lax_linalg():
     require_jax("saiunit.linalg.svd / eig / eigh")
     from saiunit.lax import _lax_linalg as _m
     return _m
+
+
+def _promote_to_inexact(x):
+    """Promote integer/bool inputs to a floating-point dtype.
+
+    ``lax.linalg`` primitives reject non-inexact dtypes whereas
+    ``jnp.linalg`` promotes them; match the ``jnp.linalg`` behaviour.
+    """
+    mantissa = x.mantissa if isinstance(x, Quantity) else x
+    mantissa = jnp.asarray(mantissa)
+    if jnp.issubdtype(mantissa.dtype, jnp.inexact):
+        return x
+    mantissa = mantissa.astype(jnp.promote_types(mantissa.dtype, jnp.float32))
+    if isinstance(x, Quantity):
+        return Quantity(mantissa, unit=x.unit)
+    return mantissa
 
 __all__ = [
     # Decompositions
@@ -88,7 +102,8 @@ def norm(
     * ``ord=None`` (default) -- 2-norm
     * ``ord=inf`` -- ``max(abs(x))``
     * ``ord=-inf`` -- ``min(abs(x))``
-    * ``ord=0`` -- ``sum(x != 0)``
+    * ``ord=0`` -- ``sum(x != 0)`` (a dimensionless count, returned
+      without a unit)
     * other numeric -- ``sum(abs(x)**ord)**(1/ord)``
 
     For **matrix norms** (two-axis reduction):
@@ -125,6 +140,12 @@ def norm(
         >>> u.linalg.norm(m)
         10.198039 * meter
     """
+    if ord == 0:
+        # ``ord=0`` counts nonzero entries — a dimensionless count — so
+        # the input unit must not be attached to the result.
+        x = maybe_custom_array(x)
+        if isinstance(x, Quantity):
+            x = x.mantissa
     return _fun_keep_unit_unary('linalg.norm', x, ord=ord, axis=axis, keepdims=keepdims, **kwargs)
 
 
@@ -226,6 +247,12 @@ def vector_norm(
         >>> u.linalg.vector_norm(x, axis=1)
         ArrayImpl([3.7416575, 9.48683262], dtype=float32) * meter
     """
+    if ord == 0:
+        # ``ord=0`` counts nonzero entries — a dimensionless count — so
+        # the input unit must not be attached to the result.
+        x = maybe_custom_array(x)
+        if isinstance(x, Quantity):
+            x = x.mantissa
     return _fun_keep_unit_unary('linalg.vector_norm',
                                 x,
                                 axis=axis,
@@ -238,7 +265,7 @@ def qr(
     a: Union[Quantity, ArrayLike],
     mode: str = "reduced",
     **kwargs,
-) -> Array | Quantity:
+) -> Array | Quantity | tuple[Array | Quantity, ...]:
     """Compute the QR decomposition of a matrix.
 
     SaiUnit implementation of :func:`numpy.linalg.qr`.
@@ -265,6 +292,9 @@ def qr(
         * ``"complete"`` -- *Q* has shape ``(..., M, M)``, *R* has shape
           ``(..., M, N)``.
         * ``"r"`` -- only *R* is returned.
+        * ``"raw"`` -- returns ``(h, tau)`` where the unit of *a* is
+          carried by *h*; the Householder scalars *tau* are
+          dimensionless.
 
     Returns
     -------
@@ -293,11 +323,23 @@ def qr(
     xp = get_backend(mantissa)
     result = xp.linalg.qr(mantissa, mode=mode, **kwargs)
     if not isinstance(a, Quantity):
-        return result  # type: ignore[return-value]
+        return result
     if mode == "r":
         return maybe_decimal(Quantity(result, unit=a.unit))
+    if mode == "raw":
+        # The backend returns ``(h, tau)``: the unit is carried by ``h``
+        # while the Householder scalars ``tau`` stay dimensionless.
+        h, tau = result
+        h = maybe_decimal(Quantity(h, unit=a.unit))
+        if hasattr(result, '_fields'):
+            return type(result)(h, tau)
+        return h, tau
     Q, R = result
-    return Q, maybe_decimal(Quantity(R, unit=a.unit))  # type: ignore[return-value]
+    R = maybe_decimal(Quantity(R, unit=a.unit))
+    # Preserve the backend's container type (e.g. ``QRResult``).
+    if hasattr(result, '_fields'):
+        return type(result)(Q, R)
+    return Q, R
 
 
 @set_module_as('saiunit.linalg')
@@ -383,10 +425,16 @@ def svd(
             return result
         if compute_uv:
             u, s, vh = result
-            return u, maybe_decimal(Quantity(s, unit=x.unit)), vh
+            s = maybe_decimal(Quantity(s, unit=x.unit))
+            # Preserve the backend's container type (e.g. ``SVDResult``).
+            if hasattr(result, '_fields'):
+                return type(result)(u, s, vh)
+            return u, s, vh
         return maybe_decimal(Quantity(result, unit=x.unit))
 
-    return _lax_linalg().svd(
+    lax_linalg = _lax_linalg()
+    x = _promote_to_inexact(x)
+    return lax_linalg.svd(
         x,
         full_matrices=full_matrices,
         compute_uv=compute_uv,
@@ -468,7 +516,11 @@ def eig(
         ArrayImpl([ 3.+0.j, -1.+0.j], dtype=complex64) * meter
     """
     a = maybe_custom_array(a)
-    return _lax_linalg().eig(a, compute_left_eigenvectors=False, **kwargs)
+    lax_linalg = _lax_linalg()
+    a = _promote_to_inexact(a)
+    # ``lax.linalg.eig`` returns a list for plain inputs; normalise both
+    # the plain and the Quantity path to a plain tuple.
+    return tuple(lax_linalg.eig(a, compute_left_eigenvectors=False, **kwargs))
 
 
 @set_module_as('saiunit.linalg')
@@ -638,3 +690,91 @@ def matrix_transpose(
                    [3, 6]], dtype=int32) * meter
     """
     return _fun_keep_unit_unary('linalg.matrix_transpose', x, **kwargs)
+
+
+@set_module_as('saiunit.linalg')
+def trace(
+    x: Union[ArrayLike, Quantity],
+    *,
+    offset: int = 0,
+    dtype: DTypeLike | None = None,
+    **kwargs,
+) -> Union[Array, Quantity]:
+    """Compute the trace of a matrix or stack of matrices.
+
+    SaiUnit implementation of :func:`numpy.linalg.trace`.
+
+    Unlike :func:`saiunit.math.trace` (which follows :func:`numpy.trace`
+    and sums over the *first* two axes by default), this function follows
+    ``linalg`` semantics and sums along the diagonals of the *last* two
+    axes.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input of shape ``(..., M, N)``.
+    offset : int, optional
+        Offset of the diagonal from the main diagonal (default: 0).
+    dtype : dtype, optional
+        Data type of the returned array.
+
+    Returns
+    -------
+    out : ndarray or Quantity
+        Trace of shape ``x.shape[:-2]``.  Carries the same unit as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+        >>> x = jnp.arange(18.).reshape(2, 3, 3) * u.meter
+        >>> u.linalg.trace(x)
+        ArrayImpl([12., 39.], dtype=float32) * meter
+    """
+    return _fun_keep_unit_unary('linalg.trace', x, offset=offset, dtype=dtype, **kwargs)
+
+
+@set_module_as('saiunit.linalg')
+def diagonal(
+    x: Union[ArrayLike, Quantity],
+    *,
+    offset: int = 0,
+    **kwargs,
+) -> Union[Array, Quantity]:
+    """Extract the diagonals of a matrix or stack of matrices.
+
+    SaiUnit implementation of :func:`numpy.linalg.diagonal`.
+
+    Unlike :func:`saiunit.math.diagonal` (which follows
+    :func:`numpy.diagonal` and uses the *first* two axes by default),
+    this function follows ``linalg`` semantics and extracts the diagonal
+    of the *last* two axes.
+
+    Parameters
+    ----------
+    x : array_like or Quantity
+        Input of shape ``(..., M, N)``.
+    offset : int, optional
+        Offset of the diagonal from the main diagonal (default: 0).
+
+    Returns
+    -------
+    out : ndarray or Quantity
+        Diagonals of shape ``x.shape[:-2] + (K,)`` with
+        ``K = min(M, N)`` for ``offset=0``.  Carries the same unit
+        as *x*.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        >>> import saiunit as u
+        >>> import jax.numpy as jnp
+        >>> x = jnp.arange(18.).reshape(2, 3, 3) * u.meter
+        >>> u.linalg.diagonal(x)
+        ArrayImpl([[ 0.,  4.,  8.],
+                   [ 9., 13., 17.]], dtype=float32) * meter
+    """
+    return _fun_keep_unit_unary('linalg.diagonal', x, offset=offset, **kwargs)

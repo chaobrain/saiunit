@@ -809,3 +809,10 @@ def test_power_scaled_dimensionless_base_array_exponent():
     scaled = u.Quantity(jnp.array([2.0, 3.0]), unit=u.kmeter / u.meter)
     r = um.power(scaled, jnp.array([1.0, 2.0]))
     assert_quantity(r, jnp.array([2000.0, 9000000.0]))
+
+
+def test_det_dimensionless_quantity_returns_plain():
+    """Regression: det of a unitless Quantity must unwrap to a plain array."""
+    r = u.linalg.det(u.Quantity(jnp.array([[2.0, 1.0], [1.0, 2.0]])))
+    assert not isinstance(r, u.Quantity)
+    assert_quantity(r, 3.0)

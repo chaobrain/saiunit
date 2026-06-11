@@ -35,7 +35,7 @@ from saiunit._base_getters import (
 from saiunit._typing import Array, ArrayLike, DTypeLike
 from saiunit._base_quantity import Quantity
 from saiunit._compatible_import import concrete_or_error
-from saiunit._sparse_base import SparseMatrix, _same_sparsity_pattern
+from saiunit._sparse_base import SparseMatrix, _HashableIndex, _same_sparsity_pattern
 from saiunit.math._fun_array_creation import asarray
 from saiunit.math._fun_keep_unit import promote_dtypes
 
@@ -107,6 +107,11 @@ class COO(SparseMatrix):
     :class:`jax.experimental.sparse.BCOO`. Additionally, there are known
     failures when ``nse`` is larger than the true number of non-zeros in the
     represented matrix.
+
+    Element-wise operations (``+``, ``-``, ``*``, ``/``, ``%`` and their
+    reflected variants) apply ONLY to the explicitly stored entries;
+    implicit zeros are unaffected. For example, ``coo + 2`` does NOT add 2
+    to absent entries, unlike dense arrays.
 
     Examples
     --------
@@ -317,8 +322,8 @@ class COO(SparseMatrix):
         Tuple[Array | Quantity,], dict[str, Any]
     ]:
         aux = self._info._asdict()
-        aux['row'] = self.row
-        aux['col'] = self.col
+        aux['row'] = _HashableIndex(self.row)
+        aux['col'] = _HashableIndex(self.col)
         return (self.data,), aux
 
     @classmethod
@@ -330,8 +335,8 @@ class COO(SparseMatrix):
         obj.shape = aux_data['shape']
         obj._rows_sorted = aux_data['rows_sorted']
         obj._cols_sorted = aux_data['cols_sorted']
-        obj.row = aux_data['row']
-        obj.col = aux_data['col']
+        obj.row = aux_data['row'].value
+        obj.col = aux_data['col'].value
         return obj
 
     def __abs__(self):
@@ -359,7 +364,10 @@ class COO(SparseMatrix):
         )
 
     def _binary_op(self, other, op):
+        """Apply ``op`` to the explicitly stored entries only (see class Notes)."""
         if isinstance(other, COO):
+            if self.shape != other.shape:
+                raise ValueError(f"shape mismatch: {self.shape} vs {other.shape}")
             if _same_sparsity_pattern(self.row, other.row) and _same_sparsity_pattern(self.col, other.col):
                 return COO(
                     (
@@ -376,6 +384,7 @@ class COO(SparseMatrix):
 
         other = asarray(other)
         if other.size == 1:
+            other = other.reshape(())
             return COO(
                 (
                     op(self.data, other),
@@ -402,7 +411,10 @@ class COO(SparseMatrix):
             raise NotImplementedError(f"mul with object of shape {other.shape}")
 
     def _binary_rop(self, other, op):
+        """Apply ``op`` to the explicitly stored entries only (see class Notes)."""
         if isinstance(other, COO):
+            if self.shape != other.shape:
+                raise ValueError(f"shape mismatch: {self.shape} vs {other.shape}")
             if _same_sparsity_pattern(self.row, other.row) and _same_sparsity_pattern(self.col, other.col):
                 return COO(
                     (
@@ -419,6 +431,7 @@ class COO(SparseMatrix):
 
         other = asarray(other)
         if other.size == 1:
+            other = other.reshape(())
             return COO(
                 (
                     op(other, self.data),
@@ -596,6 +609,8 @@ def coo_fromdense(
         Array([[1., 0., 0.],
                [0., 2., 3.]], dtype=float32)
     """
+    from saiunit._jax_guard import require_jax_backend
+    require_jax_backend("coo_fromdense", mat)
     if nse is None:
         nse = int((get_mantissa(mat) != 0).sum())
     nse_int = concrete_or_error(operator.index, nse, "coo_fromdense nse argument")

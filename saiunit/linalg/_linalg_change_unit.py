@@ -114,11 +114,26 @@ def cholesky(
         >>> u.math.allclose(x, L @ L.T)
         Array(True, dtype=bool)
     """
+    a = maybe_custom_array(a)
+    mantissa = a.mantissa if isinstance(a, Quantity) else a
+    xp = get_backend(mantissa)
+    extra: dict = {}
+    if symmetrize_input:
+        # ``np.linalg.cholesky`` (and other array-API backends) lack jax's
+        # ``symmetrize_input`` kwarg, so symmetrize here instead of
+        # forwarding it; jax's own (default) symmetrization is idempotent
+        # on the already-Hermitian result.
+        m = xp.asarray(mantissa)
+        m = (m + xp.conj(xp.matrix_transpose(m))) / 2
+        a = Quantity(m, unit=a.unit) if isinstance(a, Quantity) else m
+    elif xp is jnp:
+        # jax defaults to ``symmetrize_input=True``; forward the opt-out.
+        extra['symmetrize_input'] = False
     return _fun_change_unit_unary('linalg.cholesky',
                                   lambda u: u ** 0.5,
                                   a,
                                   upper=upper,
-                                  symmetrize_input=symmetrize_input, **kwargs)
+                                  **extra, **kwargs)
 
 
 @unit_change(lambda x, y: y / x)
@@ -255,7 +270,7 @@ def lstsq(
     *,
     numpy_resid: bool = False,
     **kwargs,
-) -> tuple[Union[ArrayLike, Quantity], Array, Array, Array]:
+) -> tuple[Union[ArrayLike, Quantity], Union[Array, Quantity], Array, Union[Array, Quantity]]:
     """
     Return the least-squares solution to a linear equation.
 
@@ -285,12 +300,14 @@ def lstsq(
     x : ndarray or Quantity
         Least-squares solution of shape ``(N,)`` or ``(N, K)``. The
         resulting unit is ``b.unit / a.unit``.
-    residuals : ndarray
-        Sum of squared residuals of shape ``()`` or ``(K,)``.
+    residuals : ndarray or Quantity
+        Sum of squared residuals of shape ``()`` or ``(K,)``. Carries
+        ``b.unit ** 2`` when ``b`` is a Quantity.
     rank : ndarray
         Effective rank of ``a``.
-    s : ndarray
-        Singular values of ``a``.
+    s : ndarray or Quantity
+        Singular values of ``a``. Carries ``a.unit`` when ``a`` is a
+        Quantity.
 
     See Also
     --------
@@ -318,12 +335,16 @@ def lstsq(
     extra = {'numpy_resid': numpy_resid} if xp is jnp else {}
     r = xp.linalg.lstsq(a_mantissa, b_mantissa, rcond=rcond, **extra, **kwargs)
     if isinstance(a, Quantity) and isinstance(b, Quantity):
-        return maybe_decimal(Quantity(r[0], unit=b.unit / a.unit)), r[1], r[2], r[3]
-    if isinstance(a, Quantity):
-        return maybe_decimal(Quantity(r[0], unit=UNITLESS / a.unit)), r[1], r[2], r[3]
-    if isinstance(b, Quantity):
-        return maybe_decimal(Quantity(r[0], unit=b.unit)), r[1], r[2], r[3]
-    return r
+        solution = maybe_decimal(Quantity(r[0], unit=b.unit / a.unit))
+    elif isinstance(a, Quantity):
+        solution = maybe_decimal(Quantity(r[0], unit=UNITLESS / a.unit))
+    elif isinstance(b, Quantity):
+        solution = maybe_decimal(Quantity(r[0], unit=b.unit))
+    else:
+        return r
+    residuals = maybe_decimal(Quantity(r[1], unit=b.unit ** 2)) if isinstance(b, Quantity) else r[1]
+    s = maybe_decimal(Quantity(r[3], unit=a.unit)) if isinstance(a, Quantity) else r[3]
+    return solution, residuals, r[2], s
 
 
 @unit_change(lambda u: u ** -1)

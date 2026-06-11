@@ -33,6 +33,27 @@ __all__ = [
 ]
 
 
+class _HashableIndex:
+    """Wraps an index array so it can live in pytree aux_data (hash/eq by content)."""
+    __slots__ = ('value', '_key')
+
+    def __init__(self, value):
+        self.value = value
+        self._key: Optional[tuple] = None
+
+    def _content_key(self) -> tuple:
+        if self._key is None:
+            arr = np.asarray(self.value)
+            self._key = (arr.shape, str(arr.dtype), arr.tobytes())
+        return self._key
+
+    def __eq__(self, other):
+        return isinstance(other, _HashableIndex) and self._content_key() == other._content_key()
+
+    def __hash__(self):
+        return hash(self._content_key())
+
+
 def _same_sparsity_pattern(a, b) -> bool:
     """Check whether two index arrays describe the same sparsity pattern.
 
@@ -94,6 +115,10 @@ class SparseMatrix:
 
     __hash__ = None  # type: ignore[assignment]
 
+    # Tell numpy to defer binary operations (including ufunc-backed operators
+    # such as ``np.ndarray @ sparse``) to the reflected methods defined here.
+    __array_ufunc__ = None
+
     def __init__(
         self,
         args: tuple[Array, ...],
@@ -130,8 +155,8 @@ class SparseMatrix:
         return self.transpose()
 
     def block_until_ready(self):
-        for arg in self.tree_flatten()[0]:
-            arg.block_until_ready()
+        import jax
+        jax.block_until_ready(self.tree_flatten()[0])
         return self
 
     def tree_flatten(self):

@@ -267,3 +267,114 @@ def test_eigvals_keeps_unit():
     ev_ref = jnp.linalg.eigvals(a)
     assert_quantity(bulinalg.eigvals(a), ev_ref)
     assert_quantity(bulinalg.eigvals(a * meter), ev_ref, meter)
+
+
+def test_linalg_trace_uses_last_two_axes():
+    """Regression: linalg.trace must reduce the last two axes (jnp.linalg semantics)."""
+    x = jnp.arange(18.0).reshape(2, 3, 3)
+    expected = jnp.linalg.trace(x)
+    assert_quantity(bulinalg.trace(x), expected)
+    assert_quantity(bulinalg.trace(x * meter), expected, unit=meter)
+    expected_off = jnp.linalg.trace(x, offset=1)
+    assert_quantity(bulinalg.trace(x, offset=1), expected_off)
+
+
+def test_linalg_diagonal_uses_last_two_axes():
+    """Regression: linalg.diagonal must take the last two axes (jnp.linalg semantics)."""
+    x = jnp.arange(18.0).reshape(2, 3, 3)
+    expected = jnp.linalg.diagonal(x)
+    assert_quantity(bulinalg.diagonal(x), expected)
+    assert_quantity(bulinalg.diagonal(x * meter), expected, unit=meter)
+    expected_off = jnp.linalg.diagonal(x, offset=1)
+    assert_quantity(bulinalg.diagonal(x, offset=1), expected_off)
+
+
+def test_norm_ord0_is_dimensionless_count():
+    """Regression: ord=0 counts nonzeros, so the result must not carry a unit."""
+    x = jnp.array([0.0, 1.0, 2.0, 0.0])
+    expected = jnp.linalg.norm(x, ord=0)
+    r = bulinalg.norm(x * meter, ord=0)
+    assert not isinstance(r, u.Quantity)
+    assert_quantity(r, expected)
+    # same physical vector in a different display unit gives the same count
+    r2 = bulinalg.norm(u.Quantity(x / 1000.0, unit=u.kmeter), ord=0)
+    assert not isinstance(r2, u.Quantity)
+    assert_quantity(r2, expected)
+
+
+def test_vector_norm_ord0_is_dimensionless_count():
+    """Regression: vector_norm(ord=0) must not carry a unit."""
+    x = jnp.array([0.0, 1.0, 2.0, 0.0])
+    expected = jnp.linalg.vector_norm(x, ord=0)
+    r = bulinalg.vector_norm(x * meter, ord=0)
+    assert not isinstance(r, u.Quantity)
+    assert_quantity(r, expected)
+
+
+def test_eig_eigvals_integer_input():
+    """Regression: integer inputs must be promoted like jnp.linalg.eig."""
+    a = jnp.array([[1, 2], [2, 1]], dtype=jnp.int32)
+    w_exp, v_exp = jnp.linalg.eig(a)
+    w, v = bulinalg.eig(a)
+    assert_quantity(w, w_exp)
+    assert_quantity(v, v_exp)
+    w_q, v_q = bulinalg.eig(a * meter)
+    assert_quantity(w_q, w_exp, unit=meter)
+    assert_quantity(bulinalg.eigvals(a), w_exp)
+    assert_quantity(bulinalg.eigvals(a * meter), w_exp, unit=meter)
+
+
+def test_svd_svdvals_integer_input():
+    """Regression: integer inputs must be promoted like jnp.linalg.svd."""
+    m = jnp.array([[1, 2, 3], [4, 5, 6]], dtype=jnp.int32)
+    u_exp, s_exp, vh_exp = jnp.linalg.svd(m)
+    u_res, s_res, vh_res = bulinalg.svd(m)
+    assert_quantity(u_res, u_exp)
+    assert_quantity(s_res, s_exp)
+    assert_quantity(vh_res, vh_exp)
+    u_res, s_res, vh_res = bulinalg.svd(m * meter)
+    assert_quantity(s_res, s_exp, unit=meter)
+    assert_quantity(bulinalg.svdvals(m), jnp.linalg.svdvals(m))
+    assert_quantity(bulinalg.svdvals(m * meter), jnp.linalg.svdvals(m), unit=meter)
+
+
+def test_qr_raw_mode_unit_on_h():
+    """Regression: for mode='raw' the unit belongs to h, and tau stays plain."""
+    x = jnp.array([[1., 2.], [3., 4.], [5., 6.]])
+    h_exp, tau_exp = jnp.linalg.qr(x, mode='raw')
+    h, tau = bulinalg.qr(x * meter, mode='raw')
+    assert isinstance(h, u.Quantity)
+    assert h.unit == meter
+    assert not isinstance(tau, u.Quantity)
+    assert_quantity(h, h_exp, unit=meter)
+    assert_quantity(tau, tau_exp)
+
+
+def test_qr_container_type_matches_plain():
+    """Regression: qr must return the same container type for plain and Quantity."""
+    x = jnp.array([[1., 2.], [3., 4.]])
+    plain = bulinalg.qr(x)
+    q = bulinalg.qr(x * meter)
+    assert type(q) is type(plain)
+    if hasattr(plain, '_fields'):
+        assert q.R.unit == meter
+        assert not isinstance(q.Q, u.Quantity)
+
+
+def test_eig_container_is_tuple():
+    """Regression: eig must return a plain tuple for plain and Quantity inputs."""
+    a = jnp.array([[1., 2.], [2., 1.]])
+    assert type(bulinalg.eig(a)) is tuple
+    assert type(bulinalg.eig(a * meter)) is tuple
+
+
+def test_eigh_and_hermitian_svd_container_types_match():
+    """Regression: container type must not depend on unit-ness."""
+    a = jnp.array([[3., 1.], [1., 3.]])
+    assert type(bulinalg.eigh(a)) is type(bulinalg.eigh(a * meter))
+    plain = bulinalg.svd(a, hermitian=True)
+    q = bulinalg.svd(a * meter, hermitian=True)
+    assert type(q) is type(plain)
+    if hasattr(plain, '_fields'):
+        assert q.S.unit == meter
+        assert not isinstance(q.U, u.Quantity)

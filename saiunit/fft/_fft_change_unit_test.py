@@ -158,6 +158,11 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
         for ufft_fun, jnpfft_fun in zip(ufft_fun_list, jnpfft_fun_list):
             print(f'fun: {ufft_fun.__name__}')
 
+            if ufft_fun.__name__ in ('fftn', 'rfftn'):
+                expected_unit = unit * (second ** len(axes))
+            else:
+                expected_unit = unit / (second ** len(axes))
+
             result = ufft_fun(jnp.array(value), s=s, axes=axes, norm=norm)
             expected = jnpfft_fun(jnp.array(value), s=s, axes=axes, norm=norm)
             assert_quantity(result, expected)
@@ -169,17 +174,17 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
             q = jnp.array(value) * unit
             result = ufft_fun(q, s=s, axes=axes, norm=norm)
             expected = jnpfft_fun(jnp.array(value), s=s, axes=axes, norm=norm)
-            assert_quantity(result, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(result, expected, unit=expected_unit)
 
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.data, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(array_result.data, expected, unit=expected_unit)
 
             array_input = Array(q)
             result = ufft_fun(array_input.data, s=s, axes=axes, norm=norm)
             array_result = Array(result)
             assert isinstance(array_result, u.CustomArray)
-            assert_quantity(array_result.data, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(array_result.data, expected, unit=expected_unit)
 
     @parameterized.product(
         size=[9, 10, 101, 102],
@@ -318,7 +323,7 @@ class TestFftChangeUnitWithArrayCustomArray(parameterized.TestCase):
         
         # Compare with direct computation
         direct_result = ufft.fftn(data, axes=(0, 1))
-        assert_quantity(result_array.data, direct_result.mantissa, unit=ufft.fftn._unit_change_fun(second))
+        assert_quantity(result_array.data, direct_result.mantissa, unit=second * (second ** 2))
 
 
 class TestFftChangeUnit(parameterized.TestCase):
@@ -437,6 +442,11 @@ class TestFftChangeUnit(parameterized.TestCase):
         for ufft_fun, jnpfft_fun in zip(ufft_fun_list, jnpfft_fun_list):
             print(f'fun: {ufft_fun.__name__}')
 
+            if ufft_fun.__name__ in ('fftn', 'rfftn'):
+                expected_unit = unit * (second ** len(axes))
+            else:
+                expected_unit = unit / (second ** len(axes))
+
             result = ufft_fun(jnp.array(value), s=s, axes=axes, norm=norm)
             expected = jnpfft_fun(jnp.array(value), s=s, axes=axes, norm=norm)
             assert_quantity(result, expected)
@@ -444,7 +454,7 @@ class TestFftChangeUnit(parameterized.TestCase):
             q = value * unit
             result = ufft_fun(q, s=s, axes=axes, norm=norm)
             expected = ufft_fun(jnp.array(value), s=s, axes=axes, norm=norm)
-            assert_quantity(result, expected, unit=ufft_fun._unit_change_fun(unit))
+            assert_quantity(result, expected, unit=expected_unit)
 
     @parameterized.product(
         size=[9, 10, 101, 102],
@@ -540,3 +550,72 @@ def test_fft_numpy_backend():
     # fft of unitless returns either a raw numpy ndarray or a Quantity on the numpy backend
     arr = r.mantissa if hasattr(r, "mantissa") else r
     assert isinstance(arr, np.ndarray)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests
+# ---------------------------------------------------------------------------
+
+def test_fft_unknown_kwarg_raises_typeerror():
+    """Unknown kwargs must raise instead of being silently dropped."""
+    x2d = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * meter
+    # 'axes' is not an fft kwarg ('axis' is) -- silently dropping it would
+    # transform the default axis instead of the requested one.
+    with pytest.raises(TypeError, match='axes'):
+        ufft.fft(x2d, axes=0)
+    x = jnp.array([1.0, 2.0, 3.0, 4.0]) * meter
+    # typo of 'norm' must not be silently ignored
+    with pytest.raises(TypeError, match='nrm'):
+        ufft.fft(x, nrm='ortho')
+    # valid kwargs still work
+    result = ufft.fft(x, n=4, axis=-1, norm='ortho')
+    expected = jnpfft.fft(jnp.array([1.0, 2.0, 3.0, 4.0]), n=4, axis=-1, norm='ortho')
+    assert_quantity(result, expected, unit=meter * second)
+
+
+def test_fftfreq_out_of_range_scale_keeps_factor():
+    """fftfreq/rfftfreq must keep d's unit factor in the fallback branch."""
+    import numpy as np
+    tdim = get_or_create_dimension(s=1)
+    ub = Unit.create(tdim, "u30f6", "u30f6", scale=30, factor=6.0)  # 1 ub = 6e30 s
+    q = ufft.fftfreq(4, 1.0 * ub)
+    assert np.isclose(float(q[1].to_decimal(u.hertz)), 1 / (4 * 6e30), rtol=1e-6, atol=0.0)
+    q = ufft.rfftfreq(4, 1.0 * ub)
+    assert np.isclose(float(q[1].to_decimal(u.hertz)), 1 / (4 * 6e30), rtol=1e-6, atol=0.0)
+
+
+def test_fftfreq_accepts_custom_array_d():
+    """A CustomArray wrapping a time Quantity must behave like the Quantity."""
+    d = 0.5 * second
+    expected = ufft.fftfreq(8, d)
+    result = ufft.fftfreq(8, Array(d))
+    assert isinstance(result, u.Quantity)
+    assert result.unit == expected.unit
+    assert jnp.allclose(result.mantissa, expected.mantissa)
+
+    expected = ufft.rfftfreq(8, d)
+    result = ufft.rfftfreq(8, Array(d))
+    assert isinstance(result, u.Quantity)
+    assert result.unit == expected.unit
+    assert jnp.allclose(result.mantissa, expected.mantissa)
+
+
+def test_fftn_funcs_do_not_mutate_unit_change_fun():
+    """Calling the n-d transforms must not attach per-call state to the function."""
+    x = jnp.ones((2, 4)) * meter
+    for fn in (ufft.fftn, ufft.rfftn, ufft.ifftn, ufft.irfftn):
+        fn(x)
+        assert not hasattr(fn, '_unit_change_fun')
+
+
+def test_fftfreq_dimensionless_quantity_d():
+    """A dimensionless Quantity d behaves like a plain number."""
+    expected = ufft.fftfreq(4, 0.5)
+    result = ufft.fftfreq(4, u.Quantity(0.5))
+    assert not isinstance(result, u.Quantity)
+    assert jnp.array_equal(result, expected)
+
+    expected = ufft.rfftfreq(4, 0.5)
+    result = ufft.rfftfreq(4, u.Quantity(0.5))
+    assert not isinstance(result, u.Quantity)
+    assert jnp.array_equal(result, expected)

@@ -19,6 +19,7 @@ import itertools
 import jax.lax as lax
 import jax.numpy as jnp
 import numpy as np
+import pytest
 from absl.testing import parameterized
 
 import saiunit as u
@@ -475,3 +476,60 @@ class TestLaxChangeUnitDocstringExamples:
         result = bulax.pow(q, jnp.float32(2.0))
         expected = lax.pow(jnp.array([2.0, 3.0]), jnp.float32(2.0))
         assert_quantity(result, expected, unit=meter ** 2)
+
+
+class TestLaxChangeUnitRegressions:
+    """Regression tests for audited bugs in change-unit lax functions."""
+
+    def test_pow_plain_base_unitless_quantity_exponent(self):
+        # LXB-1: plain base with a unitless Quantity exponent must return a plain array.
+        result = bulax.pow(jnp.array([2.0, 3.0]), u.Quantity(2.0))
+        assert not isinstance(result, u.Quantity)
+        expected = lax.pow(jnp.array([2.0, 3.0]), 2.0)
+        assert_quantity(result, expected)
+
+    def test_pow_plain_base_dimensioned_exponent_raises(self):
+        # LXB-1: a dimensioned exponent must raise TypeError, not AttributeError.
+        with pytest.raises(TypeError, match='dimensionless'):
+            bulax.pow(jnp.array([2.0]), 3.0 * u.mV)
+
+    def test_integer_pow_plain_base_unitless_quantity_exponent(self):
+        # LXB-2: plain base with a unitless Quantity exponent must return a plain array.
+        result = bulax.integer_pow(jnp.array([2.0, 3.0]), u.Quantity(2))
+        assert not isinstance(result, u.Quantity)
+        expected = lax.integer_pow(jnp.array([2.0, 3.0]), 2)
+        assert_quantity(result, expected)
+
+    def test_integer_pow_plain_base_dimensioned_exponent_raises(self):
+        # LXB-2: a dimensioned exponent must raise TypeError, not AttributeError.
+        with pytest.raises(TypeError, match='dimensionless'):
+            bulax.integer_pow(jnp.array([2.0]), u.Quantity(3, unit=u.mV))
+
+    def test_rem_plain_dividend_dimensioned_divisor_raises(self):
+        # LXB-3: a dimensioned divisor with a plain dividend must raise, not drop the unit.
+        with pytest.raises(TypeError, match='dimensionless'):
+            bulax.rem(jnp.array([5.0]), jnp.array([3.0]) * u.mV)
+
+    def test_rem_plain_dividend_scaled_dimensionless_divisor(self):
+        # LXB-3: a scaled-dimensionless divisor must have its scale folded in.
+        result = bulax.rem(jnp.array([5.0]), u.Quantity(3000.0, unit=u.mV / volt))
+        assert not isinstance(result, u.Quantity)
+        assert_quantity(result, jnp.array([2.0]))
+
+    def test_dot_general_invalid_out_type_raises(self):
+        # LXB-4: an invalid out_type must propagate the backend error, not be ignored.
+        a = jnp.ones((2, 3))
+        b = jnp.ones((3, 4))
+        dn = (((1,), (0,)), ((), ()))
+        with pytest.raises(TypeError):
+            bulax.dot_general(a, b, dn, out_type='GARBAGE')
+
+    def test_dot_general_default_call_works(self):
+        # LXB-4: the default call must keep working for plain and Quantity operands.
+        a = jnp.ones((2, 3))
+        b = jnp.ones((3, 4))
+        dn = (((1,), (0,)), ((), ()))
+        expected = lax.dot_general(a, b, dn)
+        assert_quantity(bulax.dot_general(a, b, dn), expected)
+        result = bulax.dot_general(a * meter, b * volt, dn)
+        assert_quantity(result, expected, unit=meter * volt)

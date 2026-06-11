@@ -19,7 +19,6 @@ from typing import Callable, Union, Sequence
 import jax
 from jax import lax
 
-from saiunit._base_unit import UNITLESS
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
@@ -277,16 +276,12 @@ def dot_general(
         by the ``lhs`` non-contracting/non-batch dimensions, and finally the ``rhs``
         non-contracting/non-batch dimensions.
     """
-    try:
-        return _fun_change_unit_binary(lax.dot_general,
-                                       lambda x, y: x * y,
-                                       x, y,
-                                       dimension_numbers, precision, preferred_element_type, out_type, **kwargs)
-    except TypeError:
-        return _fun_change_unit_binary(lax.dot_general,
-                                       lambda x, y: x * y,
-                                       x, y,
-                                       dimension_numbers, precision, preferred_element_type, **kwargs)
+    if out_type is not None:
+        kwargs['out_sharding'] = out_type
+    return _fun_change_unit_binary(lax.dot_general,
+                                   lambda x, y: x * y,
+                                   x, y,
+                                   dimension_numbers, precision, preferred_element_type, **kwargs)
 
 
 @set_module_as('saiunit.lax')
@@ -336,10 +331,9 @@ def pow(
             y = y.mantissa
         return maybe_decimal(Quantity(jax.lax.pow(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
-        if not y.is_unitless:
-            raise TypeError(f'{jax.lax.power.__name__} only supports scalar exponent')  # type: ignore[attr-defined]
-        y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.pow(x, y, **kwargs), unit=x ** y))  # type: ignore[arg-type]
+        if not y.dim.is_dimensionless:
+            raise TypeError(f'{jax.lax.pow.__name__} requires a dimensionless exponent, but got {y}')
+        return jax.lax.pow(x, y.to_decimal(), **kwargs)
     else:
         return jax.lax.pow(x, y, **kwargs)
 
@@ -391,10 +385,9 @@ def integer_pow(
             y = y.mantissa
         return maybe_decimal(Quantity(jax.lax.integer_pow(x.mantissa, y, **kwargs), unit=x.unit ** y))  # type: ignore[arg-type]
     elif isinstance(y, Quantity):
-        if not y.is_unitless:
-            raise TypeError(f'{jax.lax.integer_power.__name__} only supports scalar exponent')  # type: ignore[attr-defined]
-        y = y.mantissa
-        return maybe_decimal(Quantity(jax.lax.integer_pow(x, y, **kwargs), unit=x ** y))  # type: ignore[arg-type]
+        if not y.dim.is_dimensionless:
+            raise TypeError(f'{jax.lax.integer_pow.__name__} requires a dimensionless exponent, but got {y}')
+        return jax.lax.integer_pow(x, y.to_decimal(), **kwargs)  # type: ignore[arg-type]
     else:
         return jax.lax.integer_pow(x, y, **kwargs)  # type: ignore[arg-type]
 
@@ -461,7 +454,13 @@ def rem(
     elif isinstance(x, Quantity):
         return maybe_decimal(Quantity(lax.rem(x.mantissa, y, **kwargs), unit=x.unit))  # type: ignore[arg-type]
     elif isinstance(y, Quantity):
-        return maybe_decimal(Quantity(lax.rem(x, y.mantissa, **kwargs), unit=UNITLESS))
+        if not y.dim.is_dimensionless:
+            raise TypeError(
+                f'Expected "y" to be dimensionless when "x" is a plain array, '
+                f'but got y with unit={y.unit}. '
+                f'Either pass a Quantity for x with matching units, or strip the unit from y.'
+            )
+        return lax.rem(x, y.to_decimal(), **kwargs)
     else:
         return lax.rem(x, y, **kwargs)
 
