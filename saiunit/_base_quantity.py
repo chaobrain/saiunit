@@ -2243,15 +2243,30 @@ class Quantity:
         # self // oc
         if isinstance(oc, SparseMatrix):
             return oc.__rfloordiv__(self)
-        r = self._binary_operation(oc, operator.floordiv, operator.truediv)
+        other = _to_quantity(oc)
+        # ``floor`` is not scale-linear, so the operands must be aligned
+        # before flooring (e.g. (1*kmeter) // (3*meter) is 333.0, not
+        # 1 // 3 == 0.0).
+        if other.unit.has_same_dim(self.unit):
+            # Same dimension: align to self's unit; the quotient is a plain
+            # dimensionless integral value.
+            other_value = other.in_unit(self.unit).mantissa
+            r = Quantity(operator.floordiv(self.mantissa, other_value), unit=UNITLESS)
+        else:
+            # Mixed dimensions: fold each unit's magnitude into its mantissa
+            # so the result does not depend on the unit representation, and
+            # attach the magnitude-1 quotient unit.
+            self_unit = self.unit if self.unit.magnitude == 1. else Unit(dim=self.unit.dim)
+            other_unit = other.unit if other.unit.magnitude == 1. else Unit(dim=other.unit.dim)
+            r = Quantity(
+                operator.floordiv(self.to_decimal(self_unit), other.to_decimal(other_unit)),
+                unit=self_unit / other_unit,
+            )
         return maybe_decimal(r)
 
     def __rfloordiv__(self, oc):
         # oc // self
-        rdiv = lambda a, b: operator.truediv(b, a)
-        rfloordiv = lambda a, b: operator.floordiv(b, a)
-        r = self._binary_operation(oc, rfloordiv, rdiv)
-        return maybe_decimal(r)
+        return _to_quantity(oc).__floordiv__(self)
 
     def __ifloordiv__(self, oc):
         # a //= b
@@ -2923,6 +2938,28 @@ class Quantity:
         # is JIT-safe (no `bool(traced_array)` or traced unit exponents).
         axis = args[0] if args else kwds.get('axis', None)
         dim_exponent = _reduction_count_from_shape(self.shape, axis)
+
+        # A ``where`` mask excludes elements from the product, so masked-out
+        # elements must not count toward the unit exponent either. Mirror
+        # nanprod: derive the exponent from the effective element count when
+        # the mask is concrete, and require the counts to be uniform.
+        # Skipped under tracing because traced booleans cannot drive a
+        # Python ``if``.
+        where = kwds.get('where', None)
+        if where is not None and not self.is_unitless and not _is_tracer(where):
+            counts = xp.sum(xp.broadcast_to(xp.where(where, 1, 0), self.shape), axis=axis)
+            if counts.ndim > 0:
+                first = counts.ravel()[0]
+                if not bool(xp.all(counts == first)):
+                    raise ValueError(
+                        "prod with a `where` mask keeping a non-uniform number of "
+                        "elements is not supported for quantities with units, because "
+                        "the resulting elements would have different unit exponents."
+                    )
+                dim_exponent = int(first)
+            else:
+                dim_exponent = int(counts)
+
         r = Quantity(prod_res, unit=self.unit ** dim_exponent)
         return maybe_decimal(r)
 
@@ -2970,7 +3007,10 @@ class Quantity:
         # tracing because traced booleans cannot drive a Python ``if``.
         if not _is_tracer(self.mantissa):
             nan_mask = xp.isnan(self.mantissa)
-            non_nan_counts = xp.sum(xp.where(nan_mask, 0, 1), *args, **kwds)
+            # ``initial`` seeds the product, not the element count — forwarding
+            # it to the count ``sum`` would inflate the unit exponent.
+            count_kwds = {k: v for k, v in kwds.items() if k != 'initial'}
+            non_nan_counts = xp.sum(xp.where(nan_mask, 0, 1), *args, **count_kwds)
             if non_nan_counts.ndim > 0:
                 first = non_nan_counts.ravel()[0]
                 if not bool(xp.all(non_nan_counts == first)):

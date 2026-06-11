@@ -511,7 +511,15 @@ def leaky_relu(
     """
     x = maybe_custom_array(x)
     x_arr = asarray(x)
-    return where(get_mantissa(x_arr) >= 0, x_arr, negative_slope * x_arr)
+    # leaky_relu is homogeneous of degree 1, so it is unit-preserving.
+    # Compute on the mantissa and reattach the unit: multiplying the Quantity
+    # itself by ``negative_slope`` would collapse a scaled-dimensionless
+    # Quantity (e.g. mV/volt) to a plain array and break the unit-aware where.
+    m = get_mantissa(x_arr)
+    out = where(m >= 0, m, negative_slope * m)
+    if isinstance(x_arr, Quantity):
+        return Quantity(out, unit=x_arr.unit)
+    return out
 
 
 @set_module_as('saiunit.math')

@@ -562,6 +562,9 @@ def einreduce(
         (4, 3)
     """
     x = maybe_custom_array_tree(x)
+    if isinstance(x, (list, tuple)):
+        # a list/tuple of tensors is accepted: stack it into a single array/Quantity
+        x = asarray(x)
     shape = _get_shape(x)
     try:
         hashable_axes_lengths = tuple(axes_lengths.items())
@@ -716,8 +719,21 @@ def einshape(
     else:
         composition = exp.composition
     result = {}
-    for (axis_name,), axis_length in zip(composition, _shape):  # type: ignore
-        if axis_name != "_":
+    # axes is either '_' (ellipsis placeholder), [] (anonymous axis of length 1),
+    # [AnonymousAxis] or [axis_name]
+    for axes, axis_length in zip(composition, _shape):  # type: ignore
+        if isinstance(axes, str):
+            # '_' placeholder inserted for dimensions covered by the ellipsis
+            continue
+        if len(axes) == 0:
+            if axis_length != 1:
+                raise RuntimeError(f"Length of axis is not 1: {pattern} {_shape}")
+            continue
+        (axis_name,) = axes
+        if isinstance(axis_name, AnonymousAxis):
+            if axis_name.value != axis_length:
+                raise RuntimeError(f"Length of anonymous axis does not match: {pattern} {_shape}")
+        elif axis_name != "_":
             result[axis_name] = axis_length
     return result
 
@@ -1052,7 +1068,7 @@ def einsum(
     >>> u.math.einsum('ij,j', M, x) # implicit form
     Array([14, 38, 62, 86], dtype=float32) * mvolt
     >>> u.math.einsum(M, (0, 1), x, (1,), (0,)) # explicit form via indices
-    Array([14, 38, 62, 86], dtype=float32)
+    Array([14, 38, 62, 86], dtype=float32) * mvolt
     >>> u.math.einsum(M, (0, 1), x, (1,))  # implicit form via indices
     Array([14, 38, 62, 86], dtype=float32) * mvolt
 

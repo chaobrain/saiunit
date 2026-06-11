@@ -285,6 +285,13 @@ def test_finfo_iinfo_with_quantities_and_dtypes():
     assert u.math.iinfo(jnp.int16).dtype == jnp.iinfo(jnp.int16).dtype
 
 
+def test_finfo_iinfo_with_python_scalars():
+    # Python scalars must be accepted by resolving their dtype first
+    # (ml_dtypes' finfo/iinfo reject raw Python scalars).
+    assert u.math.finfo(1.0).dtype == jnp.asarray(1.0).dtype
+    assert u.math.iinfo(1).dtype == jnp.asarray(1).dtype
+
+
 def test_broadcast_shapes_and_result_type_issubdtype():
     assert u.math.broadcast_shapes((2, 1), (1, 3)) == (2, 3)
     assert u.math.issubdtype(jnp.float32, jnp.floating)
@@ -314,6 +321,34 @@ def test_get_dtype_and_is_float_is_int():
         # assert u.math.get_dtype(3 + 0j) == brainstate.environ.dctype()
 
 
+def test_get_dtype_without_brainstate():
+    # brainstate is a dev-only dependency: get_dtype/is_float/is_int must
+    # handle Python scalars without it. Run in a subprocess with the
+    # brainstate import halted so this test process is not poisoned.
+    import subprocess
+    import sys
+    code = '\n'.join([
+        "import sys",
+        "sys.modules['brainstate'] = None  # halt any 'import brainstate'",
+        "import jax.numpy as jnp",
+        "import saiunit as u",
+        "assert u.math.get_dtype(True) is bool",
+        "assert u.math.get_dtype(3) == jnp.asarray(3).dtype",
+        "assert u.math.get_dtype(3.0) == jnp.asarray(3.0).dtype",
+        "assert u.math.get_dtype(1 + 2j) == jnp.asarray(1 + 2j).dtype",
+        "assert u.math.is_float(3.0)",
+        "assert u.math.is_int(3)",
+    ])
+    result = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+
+
+def test_get_dtype_is_float_is_int_module_is_saiunit_math():
+    assert u.math.get_dtype.__module__ == 'saiunit.math'
+    assert u.math.is_float.__module__ == 'saiunit.math'
+    assert u.math.is_int.__module__ == 'saiunit.math'
+
+
 def test_gradient_quantity_no_spacing_returns_quantity():
     f = jnp.array([0.0, 1.0, 4.0, 9.0], dtype=jnp.float32) * meter
     g = u.math.gradient(f)
@@ -340,6 +375,58 @@ def test_gradient_with_unit_spacing_and_multi_axis():
     assert isinstance(gy, u.Quantity) and isinstance(gx, u.Quantity)
     assert_quantity(gy, jnp.gradient(f.mantissa, dy.mantissa, axis=0), unit=meter / second)
     assert_quantity(gx, jnp.gradient(f.mantissa, dx.mantissa, axis=1), unit=meter / second)
+
+
+def test_gradient_plain_array_respects_axis():
+    # `axis` must be forwarded for plain arrays: a scalar axis yields a single
+    # array (not a list of gradients along ALL axes), a tuple yields a list.
+    f = jnp.arange(12.0, dtype=jnp.float32).reshape(3, 4)
+    g0 = u.math.gradient(f, axis=0)
+    assert not isinstance(g0, (list, tuple)), f"expected a single array, got {type(g0).__name__}"
+    np.testing.assert_allclose(g0, jnp.gradient(f, axis=0))
+    g01 = u.math.gradient(f, axis=(0, 1))
+    assert isinstance(g01, list) and len(g01) == 2
+    for got, expected in zip(g01, jnp.gradient(f, axis=(0, 1))):
+        np.testing.assert_allclose(got, expected)
+
+
+def test_gradient_unitless_quantity_no_spacing():
+    # a unitless Quantity must not be passed raw to the backend
+    f = u.Quantity(jnp.array([1.0, 2.0, 4.0], dtype=jnp.float32))
+    g = u.math.gradient(f)
+    assert not isinstance(g, u.Quantity)
+    np.testing.assert_allclose(g, jnp.gradient(f.mantissa))
+
+
+def test_gradient_multidim_quantity_no_spacing_returns_list():
+    # numpy/jax return one array per axis: the unitful branch must return a
+    # LIST of Quantities, not a single stacked Quantity of shape (ndim, ...).
+    f = jnp.arange(12.0, dtype=jnp.float32).reshape(3, 4) * meter
+    grads = u.math.gradient(f)
+    assert isinstance(grads, list) and len(grads) == 2
+    for got, expected in zip(grads, jnp.gradient(f.mantissa)):
+        assert isinstance(got, u.Quantity)
+        assert_quantity(got, expected, unit=meter)
+    # a scalar axis yields a single Quantity
+    g0 = u.math.gradient(f, axis=0)
+    assert isinstance(g0, u.Quantity)
+    assert_quantity(g0, jnp.gradient(f.mantissa, axis=0), unit=meter)
+
+
+def test_gradient_multi_vararg_unitless_returns_raw_arrays():
+    # fully-unitless results must be raw arrays, not Quantity(unit="1"),
+    # so they remain consumable by plain jnp functions.
+    f = jnp.arange(12.0, dtype=jnp.float32).reshape(3, 4)
+    gy, gx = u.math.gradient(f, 0.5, 2.0)
+    assert not isinstance(gy, u.Quantity) and not isinstance(gx, u.Quantity)
+    np.testing.assert_allclose(gy, jnp.gradient(f, 0.5, 2.0)[0])
+    np.testing.assert_allclose(gx, jnp.gradient(f, 0.5, 2.0)[1])
+    jnp.sum(gy)  # must not raise
+    # mixed spacings: only the unitful one yields a Quantity
+    gy, gx = u.math.gradient(f, 0.5 * second, 2.0)
+    assert isinstance(gy, u.Quantity)
+    assert_quantity(gy, jnp.gradient(f, 0.5, 2.0)[0], unit=second ** -1)
+    assert not isinstance(gx, u.Quantity)
 
 
 def test_gradient_edge_order_not_supported():

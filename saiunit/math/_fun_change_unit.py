@@ -21,7 +21,7 @@ from saiunit._jax_compat import jax, jnp
 from saiunit._typing import Array, ArrayLike, DTypeLike
 
 from saiunit._backend import get_backend
-from saiunit._base_unit import UNITLESS
+from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import maybe_decimal
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
@@ -334,6 +334,24 @@ def square(
     return _fun_change_unit_unary('square', lambda u: u ** 2, x, **kwargs)
 
 
+def _check_prod_initial(initial, fun_name: str) -> Optional[ArrayLike]:
+    """Validate the ``initial`` argument of prod/nanprod.
+
+    A unitful ``initial`` would change the unit exponent of the result, so
+    only plain values and dimensionless quantities are supported (the
+    latter are unwrapped, folding any scale factor into the value).
+    """
+    if isinstance(initial, Quantity):
+        if not initial.dim.is_dimensionless:
+            raise TypeError(
+                f'{fun_name} does not support a unitful `initial` (got '
+                f'initial={initial}): it would change the unit exponent of '
+                f'the result. Pass a plain (dimensionless) value instead.'
+            )
+        return initial.to_decimal()
+    return initial
+
+
 @set_module_as('saiunit.math')
 def prod(
     x: Union[Quantity, ArrayLike],
@@ -364,7 +382,8 @@ def prod(
         If True, the axes which are reduced are left in the result as
         dimensions with size one.
     initial : scalar, optional
-        The starting value for this product.
+        The starting value for this product. Must be a plain value or a
+        dimensionless Quantity; a unitful ``initial`` raises ``TypeError``.
     where : array_like of bool, optional
         Elements to include in the product.
 
@@ -384,7 +403,8 @@ def prod(
         >>> u.math.prod(q)  # product is 6.0, unit is meter ** 2
     """
     x = maybe_custom_array(x)
-    extra = _strip_none_kwargs(dict(dtype=dtype, initial=initial, where=where))
+    initial_value = _check_prod_initial(initial, 'prod')
+    extra = _strip_none_kwargs(dict(dtype=dtype, initial=initial_value, where=where))
     if isinstance(x, Quantity):
         return x.prod(axis=axis, keepdims=keepdims, **extra)
     else:
@@ -422,7 +442,8 @@ def nanprod(
         If True, the axes which are reduced are left in the result as
         dimensions with size one.
     initial : scalar, optional
-        The starting value for this product.
+        The starting value for this product. Must be a plain value or a
+        dimensionless Quantity; a unitful ``initial`` raises ``TypeError``.
     where : array_like of bool, optional
         Elements to include in the product.
 
@@ -443,7 +464,8 @@ def nanprod(
         >>> u.math.nanprod(q)  # NaN treated as 1, result is 6.0
     """
     x = maybe_custom_array(x)
-    extra = _strip_none_kwargs(dict(dtype=dtype, initial=initial, where=where))
+    initial_value = _check_prod_initial(initial, 'nanprod')
+    extra = _strip_none_kwargs(dict(dtype=dtype, initial=initial_value, where=where))
     if isinstance(x, Quantity):
         return x.nanprod(axis=axis, keepdims=keepdims, **extra)
     else:
@@ -764,6 +786,26 @@ def true_divide(
                                    x, y, **kwargs)
 
 
+def _align_for_floor_division(x, y):
+    """Prepare mantissas and result units for floor-based division.
+
+    ``floor`` is not scale-linear, so the operands must be aligned before
+    flooring.  Same-dimension operands are aligned to ``x``'s unit: the
+    quotient is then dimensionless and the remainder keeps ``x``'s unit.
+    Mixed-dimension operands are folded to magnitude-1 (base) units so the
+    result does not depend on the unit representation of either operand.
+
+    Returns ``(x_value, y_value, quotient_unit, remainder_unit)``.
+    """
+    xq = x if isinstance(x, Quantity) else Quantity(x)
+    yq = y if isinstance(y, Quantity) else Quantity(y)
+    if xq.unit.has_same_dim(yq.unit):
+        return xq.mantissa, yq.in_unit(xq.unit).mantissa, UNITLESS, xq.unit
+    xu = xq.unit if xq.unit.magnitude == 1. else Unit(dim=xq.unit.dim)
+    yu = yq.unit if yq.unit.magnitude == 1. else Unit(dim=yq.unit.dim)
+    return xq.to_decimal(xu), yq.to_decimal(yu), xu / yu, xu
+
+
 @set_module_as('saiunit.math')
 def divmod(
     x: Union[Quantity, ArrayLike],
@@ -774,8 +816,13 @@ def divmod(
     Return element-wise quotient and remainder simultaneously.
 
     Equivalent to ``(x // y, x % y)``, but faster because it avoids
-    redundant work. The quotient carries unit ``x.unit / y.unit`` and the
-    remainder carries ``x.unit``.
+    redundant work. When `x` and `y` share a dimension, the operands are
+    aligned to ``x.unit`` first (``floor`` is not scale-linear): the
+    quotient is dimensionless and the remainder carries ``x.unit``. For
+    mixed dimensions, both operands are folded to magnitude-1 (base) units
+    so the result does not depend on the unit representation; the quotient
+    then carries the base ``x.unit / y.unit`` and the remainder the base
+    unit of ``x``.
 
     Parameters
     ----------
@@ -788,10 +835,10 @@ def divmod(
     Returns
     -------
     out1 : ndarray or Quantity
-        Element-wise quotient resulting from floor division. Unit is
-        ``x.unit / y.unit``.
+        Element-wise quotient resulting from floor division.
     out2 : ndarray or Quantity
-        Element-wise remainder from floor division. Unit is ``x.unit``.
+        Element-wise remainder from floor division, with the dimension
+        of `x`.
 
     Examples
     --------
@@ -804,18 +851,12 @@ def divmod(
     """
     x = maybe_custom_array(x)
     y = maybe_custom_array(y)
-    if isinstance(x, Quantity) and isinstance(y, Quantity):
-        xp = get_backend(x.mantissa, y.mantissa)
-        r = _resolve_op('divmod', xp)(x.mantissa, y.mantissa, **kwargs)
-        return Quantity(r[0], unit=x.unit / y.unit), Quantity(r[1], unit=x.unit)
-    elif isinstance(x, Quantity):
-        xp = get_backend(x.mantissa, y)
-        r = _resolve_op('divmod', xp)(x.mantissa, y, **kwargs)  # type: ignore[arg-type]
-        return Quantity(r[0], unit=x.unit / UNITLESS), Quantity(r[1], unit=x.unit)
-    elif isinstance(y, Quantity):
-        xp = get_backend(x, y.mantissa)
-        r = _resolve_op('divmod', xp)(x, y.mantissa, **kwargs)
-        return Quantity(r[0], unit=UNITLESS / y.unit), Quantity(r[1], unit=UNITLESS)
+    if isinstance(x, Quantity) or isinstance(y, Quantity):
+        xv, yv, quot_unit, rem_unit = _align_for_floor_division(x, y)
+        xp = get_backend(xv, yv)
+        r = _resolve_op('divmod', xp)(xv, yv, **kwargs)
+        return (maybe_decimal(Quantity(r[0], unit=quot_unit)),
+                maybe_decimal(Quantity(r[1], unit=rem_unit)))
     else:
         xp = get_backend(x, y)
         return _resolve_op('divmod', xp)(x, y, **kwargs)
@@ -936,17 +977,24 @@ def power(
                 )
             y = y.mantissa
         xp = get_backend(x.mantissa, y)
+        if x.dim.is_dimensionless:
+            # A dimensionless base yields a plain result for any exponent —
+            # including array exponents, which ``x.unit ** y`` cannot
+            # express. ``to_decimal`` folds any scale factor into the value.
+            return _resolve_op('power', xp)(x.to_decimal(), y, **kwargs)
         return maybe_decimal(Quantity(_resolve_op('power', xp)(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
-        if not y.is_unitless:
+        if not y.dim.is_dimensionless:
             raise TypeError(
                 f'power requires the exponent "y" to be dimensionless, '
                 f'but got y with unit={y.unit}. '
                 f'Strip the unit from y before raising a value to a power.'
             )
-        y = y.mantissa
-        xp = get_backend(x, y)
-        return maybe_decimal(Quantity(_resolve_op('power', xp)(x, y, **kwargs), unit=x ** y))  # type: ignore[arg-type]
+        # ``x`` carries no unit here and the exponent is dimensionless, so
+        # the result is plain; ``to_decimal`` folds any scale factor of y.
+        y_value = y.to_decimal()
+        xp = get_backend(x, y_value)
+        return _resolve_op('power', xp)(x, y_value, **kwargs)
     else:
         xp = get_backend(x, y)
         return _resolve_op('power', xp)(x, y, **kwargs)
@@ -961,8 +1009,12 @@ def floor_divide(
     """
     Return the largest integer smaller or equal to the division of the inputs.
 
-    Equivalent to the Python ``//`` operator. The resulting unit is
-    ``x.unit / y.unit``.
+    Equivalent to the Python ``//`` operator. ``floor`` is not scale-linear,
+    so when `x` and `y` share a dimension the operands are aligned to
+    ``x.unit`` first and the result is a plain (dimensionless) integral
+    value. For mixed dimensions, both operands are folded to magnitude-1
+    (base) units so the result does not depend on the unit representation;
+    the result then carries the base ``x.unit / y.unit``.
 
     Parameters
     ----------
@@ -976,7 +1028,7 @@ def floor_divide(
     -------
     out : ndarray or Quantity
         ``floor(x / y)``, element-wise. This is a scalar if both `x` and
-        `y` are scalars. The resulting unit is ``x.unit / y.unit``.
+        `y` are scalars.
 
     Examples
     --------
@@ -987,7 +1039,17 @@ def floor_divide(
         >>> b = u.math.array([2.0, 3.0]) * u.second
         >>> u.math.floor_divide(a, b)  # unit is meter / second
     """
-    return _fun_change_unit_binary('floor_divide', lambda ux, uy: ux / uy, x, y, **kwargs)
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
+    kwargs = _strip_none_kwargs(kwargs)
+    if isinstance(x, Quantity) or isinstance(y, Quantity):
+        xv, yv, quot_unit, _ = _align_for_floor_division(x, y)
+        xp = get_backend(xv, yv)
+        r = _dispatch_call(_resolve_op('floor_divide', xp), (xv, yv), kwargs)
+        return maybe_decimal(Quantity(r, unit=quot_unit))
+    else:
+        xp = get_backend(x, y)
+        return _dispatch_call(_resolve_op('floor_divide', xp), (x, y), kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -1043,17 +1105,24 @@ def float_power(
                 )
             y = y.mantissa
         xp = get_backend(x.mantissa, y)
+        if x.dim.is_dimensionless:
+            # A dimensionless base yields a plain result for any exponent —
+            # including array exponents, which ``x.unit ** y`` cannot
+            # express. ``to_decimal`` folds any scale factor into the value.
+            return _resolve_op('float_power', xp)(x.to_decimal(), y, **kwargs)
         return maybe_decimal(Quantity(_resolve_op('float_power', xp)(x.mantissa, y, **kwargs), unit=x.unit ** y))
     elif isinstance(y, Quantity):
-        if not y.is_unitless:
+        if not y.dim.is_dimensionless:
             raise TypeError(
                 f'float_power requires the exponent "y" to be dimensionless, '
                 f'but got y with unit={y.unit}. '
                 f'Strip the unit from y before raising a value to a power.'
             )
-        y = y.mantissa
-        xp = get_backend(x, y)
-        return maybe_decimal(Quantity(_resolve_op('float_power', xp)(x, y, **kwargs), unit=x ** y))
+        # ``x`` carries no unit here and the exponent is dimensionless, so
+        # the result is plain; ``to_decimal`` folds any scale factor of y.
+        y_value = y.to_decimal()
+        xp = get_backend(x, y_value)
+        return _resolve_op('float_power', xp)(x, y_value, **kwargs)
     else:
         xp = get_backend(x, y)
         return _resolve_op('float_power', xp)(x, y, **kwargs)

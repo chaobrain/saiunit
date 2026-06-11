@@ -658,3 +658,154 @@ def test_cumproduct_is_cumprod_alias():
     assert u.math.cumproduct is u.math.cumprod
     x = jnp.array([1.0, 2.0, 3.0, 4.0])
     assert jnp.allclose(u.math.cumproduct(x), u.math.cumprod(x))
+
+
+# ---------------------------------------------------------------------------
+# Regression tests: scale alignment in divmod / floor_divide
+# ---------------------------------------------------------------------------
+
+
+def test_divmod_same_dim_scale_alignment():
+    """Regression: divmod must align scales before flooring (7 m vs 2 km)."""
+    q, r = um.divmod(7.0 * u.meter, 2.0 * u.kmeter)
+    assert_quantity(q, 0.0)
+    assert_quantity(r, 7.0, unit=u.meter)
+    # identity: divmod(x, y) == (x // y, x % y)
+    fd = um.floor_divide(7.0 * u.meter, 2.0 * u.kmeter)
+    m = (7.0 * u.meter) % (2.0 * u.kmeter)
+    assert_quantity(fd, 0.0)
+    assert jnp.allclose(jnp.asarray(q), jnp.asarray(fd))
+    assert_quantity(r, m.to_decimal(u.meter), unit=u.meter)
+
+
+def test_divmod_same_dim_matches_floordiv_and_mod():
+    x = jnp.array([7.0, 9.5]) * u.meter
+    y = 2.0 * u.kmeter
+    q, r = um.divmod(x, y)
+    fd = um.floor_divide(x, y)
+    m = x % y
+    assert_quantity(q, jnp.asarray(fd))
+    assert_quantity(r, m.to_decimal(u.meter), unit=u.meter)
+
+
+def test_divmod_mixed_dim_representation_invariant():
+    """Regression: divmod(7.0, 2 km) must equal divmod(7.0, 2000 m)."""
+    q1, r1 = um.divmod(7.0, 2.0 * u.kmeter)
+    q2, r2 = um.divmod(7.0, 2000.0 * u.meter)
+    assert_quantity(q1, 0.0, unit=u.meter ** -1)
+    assert_quantity(q2, 0.0, unit=u.meter ** -1)
+    assert_quantity(r1, 7.0)
+    assert_quantity(r2, 7.0)
+
+
+def test_divmod_mixed_dim_identity():
+    x = 7.0 * u.kmeter
+    y = 3.0 * u.second
+    q, r = um.divmod(x, y)
+    fd = um.floor_divide(x, y)
+    assert_quantity(q, 2333.0, unit=u.meter / u.second)
+    assert_quantity(r, 1.0, unit=u.meter)
+    assert_quantity(fd, 2333.0, unit=u.meter / u.second)
+    # reconstruction: q * y + r == x
+    assert_quantity((q * y + r).in_unit(u.meter), 7000.0, unit=u.meter)
+
+
+def test_floor_divide_same_dim_scale_alignment():
+    """Regression: floor_divide must align scales before flooring."""
+    assert_quantity(um.floor_divide(7.0 * u.meter, 2.0 * u.kmeter), 0.0)
+    assert_quantity(um.floor_divide(1.0 * u.kmeter, 3.0 * u.meter), 333.0)
+
+
+def test_floordiv_operator_scale_alignment():
+    """Regression: Quantity.__floordiv__ must align scales before flooring."""
+    assert_quantity((1.0 * u.kmeter) // (3.0 * u.meter), 333.0)
+    assert_quantity((7.0 * u.meter) // (2.0 * u.kmeter), 0.0)
+
+
+def test_floordiv_operator_mixed_dim_representation_invariant():
+    r1 = (7.0 * u.kmeter) // 2.0
+    r2 = (7000.0 * u.meter) // 2.0
+    assert_quantity(r1, 3500.0, unit=u.meter)
+    assert_quantity(r2, 3500.0, unit=u.meter)
+
+
+def test_rfloordiv_operator_scale_alignment():
+    r = 7000.0 // u.Quantity(2.0, unit=u.kmeter / u.meter)
+    assert_quantity(r, 3.0)
+
+
+def test_floor_divide_plain_path_unchanged():
+    assert_quantity(um.floor_divide(7.0, 2.0), 3.0)
+    assert_quantity(um.floor_divide(jnp.array([7.0, 8.0]), 3.0), jnp.array([2.0, 2.0]))
+
+
+# ---------------------------------------------------------------------------
+# Regression tests: prod with ``where=`` / unitful ``initial``
+# ---------------------------------------------------------------------------
+
+
+def test_prod_where_unit_exponent_counts_only_kept_elements():
+    """Regression: masked-out elements must not raise the unit exponent."""
+    q = jnp.array([2.0, 3.0]) * u.meter
+    r = um.prod(q, where=jnp.array([True, False]))
+    assert_quantity(r, 2.0, unit=u.meter)
+
+
+def test_prod_where_uniform_counts_along_axis():
+    q = jnp.array([[2.0, 3.0], [4.0, 5.0]]) * u.meter
+    r = um.prod(q, axis=1, where=jnp.array([[True, False], [False, True]]))
+    assert_quantity(r, jnp.array([2.0, 5.0]), unit=u.meter)
+
+
+def test_prod_where_non_uniform_counts_raise():
+    q = jnp.array([[2.0, 3.0], [4.0, 5.0]]) * u.meter
+    with pytest.raises(ValueError):
+        um.prod(q, axis=1, where=jnp.array([[True, False], [True, True]]))
+
+
+def test_prod_unitful_initial_raises():
+    q = jnp.array([2.0, 3.0]) * u.meter
+    with pytest.raises(TypeError):
+        um.prod(q, initial=2.0 * u.meter)
+    with pytest.raises(TypeError):
+        um.nanprod(q, initial=2.0 * u.meter)
+
+
+def test_prod_dimensionless_quantity_initial():
+    q = jnp.array([2.0, 3.0]) * u.meter
+    r = um.prod(q, initial=u.Quantity(2.0))
+    assert_quantity(r, 12.0, unit=u.meter ** 2)
+    r = um.nanprod(q, initial=u.Quantity(2.0))
+    assert_quantity(r, 12.0, unit=u.meter ** 2)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests: power / float_power edge cases
+# ---------------------------------------------------------------------------
+
+
+def test_power_plain_base_quantity_exponent():
+    """Regression: plain base with dimensionless Quantity exponent is plain."""
+    assert_quantity(um.power(2.0, u.Quantity(3.0)), 8.0)
+    assert_quantity(um.float_power(2.0, u.Quantity(3.0)), 8.0)
+
+
+def test_power_plain_base_unitful_exponent_raises():
+    with pytest.raises(TypeError):
+        um.power(2.0, 3.0 * u.meter)
+    with pytest.raises(TypeError):
+        um.float_power(2.0, 3.0 * u.meter)
+
+
+def test_power_unitless_quantity_base_array_exponent():
+    """Regression: unitless Quantity base with array exponent must not raise."""
+    r = um.power(u.Quantity(jnp.array([2.0, 3.0])), jnp.array([2.0, 3.0]))
+    assert_quantity(r, jnp.array([4.0, 27.0]))
+    r = um.float_power(u.Quantity(jnp.array([2.0, 3.0])), jnp.array([2.0, 3.0]))
+    assert_quantity(r, jnp.array([4.0, 27.0]))
+
+
+def test_power_scaled_dimensionless_base_array_exponent():
+    scaled = u.Quantity(jnp.array([2.0, 3.0]), unit=u.kmeter / u.meter)
+    r = um.power(scaled, jnp.array([1.0, 2.0]))
+    assert_quantity(r, jnp.array([2000.0, 9000000.0]))

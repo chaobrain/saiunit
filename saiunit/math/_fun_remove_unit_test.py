@@ -597,17 +597,55 @@ class Test_allclose(unittest.TestCase):
 
         a = val * u.mV
         b = val * u.mV
+        # atol carries the data's dimension: plain or mismatched units raise
         with pytest.raises(u.UnitMismatchError):
             assert u.math.allclose(a, b, atol=1e-3)
         with pytest.raises(u.UnitMismatchError):
             assert u.math.allclose(a, b, atol=1e-3 * u.ms)
         assert u.math.allclose(a, b, atol=1e-3 * u.mV)
 
-        with pytest.raises(u.UnitMismatchError):
-            assert u.math.allclose(a, b, rtol=1e-8)
+        # rtol is dimensionless: plain floats and dimensionless Quantities
+        # work, unitful rtol raises regardless of the data's unit
+        assert u.math.allclose(a, b, rtol=1e-8)
+        assert u.math.allclose(a, b, rtol=u.Quantity(1e-8))
         with pytest.raises(u.UnitMismatchError):
             assert u.math.allclose(a, b, rtol=1e-8 * u.ms)
-        assert u.math.allclose(a, b, rtol=1e-8 * u.mV)
+        with pytest.raises(u.UnitMismatchError):
+            assert u.math.allclose(a, b, rtol=1e-8 * u.mV)
+
+    def test_rtol_dimensionless(self):
+        x = jnp.array([1.0, 2.0]) * u.volt
+        y = x * 1.005
+        # plain float rtol works on unitful data
+        assert u.math.allclose(x, y, rtol=1e-2)
+        assert not u.math.allclose(x, y, rtol=1e-3)
+        assert u.math.isclose(x, y, rtol=1e-2).all()
+        # dimensionless Quantity rtol works
+        assert u.math.allclose(x, y, rtol=u.Quantity(1e-2))
+        # unitful rtol is rejected
+        with pytest.raises(u.UnitMismatchError):
+            u.math.allclose(x, y, rtol=2e-4 * u.mV)
+        with pytest.raises(u.UnitMismatchError):
+            u.math.isclose(x, y, rtol=2e-4 * u.mV)
+
+    def test_rtol_scale_invariance(self):
+        # identical physical data must give identical results regardless of
+        # the display unit
+        x_v = jnp.array([1.0, 2.0]) * u.volt
+        y_v = x_v * 1.005
+        x_mv = x_v.in_unit(u.mV)
+        y_mv = y_v.in_unit(u.mV)
+        assert bool(u.math.allclose(x_v, y_v, rtol=1e-2)) == bool(u.math.allclose(x_mv, y_mv, rtol=1e-2))
+        assert bool(u.math.allclose(x_v, y_v, rtol=1e-3)) == bool(u.math.allclose(x_mv, y_mv, rtol=1e-3))
+        assert jnp.array_equal(u.math.isclose(x_v, y_v, rtol=1e-2),
+                               u.math.isclose(x_mv, y_mv, rtol=1e-2))
+
+    def test_atol_compatible_unit_rescales(self):
+        x = jnp.array([1.0, 2.0]) * u.meter
+        y = x + 1e-3 * u.meter
+        assert u.math.allclose(x, y, rtol=0.0, atol=2 * u.mmeter)
+        assert not u.math.allclose(x, y, rtol=0.0, atol=0.5 * u.mmeter)
+        assert u.math.isclose(x, y, rtol=0.0, atol=2 * u.mmeter).all()
 
 
 # =========================================================================
@@ -737,6 +775,17 @@ def test_flatnonzero_numpy_backend_default_kwargs():
     assert np.array_equal(r, np.array([1, 3]))
 
 
+def test_flatnonzero_fill_value_is_unitless_index():
+    """Regression: fill_value pads the returned index array, so it must be
+    a plain (unitless) value even when the input carries a unit."""
+    q = jnp.array([0.0, 1.0, 0.0, 2.0]) * u.meter
+    r = u.math.flatnonzero(q, size=4, fill_value=0)
+    assert jnp.array_equal(r, jnp.array([1, 3, 0, 0]))
+    # an index cannot carry a unit
+    with pytest.raises(TypeError):
+        u.math.flatnonzero(q, size=4, fill_value=2 * u.meter)
+
+
 def test_nonzero_numpy_backend_default_kwargs():
     """Regression: nonzero must not forward JAX-only kwargs to NumPy."""
     import numpy as np
@@ -746,6 +795,15 @@ def test_nonzero_numpy_backend_default_kwargs():
     r = u.math.nonzero(q)
     assert isinstance(r, tuple)
     assert np.array_equal(r[0], np.array([1, 3]))
+
+
+def test_get_promote_dtypes_variadic():
+    """Regression: get_promote_dtypes must accept one or three-plus args,
+    not just exactly two."""
+    import numpy as np
+    assert bm.get_promote_dtypes(jnp.float32, jnp.int32) == np.dtype('float32')
+    assert bm.get_promote_dtypes(jnp.float32) == np.dtype('float32')
+    assert bm.get_promote_dtypes(jnp.float32, jnp.int32, jnp.float64) == np.dtype('float64')
 
 
 def test_iscomplexobj_matches_jnp():

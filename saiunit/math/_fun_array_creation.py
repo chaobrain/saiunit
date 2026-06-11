@@ -14,6 +14,7 @@
 # ==============================================================================
 from __future__ import annotations
 
+import inspect
 from collections.abc import Sequence
 from typing import (Union, Optional, List, Any, Tuple)
 
@@ -720,7 +721,7 @@ def empty_like(
         if not unit.is_unitless:
             prototype = prototype.in_unit(unit)
         return Quantity(
-            _safe_call_xp(xp.empty_like, (prototype.mantissa,), dict(dtype=dtype)),
+            _safe_call_xp(xp.empty_like, (prototype.mantissa,), dict(dtype=dtype, shape=shape)),
             unit=prototype.unit,
         )
     else:
@@ -905,21 +906,27 @@ def asarray(
             "pass an array, list, or Quantity."
         )
 
+    if unit is not None and not isinstance(unit, Unit):
+        raise TypeError(f'asarray requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
+
     # get leaves
     leaves, treedef = _tree.flatten(a, is_leaf=lambda x: isinstance(x, Quantity))
-    leaves = unit_scale_align_to_first(*leaves)
-    leaf_unit = leaves[0].unit
+    if leaves:
+        leaves = unit_scale_align_to_first(*leaves)
 
-    # get unit
-    if unit is not None and not leaf_unit.is_unitless:
-        if not isinstance(unit, Unit):
-            raise TypeError(f'asarray requires "unit" to be a Unit instance, got {type(unit).__name__}: {unit!r}.')
-        leaves = [leaf.in_unit(unit) for leaf in leaves]
-    else:
-        unit = leaf_unit
+        # get unit
+        if unit is not None:
+            # an explicit target unit is strict: every leaf must be
+            # convertible to it (``in_unit`` raises ``UnitMismatchError``
+            # otherwise, including for dimensionless leaves).
+            leaves = [leaf.in_unit(unit) for leaf in leaves]
+        else:
+            unit = leaves[0].unit
 
-    # reconstruct mantissa
-    a = treedef.unflatten([leaf.mantissa for leaf in leaves])  # type: ignore[attr-defined]
+        # reconstruct mantissa
+        a = treedef.unflatten([leaf.mantissa for leaf in leaves])  # type: ignore[attr-defined]
+    # with no leaves (e.g. ``asarray([])``) there are no units to align;
+    # the backend builds the empty array and ``unit`` (when given) wraps it.
     xp = _default_xp()
     # ``order`` is a numpy/jax-only kwarg; torch / dask / ndonnx ``asarray``
     # reject it. Only forward when explicitly provided.
@@ -929,7 +936,7 @@ def asarray(
     a = xp.asarray(a, dtype=dtype, **extra)
 
     # returns
-    if unit.is_unitless:
+    if unit is None or unit.is_unitless:
         return a
     return Quantity(a, unit=unit)
 
@@ -973,6 +980,8 @@ def arange(
     ------
     UnitMismatchError
         If ``start``, ``stop``, and ``step`` do not share the same unit.
+    TypeError
+        If neither ``start`` nor ``stop`` is given.
 
     Examples
     --------
@@ -989,10 +998,13 @@ def arange(
     stop = maybe_custom_array(stop) if stop is not None else stop
     step = maybe_custom_array(step) if step is not None else step
 
+    # numpy requires a stop: it may arrive positionally (``arange(n)``,
+    # carried in ``start``) or as the keyword, but one of the two must be given.
+    if start is None and stop is None:
+        raise TypeError('arange() requires stop to be specified.')
+
     # checking the dimension of the data
     non_none_data = [d for d in (start, stop, step) if d is not None]
-    if len(non_none_data) == 0:
-        raise ValueError('arange requires at least one of start, stop, or step to be provided.')
     d1 = non_none_data[0]
     for d2 in non_none_data[1:]:
         fail_for_unit_mismatch(
@@ -1014,7 +1026,11 @@ def arange(
     # ``stop``. Normalize the single-arg form ``arange(stop)`` to ``(0, stop)``
     # the way numpy does, then drop ``step`` when not given.
     if stop is None:
+        # single-argument ``arange(n)`` form: ``start`` is really the stop.
         head: Tuple[Any, ...] = (0, start)
+    elif start is None:
+        # keyword-only ``stop``: default start to 0 (in ``stop``'s unit).
+        head = (0, stop)
     else:
         head = (start, stop)
     pos = head if step is None else (*head, step)
@@ -1033,7 +1049,7 @@ def linspace(
     endpoint: Optional[bool] = True,
     retstep: Optional[bool] = False,
     dtype: Optional[DTypeLike] = None
-) -> Union[Quantity, Array]:
+) -> Union[Quantity, Array, Tuple[Union[Quantity, Array], Union[Quantity, Array]]]:
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -1064,6 +1080,9 @@ def linspace(
     samples : Quantity or Array
         ``num`` equally spaced samples in the closed interval
         ``[start, stop]`` or the half-open interval ``[start, stop)``.
+    step : Quantity or Array
+        Only returned if ``retstep`` is ``True``: size of spacing between
+        samples.
 
     Raises
     ------
@@ -1098,6 +1117,13 @@ def linspace(
             xp.linspace, (start, stop),
             dict(num=num, endpoint=endpoint, retstep=retstep, dtype=dtype),
         )
+    if retstep:
+        # ``result`` is a ``(samples, step)`` pair; wrap each separately —
+        # a single Quantity over the tuple would try to concatenate them.
+        samples, step = result
+        if unit.is_unitless:
+            return samples, step
+        return Quantity(samples, unit=unit), Quantity(step, unit=unit)
     return result if unit.is_unitless else Quantity(result, unit=unit)
 
 
@@ -1175,6 +1201,28 @@ def logspace(
         )
 
 
+def _fill_diagonal_call(xp, a, val, wrap, inplace):
+    """Call ``xp.fill_diagonal`` normalizing in-place vs functional semantics.
+
+    JAX's ``fill_diagonal`` is functional and honours ``inplace`` (rejecting
+    ``True`` on immutable arrays).  numpy's mutates ``a`` in place and
+    returns ``None`` — and has no ``inplace`` kwarg, so the kwarg filter
+    would silently drop it.  On that path, operate on a copy when
+    ``inplace`` is ``False`` so the input is left untouched, and return the
+    filled array either way.
+    """
+    fn = xp.fill_diagonal
+    try:
+        functional = 'inplace' in inspect.signature(fn).parameters
+    except (TypeError, ValueError):
+        functional = False
+    if functional:
+        return _safe_call_xp(fn, (a, val, wrap), dict(inplace=inplace))
+    target = a if inplace else xp.asarray(a, copy=True)
+    fn(target, val, wrap)
+    return target
+
+
 @set_module_as('saiunit.math')
 def fill_diagonal(
     a: Union[Quantity, ArrayLike],
@@ -1207,6 +1255,11 @@ def fill_diagonal(
     out : Quantity or Array
         The input array with the diagonal filled.
 
+    Raises
+    ------
+    TypeError
+        If ``val`` carries a unit but ``a`` is a plain array (not unitless).
+
     Examples
     --------
     .. code-block:: python
@@ -1225,22 +1278,28 @@ def fill_diagonal(
         if isinstance(a, Quantity):
             val = val.in_unit(a.unit)
             return Quantity(
-                _safe_call_xp(xp.fill_diagonal, (a.mantissa, val.mantissa, wrap), dict(inplace=inplace)),
+                _fill_diagonal_call(xp, a.mantissa, val.mantissa, wrap, inplace),
                 unit=a.unit,
             )
         else:
+            if not val.is_unitless:
+                raise TypeError(
+                    f'fill_diagonal requires "val" to be dimensionless when "a" is a plain array, '
+                    f'but got val with unit={val.unit}. '
+                    f'Either pass a plain number as val or wrap "a" as a Quantity.'
+                )
             return Quantity(
-                _safe_call_xp(xp.fill_diagonal, (a, val.mantissa, wrap), dict(inplace=inplace)),
+                _fill_diagonal_call(xp, a, val.mantissa, wrap, inplace),
                 unit=val.unit,
             )
     else:
         if isinstance(a, Quantity):
             return Quantity(
-                _safe_call_xp(xp.fill_diagonal, (a.mantissa, val, wrap), dict(inplace=inplace)),
+                _fill_diagonal_call(xp, a.mantissa, val, wrap, inplace),
                 unit=a.unit,
             )
         else:
-            return _safe_call_xp(xp.fill_diagonal, (a, val, wrap), dict(inplace=inplace))
+            return _fill_diagonal_call(xp, a, val, wrap, inplace)
 
 
 @set_module_as('saiunit.math')
@@ -1323,7 +1382,7 @@ def meshgrid(
 @set_module_as('saiunit.math')
 def vander(
     x: Union[Quantity, ArrayLike],
-    N: Optional[bool] = None,
+    N: Optional[int] = None,
     increasing: Optional[bool] = False,
     unit: Unit = UNITLESS
 ) -> Union[Quantity, Array]:
@@ -1373,7 +1432,7 @@ def vander(
             raise TypeError(
                 f'vander requires "x" to be dimensionless, '
                 f'but got x with unit={x.unit}. '
-                f'Pass "unit_to_scale" or strip the unit before calling vander.'
+                f'Strip the unit before calling vander, e.g. with x.to_decimal(unit).'
             )
         x = x.mantissa
     r = get_backend(x).vander(x, N=N, increasing=increasing)

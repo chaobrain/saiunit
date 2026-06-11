@@ -977,6 +977,52 @@ class TestDocstringExamples:
 
 
 # ---------------------------------------------------------------------------
+# leaky_relu unit handling tests
+# ---------------------------------------------------------------------------
+
+class TestLeakyReluUnits:
+    """Regression tests for leaky_relu unit handling.
+
+    leaky_relu is homogeneous of degree 1, so it is unit-preserving like relu.
+    It previously crashed on scaled-dimensionless Quantities (e.g. mV/volt)
+    because ``negative_slope * x`` collapsed the Quantity to a plain array
+    while the other branch of the unit-aware ``where`` stayed a Quantity.
+    """
+
+    def test_leaky_relu_plain_array_matches_jax(self):
+        """Plain-array behavior must match jax.nn.leaky_relu exactly."""
+        x = jnp.array([-3.0, -1.0, -0.5, 0.0, 0.5, 1.0, 3.0])
+        np.testing.assert_array_equal(um.leaky_relu(x), jax.nn.leaky_relu(x))
+        np.testing.assert_array_equal(
+            um.leaky_relu(x, negative_slope=0.2),
+            jax.nn.leaky_relu(x, negative_slope=0.2),
+        )
+
+    def test_leaky_relu_scaled_dimensionless_quantity(self):
+        """leaky_relu must not crash on a scaled-dimensionless Quantity (mV/volt)."""
+        q = Quantity(jnp.array([-1.0, 1.0]), unit=u.mV / u.volt)
+        result = um.leaky_relu(q)
+        assert isinstance(result, Quantity)
+        assert result.unit == u.mV / u.volt
+        expected = jax.nn.leaky_relu(q.to_decimal())
+        np.testing.assert_allclose(result.to_decimal(), expected, rtol=1e-6)
+
+    def test_leaky_relu_unitful_quantity_consistent_with_relu(self):
+        """Unitful input behaves like relu: Quantity out, unit preserved."""
+        q = Quantity(jnp.array([-2.0, -1.0, 0.0, 1.0]), unit=u.mV)
+        relu_result = um.relu(q)
+        assert isinstance(relu_result, Quantity)
+        assert relu_result.unit == u.mV
+
+        result = um.leaky_relu(q)
+        assert isinstance(result, Quantity)
+        assert result.unit == relu_result.unit
+        np.testing.assert_allclose(
+            result.mantissa, jax.nn.leaky_relu(q.mantissa), rtol=1e-6
+        )
+
+
+# ---------------------------------------------------------------------------
 # unit_to_scale tests
 # ---------------------------------------------------------------------------
 

@@ -321,6 +321,28 @@ def test_list_inputs():
     )
 
 
+def test_list_input_reduce_without_reshape():
+    # recipe needs no initial reshape/transpose, so the list must be stacked up front
+    x = [jnp.ones(3), jnp.ones(3)]
+    result = einreduce(x, "b a -> b", "sum")
+    assert not isinstance(result, list)
+    assert np.array_equal(np.asarray(result), np.asarray([3.0, 3.0]))
+
+
+def test_list_input_rearrange_identity():
+    x = [jnp.arange(3.0), jnp.arange(3.0, 6.0)]
+    result = einrearrange(x, "b a -> b a")
+    assert not isinstance(result, list)
+    assert np.array_equal(np.asarray(result), np.stack([np.arange(3.0), np.arange(3.0, 6.0)]))
+
+
+def test_list_input_quantity_preserves_unit():
+    x = [jnp.ones(3) * u.mV, jnp.ones(3) * u.mV]
+    result = einreduce(x, "b a -> b", "sum")
+    assert isinstance(result, u.Quantity)
+    assert_quantity(result, jnp.array([3.0, 3.0]), u.mV)
+
+
 def bit_count(x):
     return sum((x >> i) & 1 for i in range(20))
 
@@ -850,3 +872,20 @@ def test_einshape_rejects_composite_axes():
     x = jnp.zeros((6, 4))
     with pytest.raises(RuntimeError):
         u.math.einshape(x, '(a b) c')
+
+
+def test_einshape_unitary_anonymous_axis():
+    assert u.math.einshape(jnp.zeros((2, 1, 5)), 'a 1 b') == {'a': 2, 'b': 5}
+    with pytest.raises(RuntimeError):
+        u.math.einshape(jnp.zeros((2, 3, 5)), 'a 1 b')
+
+
+def test_einshape_anonymous_axis_validation():
+    assert u.math.einshape(jnp.zeros((2, 5, 3)), 'a 5 b') == {'a': 2, 'b': 3}
+    with pytest.raises(RuntimeError):
+        u.math.einshape(jnp.zeros((2, 5, 3)), 'a 7 b')
+
+
+def test_einshape_with_ellipsis():
+    x = jnp.zeros((2, 3, 5, 7))
+    assert u.math.einshape(x, 'a ... b') == {'a': 2, 'b': 7}

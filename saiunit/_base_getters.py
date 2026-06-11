@@ -739,9 +739,10 @@ def unit_scale_align_to_first(*args) -> 'list[Quantity]':
         if not isinstance(items[0], Quantity):
             items[0] = Quantity(items[0])
         for i in range(1, len(items)):
-            fail_for_unit_mismatch(items[i], items[0], 'Non-matching unit for function "unit_scale_align_to_first"')
-            if not isinstance(items[i], Quantity):
-                items[i] = Quantity(items[i])
+            # ``in_unit`` both checks the dimension and rescales
+            # scaled-dimensionless quantities (e.g. mV/volt) onto the
+            # unitless first item, instead of only checking dimensions.
+            items[i] = _to_quantity(items[i]).in_unit(first_unit)
     else:
         for i in range(1, len(items)):
             # Route through _to_quantity so raw values (plain numbers, bare

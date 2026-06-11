@@ -491,6 +491,10 @@ def finfo(a: Union[Quantity, ArrayLike]) -> jnp.finfo:
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return jnp.finfo(a.mantissa)
+    elif isinstance(a, (int, float, complex)) and not hasattr(a, 'dtype'):
+        # ``ml_dtypes.finfo`` rejects raw Python scalars: resolve the dtype
+        # first (this respects the JAX x64 configuration).
+        return jnp.finfo(jnp.result_type(a))
     else:
         return jnp.finfo(a)
 
@@ -500,6 +504,10 @@ def iinfo(a: Union[Quantity, ArrayLike]) -> jnp.iinfo:
     a = maybe_custom_array(a)
     if isinstance(a, Quantity):
         return jnp.iinfo(a.mantissa)
+    elif isinstance(a, (int, float, complex)) and not hasattr(a, 'dtype'):
+        # ``ml_dtypes.iinfo`` rejects raw Python scalars: resolve the dtype
+        # first (this respects the JAX x64 configuration).
+        return jnp.iinfo(jnp.result_type(a))
     else:
         return jnp.iinfo(a)
 
@@ -532,7 +540,7 @@ def broadcast_shapes(*shapes):
 environ = None  # type: ignore[assignment]
 
 
-@set_module_as('brainstate.math')
+@set_module_as('saiunit.math')
 def get_dtype(a):
     """Get the dtype of an array, ``Quantity``, or Python scalar.
 
@@ -562,23 +570,25 @@ def get_dtype(a):
         global environ
         if isinstance(a, bool):
             return bool
-        elif isinstance(a, int):
+        elif isinstance(a, (int, float, complex)):
             if environ is None:
-                from brainstate import environ  # type: ignore[import-untyped]
-            return environ.ditype()
-        elif isinstance(a, float):
-            if environ is None:
-                from brainstate import environ
-            return environ.dftype()
-        elif isinstance(a, complex):
-            if environ is None:
-                from brainstate import environ
-            return environ.dctype()
+                try:
+                    from brainstate import environ  # type: ignore[import-untyped]
+                except ImportError:
+                    # ``brainstate`` is an optional dependency: fall back to
+                    # JAX's default scalar promotion (respects the x64 config).
+                    return jnp.asarray(a).dtype
+            if isinstance(a, int):
+                return environ.ditype()
+            elif isinstance(a, float):
+                return environ.dftype()
+            else:
+                return environ.dctype()
         else:
             raise ValueError(f'Can not get dtype of {a}.')
 
 
-@set_module_as('brainstate.math')
+@set_module_as('saiunit.math')
 def is_float(array):
     """Check if the array has a floating-point dtype.
 
@@ -607,7 +617,7 @@ def is_float(array):
     return jnp.issubdtype(get_dtype(array), jnp.floating)
 
 
-@set_module_as('brainstate.math')
+@set_module_as('saiunit.math')
 def is_int(array):
     """Check if the array has an integer dtype.
 
@@ -706,10 +716,16 @@ def gradient(
     xp = get_backend(f_mantissa, *varargs_mantissa)
 
     if len(varargs) == 0:
+        grad = xp.gradient(f_mantissa, axis=axis)  # type: ignore[arg-type]
         if isinstance(f, Quantity) and not is_unitless(f):
-            return Quantity(xp.gradient(f.mantissa, axis=axis), unit=f.unit)
-        else:
-            return xp.gradient(f)  # type: ignore[arg-type]
+            # ``xp.gradient`` returns a single array for a scalar ``axis``
+            # (or a 1-D input) and a list of per-axis arrays otherwise.
+            # Preserve that contract instead of stacking the list into one
+            # Quantity of shape (ndim, ...).
+            if isinstance(grad, (list, tuple)):
+                return [Quantity(g, unit=f.unit) for g in grad]
+            return Quantity(grad, unit=f.unit)
+        return grad
     elif len(varargs) == 1:
         unit = get_unit(f) / get_unit(varargs[0])
         grad = xp.gradient(f_mantissa, varargs_mantissa[0], axis=axis)  # type: ignore[arg-type]
@@ -725,7 +741,10 @@ def gradient(
     else:
         unit_list = [get_unit(f) / get_unit(v) for v in varargs]
         result_list = xp.gradient(f_mantissa, *varargs_mantissa, axis=axis)  # type: ignore[arg-type]
-        return [(Quantity(r, unit=unit) if unit is not None else r) for r, unit in zip(result_list, unit_list)]
+        return [
+            (r if isinstance(unit, Unit) and unit.is_unitless else Quantity(r, unit=unit))
+            for r, unit in zip(result_list, unit_list)
+        ]
 
 
 # window funcs
