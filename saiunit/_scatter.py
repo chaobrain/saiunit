@@ -357,13 +357,16 @@ def _scatter_npy_like(xp, mantissa, index, value, op: str, *, mode, fill_value):
 
 
 def _take_masked(value, valid, xp):
-    """Subset ``value`` by ``valid`` if it's a 1D array of matching length."""
+    """Subset ``value`` along axis 0 by ``valid`` if its leading length matches."""
     if isinstance(value, (int, float, complex, np.number)):
         return value
     arr = xp.asarray(value)
     if arr.ndim == 0:
         return arr
-    if arr.ndim == 1 and arr.shape[0] == valid.shape[0]:
+    if arr.ndim >= 1 and arr.shape[0] == valid.shape[0]:
+        # Drop the rows whose scatter index was out of bounds. This must apply
+        # to multi-dimensional values too (e.g. a (n_index, k) block scattered
+        # into a (m, k) target), not just 1-D values.
         return arr[valid]
     # broadcast cases (e.g. value is scalar-like 0-D); return as-is
     return arr

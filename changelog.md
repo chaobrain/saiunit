@@ -1,5 +1,51 @@
 # Release Notes
 
+## Version 0.5.0
+
+### Highlights
+
+Version 0.5.0 is a focused follow-up to the library-wide correctness audit that
+landed in 0.4.0. A second, execution-verified pass over the entire public API —
+the core ``Quantity``, ``Unit``, and ``Dimension`` types together with every
+numerical subpackage (``saiunit.math``, ``saiunit.lax``, ``saiunit.linalg``,
+``saiunit.fft``, ``saiunit.sparse``, and ``saiunit.autograd``) — confirmed that
+those subpackages are already correct and surfaced a small number of remaining
+edge-case defects in the core and decorator layers, which this release fixes.
+The public API is unchanged, so 0.5.0 is a drop-in upgrade from 0.4.0.
+
+### Core: ``Quantity``
+
+- **Fix indexed ``.at[...]`` updates with a multi-dimensional value and
+  out-of-bounds indices on the NumPy/CuPy backends.** ``q.at[idx].set(value)``
+  (and the ``add``/``multiply``/``divide``/``min``/``max`` variants) no longer
+  raises a shape-mismatch error when ``value`` is multi-dimensional and ``idx``
+  contains out-of-bounds entries; the out-of-bounds rows are now dropped to match
+  JAX's scatter behaviour (#127).
+- **Make ``Quantity.itemsize`` and ``Quantity.nbytes`` consistent with
+  ``Quantity.dtype``.** For scalar (Python-number) mantissas the byte counts now
+  follow the canonicalized ``dtype`` (e.g. ``float32`` under x32) instead of
+  reporting NumPy's default ``float64`` width (#127).
+
+### Decorators and validation
+
+- **``assign_units`` no longer drops variadic positional arguments.** A function
+  decorated with ``@assign_units`` that declares ``*args`` now receives the
+  surplus positional arguments instead of having them silently discarded: the
+  unit-stripped declared parameters are forwarded positionally so the trailing
+  ``*args`` is preserved. ``without_result_units`` was corrected identically
+  (#127).
+- **Correct stale documentation on ``fail_for_dimension_mismatch`` and
+  ``fail_for_unit_mismatch``.** Removed an inherited note claiming ``0`` is
+  treated as having "any dimension"; these helpers compare ``0`` as a
+  dimensionless value (the 0-as-any-dimension convention applies only to
+  ``Quantity`` equality). The ``assign_units.without_result_units`` docstring
+  example was also fixed (#127).
+
+### ``saiunit.lax``
+
+- **Correct the ``lax.index_take`` docstring example**, which showed a transposed
+  result that did not match the function's (JAX-consistent) output (#127).
+
 ## Version 0.4.0
 
 ### Highlights

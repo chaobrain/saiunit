@@ -639,8 +639,8 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
 
     The decorated function has a 'without_result_units' attribute that
     returns the raw result without unit assignment:
-    >>> func = assign_units(result=volt)(lambda x: x)
-    >>> func(3*mV).without_result_units()
+    >>> func = assign_units(x=volt, result=volt)(lambda x: x)
+    >>> func.without_result_units(3*mV)
     0.003
 
     Notes
@@ -656,13 +656,15 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
     if f is missing:
         return partial(assign_units, **au)
 
-    @wraps(f)
-    def new_f(*args, **kwds):
+    def _strip_units(args, kwds):
+        # Strip the declared-unit arguments while preserving the
+        # positional/keyword split, so any surplus positional arguments
+        # (absorbed by the wrapped function's ``*args``) are forwarded rather
+        # than silently dropped.
         arg_names = f.__code__.co_varnames[0: f.__code__.co_argcount]
-        newkeyset = kwds.copy()
-        for n, v in zip(arg_names, args[0: f.__code__.co_argcount]):
-            newkeyset[n] = v
-        for n, v in tuple(newkeyset.items()):
+        n_named = f.__code__.co_argcount
+
+        def convert(n, v):
             if n in au and v is not None:
                 specific_unit = au[n]
 
@@ -683,9 +685,18 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
                     v,
                     is_leaf=_is_quantity
                 )
-            newkeyset[n] = v
+            return v
 
-        result = f(**newkeyset)
+        pos_args = [convert(arg_names[i], v) for i, v in enumerate(args[0:n_named])]
+        extra_args = list(args[n_named:])
+        new_kwds = {n: convert(n, v) for n, v in kwds.items()}
+        return pos_args, extra_args, new_kwds
+
+    @wraps(f)
+    def new_f(*args, **kwds):
+        pos_args, extra_args, new_kwds = _strip_units(args, kwds)
+
+        result = f(*pos_args, *extra_args, **new_kwds)
         if "result" in au:
             if isinstance(au["result"], Callable) and au["result"] != bool:
                 expected_result = au["result"](*[get_unit(a) for a in args])
@@ -716,33 +727,8 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
         return result
 
     def without_result_units(*args, **kwds):
-        arg_names = f.__code__.co_varnames[0: f.__code__.co_argcount]
-        newkeyset = kwds.copy()
-        for n, v in zip(arg_names, args[0: f.__code__.co_argcount]):
-            newkeyset[n] = v
-        for n, v in tuple(newkeyset.items()):
-            if n in au and v is not None:
-                specific_unit = au[n]
-
-                if (
-                    _jtree.structure(specific_unit, is_leaf=_is_quantity)
-                    !=
-                    _jtree.structure(v, is_leaf=_is_quantity)
-                ):
-                    raise TypeError(
-                        f"For argument '{n}', we expect the input type {specific_unit} but got {v}"
-                    )
-
-                v = _jtree.map(
-                    partial(_remove_unit, f.__name__, n),
-                    specific_unit,
-                    v,
-                    is_leaf=_is_quantity
-                )
-            newkeyset[n] = v
-
-        result = f(**newkeyset)
-        return result
+        pos_args, extra_args, new_kwds = _strip_units(args, kwds)
+        return f(*pos_args, *extra_args, **new_kwds)
 
     new_f.without_result_units = without_result_units  # type: ignore[attr-defined]
 

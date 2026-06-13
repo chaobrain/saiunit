@@ -488,11 +488,6 @@ def fail_for_dimension_mismatch(
         If the dimensions of `obj1` and `obj2` do not match (or, if `obj2`
         is ``None``, when `obj1` is not dimensionless).
 
-    Notes
-    -----
-    Implements special checking for ``0``, treating it as having "any
-    dimensions".
-
     Examples
     --------
     .. code-block:: python
@@ -565,11 +560,6 @@ def fail_for_unit_mismatch(
     UnitMismatchError
         If the dimensions of `obj1` and `obj2` do not match (or, if `obj2`
         is ``None``, when `obj1` is not unitless).
-
-    Notes
-    -----
-    Implements special checking for ``0``, treating it as having "any
-    dimensions".
 
     Examples
     --------
