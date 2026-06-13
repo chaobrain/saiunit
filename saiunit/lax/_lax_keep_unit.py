@@ -360,8 +360,8 @@ def index_take(
         >>> idx = jnp.array([0, 2])
         >>> result = sulax.index_take(x, (idx,), axes=(1,))
         >>> result.mantissa
-        Array([[1., 3.],
-               [4., 6.]], dtype=float32)
+        Array([[1., 4.],
+               [3., 6.]], dtype=float32)
     """
     require_jax_backend("saiunit.lax.index_take", src)
     return _fun_keep_unit_unary(lax.index_take, src, idxs, axes, **kwargs)

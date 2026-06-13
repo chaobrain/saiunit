@@ -1490,7 +1490,9 @@ class Quantity:
         if hasattr(m, "nbytes"):
             return m.nbytes
         _reject_lazy_materialization(m, "Quantity.nbytes")
-        return np.asarray(m).nbytes
+        # Stay consistent with ``dtype`` (which canonicalizes Python scalars,
+        # e.g. float -> float32 under x32) instead of ``np.asarray`` (float64).
+        return self.size * np.dtype(self.dtype).itemsize
 
     @property
     def itemsize(self) -> int:
@@ -1499,7 +1501,9 @@ class Quantity:
         if hasattr(m, "itemsize"):
             return m.itemsize
         _reject_lazy_materialization(m, "Quantity.itemsize")
-        return np.asarray(m).itemsize
+        # Stay consistent with ``dtype`` (which canonicalizes Python scalars,
+        # e.g. float -> float32 under x32) instead of ``np.asarray`` (float64).
+        return np.dtype(self.dtype).itemsize
 
     @property
     def strides(self):
