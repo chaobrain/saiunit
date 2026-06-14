@@ -647,6 +647,32 @@ class Test_allclose(unittest.TestCase):
         assert not u.math.allclose(x, y, rtol=0.0, atol=0.5 * u.mmeter)
         assert u.math.isclose(x, y, rtol=0.0, atol=2 * u.mmeter).all()
 
+    def test_atol_zero_is_dimension_neutral(self):
+        # A concrete zero is the universal "pure relative tolerance" idiom and
+        # is dimensionally neutral (0 is the same in every unit), matching
+        # saiunit's zero-compatibility convention used by +, -, ==, <, > ...
+        # So `atol=0` must work on unitful data even though a nonzero bare
+        # float does not.
+        a = jnp.array([1.0, 2.0]) * u.mV
+        b = jnp.array([1.0, 2.0]) * u.mV
+        # bare zero (int and float) accepted on unitful data
+        assert u.math.allclose(a, b, atol=0)
+        assert u.math.allclose(a, b, atol=0.0)
+        assert u.math.isclose(a, b, atol=0).all()
+        # the canonical pure-relative idiom
+        assert u.math.allclose(a, b, rtol=1e-5, atol=0)
+        # an all-zero array tolerance is likewise neutral
+        assert u.math.allclose(a, b, atol=jnp.zeros(2))
+        # numeric correctness: with rtol=0 and atol=0 only exact equality is close
+        c = jnp.array([1.0, 2.0 + 1e-6]) * u.mV
+        assert not u.math.allclose(a, c, rtol=0.0, atol=0)
+        assert u.math.isclose(a, c, rtol=0.0, atol=0).tolist() == [True, False]
+        # contract preserved: a *nonzero* bare-float atol still raises
+        with pytest.raises(u.UnitMismatchError):
+            u.math.allclose(a, b, atol=1e-3)
+        with pytest.raises(u.UnitMismatchError):
+            u.math.isclose(a, b, atol=1e-3)
+
 
 # =========================================================================
 # Docstring example tests

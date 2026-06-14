@@ -24,7 +24,7 @@ from saiunit._typing import Array, ArrayLike
 
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
-from saiunit._base_quantity import Quantity
+from saiunit._base_quantity import Quantity, _is_concrete_zero
 from saiunit._base_unit import UNITLESS
 from ._fun_keep_unit import _resolve_op, _strip_none_kwargs, _dispatch_call
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
@@ -856,6 +856,24 @@ def array_equal(
     return _fun_logic_binary('array_equal', x, y, *args, **kwargs)
 
 
+def _resolve_atol(atol, unit):
+    """Convert ``atol`` into the data's ``unit`` for isclose/allclose.
+
+    ``atol`` is an absolute tolerance, so it carries the data's dimension and a
+    plain number is rejected for dimensioned data. The one exception is a
+    concrete zero: ``0`` is the same in every unit, so it is dimensionally
+    neutral here exactly as it is for ``+``/``-``/``==`` (saiunit's
+    zero-compatibility convention). This keeps the universal ``atol=0``
+    pure-relative-tolerance idiom working on unitful data.
+    """
+    atol = Quantity(atol)
+    if (atol.unit.is_unitless
+            and not unit.is_unitless
+            and _is_concrete_zero(atol.mantissa)):
+        return atol.mantissa
+    return atol.in_unit(unit).mantissa
+
+
 @set_module_as('saiunit.math')
 def isclose(
     x: Union[Quantity, ArrayLike],
@@ -927,7 +945,7 @@ def isclose(
     # rtol multiplies |y| so it is mathematically dimensionless; atol is
     # compared against the data and therefore carries the data's unit.
     rtol_val = 1e-5 if rtol is None else Quantity(rtol).in_unit(UNITLESS).mantissa
-    atol_val = 1e-8 if atol is None else Quantity(atol).in_unit(unit).mantissa
+    atol_val = 1e-8 if atol is None else _resolve_atol(atol, unit)
     return _fun_logic_binary('isclose', x, y, rtol=rtol_val, atol=atol_val, equal_nan=equal_nan, **kwargs)
 
 
@@ -1012,7 +1030,7 @@ def allclose(
     # rtol multiplies |y| so it is mathematically dimensionless; atol is
     # compared against the data and therefore carries the data's unit.
     rtol_val = 1e-5 if rtol is None else Quantity(rtol).in_unit(UNITLESS).mantissa
-    atol_val = 1e-8 if atol is None else Quantity(atol).in_unit(unit).mantissa
+    atol_val = 1e-8 if atol is None else _resolve_atol(atol, unit)
     xp = get_backend(x_val, y_val)
     return xp.allclose(x_val, y_val, rtol=rtol_val, atol=atol_val, equal_nan=equal_nan, **kwargs)  # type: ignore[arg-type]
 
