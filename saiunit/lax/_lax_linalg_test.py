@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import jax
 import jax.numpy as jnp
 import pytest
 from absl.testing import parameterized
@@ -533,18 +534,24 @@ def test_linalg_kwargs_forwarding():
     A = jnp.array([[1.0, 2.0], [3.0, 4.0]]) * u.second
     H = jnp.array([[2.0, 1.0], [1.0, 3.0]]) * u.second
 
+    # ``is_hermitian`` is accepted by jax's qdwh across all supported versions.
     u_mat, h, num_iters, is_converged = ulax.qdwh(A, is_hermitian=False)
     assert u.get_unit(h) == u.second
 
-    w, vl, vr = ulax.eig(A, implementation=None)
+    # The kwargs below were introduced in later jax releases; forward each one
+    # only where the underlying jax function accepts it.
+    eig_kw = {'implementation': None} if jax.__version_info__ >= (0, 8, 0) else {}
+    w, vl, vr = ulax.eig(A, **eig_kw)
     assert u.get_unit(w) == u.second
 
-    v, w2 = ulax.eigh(H, implementation=None)
+    eigh_kw = {'implementation': None} if jax.__version_info__ >= (0, 9, 0) else {}
+    v, w2 = ulax.eigh(H, **eigh_kw)
     assert u.get_unit(w2) == u.second
 
     dl = jnp.array([0.0, 1.0, 1.0])
     d = jnp.array([2.0, 2.0, 2.0])
     du = jnp.array([1.0, 1.0, 0.0])
     b = jnp.array([[1.0], [2.0], [3.0]]) * u.meter
-    x = ulax.tridiagonal_solve(dl, d, du, b, perturb_singular=True)
+    ts_kw = {'perturb_singular': True} if jax.__version_info__ >= (0, 10, 0) else {}
+    x = ulax.tridiagonal_solve(dl, d, du, b, **ts_kw)
     assert u.get_unit(x) == u.meter
