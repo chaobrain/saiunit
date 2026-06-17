@@ -11,7 +11,10 @@ numerical subpackage (``saiunit.math``, ``saiunit.lax``, ``saiunit.linalg``,
 ``saiunit.fft``, ``saiunit.sparse``, and ``saiunit.autograd``) — confirmed that
 those subpackages are already correct and surfaced a small number of remaining
 edge-case defects in the core and decorator layers, which this release fixes.
-The public API is unchanged, so 0.5.0 is a drop-in upgrade from 0.4.0.
+A handful of follow-up changes — a JAX < 0.10 compatibility shim for
+``CustomArray.argpartition``, a dimension-neutral ``atol=0`` in ``isclose`` and
+``allclose``, and a documentation correction — round out the release. The public
+API is unchanged, so 0.5.0 is a drop-in upgrade from 0.4.0.
 
 ### Core: ``Quantity``
 
@@ -45,6 +48,34 @@ The public API is unchanged, so 0.5.0 is a drop-in upgrade from 0.4.0.
 
 - **Correct the ``lax.index_take`` docstring example**, which showed a transposed
   result that did not match the function's (JAX-consistent) output (#127).
+
+### ``saiunit.math``
+
+- **Allow ``atol=0`` in ``isclose`` and ``allclose`` on dimensioned data.** An
+  absolute tolerance normally carries the data's dimension, so a bare number is
+  rejected for unitful inputs. A concrete ``0`` is now treated as dimensionally
+  neutral — matching saiunit's zero-compatibility convention for ``+``, ``-``,
+  and ``==`` — so the universal ``atol=0`` (pure relative tolerance) idiom keeps
+  working on ``Quantity`` data.
+
+### Compatibility and packaging
+
+- **Support JAX < 0.10 in ``CustomArray.argpartition``.** JAX's bound
+  ``Array.argpartition`` references an internal symbol that was removed before
+  0.10; NumPy arrays now dispatch to the bound method (preserving
+  ``kind``/``order``) and JAX arrays to the functional ``jnp.argpartition``,
+  which works on every supported version. The daily CI now also exercises jax
+  0.7, 0.8, and 0.9, and the stale Python 3.10 trove classifier was dropped from
+  ``pyproject.toml`` (#129).
+
+### Documentation
+
+- **Fix two stale examples in the ``array_creation`` notebook.**
+  ``asarray([1, 2, 3], unit=second)`` and ``logspace(0 * s, 10 * s, 5)`` violated
+  saiunit's unit semantics and raised ``UnitMismatchError``; they now demonstrate
+  strict same-dimension conversion (``ms`` → ``s``) and the
+  dimensionless-``logspace`` constraint, so all 31 documentation notebooks
+  execute cleanly (#128).
 
 ## Version 0.4.0
 
