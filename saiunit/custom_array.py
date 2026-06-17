@@ -455,14 +455,20 @@ class CustomArray:
 
     def argpartition(self, kth, axis: int = -1, kind: str = 'introselect', order=None):
         """Returns the indices that would partition this array."""
-        # JAX's ``argpartition`` accepts neither ``kind`` nor ``order``;
-        # forward them only when they deviate from numpy's defaults.
-        kwargs = {}
-        if kind != 'introselect':
-            kwargs['kind'] = kind
-        if order is not None:
-            kwargs['order'] = order
-        return self.data.argpartition(kth, axis, **kwargs)
+        if isinstance(self.data, np.ndarray):
+            # NumPy's ``argpartition`` accepts ``kind`` and ``order``; forward
+            # them only when they deviate from numpy's defaults.
+            kwargs: dict[str, Any] = {}
+            if kind != 'introselect':
+                kwargs['kind'] = kind
+            if order is not None:
+                kwargs['order'] = order
+            return self.data.argpartition(kth, axis, **kwargs)
+        # JAX's bound ``Array.argpartition`` method is broken in jax<0.10 (it
+        # references a removed internal symbol), so use the functional API,
+        # which works across versions. JAX accepts neither ``kind`` nor
+        # ``order``, so they are intentionally dropped.
+        return jnp.argpartition(self.data, kth, axis=axis)
 
     def argsort(self, axis=-1, kind=None, order=None):
         """Returns the indices that would sort this array."""
