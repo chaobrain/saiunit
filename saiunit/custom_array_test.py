@@ -733,3 +733,103 @@ class TestCustomArrayBackendMethods:
         np.testing.assert_array_equal(
             np.asarray(r), np.array([1, 256], dtype=np.int32).byteswap()
         )
+
+
+# =========================================================================
+# CustomArray pytree reconstruction
+# =========================================================================
+
+@jax.tree_util.register_pytree_node_class
+class _PytreeArray(u.CustomArray):
+    """Registered plain CustomArray subclass for pytree round-trip tests."""
+
+    def __init__(self, value):
+        self.data = value
+
+
+class TestCustomArrayPytree:
+    """Pytree flatten/unflatten behaviour for CustomArray subclasses.
+
+    ``CustomArray`` is a generic base: its ``tree_unflatten`` routes through
+    the subclass ``__init__`` (via ``cls(*flat_contents)``) so that subclasses
+    whose construction is non-trivial are reconstructed correctly. The most
+    important such case is a ``brainstate.State``-backed subclass, whose
+    ``data`` is a property that requires ``State`` internals established in
+    ``__init__`` -- bypassing it with ``object.__new__`` would break the
+    setter. These tests lock in the generic round-trip (including
+    framework-supplied placeholder leaves) and the ``State``-backed path.
+    """
+
+    def test_tree_flatten_structure(self):
+        arr = _PytreeArray(jnp.array([1.0, 2.0, 3.0]))
+        children, aux = arr.tree_flatten()
+        assert aux is None
+        assert len(children) == 1
+
+    def test_flatten_unflatten_roundtrip(self):
+        arr = _PytreeArray(jnp.array([1.0, 2.0, 3.0]))
+        leaves, treedef = jax.tree_util.tree_flatten(arr)
+        arr2 = jax.tree_util.tree_unflatten(treedef, leaves)
+        assert isinstance(arr2, _PytreeArray)
+        np.testing.assert_array_equal(arr2.data, arr.data)
+
+    def test_tree_unflatten_accepts_string_placeholder_leaf(self):
+        # JAX feeds non-array placeholders (e.g. ShapedArray.str_short()
+        # strings) through tree_unflatten when inspecting/rendering structure.
+        # A plain CustomArray subclass has no validation guard, so these must
+        # round-trip verbatim rather than raise.
+        arr = _PytreeArray.tree_unflatten(None, ("f32[3]",))
+        assert isinstance(arr, _PytreeArray)
+        assert arr.data == "f32[3]"
+
+    def test_tree_unflatten_returns_subclass_instance(self):
+        arr = _PytreeArray.tree_unflatten(None, (jnp.array([1.0]),))
+        assert isinstance(arr, _PytreeArray)
+
+    def test_jit_identity_preserves_type(self):
+        # A jitted function returning the pytree reconstructs the output via
+        # tree_unflatten.
+        arr = _PytreeArray(jnp.array([1.0, 2.0, 3.0]))
+        result = jax.jit(lambda x: x)(arr)
+        assert isinstance(result, _PytreeArray)
+        np.testing.assert_array_equal(result.data, arr.data)
+
+    def test_grad_roundtrip(self):
+        arr = _PytreeArray(jnp.array([1.0, 2.0, 3.0]))
+        g = jax.grad(lambda x: jnp.sum(x * x))(arr)
+        assert isinstance(g, _PytreeArray)
+        np.testing.assert_array_equal(g.data, jnp.array([2.0, 4.0, 6.0]))
+
+    def test_vmap_identity_roundtrip(self):
+        arr = _PytreeArray(jnp.arange(6.0).reshape(3, 2))
+        result = jax.vmap(lambda x: x)(arr)
+        assert isinstance(result, _PytreeArray)
+        np.testing.assert_array_equal(result.data, arr.data)
+
+    def test_eval_shape_roundtrip(self):
+        arr = _PytreeArray(jnp.array([1.0, 2.0, 3.0]))
+        out = jax.eval_shape(lambda x: x, arr)
+        assert isinstance(out, _PytreeArray)
+        assert out.data.shape == (3,)
+
+    def test_tree_map_roundtrip(self):
+        arr = _PytreeArray(jnp.array([1.0, 2.0]))
+        arr2 = jax.tree_util.tree_map(lambda x: x + 1, arr)
+        assert isinstance(arr2, _PytreeArray)
+        np.testing.assert_array_equal(arr2.data, jnp.array([2.0, 3.0]))
+
+    def test_brainstate_state_subclass_still_roundtrips(self):
+        # Regression: State-backed subclasses rely on __init__ running during
+        # reconstruction (the ``data`` property needs State internals). The
+        # base tree_unflatten must keep calling __init__ for them.
+        arr = Array(jnp.array([1.0, 2.0, 3.0]))
+        leaves, treedef = jax.tree_util.tree_flatten(arr)
+        arr2 = jax.tree_util.tree_unflatten(treedef, leaves)
+        assert isinstance(arr2, Array)
+        np.testing.assert_array_equal(arr2.data, arr.data)
+
+    def test_brainstate_state_subclass_grad_roundtrips(self):
+        arr = Array(jnp.array([1.0, 2.0, 3.0]))
+        g = jax.grad(lambda x: jnp.sum(x * x))(arr)
+        assert isinstance(g, Array)
+        np.testing.assert_array_equal(g.data, jnp.array([2.0, 4.0, 6.0]))
