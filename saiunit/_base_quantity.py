@@ -3905,7 +3905,17 @@ class Quantity:
         Returns:
           The Quantity object.
         """
-        return cls(*values, unit=unit)  # type: ignore[misc]
+        # Pytree reconstruction must round-trip *any* leaf the framework supplies,
+        # including non-array placeholders that JAX passes purely to inspect or
+        # render tree structure (e.g. ShapedArray.str_short() strings fed through
+        # tree_unflatten when building custom_vjp structure-mismatch messages).
+        # Such placeholders must not trip the user-facing str/bytes guard in
+        # __init__; build the instance directly instead.
+        obj = object.__new__(cls)
+        mantissa, = values
+        obj._mantissa = mantissa
+        obj._unit = unit if unit is not None else UNITLESS
+        return obj
 
     def cuda(self, device=None) -> 'Quantity':
         from saiunit._jax_compat import device_put as _device_put, devices as _devices

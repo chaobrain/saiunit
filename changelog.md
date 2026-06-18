@@ -1,5 +1,43 @@
 # Release Notes
 
+## Version 0.5.1
+
+### Highlights
+
+Version 0.5.1 is a small maintenance release that hardens JAX pytree
+reconstruction for the core ``Quantity`` type and raises the minimum supported
+Python version to 3.11. The public API is unchanged, so 0.5.1 is a drop-in
+upgrade from 0.5.0.
+
+### Core: ``Quantity``
+
+- **Harden ``Quantity`` pytree reconstruction against non-array leaves.**
+  ``Quantity.tree_unflatten`` now rebuilds the instance directly rather than
+  routing through ``__init__``. JAX legitimately feeds non-array placeholders
+  through ``tree_unflatten`` when it inspects or renders tree structure — for
+  example, the ``ShapedArray.str_short()`` strings used to build ``custom_vjp``
+  structure-mismatch messages. Such placeholders previously tripped the
+  ``str``/``bytes`` guard that ``__init__`` applies to user input and raised a
+  spurious ``TypeError``. Reconstruction now round-trips any leaf the framework
+  supplies, while still enforcing the single-child invariant and normalising a
+  missing unit to ``UNITLESS`` (#131).
+
+### Packaging
+
+- **Raise the minimum supported Python to 3.11.** ``requires-python`` is now
+  ``>=3.11``; Python 3.10 is no longer tested or supported. The corresponding
+  ``Programming Language :: Python :: 3.10`` classifier had already been
+  dropped (#131).
+
+### Tests
+
+- Added comprehensive pytree round-trip coverage for ``Quantity`` and
+  ``CustomArray`` subclasses — including framework-supplied placeholder leaves
+  and the ``jit`` / ``grad`` / ``vmap`` / ``eval_shape`` / ``tree_map``
+  transform paths — and a regression test ensuring ``brainstate.State``-backed
+  ``CustomArray`` subclasses, whose reconstruction depends on ``__init__``
+  running, continue to round-trip correctly (#131).
+
 ## Version 0.5.0
 
 ### Highlights

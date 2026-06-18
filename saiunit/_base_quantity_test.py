@@ -438,6 +438,130 @@ class TestQuantityPytree:
         assert jnp.allclose(result.mantissa, 6.0)
         assert result.unit == _metre
 
+    # -- tree_unflatten guard-bypass contract ------------------------------
+    # tree_unflatten reconstructs the instance directly (object.__new__) and
+    # must round-trip *any* leaf the framework supplies verbatim, without
+    # re-running __init__'s validation/coercion.
+
+    def test_tree_unflatten_string_leaf_bypasses_guard(self):
+        # JAX feeds non-array placeholders (e.g. ShapedArray.str_short()
+        # strings) through tree_unflatten when rendering tree structure. These
+        # must not trip the str/bytes guard that __init__ applies to user input.
+        q = Quantity.tree_unflatten(_metre, ("f32[3]",))
+        assert isinstance(q, Quantity)
+        assert q._mantissa == "f32[3]"
+        assert q._unit is _metre
+
+    def test_tree_unflatten_bytes_leaf_bypasses_guard(self):
+        q = Quantity.tree_unflatten(_metre, (b"placeholder",))
+        assert q._mantissa == b"placeholder"
+
+    def test_tree_unflatten_does_not_coerce_leaf(self):
+        # __init__ would convert a list mantissa into an array; tree_unflatten
+        # must store the supplied leaf by identity, proving __init__ is bypassed.
+        leaf = [1, 2, 3]
+        q = Quantity.tree_unflatten(_metre, (leaf,))
+        assert q._mantissa is leaf
+        assert isinstance(q._mantissa, list)
+
+    def test_tree_unflatten_preserves_arbitrary_leaf_identity(self):
+        sentinel = object()
+        q = Quantity.tree_unflatten(_metre, (sentinel,))
+        assert q._mantissa is sentinel
+
+    def test_tree_unflatten_none_unit_normalizes_to_unitless(self):
+        q = Quantity.tree_unflatten(None, (5.0,))
+        assert q._unit is UNITLESS
+
+    def test_tree_unflatten_preserves_unit_identity(self):
+        q = Quantity.tree_unflatten(_metre, (1.0,))
+        assert q._unit is _metre
+
+    def test_tree_unflatten_returns_quantity_instance(self):
+        assert isinstance(Quantity.tree_unflatten(_metre, (1.0,)), Quantity)
+
+    @pytest.mark.parametrize("values", [(), (1.0, 2.0)])
+    def test_tree_unflatten_requires_single_child(self, values):
+        # tree_flatten always emits exactly one child; a differently-shaped
+        # children tuple should raise loudly rather than mis-reconstruct.
+        with pytest.raises(ValueError):
+            Quantity.tree_unflatten(_metre, values)
+
+    # -- round-trip fidelity ----------------------------------------------
+
+    @pytest.mark.parametrize(
+        "mantissa,unit",
+        [
+            (3.0, _metre),
+            (jnp.array([1.0, 2.0, 3.0]), _metre),
+            (jnp.arange(6.0).reshape(2, 3), _second),
+            (1.0, UNITLESS),
+            (2.5, _metre / _second),
+        ],
+    )
+    def test_round_trip_preserves_value_and_unit(self, mantissa, unit):
+        q = Quantity(mantissa, unit=unit)
+        leaves, treedef = jax.tree.flatten(q)
+        q2 = treedef.unflatten(leaves)
+        assert jnp.allclose(q.mantissa, q2.mantissa)
+        assert q.unit == q2.unit
+
+    def test_round_trip_preserves_numpy_backend(self):
+        q = Quantity(np.array([1.0, 2.0, 3.0]), unit=_metre)
+        leaves, treedef = jax.tree.flatten(q)
+        q2 = treedef.unflatten(leaves)
+        assert isinstance(q2.mantissa, np.ndarray)
+
+    # -- high-level JAX transforms that exercise unflatten -----------------
+
+    def test_eval_shape_roundtrip(self):
+        # eval_shape reconstructs the output pytree from abstract leaves —
+        # the natural analogue of the placeholder-leaf path.
+        q = Quantity(jnp.array([1.0, 2.0, 3.0]), unit=_metre)
+        out = jax.eval_shape(lambda x: x * 2, q)
+        assert isinstance(out, Quantity)
+        assert out.unit == _metre
+        assert out.mantissa.shape == (3,)
+
+    def test_tree_map_roundtrip(self):
+        q = Quantity(jnp.array([1.0, 2.0]), unit=_metre)
+        q2 = jax.tree.map(lambda x: x + 1, q)
+        assert q2.unit == _metre
+        assert jnp.allclose(q2.mantissa, jnp.array([2.0, 3.0]))
+
+    def test_vmap_roundtrip(self):
+        q = Quantity(jnp.arange(6.0).reshape(3, 2), unit=_metre)
+        result = jax.vmap(lambda row: row * 2)(q)
+        assert result.unit == _metre
+        assert jnp.allclose(result.mantissa, q.mantissa * 2)
+
+    def test_grad_through_quantity(self):
+        q = Quantity(jnp.array([1.0, 2.0]), unit=_metre)
+        g = jax.grad(lambda x: (x / _metre).sum())(q)
+        assert isinstance(g, Quantity)
+
+    def test_custom_vjp_structure_mismatch_raises_jax_error(self):
+        # A bwd rule returning the wrong structure makes JAX render a
+        # structure-mismatch message. Reconstruction during that path must
+        # surface JAX's error, never saiunit's str/bytes guard.
+        @jax.custom_vjp
+        def f(x):
+            return x * 2.0
+
+        def f_fwd(x):
+            return f(x), None
+
+        def f_bwd(res, g):
+            return (g, g)  # two cotangents for one input
+
+        f.defvjp(f_fwd, f_bwd)
+
+        q = Quantity(jnp.array([1.0, 2.0, 3.0]), unit=_metre)
+        with pytest.raises(TypeError) as excinfo:
+            out, vjp = jax.vjp(f, q)
+            vjp(out)
+        assert "Cannot create a Quantity from a str" not in str(excinfo.value)
+
 
 # =========================================================================
 # Wrapping functions
