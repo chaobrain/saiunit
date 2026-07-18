@@ -32,6 +32,7 @@ __all__ = [
     'wrap_init',
     'Primitive',
     'concrete_or_error',
+    'is_constant_dim',
 ]
 
 T = TypeVar("T")
@@ -72,6 +73,15 @@ if HAS_JAX:
                 if typ is None:
                     return val
                 return typ(val)
+
+
+    # ``is_constant_dim`` was removed from ``jax.core`` in JAX 0.11 with no
+    # ``jax.extend.core`` replacement; it still lives in the private
+    # ``jax._src.core`` module. Use the public alias on older JAX.
+    if jax.__version_info__ < (0, 10, 0):
+        from jax.core import is_constant_dim
+    else:
+        from jax._src.core import is_constant_dim
 
 
     def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):
@@ -124,6 +134,9 @@ else:
 
     def concrete_or_error(typ, val, context=""):  # type: ignore[no-redef]
         require_jax("concrete_or_error")
+
+    def is_constant_dim(d):  # type: ignore[no-redef]
+        require_jax("is_constant_dim")
 
     def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):  # type: ignore[no-redef]
         require_jax("wrap_init")

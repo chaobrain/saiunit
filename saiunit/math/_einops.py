@@ -29,7 +29,7 @@ import opt_einsum  # type: ignore[import-untyped]
 
 from saiunit._base_unit import UNITLESS
 from saiunit._base_quantity import Quantity
-from saiunit._compatible_import import safe_map, unzip2
+from saiunit._compatible_import import safe_map, unzip2, is_constant_dim
 from saiunit._misc import set_module_as, maybe_custom_array_tree
 from ._einops_parsing import ParsedExpression, _ellipsis, AnonymousAxis, EinopsError
 from ._fun_array_creation import asarray, zeros_like
@@ -1214,7 +1214,7 @@ def einsum(
     # Allow handling of shape polymorphism
     non_constant_dim_types = {
         type(d) for op in operands if not isinstance(op, str)
-        for d in np.shape(op) if not jax.core.is_constant_dim(d)
+        for d in np.shape(op) if not is_constant_dim(d)
     }
     if not non_constant_dim_types:
         contract_path = opt_einsum.contract_path
