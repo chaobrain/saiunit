@@ -21,7 +21,7 @@ import pytest
 
 import saiunit._compatible_import as ci
 
-EXPORTS = ["safe_map", "unzip2", "wrap_init", "Primitive", "concrete_or_error"]
+EXPORTS = ["safe_map", "unzip2", "wrap_init", "Primitive", "concrete_or_error", "is_constant_dim"]
 
 
 def test_all_exports_present():
