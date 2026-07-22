@@ -57,7 +57,7 @@ if HAS_JAX:
         from jax.extend.core import concrete_or_error
     except ImportError:
         try:
-            from jax.core import concrete_or_error
+            from jax.core import concrete_or_error  # type: ignore[attr-defined,no-redef]
         except ImportError:
             def concrete_or_error(typ, val, context=""):
                 """Minimal shim used when concrete_or_error is unavailable.
@@ -79,7 +79,7 @@ if HAS_JAX:
     # ``jax.extend.core`` replacement; it still lives in the private
     # ``jax._src.core`` module. Use the public alias on older JAX.
     if jax.__version_info__ < (0, 10, 0):
-        from jax.core import is_constant_dim
+        from jax.core import is_constant_dim  # type: ignore[attr-defined]
     else:
         from jax._src.core import is_constant_dim
 
