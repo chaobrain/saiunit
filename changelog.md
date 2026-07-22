@@ -1,5 +1,47 @@
 # Release Notes
 
+## Version 0.5.2
+
+### Highlights
+
+Version 0.5.2 is a maintenance release that restores compatibility with
+JAX 0.11. The ``is_constant_dim`` helper that ``saiunit.math.einsum`` relies on
+was removed from the public ``jax.core`` namespace in JAX 0.11; this release
+sources it through the version-aware ``saiunit._compatible_import`` shim so the
+einsum contraction path keeps working across JAX 0.6–0.11. Type checking and
+the compatibility export test are realigned accordingly. The public API is
+unchanged, so 0.5.2 is a drop-in upgrade from 0.5.1.
+
+### JAX compatibility
+
+- **Restore ``einsum`` on JAX 0.11.** ``is_constant_dim`` was removed from
+  ``jax.core`` in JAX 0.11 with no ``jax.extend.core`` replacement, so the
+  constant-dimension check in ``saiunit.math.einsum`` raised ``AttributeError``
+  under the new release. The symbol is now imported through
+  ``saiunit._compatible_import``, which pulls it from the public ``jax.core``
+  alias on JAX < 0.10 and from the private ``jax._src.core`` module on
+  JAX ≥ 0.10; ``_einops.py`` calls the shimmed helper instead of
+  ``jax.core.is_constant_dim`` directly (#135).
+- **Expose ``is_constant_dim`` from the compatibility layer.** It is now part of
+  ``saiunit._compatible_import.__all__``, with a ``require_jax`` stub provided
+  for JAX-less installs so the public surface stays consistent whether or not
+  JAX is present (#135).
+
+### Tooling
+
+- **Fix the ``mypy`` type-check gate for version-guarded JAX imports.** The
+  ``concrete_or_error`` and ``is_constant_dim`` fallback imports from
+  ``jax.core`` are annotated so ``mypy`` no longer reports missing attributes on
+  newer JAX, unblocking the ``type_check`` CI job (#138).
+- **Align the compatibility export test with ``__all__``.** The expected export
+  list in ``_compatible_import_test.py`` now includes ``is_constant_dim``,
+  keeping the API-surface regression test in sync (#138).
+
+### Continuous integration
+
+- Bumped ``actions/checkout`` from 6 to 7 (#134) and ``actions/setup-python``
+  from 6 to 7 (#136) across the CI, daily CI, publish, and docs workflows.
+
 ## Version 0.5.1
 
 ### Highlights
