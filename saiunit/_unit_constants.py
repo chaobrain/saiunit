@@ -63,6 +63,13 @@ Force
     ``IMF``
 """
 
+# Convention: entries below keep ``factor`` in [1, 10), pushing the decade
+# into ``scale`` (e.g. ``hour = 3.600 * 10**3 s``, not ``factor=3600,
+# scale=0``). ``Unit.create`` does not enforce this. ``==``/``hash``/the
+# standard-unit registry key are component-wise on (dim, scale, base,
+# factor), so re-encoding an existing unit to a different (scale, factor)
+# pair that yields the same magnitude would change its identity — don't.
+
 from ._base_unit import Unit
 from ._unit_common import joule, kilogram, second, meter, radian, pascal, meter2, meter3, watt, newton
 from .math import pi

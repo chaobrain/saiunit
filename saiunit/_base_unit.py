@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any
 from ._base_dimension import (
     Dimension,
     DIMENSIONLESS,
+    _is_tracer,
 )
 from ._typing import ArrayLike
 
@@ -542,7 +543,14 @@ def _parse_term(s: str):
             # swallowed and reported as "unknown unit".
             if base_num == 10.0:
                 return Unit(DIMENSIONLESS, scale=exp)
-            return Unit(DIMENSIONLESS, factor=base_num ** exp)
+            try:
+                value = base_num ** exp
+            except OverflowError:
+                raise ValueError(
+                    f"unit factor {base_num} ** {exp} overflows the float "
+                    f"range; reduce the exponent."
+                ) from None
+            return Unit(DIMENSIONLESS, factor=value)
 
         if atom in _unit_name_registry:
             return _unit_name_registry[atom] ** exp
@@ -634,14 +642,25 @@ def _normalise_scalar(x: Any) -> Any:
 
     Standard-unit registration and lookup require plain Python numbers,
     so e.g. ``np.int64(3)`` must behave the same as ``3``.  Non-Real
-    objects (JAX tracers, arrays) pass through untouched.
+    objects (JAX tracers, arrays) pass through untouched, except for
+    concrete 0-d arrays, which are unwrapped to their scalar value (a
+    concrete 0-d array would otherwise construct a ``Unit`` whose
+    ``hash()`` crashes).  JAX tracers are left untouched so tracing
+    under ``jit``/``vmap``/``grad`` keeps working.
     """
+    if isinstance(x, bool):
+        return int(x)
     if isinstance(x, (int, float)):
         return x
     if isinstance(x, numbers.Integral):
         return int(x)
     if isinstance(x, numbers.Real):
         return float(x)
+    if getattr(x, 'ndim', None) == 0 and not _is_tracer(x):
+        try:
+            return _normalise_scalar(x.item())
+        except (AttributeError, TypeError):
+            pass
     return x
 
 
@@ -659,10 +678,24 @@ def _validate_scale_and_factor(scale: Any, factor: Any) -> None:
             f"Unit scale and factor must be real numbers; "
             f"got scale={scale!r}, factor={factor!r}."
         )
+    if isinstance(scale, int) and not isinstance(scale, bool):
+        try:
+            float(scale)
+        except OverflowError:
+            raise ValueError(
+                f"Unit scale overflows the float range: {scale!r}."
+            ) from None
     if isinstance(scale, (int, float)) and not math.isfinite(scale):
         raise ValueError(
             f"Unit scale must be a finite real number; got scale={scale!r}."
         )
+    if isinstance(factor, int) and not isinstance(factor, bool):
+        try:
+            float(factor)
+        except OverflowError:
+            raise ValueError(
+                f"Unit factor overflows the float range: {factor!r}."
+            ) from None
     if isinstance(factor, (int, float)):
         if not math.isfinite(factor):
             raise ValueError(
@@ -1255,6 +1288,13 @@ class Unit:
             the factor set to 1 (the registered standard unit for the
             same dimension/scale when one exists).
 
+        Notes
+        -----
+        For a dimensionless unit, the result may carry an angular label
+        (e.g. ``rad``) even though the input was a plain ratio: saiunit
+        does not distinguish angle from ratio in the dimensionless
+        registry keyspace.
+
         Examples
         --------
         .. code-block:: python
@@ -1274,7 +1314,17 @@ class Unit:
         # using standard units
         key = (self.dim, self.scale, self.base, 1.)
         if key in _standard_units:
-            return _standard_units[key]
+            candidate = _standard_units[key]
+            # Dimensionless keys collapse radian powers (rad^2, rad^3, ...)
+            # onto plain ratio scales; substituting a power alias would
+            # mislabel a first-power unit (arcmin -> "crad^2").  Only
+            # accept first-power display names for dimensionless dims.
+            if not (
+                self.dim.is_dimensionless
+                and isinstance(candidate.dispname, str)
+                and _RE_DISPNAME_EXP.match(candidate.dispname)
+            ):
+                return candidate
 
         # using temporary units
         name, dispname, is_fullname, dimless = _find_standard_unit(self.dim, self.base, self.scale, 1.0)
@@ -1358,6 +1408,11 @@ class Unit:
         component-wise, not on the computed product ``factor * base**scale``:
         a unit encoded as ``scale=3`` and one encoded as ``factor=1000.``
         have equal magnitude products but compare unequal here.
+
+        Note also that comparing quantities across factor units after
+        conversion is exact-float equality: e.g. ``1*u.inch == 25.4*u.mm``
+        is ``False`` (the conversion ratio is off by one ulp). For factor
+        units, prefer ``u.math.isclose`` over ``==``.
 
         Parameters
         ----------
@@ -1768,6 +1823,11 @@ class Unit:
         Computes ``1 / self``, producing a new unit with negated scale,
         inverted factor, and reciprocal dimensions.
 
+        Note that ``self.reverse().reverse()`` may differ from ``self``
+        in the last ulp of ``factor`` (e.g. for ``hour``, whose factor is
+        3.6): factor inversion is plain float division, not exact for
+        every value.
+
         Returns
         -------
         Unit
@@ -1849,7 +1909,14 @@ class Unit:
         if is_scalar_type(other):
             dim = self.dim ** other
             scale = self.scale * other
-            factor = self.factor ** other
+            try:
+                factor = self.factor ** other
+            except OverflowError:
+                raise ValueError(
+                    f"unit factor {self.factor} ** {other} overflows the float "
+                    f"range; strip the factor first (factorless()) or reduce "
+                    f"the exponent."
+                ) from None
 
             if dim == DIMENSIONLESS:
                 # Preserve a named-dimensionless display (radian, steradian)

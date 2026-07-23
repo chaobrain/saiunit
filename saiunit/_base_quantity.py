@@ -185,6 +185,30 @@ def _wrap_function_remove_unit(func):
 # List processing helpers
 # ---------------------------------------------------------------------------
 
+def _conversion_ratio(u_from: Unit, u_to: Unit):
+    """
+    Ratio between two units' magnitudes, computed without materializing
+    either magnitude.
+
+    ``Unit.magnitude`` (``factor * base ** scale``) saturates to
+    ``inf``/``0.0`` once the combined scale exceeds ~±308, so dividing two
+    materialized magnitudes can produce ``inf``, ``0.0``, or ``nan`` even
+    when the true ratio is perfectly representable. Instead compute
+    ``(f1 * b**s1) / (f2 * b**s2)`` as ``(f1 / f2) * b ** (s1 - s2)``: the
+    factor ratio and the scale delta are each far more likely to stay in
+    range than either magnitude alone (F3).
+
+    A ratio that genuinely exceeds the float range yields ``inf``
+    (IEEE-754 semantics, matching ``Unit.magnitude``) rather than raising
+    the ``OverflowError`` that Python float ``**`` produces.
+    """
+    try:
+        return (u_from.factor / u_to.factor) * u_from.base ** (u_from.scale - u_to.scale)
+    except OverflowError:
+        # factor and base are validated positive, so the ratio's sign is +.
+        return float('inf')
+
+
 def _zoom_values_with_units(
     values: Sequence[ArrayLike],
     units: Sequence[Unit]
@@ -209,7 +233,7 @@ def _zoom_values_with_units(
     first_unit = units[0]
     for i in range(1, len(values)):
         if not units[i].has_same_magnitude(first_unit):
-            values[i] = values[i] * (units[i].magnitude / first_unit.magnitude)
+            values[i] = values[i] * _conversion_ratio(units[i], first_unit)
     return values
 
 
@@ -646,7 +670,7 @@ class Quantity:
                     if not new_unit.has_same_dim(unit):
                         raise TypeError(f"All elements must have the same unit. But got {unit} != {new_unit}")
                     if not new_unit.has_same_magnitude(unit):
-                        mantissa = mantissa * (new_unit.magnitude / unit.magnitude)
+                        mantissa = mantissa * _conversion_ratio(new_unit, unit)
                 # Respect the default backend for list/tuple inputs.
                 from saiunit._backend import _xp_for, get_default_backend
                 default = get_default_backend() or "jax"
@@ -1090,7 +1114,7 @@ class Quantity:
                 unit,
             )
         if not unit.has_same_magnitude(self.unit):
-            return self.mantissa * (self.unit.magnitude / unit.magnitude)
+            return self.mantissa * _conversion_ratio(self.unit, unit)
         else:
             return self.mantissa
 
@@ -1134,12 +1158,10 @@ class Quantity:
                 raise UnitMismatchError(f"Cannot convert to a unit with different dimensions.", self.unit, unit)
             else:
                 raise UnitMismatchError(err_msg)
-        self_mag = self.unit.magnitude
-        target_mag = unit.magnitude
-        if self_mag == target_mag:
+        if unit.has_same_magnitude(self.unit):
             u = Quantity(self.mantissa, unit=unit)
         else:
-            u = Quantity(self.mantissa * (self_mag / target_mag), unit=unit)
+            u = Quantity(self.mantissa * _conversion_ratio(self.unit, unit), unit=unit)
         return u
 
     @staticmethod
@@ -2377,7 +2399,6 @@ class Quantity:
     # -------------------- #
 
     def __pow__(self, oc):
-        self = self.factorless()
         if isinstance(oc, Quantity):
             if not oc.dim.is_dimensionless:
                 raise ValueError(f"Cannot calculate {self} ** {oc}, the exponent has to be dimensionless")
@@ -2385,18 +2406,35 @@ class Quantity:
             # the value, so a percent-style ratio (e.g. mV/uV) exponentiates
             # correctly instead of being treated as strictly unitless.
             oc = oc.to_decimal()
-        # Preserve backend: use mantissa's own ** operator if available.
-        m = self.mantissa
-        if hasattr(m, "__pow__"):
-            powered = m ** oc
-        else:
-            powered = get_backend(self).asarray(m) ** oc
         if self.unit.is_unitless:
             # A dimensionless base stays dimensionless for any exponent —
             # including array exponents, which ``unit ** oc`` cannot express.
             # (maybe_decimal would strip the Quantity wrapper here anyway.)
-            return powered
-        r = Quantity(powered, unit=self.unit ** oc)
+            m = self.mantissa
+            if hasattr(m, "__pow__"):
+                return m ** oc
+            else:
+                return get_backend(self).asarray(m) ** oc
+        # F1: keep the factor through ``**`` (matching ``*``, ``/``, and the
+        # ``saiunit.math`` change-unit wrappers) instead of unconditionally
+        # folding it into the mantissa via ``factorless()`` beforehand. Only
+        # fall back to ``factorless()`` if ``factor ** oc`` itself overflows
+        # the float range (rare, extreme exponents) — and only then, so the
+        # order matters: the mantissa is exponentiated *after* this decision,
+        # since ``factorless()`` rescales the mantissa.
+        quantity = self
+        try:
+            new_unit = quantity.unit ** oc
+        except (OverflowError, ValueError):
+            quantity = quantity.factorless()
+            new_unit = quantity.unit ** oc
+        # Preserve backend: use mantissa's own ** operator if available.
+        m = quantity.mantissa
+        if hasattr(m, "__pow__"):
+            powered = m ** oc
+        else:
+            powered = get_backend(quantity).asarray(m) ** oc
+        r = Quantity(powered, unit=new_unit)
         return maybe_decimal(r)
 
     def __rpow__(self, oc):

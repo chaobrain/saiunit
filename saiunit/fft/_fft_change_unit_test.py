@@ -584,6 +584,45 @@ def test_fftfreq_out_of_range_scale_keeps_factor():
     assert np.isclose(float(q[1].to_decimal(u.hertz)), 1 / (4 * 6e30), rtol=1e-6, atol=0.0)
 
 
+@pytest.mark.parametrize('fn_name', ['fftfreq', 'rfftfreq'])
+def test_fftfreq_fallback_uses_reverse_no_registry_pollution(fn_name):
+    """F4: the |scale| >= 28 fallback must use ``Unit.reverse()`` instead of
+    ``Unit.create``, so it registers nothing and reports the true factor."""
+    import numpy as np
+    from saiunit._base_unit import _unit_name_registry
+
+    fn = getattr(ufft, fn_name)
+    np_fn = getattr(np.fft, fn_name)
+
+    # 1. Fallback path, factor=1: values match the pre-fix mantissas exactly,
+    # and the unit reports the correct dim/scale/factor.
+    d = u.Quantity(1.0, unit=Unit(u.second.dim, scale=28))
+    result = fn(4, d)
+    assert result.unit.dim == get_or_create_dimension(s=-1)
+    assert result.unit.scale == -28
+    assert result.unit.factor == 1.0
+    np.testing.assert_allclose(np.asarray(result.mantissa), np_fn(4, 1.0))
+
+    # 2. Fallback path with a non-trivial factor: the unit must expose the
+    # true reciprocal factor (0.5), not silently drop it.
+    d_factor = u.Quantity(1.0, unit=Unit(u.second.dim, scale=28, factor=2.0))
+    result_factor = fn(4, d_factor)
+    assert result_factor.unit.scale == -28
+    assert result_factor.unit.factor == 0.5
+    # physical correctness: mantissa * unit.magnitude equals the true frequency
+    true_freq = np_fn(4, 1.0) / (2.0 * 10.0 ** 28)
+    np.testing.assert_allclose(
+        np.asarray(result_factor.mantissa) * result_factor.unit.magnitude,
+        true_freq,
+    )
+
+    # 3. No global registry pollution for a novel scale.
+    before = len(_unit_name_registry)
+    d_novel = u.Quantity(1.0, unit=Unit(u.second.dim, scale=29))
+    fn(4, d_novel)
+    assert len(_unit_name_registry) == before
+
+
 def test_fftfreq_accepts_custom_array_d():
     """A CustomArray wrapping a time Quantity must behave like the Quantity."""
     d = 0.5 * second
@@ -598,6 +637,22 @@ def test_fftfreq_accepts_custom_array_d():
     assert isinstance(result, u.Quantity)
     assert result.unit == expected.unit
     assert jnp.allclose(result.mantissa, expected.mantissa)
+
+
+def test_fftfreq_mainstream_path_unchanged():
+    """Regression anchor: the |scale| <= 27 mainstream path (unaffected by the
+    F4 fallback fix) still resolves to mHz with the expected values."""
+    import numpy as np
+
+    expected_fftfreq = np.array([0., 0.06944445, -0.1388889, -0.06944445])
+    result = ufft.fftfreq(4, 1.0 * u.hour)
+    assert result.unit.dispname == 'mHz'
+    np.testing.assert_allclose(np.asarray(result.mantissa), expected_fftfreq, rtol=1e-5)
+
+    expected_rfftfreq = np.array([0., 0.06944445, 0.1388889])
+    result = ufft.rfftfreq(4, 1.0 * u.hour)
+    assert result.unit.dispname == 'mHz'
+    np.testing.assert_allclose(np.asarray(result.mantissa), expected_rfftfreq, rtol=1e-5)
 
 
 def test_fftn_funcs_do_not_mutate_unit_change_fun():

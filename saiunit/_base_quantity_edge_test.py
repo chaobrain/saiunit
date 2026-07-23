@@ -564,3 +564,84 @@ class TestTakeEmptyAxis:
         q = Quantity(np.zeros((0,)), unit=u.mV)
         r = q.take(np.array([0]), mode='clip')
         assert np.isnan(np.asarray(r.mantissa)[0])
+
+
+class TestPowKeepsFactor:
+    """F1: `Quantity.__pow__` must keep the unit's factor instead of
+    unconditionally rewriting it to the factor-1 (usually SI) standard
+    unit, matching `*`, `/`, and the `saiunit.math` change-unit wrappers."""
+
+    def test_pow_one_keeps_unit(self):
+        r = (1 * u.foot) ** 1
+        assert r.unit == u.foot
+        assert r.mantissa == 1
+
+    def test_pow_two_matches_mul(self):
+        r_pow = (1 * u.foot) ** 2
+        r_mul = (1 * u.foot) * (1 * u.foot)
+        assert r_pow.unit == r_mul.unit
+        np.testing.assert_allclose(np.asarray(r_pow.mantissa), np.asarray(r_mul.mantissa))
+
+    def test_pow_matches_math_sqrt(self):
+        q = Quantity(4.0, unit=u.acre)
+        r_sqrt = u.math.sqrt(q)
+        r_pow = q ** 0.5
+        assert r_sqrt.unit == r_pow.unit
+        np.testing.assert_allclose(np.asarray(r_sqrt.mantissa), np.asarray(r_pow.mantissa))
+
+    def test_degree_squared_matches_mul(self):
+        # Dimensionless-but-factored base (degree): `**2` and `*` must
+        # agree, including going through `maybe_decimal`'s dimensionless
+        # stripping (both end up as the same plain float, in radians^2).
+        r_pow = (90 * u.degree) ** 2
+        r_mul = (90 * u.degree) * (90 * u.degree)
+        assert r_pow == r_mul
+
+    def test_extreme_exponent_scalar_mantissa_overflows_or_raises(self):
+        # Python-scalar mantissa follows Python float ``**`` semantics,
+        # which raises on overflow (see F9); this is pre-existing
+        # Quantity behaviour, not specific to the factor fix.
+        with pytest.raises(OverflowError):
+            (1.0 * u.calorie) ** 500
+
+    def test_extreme_exponent_array_mantissa_falls_back_to_factorless(self):
+        # `factor ** 500` overflows the float range, so `__pow__` must
+        # fall back to `factorless()` (folding the factor into the
+        # mantissa) instead of raising or crashing; an array mantissa
+        # then produces an inf under NumPy/JAX ** semantics.
+        q = Quantity(jnp.asarray(4.184), unit=u.calorie) ** 500
+        assert np.isinf(np.asarray(q.mantissa))
+        assert q.unit == u.joule ** 500
+
+
+class TestConversionRatioNoSaturation:
+    """F3: conversions must not go through the materialized magnitude
+    ratio, which saturates to inf/0.0 for combined scales beyond ~1e308."""
+
+    def test_to_decimal_extreme_scale(self):
+        r = Quantity(1.0, unit=u.ymetre ** 14).to_decimal(u.zmetre ** 14)
+        assert r == pytest.approx(1e-42)
+
+    def test_in_unit_extreme_scale(self):
+        big1 = Unit(u.metre.dim, scale=312)
+        big2 = Unit(u.metre.dim, scale=313)
+        r = Quantity(1.0, unit=big1).in_unit(big2)
+        assert r.mantissa == pytest.approx(0.1)
+
+    def test_add_extreme_scale_no_saturation(self):
+        r = Quantity(1.0, unit=u.Zmetre ** 13) + Quantity(1.0, unit=u.Ymetre ** 13)
+        assert not np.isinf(r.mantissa)
+        assert r.mantissa == pytest.approx(1e39)
+
+    def test_genuinely_out_of_range_ratio_yields_inf(self):
+        # A ratio that truly exceeds the float range must saturate to inf
+        # (IEEE semantics, like Unit.magnitude), not raise OverflowError
+        # from Python float ``**``.
+        r = Quantity(1.0, unit=u.Ymetre ** 13).to_decimal(u.metre ** 13)
+        assert np.isinf(r)
+
+    def test_hour_to_second_exact(self):
+        assert (1 * u.hour).to_decimal(u.second) == 3600.0
+
+    def test_day_in_hour_exact(self):
+        assert (1 * u.day).in_unit(u.hour).mantissa == 24.0

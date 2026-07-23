@@ -1582,6 +1582,53 @@ class TestFactorlessIdentity:
         # factor-1 standard unit for the same dimension/scale.
         assert u.degree.factorless().name == 'radian'
 
+    def test_arcsec_still_resolves_first_power_alias(self):
+        # arcsec's factorless() hits a first-power dimensionless alias
+        # (uradian), which is fine to substitute.
+        assert u.arcsec.factorless().name == 'uradian'
+
+    def test_arcmin_does_not_mislabel_as_power_alias(self):
+        # arcmin's (dim, scale, base, 1.) key collides with a registered
+        # power alias ('crad^2'); factorless() must reject it and fall
+        # back to the anonymous factor-1 unit instead of mislabelling an
+        # angle^1 quantity as angle^2 (F2).
+        result = u.arcmin.factorless()
+        assert result.name != 'cradian2'
+        assert 'cradian2' not in (result.name or '')
+        assert result.dim.is_dimensionless
+        assert result.scale == u.arcmin.scale
+        assert result.factor == 1.
+
+
+class TestUnitOverflowErgonomics:
+    def test_pow_overflow_raises_value_error(self):
+        with pytest.raises(ValueError, match="overflows the float range"):
+            u.calorie ** 500
+
+    def test_huge_int_factor_raises_value_error(self):
+        with pytest.raises(ValueError, match="overflows the float range"):
+            Unit(scale=0, factor=2 ** 2000)
+
+    def test_parse_unit_numeric_power_overflow_raises_value_error(self):
+        with pytest.raises(ValueError, match="overflows the float range"):
+            parse_unit('2^1024')
+
+
+class TestUnitConcreteArrayFactor:
+    def test_concrete_0d_array_factor_unwrapped(self):
+        un = Unit(scale=0, factor=jnp.asarray(2.0))
+        assert un.factor == 2.0
+        assert type(un.factor) is float
+        # Must not raise (was TypeError: unhashable type: ArrayImpl).
+        hash(un)
+
+
+class TestUnitBoolFactor:
+    def test_bool_factor_coerced_to_int(self):
+        un = Unit(scale=0, factor=True)
+        assert un.factor == 1
+        assert type(un.factor) is int
+
 
 class TestUnitQuantityEqSymmetry:
     def test_eq_symmetric(self):

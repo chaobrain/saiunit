@@ -11,6 +11,9 @@ Details and proposed fixes live in the per-module files:
 - [`quantity.md`](./quantity.md) — issues in `Quantity`
 - [`unit.md`](./unit.md) — issues in `Unit` and the parser/registry
 - [`dimension.md`](./dimension.md) — issues in `Dimension` (mostly clean)
+- [`unit_factor.md`](./unit_factor.md) — follow-up deep-dive into the
+  `Unit.factor` subsystem (2026-07-23): conversion math, `factorless()`,
+  registry interaction, catalog conventions, FFT helpers (F1–F10)
 
 ## Summary
 
@@ -35,6 +38,23 @@ Details and proposed fixes live in the per-module files:
 | G1 | Low | `is_unit_equal_math` docstring contradicts `Unit.__eq__` (claims `__eq__` compares names; it does not — the two functions are the same comparison) | unit.md |
 | G2 | Low | `maybe_decimal(val, unit=...)` silently ignores `unit` when `val` is dimensionless | quantity.md |
 | D1 | Info | `Dimension.__getstate__` / `__setstate__` are dead code (`__reduce__` takes precedence) | dimension.md |
+
+### Follow-up: `Unit.factor` deep-dive (2026-07-23)
+
+**Status:** F1–F4, F6–F8 fixed on this branch (same day); F5/F9/F10
+documented in docstrings/comments. See the status note at the top of
+[`unit_factor.md`](./unit_factor.md) for implementation deviations.
+
+| # | Severity | Issue | File |
+|---|----------|-------|------|
+| F1 | **High** | `Quantity.__pow__` strips the factor before exponentiating — `(1*foot)**1` silently becomes `0.3048 m`, inconsistent with `*`, `u.math.sqrt`, `Unit.__pow__` | unit_factor.md |
+| F2 | Medium | `Unit.factorless()` substitutes arbitrary dimensionless registry aliases (`arcmin.factorless()` → `crad^2`, percent-like → `rad`) | unit_factor.md |
+| F3 | Medium | Magnitude-ratio conversion saturates beyond ~10^±308 — `to_decimal` returns `0.0`/`inf`, `in_unit` returns the mantissa unchanged when both magnitudes are `inf` | unit_factor.md |
+| F4 | Medium | `fftfreq`/`rfftfreq` fallback registers ad-hoc units globally and their display name omits the factor | unit_factor.md |
+| F5 | Low | Float drift: `1*inch == 25.4*mm` is `False`, `hour.reverse().reverse() != hour` — document + `u.math.isclose` | unit_factor.md |
+| F6 | Low | Raw `OverflowError` escapes `Unit.__pow__`, factor validation (huge ints), and `parse_unit('2^1024')` | unit_factor.md |
+| F7 | Low | Concrete 0-d JAX array accepted as `factor` → unhashable `Unit` | unit_factor.md |
+| F8–F10 | Info | bool/huge-int factors; scalar-vs-array pow overflow asymmetry; catalog/registry conventions (radian-power keyspace pollution, `micron`/`umetre` shared key, undocumented `[1,10)` factor invariant) | unit_factor.md |
 
 ## What was checked and found solid
 

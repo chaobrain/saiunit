@@ -22,8 +22,6 @@ import numpy as np
 
 from saiunit import _unit_common as uc
 from saiunit._backend import get_backend
-from saiunit._base_dimension import get_or_create_dimension
-from saiunit._base_unit import Unit
 from saiunit._base_quantity import Quantity
 from saiunit._misc import set_module_as, maybe_custom_array
 from saiunit._unit_common import second
@@ -828,13 +826,7 @@ def fftfreq(
             time_unit, freq_unit = _time_freq_map[time_scale]
         except KeyError:
             time_unit = d.unit
-            freq_unit_scale = -d.unit.scale
-            freq_unit = Unit.create(get_or_create_dimension(s=-1),
-                                    name=f'10^{freq_unit_scale} hertz',
-                                    dispname=f'10^{freq_unit_scale} Hz',
-                                    scale=freq_unit_scale,
-                                    base=d.unit.base,
-                                    factor=1.0 / d.unit.factor)
+            freq_unit = d.unit.reverse()
         d_value = d.to_decimal(time_unit)
         xp = get_backend(d_value)
         extra = _fftfreq_extra_kwargs(xp, dtype)
@@ -894,13 +886,7 @@ def rfftfreq(
             time_unit, freq_unit = _time_freq_map[time_scale]
         except KeyError:
             time_unit = d.unit
-            freq_unit_scale = -d.unit.scale
-            freq_unit = Unit.create(get_or_create_dimension(s=-1),
-                                    name=f'10^{freq_unit_scale} hertz',
-                                    dispname=f'10^{freq_unit_scale} Hz',
-                                    scale=freq_unit_scale,
-                                    base=d.unit.base,
-                                    factor=1.0 / d.unit.factor)
+            freq_unit = d.unit.reverse()
         d_value = d.to_decimal(time_unit)
         xp = get_backend(d_value)
         extra = _fftfreq_extra_kwargs(xp, dtype)
