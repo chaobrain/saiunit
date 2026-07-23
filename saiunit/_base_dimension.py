@@ -618,35 +618,6 @@ class Dimension:
         return not result
 
     # MAKE DIMENSION PICKABLE #
-    def __getstate__(self):
-        """
-        Support for pickling Dimension objects.
-
-        Returns the internal dimensional exponents array which is sufficient
-        to reconstruct the Dimension object.
-
-        Returns
-        -------
-        numpy.ndarray
-            The array of dimensional exponents.
-        """
-        return self._dims
-
-    def __setstate__(self, state):
-        """
-        Support for unpickling Dimension objects.
-
-        Sets the internal dimensional exponents from the pickled state.
-
-        Parameters
-        ----------
-        state : numpy.ndarray
-            The array of dimensional exponents.
-        """
-        self._dims = state
-        self._dims.flags.writeable = False
-        self._hash = None
-
     def __reduce__(self):
         """
         Support for pickling with singleton pattern preservation.
@@ -654,6 +625,10 @@ class Dimension:
         This method ensures that when unpickling a Dimension object,
         the singleton system (using get_or_create_dimension) is used
         rather than creating a duplicate Dimension object with the same values.
+
+        ``__reduce__`` is the sole pickle path for this class (it takes
+        precedence over ``__getstate__``/``__setstate__`` for every pickle
+        protocol, so those are intentionally not defined here).
 
         Returns
         -------
@@ -865,8 +840,6 @@ def get_dim_for_display(d):
     """
     if (isinstance(d, int) and d == 1) or d is DIMENSIONLESS:
         return "1"
-    if isinstance(d, Dimension):
-        return str(d)
     return str(d)
 
 

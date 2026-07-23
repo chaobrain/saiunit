@@ -1020,11 +1020,15 @@ class TestQuantityIntegration:
         def set_to_value(key, value):
             quantity[key] = value
 
-        with pytest.raises(TypeError):
+        # Q6: assigning a plain (non-zero) number into a unit-bearing
+        # Quantity now raises UnitMismatchError uniformly (it used to raise
+        # TypeError here specifically), matching every other mismatched
+        # assignment below.
+        with pytest.raises(u.UnitMismatchError):
             set_to_value(0, 1)
         with pytest.raises(u.UnitMismatchError):
             set_to_value(0, 1 * second)
-        with pytest.raises(TypeError):
+        with pytest.raises(u.UnitMismatchError):
             set_to_value((slice(2), slice(3)), np.ones((2, 3)))
 
         brainstate = pytest.importorskip("brainstate")
@@ -1166,12 +1170,18 @@ class TestQuantityIntegration:
                 raise AssertionError(f"Operation raised unexpected exception: {ex}")
 
         def assert_operations_do_not_work(a, b):
-            tryops = [add, sub, lt, le, gt, ge, eq, ne]
+            tryops = [add, sub, lt, le, gt, ge]
             for op in tryops:
                 with pytest.raises(u.UnitMismatchError):
                     op(a, b)
                 with pytest.raises(u.UnitMismatchError):
                     op(b, a)
+            # Q5: `==`/`!=` no longer raise on a dimension mismatch, they
+            # report the mismatch as "not equal" instead (elementwise).
+            assert not np.all(np.asarray(eq(a, b)))
+            assert not np.all(np.asarray(eq(b, a)))
+            assert np.all(np.asarray(ne(a, b)))
+            assert np.all(np.asarray(ne(b, a)))
 
         # Check that consistent units work
         # unit arrays

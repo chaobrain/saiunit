@@ -629,6 +629,34 @@ class TestDisplayParts:
         normed = _normalise_display_parts(parts)
         assert len(normed) == 0
 
+    # --- U3: merge keys on (name, disp), not disp alone ---
+    def test_normalise_does_not_merge_same_dispname_different_name(self):
+        # Two distinct units that happen to share a display symbol "m"
+        # must NOT have their exponents summed together.
+        parts = [("metre", "m", 1), ("my_unit", "m", 1)]
+        normed = _normalise_display_parts(parts)
+        assert len(normed) == 2
+        assert set(normed) == {("metre", "m", 1), ("my_unit", "m", 1)}
+
+    def test_normalise_still_merges_same_name_same_dispname(self):
+        parts = [("metre", "m", 1), ("metre", "m", 2)]
+        normed = _normalise_display_parts(parts)
+        assert normed == [("metre", "m", 3)]
+
+    def test_rendered_compound_keeps_same_dispname_units_distinct(self):
+        # Construct two units that share a display symbol ("m") but have
+        # different underlying names, then verify the rendered compound
+        # string keeps both terms rather than summing their exponents.
+        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+        u1 = Unit(d, name="metre", dispname="m")
+        u2 = Unit(d, name="my_length_unit", dispname="m")
+        parts = _normalise_display_parts(
+            _merge_display_parts(_get_display_parts(u1), _get_display_parts(u2))
+        )
+        assert len(parts) == 2
+        s = _format_display_parts(parts)
+        assert s == "m * m"
+
     def test_fmt_exp_int(self):
         assert _fmt_exp(3.0) == "3"
         assert _fmt_exp(3) == "3"
@@ -1437,6 +1465,22 @@ class TestParseUnit:
     def test_parens_in_denominator(self):
         # Already worked; sanity check that the new recursion preserves it.
         assert parse_unit("m / (kg * s^2)") == u.metre / (u.kilogram * u.second ** 2)
+
+    # --- U1: parenthesised atom with an exponent ---
+    def test_parens_group_with_exponent(self):
+        assert parse_unit("(m / s)^2") == (u.metre / u.second) ** 2
+
+    def test_parens_group_with_negative_exponent(self):
+        assert parse_unit("(m * s)^-2") == (u.metre * u.second) ** -2
+
+    def test_nested_parens_group_with_exponent(self):
+        assert parse_unit("((m / s))^2") == (u.metre / u.second) ** 2
+
+    def test_parens_product_of_two_groups_not_misparsed(self):
+        # "(m) * (s)^2" is *not* a single parenthesised group carrying the
+        # exponent -- the exponent applies only to "(s)". Must parse as
+        # m * s^2, not (m * s)^2.
+        assert parse_unit("(m) * (s)^2") == u.metre * u.second ** 2
 
     # --- kelvin prefix coverage (#10) ---
     def test_kelvin_prefixes_parse(self):

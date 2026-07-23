@@ -321,6 +321,15 @@ class TestMaybeDecimal:
         result = maybe_decimal(5.0)
         assert jnp.allclose(result, 5.0)
 
+    def test_explicit_unit_takes_precedence_when_dimensionless(self):
+        # G2: an explicit `unit` must not be silently dropped just because
+        # `val` is already dimensionless in its own right.
+        percent = Unit(scale=-2)
+        permille = Unit(scale=-3)
+        q = Quantity(50.0, unit=percent)  # a fraction of 0.5
+        assert jnp.allclose(maybe_decimal(q), 0.5)
+        assert jnp.allclose(maybe_decimal(q, permille), 500.0)
+
 
 # =========================================================================
 # unit_scale_align_to_first

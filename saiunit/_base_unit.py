@@ -154,6 +154,10 @@ _unit_name_registry: 'dict[str, Unit]' = {}
 # identity.  Used by :func:`_select_preferred_standard_unit` to prefer
 # units that were registered earlier (i.e. library built-ins) over
 # user-added aliases for the same physical key.
+# Entries are never evicted, but this is safe: the key is ``id(u)``, and
+# every registered ``u`` stays alive for the process lifetime via the
+# strong reference held in ``_standard_unit_aliases``, so an id can never
+# be recycled and silently collide with a later, unrelated Unit.
 _unit_registration_index: 'dict[int, int]' = {}
 _next_registration_index: 'list[int]' = [0]
 # Guards all registry mutation in ``add_standard_unit`` so concurrent
@@ -316,7 +320,14 @@ def _normalise_display_parts(parts):
 
     If a dispname already contains an exponent (e.g. ``'m^2'``), fold that
     exponent into the part's own exponent so that ``('meter2', 'm^2', 3)``
-    becomes ``('meter2', 'm', 6)`` instead of rendering as ``m^2^3``.
+    becomes ``('m', 'm', 6)`` instead of rendering as ``m^2^3``. Folding
+    also resets the part's ``name`` to its base ``disp`` symbol, marking it
+    as "N copies of the base symbol" (a *generic* part). Generic parts keep
+    combining with plain same-symbol parts across repeated multiplications
+    (e.g. ``metre2 * metre`` and chained products like ``mm * mm2 * mm``
+    both collapse to a single power), while two *unrelated* units that
+    merely happen to share a display symbol (different name, never
+    decomposed) are kept separate in the rendered output.
     """
     result = []
     for name, disp, exp in parts:
@@ -328,16 +339,35 @@ def _normalise_display_parts(parts):
             inner_exp = float(m.group(2))
             disp = base_disp
             exp = inner_exp * exp
+            name = disp  # mark as a generic "base symbol" part
         result.append((name, disp, exp))
-    # Merge entries that now share the same base dispname
-    merged: dict[str, tuple] = {}
-    for name, disp, exp in result:
-        if disp in merged:
-            _, old_disp, old_exp = merged[disp]
-            merged[disp] = (name, disp, old_exp + exp)
+
+    # Group by dispname. If any part sharing a dispname is generic
+    # (name == disp), all parts for that dispname merge into one --
+    # generic parts act as a wildcard for "the same base symbol", which is
+    # what lets decomposed compound units (metre2, mm2, ...) recombine with
+    # plain units of the same symbol. Otherwise, entries merge only when
+    # both ``name`` and ``disp`` match, so distinct registered units that
+    # merely share a display symbol stay separate (U3).
+    by_disp: 'dict[str, list[tuple]]' = {}
+    for entry in result:
+        by_disp.setdefault(entry[1], []).append(entry)
+
+    merged = []
+    for disp, entries in by_disp.items():
+        if any(n == disp for n, d, e in entries):
+            merged.append((disp, disp, sum(e for n, d, e in entries)))
         else:
-            merged[disp] = (name, disp, exp)
-    result = [(n, d, e) for n, d, e in merged.values() if e != 0]
+            by_name: dict = {}
+            for name, d, exp in entries:
+                if name in by_name:
+                    _, old_disp, old_exp = by_name[name]
+                    by_name[name] = (name, d, old_exp + exp)
+                else:
+                    by_name[name] = (name, d, exp)
+            merged.extend(by_name.values())
+
+    result = [(n, d, e) for n, d, e in merged if e != 0]
     result.sort(key=lambda x: (0 if x[2] > 0 else 1, x[0].lower()))
     return result
 
@@ -475,6 +505,29 @@ def _parse_term(s: str):
                 exp = int(exp)
         except ValueError:
             raise ValueError(f"Invalid exponent in unit string: {s!r}")
+
+        # Parenthesised atom with an exponent, e.g. "(m / s)^2". Recurse
+        # into the group as a full expression, mirroring the outer-paren
+        # strip above. Guard against a group that only *looks* balanced
+        # (e.g. the atom of "(m) * (s)^2" is "(m) * (s)", whose first ')'
+        # closes before the end) by requiring depth to return to zero only
+        # at the very end of ``atom``.
+        if atom.startswith('(') and atom.endswith(')'):
+            depth = 0
+            balanced_at_zero_only_at_end = True
+            for i, ch in enumerate(atom):
+                if ch == '(':
+                    depth += 1
+                elif ch == ')':
+                    depth -= 1
+                    if depth == 0 and i != len(atom) - 1:
+                        balanced_at_zero_only_at_end = False
+                        break
+            if balanced_at_zero_only_at_end:
+                inner = atom[1:-1].strip()
+                if not inner:
+                    raise ValueError(f"Empty parenthesised group in {s!r}")
+                return _parse_expression(inner) ** exp
 
         # Numeric base → dimensionless scaled unit (e.g. "10^3").
         # ``Unit`` is base=10-only, so encode ``base_num ** exp`` either
@@ -755,6 +808,14 @@ class Unit:
         3. * joule
         >>> 3 * Nm
         3. * joule
+
+    Comparison and arithmetic treat a bare ``Unit`` operand differently.
+    Comparing a ``Quantity`` against a bare ``Unit`` implicitly reads the
+    unit as "one of that unit" (``1 * unit``), so ``Quantity(1, mV) == mV``
+    is ``True``. Addition/subtraction, by contrast, reject a bare ``Unit``
+    operand outright (``Quantity(1, mV) + mV`` raises ``TypeError``),
+    since there is no natural mantissa to add. Both behaviours are
+    intentional; see ``__eq__`` for the comparison side.
 
     Examples
     --------
