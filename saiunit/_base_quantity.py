@@ -185,6 +185,30 @@ def _wrap_function_remove_unit(func):
 # List processing helpers
 # ---------------------------------------------------------------------------
 
+def _conversion_ratio(u_from: Unit, u_to: Unit):
+    """
+    Ratio between two units' magnitudes, computed without materializing
+    either magnitude.
+
+    ``Unit.magnitude`` (``factor * base ** scale``) saturates to
+    ``inf``/``0.0`` once the combined scale exceeds ~±308, so dividing two
+    materialized magnitudes can produce ``inf``, ``0.0``, or ``nan`` even
+    when the true ratio is perfectly representable. Instead compute
+    ``(f1 * b**s1) / (f2 * b**s2)`` as ``(f1 / f2) * b ** (s1 - s2)``: the
+    factor ratio and the scale delta are each far more likely to stay in
+    range than either magnitude alone (F3).
+
+    A ratio that genuinely exceeds the float range yields ``inf``
+    (IEEE-754 semantics, matching ``Unit.magnitude``) rather than raising
+    the ``OverflowError`` that Python float ``**`` produces.
+    """
+    try:
+        return (u_from.factor / u_to.factor) * u_from.base ** (u_from.scale - u_to.scale)
+    except OverflowError:
+        # factor and base are validated positive, so the ratio's sign is +.
+        return float('inf')
+
+
 def _zoom_values_with_units(
     values: Sequence[ArrayLike],
     units: Sequence[Unit]
@@ -209,7 +233,7 @@ def _zoom_values_with_units(
     first_unit = units[0]
     for i in range(1, len(values)):
         if not units[i].has_same_magnitude(first_unit):
-            values[i] = values[i] * (units[i].magnitude / first_unit.magnitude)
+            values[i] = values[i] * _conversion_ratio(units[i], first_unit)
     return values
 
 
@@ -474,6 +498,29 @@ def _build_ufunc_dispatch() -> dict:
         np.isfinite: _u_math.isfinite,
         np.isnan: _u_math.isnan,
         np.isinf: _u_math.isinf,
+        # elementwise extrema / rounding / sign (keep unit)
+        np.maximum: _u_math.maximum,
+        np.minimum: _u_math.minimum,
+        np.fmax: _u_math.fmax,
+        np.fmin: _u_math.fmin,
+        np.floor: _u_math.floor,
+        np.ceil: _u_math.ceil,
+        np.trunc: _u_math.trunc,
+        np.rint: _u_math.rint,
+        np.fabs: _u_math.fabs,
+        np.copysign: _u_math.copysign,
+        np.remainder: _u_math.remainder,
+        np.sign: _u_math.sign,
+        np.hypot: _u_math.hypot,
+        # accept-unitless transcendentals
+        np.expm1: _u_math.expm1,
+        np.log1p: _u_math.log1p,
+        np.sinh: _u_math.sinh,
+        np.cosh: _u_math.cosh,
+        np.tanh: _u_math.tanh,
+        np.arcsinh: _u_math.arcsinh,
+        np.arccosh: _u_math.arccosh,
+        np.arctanh: _u_math.arctanh,
     }
     return table
 
@@ -623,7 +670,7 @@ class Quantity:
                     if not new_unit.has_same_dim(unit):
                         raise TypeError(f"All elements must have the same unit. But got {unit} != {new_unit}")
                     if not new_unit.has_same_magnitude(unit):
-                        mantissa = mantissa * (new_unit.magnitude / unit.magnitude)
+                        mantissa = mantissa * _conversion_ratio(new_unit, unit)
                 # Respect the default backend for list/tuple inputs.
                 from saiunit._backend import _xp_for, get_default_backend
                 default = get_default_backend() or "jax"
@@ -1067,7 +1114,7 @@ class Quantity:
                 unit,
             )
         if not unit.has_same_magnitude(self.unit):
-            return self.mantissa * (self.unit.magnitude / unit.magnitude)
+            return self.mantissa * _conversion_ratio(self.unit, unit)
         else:
             return self.mantissa
 
@@ -1111,12 +1158,10 @@ class Quantity:
                 raise UnitMismatchError(f"Cannot convert to a unit with different dimensions.", self.unit, unit)
             else:
                 raise UnitMismatchError(err_msg)
-        self_mag = self.unit.magnitude
-        target_mag = unit.magnitude
-        if self_mag == target_mag:
+        if unit.has_same_magnitude(self.unit):
             u = Quantity(self.mantissa, unit=unit)
         else:
-            u = Quantity(self.mantissa * (self_mag / target_mag), unit=unit)
+            u = Quantity(self.mantissa * _conversion_ratio(self.unit, unit), unit=unit)
         return u
 
     @staticmethod
@@ -1341,7 +1386,7 @@ class Quantity:
             return a.dtype
         else:
             if isinstance(a, bool):
-                return bool
+                return np.dtype(bool)
             elif isinstance(a, int):
                 return _canonicalize_dtype(int)
             elif isinstance(a, float):
@@ -1709,6 +1754,22 @@ class Quantity:
             raise TypeError("Array indices must be integers or slices, not Array")
         return Quantity(self.mantissa[index], unit=self.unit)  # type: ignore[index]
 
+    def _coerce_assign_value(self, value, api_name: str) -> 'Quantity':
+        """Coerce ``value`` for an assignment-like op into ``self``'s unit.
+
+        Applies the concrete-zero convention (a plain ``0`` is compatible
+        with any dimension, matching ``+``/``-``/comparisons), then converts
+        via ``in_unit``. Shared by ``__setitem__``, ``scatter_add/max/min``,
+        ``at[].set/add/min/max``, ``fill``, and the ``clip`` bounds so that
+        assigning a plain number into a unit-bearing quantity raises
+        ``UnitMismatchError`` uniformly everywhere.
+        """
+        value = _to_quantity(value)
+        if (value.unit.is_unitless and not self.unit.is_unitless
+                and _is_concrete_zero(value.mantissa)):
+            return Quantity(value.mantissa, unit=self.unit)
+        return value.in_unit(self.unit)
+
     def __setitem__(self, index, value: 'Quantity | ArrayLike'):
         if _is_tracer(self.mantissa):
             raise RuntimeError(
@@ -1717,13 +1778,7 @@ class Quantity:
                 "form Quantity(q.mantissa.at[index].set(value.mantissa), unit=q.unit) "
                 "instead, or perform the update outside the traced function."
             )
-        # check value
-        if not isinstance(value, Quantity):
-            if self.is_unitless:
-                value = Quantity(value)
-            else:
-                raise TypeError(f"Only Quantity can be assigned to Quantity. But got {value}")
-        value = value.in_unit(self.unit)
+        value = self._coerce_assign_value(value, "__setitem__")
 
         # check index
         index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
@@ -1763,13 +1818,7 @@ class Quantity:
             Quantity([11.  2.  3.], "mV")
         """
 
-        # check value
-        if not isinstance(value, Quantity):
-            if self.is_unitless:
-                value = Quantity(value)
-            else:
-                raise TypeError(f"Only Quantity can be assigned to Quantity. But got {value}")
-        value = value.in_unit(self.unit)
+        value = self._coerce_assign_value(value, "scatter_add")
 
         # check index
         index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
@@ -1950,13 +1999,7 @@ class Quantity:
             Quantity([10.  2.  3.], "mV")
         """
 
-        # check value
-        if not isinstance(value, Quantity):
-            if self.is_unitless:
-                value = Quantity(value)
-            else:
-                raise TypeError(f"Only Quantity can be assigned to Quantity. But got {value}")
-        value = value.in_unit(self.unit)
+        value = self._coerce_assign_value(value, "scatter_max")
 
         # check index
         index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
@@ -1997,13 +2040,7 @@ class Quantity:
             Quantity([0.5 2.  3. ], "mV")
         """
 
-        # check value
-        if not isinstance(value, Quantity):
-            if self.is_unitless:
-                value = Quantity(value)
-            else:
-                raise TypeError(f"Only Quantity can be assigned to Quantity. But got {value}")
-        value = value.in_unit(self.unit)
+        value = self._coerce_assign_value(value, "scatter_min")
 
         # check index
         index = _jtree.map(_element_not_quantity, index, is_leaf=lambda x: isinstance(x, Quantity))
@@ -2047,7 +2084,7 @@ class Quantity:
             )
         return Quantity(~self.mantissa, unit=self.unit)  # type: ignore[operator]
 
-    def _comparison(self, other: Any, operator_str: str, operation: Callable):
+    def _comparison(self, other: Any, operator_str: str, operation: Callable, *, mismatch_raises: bool = True):
         if not _is_comparable_operand(other):
             return NotImplemented
         other = _to_quantity(other)
@@ -2065,6 +2102,15 @@ class Quantity:
         try:
             other_value = other.in_unit(self.unit).mantissa
         except UnitMismatchError as e:
+            if not mismatch_raises:
+                # ``==``/``!=`` must not raise on a dimension mismatch: NumPy,
+                # pint, and astropy all return an elementwise False/True
+                # instead, which keeps ``in``, ``list.index``, etc. working.
+                # Ordering comparisons keep raising (mismatch_raises=True).
+                eq = operation is operator.eq
+                shape = np.broadcast_shapes(self.shape, other.shape)
+                xp = get_backend(self, other)
+                return xp.full(shape, not eq, dtype=bool)
             raise UnitMismatchError(
                 f"Cannot compare {self} {operator_str} {other}",
                 self.unit, other.unit,
@@ -2072,10 +2118,10 @@ class Quantity:
         return operation(self.mantissa, other_value)
 
     def __eq__(self, oc) -> ArrayLike:  # type: ignore[override]
-        return self._comparison(oc, "==", operator.eq)
+        return self._comparison(oc, "==", operator.eq, mismatch_raises=False)
 
     def __ne__(self, oc) -> ArrayLike:  # type: ignore[override]
-        return self._comparison(oc, "!=", operator.ne)
+        return self._comparison(oc, "!=", operator.ne, mismatch_raises=False)
 
     def __lt__(self, oc) -> ArrayLike:
         return self._comparison(oc, "<", operator.lt)
@@ -2125,6 +2171,11 @@ class Quantity:
 
         # format "other"
         if not isinstance(other, Quantity):
+            if not _is_comparable_operand(other):
+                # Defer to the other operand's reflected dunder (e.g. a
+                # third-party type's __rmul__) instead of silently wrapping
+                # it as an opaque mantissa.
+                return NotImplemented
             other = _to_quantity(other)
 
         # format the unit and mantissa of "other"
@@ -2142,11 +2193,23 @@ class Quantity:
                 # mirror case: ``Quantity(0) + 3*ms``
                 self = Quantity(self.mantissa, unit=other.unit)
             else:
+                # A unitless *traced* operand cannot be checked against the
+                # concrete-zero convention above (tracers have no known
+                # value), so the mismatch here may just be a jitted zero.
+                # Point the user at the fix instead of leaving them to
+                # rediscover the eager-vs-jit divergence themselves.
+                hint = ""
+                if (other.unit.is_unitless and not self.unit.is_unitless and _is_tracer(other.mantissa)) or (
+                        self.unit.is_unitless and not other.unit.is_unitless and _is_tracer(self.mantissa)):
+                    hint = (" (note: a concrete 0 would be accepted here — the "
+                            "zero-compatibility convention — but this value is a "
+                            "JAX tracer and cannot be checked; attach the expected "
+                            "unit explicitly, e.g. Quantity(x, unit=...))")
                 other = other.in_unit(
                     self.unit,
                     err_msg=f"Cannot calculate \n"
                             f"{self} {operator_str} {other}, "
-                            f"because units do not match: {self.unit} != {other.unit}"
+                            f"because units do not match: {self.unit} != {other.unit}{hint}"
                 )
         other_value = other.mantissa
         other_unit = other.unit
@@ -2207,13 +2270,14 @@ class Quantity:
 
     def __isub__(self, oc):
         # a -= b
+        self._reject_bare_unit(oc, "subtract")
         return self._binary_operation(oc, operator.sub, fail_for_mismatch=True, operator_str="-=", inplace=True)
 
     def __mul__(self, oc):
         if isinstance(oc, SparseMatrix):
             return oc.__rmul__(self)
         r = self._binary_operation(oc, operator.mul, operator.mul)
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def __rmul__(self, oc):
         return self.__mul__(oc)
@@ -2227,7 +2291,7 @@ class Quantity:
         if isinstance(oc, SparseMatrix):
             return oc.__rdiv__(self)
         r = self._binary_operation(oc, operator.truediv, operator.truediv)
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def __idiv__(self, oc):
         raise NotImplementedError("In-place division is not supported, since it changes the unit.")
@@ -2243,7 +2307,7 @@ class Quantity:
         # division with swapped arguments
         rdiv = lambda a, b: operator.truediv(b, a)
         r = self._binary_operation(oc, rdiv, rdiv)
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def __rtruediv__(self, oc):
         # oc / self
@@ -2291,18 +2355,27 @@ class Quantity:
         if isinstance(oc, SparseMatrix):
             return oc.__rmod__(self)
         r = self._binary_operation(oc, operator.mod, lambda ua, ub: ua, fail_for_mismatch=True, operator_str=r"%")
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def __rmod__(self, oc):
         # oc % self
         oc = _to_quantity(oc)
         r = oc._binary_operation(self, operator.mod, lambda ua, ub: ua, fail_for_mismatch=True, operator_str=r"%")
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def __imod__(self, oc):
         raise NotImplementedError("In-place mod is not supported, since it changes the unit.")
 
     def __divmod__(self, oc):
+        # Validate upfront so a dimension mismatch raises before the
+        # floordiv leg runs (__mod__ requires matching dimensions, so
+        # computing it partially and then failing on __mod__ would leave
+        # divmod half-evaluated).
+        other = _to_quantity(oc)
+        if not other.unit.has_same_dim(self.unit):
+            raise UnitMismatchError(
+                "divmod requires operands with the same dimension", self.unit, other.unit
+            )
         return self.__floordiv__(oc), self.__mod__(oc)
 
     def __rdivmod__(self, oc):
@@ -2312,12 +2385,12 @@ class Quantity:
         if isinstance(oc, SparseMatrix):
             return oc.__rmatmul__(self)
         r = self._binary_operation(oc, operator.matmul, operator.mul, operator_str="@")
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def __rmatmul__(self, oc):
         oc = _to_quantity(oc)
         r = oc._binary_operation(self, operator.matmul, operator.mul, operator_str="@")
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def __imatmul__(self, oc):
         # a @= b
@@ -2326,30 +2399,49 @@ class Quantity:
     # -------------------- #
 
     def __pow__(self, oc):
-        self = self.factorless()
         if isinstance(oc, Quantity):
-            if not oc.is_unitless:
+            if not oc.dim.is_dimensionless:
                 raise ValueError(f"Cannot calculate {self} ** {oc}, the exponent has to be dimensionless")
-            oc = oc.mantissa
-        # Preserve backend: use mantissa's own ** operator if available.
-        m = self.mantissa
-        if hasattr(m, "__pow__"):
-            powered = m ** oc
-        else:
-            powered = get_backend(self).asarray(m) ** oc
+            # ``to_decimal`` (not ``.mantissa``) folds any scale/factor into
+            # the value, so a percent-style ratio (e.g. mV/uV) exponentiates
+            # correctly instead of being treated as strictly unitless.
+            oc = oc.to_decimal()
         if self.unit.is_unitless:
             # A dimensionless base stays dimensionless for any exponent —
             # including array exponents, which ``unit ** oc`` cannot express.
             # (maybe_decimal would strip the Quantity wrapper here anyway.)
-            return powered
-        r = Quantity(powered, unit=self.unit ** oc)
+            m = self.mantissa
+            if hasattr(m, "__pow__"):
+                return m ** oc
+            else:
+                return get_backend(self).asarray(m) ** oc
+        # F1: keep the factor through ``**`` (matching ``*``, ``/``, and the
+        # ``saiunit.math`` change-unit wrappers) instead of unconditionally
+        # folding it into the mantissa via ``factorless()`` beforehand. Only
+        # fall back to ``factorless()`` if ``factor ** oc`` itself overflows
+        # the float range (rare, extreme exponents) — and only then, so the
+        # order matters: the mantissa is exponentiated *after* this decision,
+        # since ``factorless()`` rescales the mantissa.
+        quantity = self
+        try:
+            new_unit = quantity.unit ** oc
+        except (OverflowError, ValueError):
+            quantity = quantity.factorless()
+            new_unit = quantity.unit ** oc
+        # Preserve backend: use mantissa's own ** operator if available.
+        m = quantity.mantissa
+        if hasattr(m, "__pow__"):
+            powered = m ** oc
+        else:
+            powered = get_backend(quantity).asarray(m) ** oc
+        r = Quantity(powered, unit=new_unit)
         return maybe_decimal(r)
 
     def __rpow__(self, oc):
         # oc ** self
-        if not self.is_unitless:
+        if not self.dim.is_dimensionless:
             raise ValueError(f"Cannot calculate {oc} ** {self}, the exponent has to be dimensionless")
-        return oc ** self.mantissa
+        return oc ** self.to_decimal()
 
     def __ipow__(self, oc):
         # a **= b
@@ -2625,8 +2717,10 @@ class Quantity:
         # Align only the bounds that are given; a missing bound stays ``None``
         # and is passed straight to the backend ``clip`` (numpy/jax accept
         # ``None`` for an unbounded side). Aligning ``None`` previously crashed.
-        min_val = None if min is None else unit_scale_align_to_first(self, min)[1].mantissa
-        max_val = None if max is None else unit_scale_align_to_first(self, max)[1].mantissa
+        # ``_coerce_assign_value`` (rather than ``unit_scale_align_to_first``)
+        # also honours the concrete-zero convention, so ``q.clip(min=0)`` works.
+        min_val = None if min is None else self._coerce_assign_value(min, "clip").mantissa
+        max_val = None if max is None else self._coerce_assign_value(max, "clip").mantissa
         return Quantity(get_backend(self).clip(self.mantissa, min_val, max_val), unit=self.unit)
 
     def conj(self) -> 'Quantity':
@@ -2713,7 +2807,7 @@ class Quantity:
         xp = get_backend(self, b)
         r = self._binary_operation(b, xp.dot if hasattr(xp, "dot") else jnp.dot,
                                    operator.mul, operator_str="@")
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def trace(self, offset: int = 0, axis1: int = 0, axis2: int = 1) -> 'Quantity':  # type: ignore[no-redef]
         """
@@ -2806,7 +2900,7 @@ class Quantity:
         xp = get_backend(self, b)
         r = self._binary_operation(b, xp.outer if hasattr(xp, "outer") else jnp.outer,
                                    operator.mul, operator_str="outer")
-        return maybe_decimal(r)
+        return r if r is NotImplemented else maybe_decimal(r)
 
     def cross(self, b: 'Quantity', axisa: int = -1, axisb: int = -1, axisc: int = -1, axis: int | None = None) -> 'Quantity':
         """
@@ -2865,7 +2959,9 @@ class Quantity:
 
     def fill(self, value: 'Quantity') -> 'Quantity':
         """Fill the array with a scalar mantissa."""
-        fail_for_dimension_mismatch(self, value, "fill")
+        # ``__setitem__`` (via ``_coerce_assign_value``) already applies the
+        # concrete-zero convention and raises a uniform ``UnitMismatchError``
+        # on mismatch, so no separate check is needed here.
         self[:] = value
         return self
 
@@ -3187,6 +3283,12 @@ class Quantity:
     def resize(self, new_shape) -> 'Quantity':
         """Change shape and size of array in-place (``numpy.resize`` semantics:
         the data is repeated or truncated to fill the new shape)."""
+        if _is_tracer(self.mantissa):
+            raise RuntimeError(
+                "resize() cannot mutate a Quantity whose mantissa is a JAX "
+                "tracer (e.g., inside jit/vmap/grad). Construct a new Quantity "
+                "instead, e.g. Quantity(new_mantissa, unit=q.unit)."
+            )
         # ``resize`` is not in the array-API spec; both numpy and jax expose it.
         # Rebind the mantissa directly: ``update_mantissa`` rejects any shape
         # change, which made this method unusable for actual resizes.
@@ -3386,6 +3488,28 @@ class Quantity:
             arr = self.mantissa
             n = arr.size if axis is None else arr.shape[axis]
             idx = np.asarray(indices)
+            if n == 0:
+                # Every index is necessarily out of bounds when the axis is
+                # empty. ``np.take`` raises IndexError even for a
+                # clipped-to-0 index in that case, so build the (fill)
+                # result directly instead of gathering.
+                ax = 0 if axis is None else axis % arr.ndim
+                out_shape = idx.shape if axis is None else (
+                    arr.shape[:ax] + idx.shape + arr.shape[ax + 1:]
+                )
+                fv = fill_value
+                if fv is None:
+                    dt = arr.dtype
+                    if np.issubdtype(dt, np.inexact):
+                        fv = np.nan
+                    elif dt == np.bool_:
+                        fv = True
+                    elif np.issubdtype(dt, np.unsignedinteger):
+                        fv = np.iinfo(dt).max
+                    else:
+                        fv = np.iinfo(dt).min
+                taken = np.full(out_shape, fv, dtype=arr.dtype)
+                return Quantity(taken, unit=self.unit)
             # Wrap valid negative indices once (numpy 'raise' semantics), then
             # clamp so the gather itself is always in-bounds.
             idx_norm = np.where(idx < 0, idx + n, idx)
@@ -4048,7 +4172,7 @@ class _IndexUpdateRef:
         Returns the value of ``x`` that would result from the NumPy-style
         :mod:`indexed assignment <numpy.doc.indexing>` ``x[idx] = y``.
         """
-        values = Quantity(values).in_unit(self.unit).mantissa
+        values = self.quantity._coerce_assign_value(values, "at[...].set").mantissa
         return Quantity(
             self._scatter(
                 "set", values,
@@ -4072,7 +4196,7 @@ class _IndexUpdateRef:
         :mod:indexed assignment <numpy.doc.indexing>` ``x[idx] += y``.
 
         """
-        values = Quantity(values).in_unit(self.unit).mantissa
+        values = self.quantity._coerce_assign_value(values, "at[...].add").mantissa
         return Quantity(
             self._scatter(
                 "add", values,
@@ -4192,7 +4316,7 @@ class _IndexUpdateRef:
         ``x[idx] = minimum(x[idx], y)``.
 
         """
-        values = Quantity(values).in_unit(self.unit).mantissa
+        values = self.quantity._coerce_assign_value(values, "at[...].min").mantissa
         return Quantity(
             self._scatter(
                 "min", values,
@@ -4217,7 +4341,7 @@ class _IndexUpdateRef:
         ``x[idx] = maximum(x[idx], y)``.
 
         """
-        values = Quantity(values).in_unit(self.unit).mantissa
+        values = self.quantity._coerce_assign_value(values, "at[...].max").mantissa
         return Quantity(
             self._scatter(
                 "max", values,

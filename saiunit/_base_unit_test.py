@@ -629,6 +629,34 @@ class TestDisplayParts:
         normed = _normalise_display_parts(parts)
         assert len(normed) == 0
 
+    # --- U3: merge keys on (name, disp), not disp alone ---
+    def test_normalise_does_not_merge_same_dispname_different_name(self):
+        # Two distinct units that happen to share a display symbol "m"
+        # must NOT have their exponents summed together.
+        parts = [("metre", "m", 1), ("my_unit", "m", 1)]
+        normed = _normalise_display_parts(parts)
+        assert len(normed) == 2
+        assert set(normed) == {("metre", "m", 1), ("my_unit", "m", 1)}
+
+    def test_normalise_still_merges_same_name_same_dispname(self):
+        parts = [("metre", "m", 1), ("metre", "m", 2)]
+        normed = _normalise_display_parts(parts)
+        assert normed == [("metre", "m", 3)]
+
+    def test_rendered_compound_keeps_same_dispname_units_distinct(self):
+        # Construct two units that share a display symbol ("m") but have
+        # different underlying names, then verify the rendered compound
+        # string keeps both terms rather than summing their exponents.
+        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
+        u1 = Unit(d, name="metre", dispname="m")
+        u2 = Unit(d, name="my_length_unit", dispname="m")
+        parts = _normalise_display_parts(
+            _merge_display_parts(_get_display_parts(u1), _get_display_parts(u2))
+        )
+        assert len(parts) == 2
+        s = _format_display_parts(parts)
+        assert s == "m * m"
+
     def test_fmt_exp_int(self):
         assert _fmt_exp(3.0) == "3"
         assert _fmt_exp(3) == "3"
@@ -1438,6 +1466,22 @@ class TestParseUnit:
         # Already worked; sanity check that the new recursion preserves it.
         assert parse_unit("m / (kg * s^2)") == u.metre / (u.kilogram * u.second ** 2)
 
+    # --- U1: parenthesised atom with an exponent ---
+    def test_parens_group_with_exponent(self):
+        assert parse_unit("(m / s)^2") == (u.metre / u.second) ** 2
+
+    def test_parens_group_with_negative_exponent(self):
+        assert parse_unit("(m * s)^-2") == (u.metre * u.second) ** -2
+
+    def test_nested_parens_group_with_exponent(self):
+        assert parse_unit("((m / s))^2") == (u.metre / u.second) ** 2
+
+    def test_parens_product_of_two_groups_not_misparsed(self):
+        # "(m) * (s)^2" is *not* a single parenthesised group carrying the
+        # exponent -- the exponent applies only to "(s)". Must parse as
+        # m * s^2, not (m * s)^2.
+        assert parse_unit("(m) * (s)^2") == u.metre * u.second ** 2
+
     # --- kelvin prefix coverage (#10) ---
     def test_kelvin_prefixes_parse(self):
         from saiunit._unit_common import mkelvin, ukelvin, nkelvin, kkelvin, Mkelvin
@@ -1537,6 +1581,53 @@ class TestFactorlessIdentity:
         # Units with factor != 1 still resolve to the registered
         # factor-1 standard unit for the same dimension/scale.
         assert u.degree.factorless().name == 'radian'
+
+    def test_arcsec_still_resolves_first_power_alias(self):
+        # arcsec's factorless() hits a first-power dimensionless alias
+        # (uradian), which is fine to substitute.
+        assert u.arcsec.factorless().name == 'uradian'
+
+    def test_arcmin_does_not_mislabel_as_power_alias(self):
+        # arcmin's (dim, scale, base, 1.) key collides with a registered
+        # power alias ('crad^2'); factorless() must reject it and fall
+        # back to the anonymous factor-1 unit instead of mislabelling an
+        # angle^1 quantity as angle^2 (F2).
+        result = u.arcmin.factorless()
+        assert result.name != 'cradian2'
+        assert 'cradian2' not in (result.name or '')
+        assert result.dim.is_dimensionless
+        assert result.scale == u.arcmin.scale
+        assert result.factor == 1.
+
+
+class TestUnitOverflowErgonomics:
+    def test_pow_overflow_raises_value_error(self):
+        with pytest.raises(ValueError, match="overflows the float range"):
+            u.calorie ** 500
+
+    def test_huge_int_factor_raises_value_error(self):
+        with pytest.raises(ValueError, match="overflows the float range"):
+            Unit(scale=0, factor=2 ** 2000)
+
+    def test_parse_unit_numeric_power_overflow_raises_value_error(self):
+        with pytest.raises(ValueError, match="overflows the float range"):
+            parse_unit('2^1024')
+
+
+class TestUnitConcreteArrayFactor:
+    def test_concrete_0d_array_factor_unwrapped(self):
+        un = Unit(scale=0, factor=jnp.asarray(2.0))
+        assert un.factor == 2.0
+        assert type(un.factor) is float
+        # Must not raise (was TypeError: unhashable type: ArrayImpl).
+        hash(un)
+
+
+class TestUnitBoolFactor:
+    def test_bool_factor_coerced_to_int(self):
+        un = Unit(scale=0, factor=True)
+        assert un.factor == 1
+        assert type(un.factor) is int
 
 
 class TestUnitQuantityEqSymmetry:

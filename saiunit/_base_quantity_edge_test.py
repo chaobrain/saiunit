@@ -15,12 +15,14 @@
 
 """Regression tests for Quantity API edge cases and bug fixes."""
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
 
 import saiunit as u
 from saiunit import Quantity, UnitMismatchError
+from saiunit._base_unit import Unit
 
 
 class TestScatterFactorUnits:
@@ -355,3 +357,291 @@ class TestBoolTruthiness:
     def test_len_zero_dim_raises_cleanly(self):
         with pytest.raises(TypeError, match="0-d"):
             len(Quantity(2.5, unit=u.mV))
+
+
+class TestIsubBareUnit:
+    """Q1: `q -= unit` must be rejected the same way `+`, `-`, `+=` are."""
+
+    def test_isub_bare_unit_raises(self):
+        q = Quantity(3.0, unit=u.mV)
+        with pytest.raises(TypeError, match="bare Unit"):
+            q -= u.mV
+
+
+class TestUfuncDispatchExtras:
+    """Q2: ufuncs missing from `_UFUNC_DISPATCH` should route through saiunit.math."""
+
+    def test_np_maximum(self):
+        q1 = Quantity(jnp.array([1.0, 5.0]), unit=u.mV)
+        q2 = Quantity(jnp.array([3.0, 2.0]), unit=u.mV)
+        r = np.maximum(q1, q2)
+        np.testing.assert_allclose(np.asarray(r.mantissa), [3.0, 5.0])
+        assert r.unit == u.mV
+
+    def test_np_floor(self):
+        q = Quantity(jnp.array([1.7, 2.3]), unit=u.mV)
+        r = np.floor(q)
+        np.testing.assert_allclose(np.asarray(r.mantissa), [1.0, 2.0])
+        assert r.unit == u.mV
+
+    def test_np_tanh_dimensionless(self):
+        q = Quantity(jnp.array([0.0, 1.0]))
+        r = np.tanh(q)
+        np.testing.assert_allclose(np.asarray(r), np.tanh([0.0, 1.0]))
+
+    def test_np_hypot(self):
+        # saiunit.math.hypot only accepts dimensionless operands (unless
+        # `unit_to_scale` is given), so dispatch it through dimensionless
+        # Quantities rather than unit-bearing ones.
+        q1 = Quantity(jnp.array([3.0]))
+        q2 = Quantity(jnp.array([4.0]))
+        r = np.hypot(q1, q2)
+        np.testing.assert_allclose(np.asarray(r), [5.0])
+
+
+class TestBinaryOpNotImplementedFallback:
+    """Q3: an operand `_binary_operation` can't handle must defer via
+    `NotImplemented` so Python tries the operand's own reflected dunder."""
+
+    class _RMulSentinel:
+        def __rmul__(self, other):
+            return "handled-by-other"
+
+    def test_mul_defers_to_other_rmul(self):
+        q = Quantity(3.0, unit=u.mV)
+        assert (q * self._RMulSentinel()) == "handled-by-other"
+
+    def test_unsupported_operand_raises_type_error_not_internal_crash(self):
+        q = Quantity(3.0, unit=u.mV)
+        with pytest.raises(TypeError):
+            q * object()
+
+
+class TestAssignmentZeroCompat:
+    """Q4/Q6: plain `0` is compatible with any unit for assignment-style ops,
+    and a mismatched non-zero value raises UnitMismatchError uniformly."""
+
+    def test_setitem_zero(self):
+        q = Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
+        q[0] = 0
+        assert float(q.mantissa[0]) == pytest.approx(0.0)
+
+    def test_setitem_mismatch_raises_unit_mismatch(self):
+        q = Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
+        with pytest.raises(UnitMismatchError):
+            q[0] = 5.0
+
+    def test_scatter_add_zero(self):
+        q = Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
+        r = q.scatter_add(0, 0)
+        assert float(r.mantissa[0]) == pytest.approx(1.0)
+
+    def test_scatter_add_mismatch_raises_unit_mismatch(self):
+        q = Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
+        with pytest.raises(UnitMismatchError):
+            q.scatter_add(0, 5.0)
+
+    def test_fill_zero(self):
+        q = Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
+        q.fill(0)
+        np.testing.assert_allclose(np.asarray(q.mantissa), [0.0, 0.0])
+
+    def test_at_set_zero(self):
+        q = Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
+        r = q.at[0].set(0)
+        assert float(r.mantissa[0]) == pytest.approx(0.0)
+
+
+class TestEqualityMismatchDoesNotRaise:
+    """Q5: `==`/`!=` return elementwise False/True on a dimension mismatch
+    instead of raising; ordering comparisons keep raising."""
+
+    def test_eq_different_dim_is_false(self):
+        r = (3.0 * u.mV) == (3.0 * u.second)
+        assert bool(r) is False
+
+    def test_ne_different_dim_is_true(self):
+        r = (3.0 * u.mV) != (3.0 * u.second)
+        assert bool(r) is True
+
+    def test_eq_different_dim_array_shape(self):
+        q1 = Quantity(jnp.array([1.0, 2.0]), unit=u.mV)
+        q2 = Quantity(jnp.array([1.0, 2.0]), unit=u.second)
+        r = q1 == q2
+        np.testing.assert_array_equal(np.asarray(r), [False, False])
+
+    def test_ordering_different_dim_still_raises(self):
+        with pytest.raises(UnitMismatchError):
+            (3.0 * u.mV) < (3.0 * u.second)
+
+    def test_membership_works_with_mismatched_dim(self):
+        # `in` relies on `__eq__` not raising for incompatible elements.
+        assert (3.0 * u.second) not in [1.0 * u.mV, 2.0 * u.mV]
+
+
+class TestPowScaledDimensionlessExponent:
+    """Q7: a dimensionless-but-scaled Quantity exponent (e.g. percent) must
+    be accepted, not just a strictly unitless one."""
+
+    def test_percent_exponent(self):
+        percent = Unit(scale=-2)
+        r = 2.0 ** Quantity(50.0, unit=percent)
+        assert float(r) == pytest.approx(2.0 ** 0.5)
+
+    def test_rpow_percent_exponent(self):
+        percent = Unit(scale=-2)
+        base = Quantity(50.0, unit=percent)  # dimensionless base too
+        r = 2.0 ** base
+        assert float(r) == pytest.approx(2.0 ** 0.5)
+
+    def test_non_dimensionless_exponent_still_raises(self):
+        with pytest.raises(ValueError):
+            2.0 ** Quantity(2.0, unit=u.mV)
+
+
+class TestDivmodUpfrontValidation:
+    """Q8: divmod must raise on a dimension mismatch before doing any
+    partial computation."""
+
+    def test_divmod_mismatch_raises(self):
+        with pytest.raises(UnitMismatchError):
+            divmod(3.0 * u.mV, 2.0 * u.second)
+
+    def test_divmod_same_dim_ok(self):
+        q, r = divmod(7.0 * u.mV, 2.0 * u.mV)
+        assert float(q) == pytest.approx(3.0)
+        assert float(r.mantissa) == pytest.approx(1.0)
+
+
+class TestTracerMismatchHint:
+    """Q9: a unit mismatch involving a traced unitless zero should hint at
+    the eager-vs-jit divergence instead of leaving a bare mismatch error."""
+
+    def test_hint_present_under_jit(self):
+        @jax.jit
+        def f(x):
+            return (x - x) + 3 * u.mV
+
+        with pytest.raises(UnitMismatchError, match="JAX tracer"):
+            f(jnp.array(1.0))
+
+
+class TestDtypeBoolMantissa:
+    """Q10: `Quantity.dtype` for a Python bool mantissa must be a real
+    dtype object, not the Python `bool` type."""
+
+    def test_bool_mantissa_dtype_is_np_dtype(self):
+        q = Quantity(True)
+        assert q.dtype == np.dtype(bool)
+        assert isinstance(q.dtype, np.dtype)
+
+
+class TestResizeTracerGuard:
+    """Q11: resize() must reject a traced mantissa like other mutators do."""
+
+    def test_resize_under_jit_raises(self):
+        @jax.jit
+        def f(x):
+            q = Quantity(x, unit=u.mV)
+            q.resize((4,))
+            return q.mantissa
+
+        with pytest.raises(RuntimeError, match="tracer"):
+            f(jnp.arange(4.0))
+
+
+class TestTakeEmptyAxis:
+    """Q12: take(mode='clip'/'fill') on an empty NumPy-backed axis must not
+    raise IndexError."""
+
+    def test_take_fill_empty_array(self):
+        q = Quantity(np.zeros((0,)), unit=u.mV)
+        r = q.take(np.array([0, 1]), mode='fill', fill_value=Quantity(9.0, unit=u.mV))
+        np.testing.assert_allclose(np.asarray(r.mantissa), [9.0, 9.0])
+        assert r.unit == u.mV
+
+    def test_take_clip_empty_array_default_fill(self):
+        q = Quantity(np.zeros((0,)), unit=u.mV)
+        r = q.take(np.array([0]), mode='clip')
+        assert np.isnan(np.asarray(r.mantissa)[0])
+
+
+class TestPowKeepsFactor:
+    """F1: `Quantity.__pow__` must keep the unit's factor instead of
+    unconditionally rewriting it to the factor-1 (usually SI) standard
+    unit, matching `*`, `/`, and the `saiunit.math` change-unit wrappers."""
+
+    def test_pow_one_keeps_unit(self):
+        r = (1 * u.foot) ** 1
+        assert r.unit == u.foot
+        assert r.mantissa == 1
+
+    def test_pow_two_matches_mul(self):
+        r_pow = (1 * u.foot) ** 2
+        r_mul = (1 * u.foot) * (1 * u.foot)
+        assert r_pow.unit == r_mul.unit
+        np.testing.assert_allclose(np.asarray(r_pow.mantissa), np.asarray(r_mul.mantissa))
+
+    def test_pow_matches_math_sqrt(self):
+        q = Quantity(4.0, unit=u.acre)
+        r_sqrt = u.math.sqrt(q)
+        r_pow = q ** 0.5
+        assert r_sqrt.unit == r_pow.unit
+        np.testing.assert_allclose(np.asarray(r_sqrt.mantissa), np.asarray(r_pow.mantissa))
+
+    def test_degree_squared_matches_mul(self):
+        # Dimensionless-but-factored base (degree): `**2` and `*` must
+        # agree, including going through `maybe_decimal`'s dimensionless
+        # stripping (both end up as the same plain float, in radians^2).
+        r_pow = (90 * u.degree) ** 2
+        r_mul = (90 * u.degree) * (90 * u.degree)
+        assert r_pow == r_mul
+
+    def test_extreme_exponent_scalar_mantissa_overflows_or_raises(self):
+        # Python-scalar mantissa follows Python float ``**`` semantics,
+        # which raises on overflow (see F9); this is pre-existing
+        # Quantity behaviour, not specific to the factor fix.
+        with pytest.raises(OverflowError):
+            (1.0 * u.calorie) ** 500
+
+    def test_extreme_exponent_array_mantissa_falls_back_to_factorless(self):
+        # `factor ** 500` overflows the float range, so `__pow__` must
+        # fall back to `factorless()` (folding the factor into the
+        # mantissa) instead of raising or crashing; an array mantissa
+        # then produces an inf under NumPy/JAX ** semantics.
+        q = Quantity(jnp.asarray(4.184), unit=u.calorie) ** 500
+        assert np.isinf(np.asarray(q.mantissa))
+        assert q.unit == u.joule ** 500
+
+
+class TestConversionRatioNoSaturation:
+    """F3: conversions must not go through the materialized magnitude
+    ratio, which saturates to inf/0.0 for combined scales beyond ~1e308."""
+
+    def test_to_decimal_extreme_scale(self):
+        r = Quantity(1.0, unit=u.ymetre ** 14).to_decimal(u.zmetre ** 14)
+        assert r == pytest.approx(1e-42)
+
+    def test_in_unit_extreme_scale(self):
+        big1 = Unit(u.metre.dim, scale=312)
+        big2 = Unit(u.metre.dim, scale=313)
+        r = Quantity(1.0, unit=big1).in_unit(big2)
+        assert r.mantissa == pytest.approx(0.1)
+
+    def test_add_extreme_scale_no_saturation(self):
+        r = Quantity(1.0, unit=u.Zmetre ** 13) + Quantity(1.0, unit=u.Ymetre ** 13)
+        assert not np.isinf(r.mantissa)
+        assert r.mantissa == pytest.approx(1e39)
+
+    def test_genuinely_out_of_range_ratio_yields_inf(self):
+        # A ratio that truly exceeds the float range must saturate to inf
+        # (IEEE semantics, like Unit.magnitude), not raise OverflowError
+        # from Python float ``**``.
+        r = Quantity(1.0, unit=u.Ymetre ** 13).to_decimal(u.metre ** 13)
+        assert np.isinf(r)
+
+    def test_hour_to_second_exact(self):
+        assert (1 * u.hour).to_decimal(u.second) == 3600.0
+
+    def test_day_in_hour_exact(self):
+        assert (1 * u.day).in_unit(u.hour).mantissa == 24.0

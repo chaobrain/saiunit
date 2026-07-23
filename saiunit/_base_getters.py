@@ -368,10 +368,11 @@ def is_unit_equal_math(u1, u2) -> bool:
     SI meter) are equivalent, and a freshly-composed ``A * ohm`` is
     equivalent to ``volt``.
 
-    This is distinct from ``Unit.__eq__``, which also requires
-    ``name``/``dispname`` to match — that operator treats two aliases as
-    different units. Use ``is_unit_equal_math`` when you only care that
-    two units convert the same way.
+    This is the same comparison ``Unit.__eq__`` performs (``name`` and
+    ``dispname`` are not part of either comparison), so
+    ``is_unit_equal_math(u1, u2)`` and ``u1 == u2`` agree for two ``Unit``
+    operands; this function additionally tolerates non-``Unit`` arguments
+    by returning ``False`` instead of raising.
 
     Parameters
     ----------
@@ -412,8 +413,7 @@ def has_same_unit(obj1, obj2) -> bool:
 
     Compares the underlying units mathematically (``dim``, ``scale``,
     ``base``, ``factor``) — alias spellings and display-name differences
-    are ignored. For strict identity-level equality use ``Unit.__eq__``
-    directly.
+    are ignored. This matches what ``Unit.__eq__`` itself compares.
 
     Parameters
     ----------
@@ -681,10 +681,10 @@ def maybe_decimal(
         True
     """
     valq = _to_quantity(val)
-    if valq.dim.is_dimensionless:
-        return valq.to_decimal()
     if unit is not None:
         return valq.to_decimal(unit)
+    if valq.dim.is_dimensionless:
+        return valq.to_decimal()
     else:
         return val
 
