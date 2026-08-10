@@ -25,6 +25,8 @@ because the symbolic graph has no notion of in-place update.
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pytest
 
@@ -38,7 +40,7 @@ from saiunit import BackendError, Quantity, meter, mV
 
 def _to_numpy(q: Quantity) -> np.ndarray:
     """Return mantissa as a numpy array regardless of backend."""
-    return q.to_numpy().mantissa
+    return cast(np.ndarray, q.to_numpy().mantissa)
 
 
 def _make_quantity(values, unit, backend_name: str) -> Quantity:
