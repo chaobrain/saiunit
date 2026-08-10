@@ -22,7 +22,13 @@ from saiunit._jax_compat import jax, jnp, tree as _tree
 from saiunit._typing import Array, ArrayLike, DTypeLike
 import numpy as np
 
-from saiunit._backend import get_backend, get_default_backend, _xp_for, _translate_dtype
+from saiunit._backend import (
+    _translate_dtype,
+    _xp_for,
+    get_backend,
+    get_default_backend,
+    to_backend,
+)
 from saiunit._base_dimension import UnitMismatchError
 from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import fail_for_unit_mismatch, get_unit, unit_scale_align_to_first
@@ -1595,7 +1601,7 @@ def from_numpy(
 @set_module_as('saiunit.math')
 def as_numpy(x):
     """
-    Convert a JAX array (or ``Quantity``) to a NumPy array.
+    Convert an array from any supported backend to a NumPy array.
 
     Parameters
     ----------
@@ -1617,7 +1623,9 @@ def as_numpy(x):
         array([1., 1., 1.], dtype=float32)
     """
     x = maybe_custom_array(x)
-    return np.array(x)
+    if isinstance(x, Quantity):
+        x = x.mantissa
+    return to_backend(x, "numpy")
 
 
 @set_module_as('saiunit.math')

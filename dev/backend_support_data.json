@@ -21,7 +21,7 @@
     "math": {
       "mapped": 294,
       "na": 47,
-      "total": 341
+      "total": 342
     },
     "quantity": {
       "mapped": 78,
@@ -29,8 +29,29 @@
       "total": 79
     }
   },
+  "environment": {
+    "backend_versions": {
+      "cupy": "14.1.1",
+      "dask": "2026.7.1",
+      "jax": "0.11.0",
+      "ndonnx": "0.21.0",
+      "numpy": "2.5.1",
+      "torch": "2.13.0+cpu"
+    },
+    "cuda": {
+      "device_id": 0,
+      "device_name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+      "driver_version": 13030,
+      "runtime_version": 12090
+    },
+    "python": "3.12.3"
+  },
   "function_results": {
     "saiunit.fft.fft": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -53,6 +74,10 @@
       }
     },
     "saiunit.fft.fft2": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -75,6 +100,10 @@
       }
     },
     "saiunit.fft.fftfreq": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -97,6 +126,10 @@
       }
     },
     "saiunit.fft.fftn": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -119,6 +152,10 @@
       }
     },
     "saiunit.fft.fftshift": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -141,6 +178,10 @@
       }
     },
     "saiunit.fft.ifft": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -163,6 +204,10 @@
       }
     },
     "saiunit.fft.ifft2": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -185,6 +230,10 @@
       }
     },
     "saiunit.fft.ifftn": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -207,6 +256,10 @@
       }
     },
     "saiunit.fft.ifftshift": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -229,6 +282,10 @@
       }
     },
     "saiunit.fft.irfft": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -251,6 +308,10 @@
       }
     },
     "saiunit.fft.irfft2": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -273,6 +334,10 @@
       }
     },
     "saiunit.fft.irfftn": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -295,6 +360,10 @@
       }
     },
     "saiunit.fft.rfft": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -317,6 +386,10 @@
       }
     },
     "saiunit.fft.rfft2": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -339,6 +412,10 @@
       }
     },
     "saiunit.fft.rfftfreq": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -361,6 +438,10 @@
       }
     },
     "saiunit.fft.rfftn": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -383,6 +464,10 @@
       }
     },
     "saiunit.linalg.cholesky": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -392,8 +477,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'linalg.cholesky'",
-        "status": "skip"
+        "detail": "NotImplementedError: ",
+        "status": "fail"
       },
       "numpy": {
         "detail": "",
@@ -405,6 +490,10 @@
       }
     },
     "saiunit.linalg.cond": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.cond'",
         "status": "skip"
@@ -427,6 +516,10 @@
       }
     },
     "saiunit.linalg.cross": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'cross'",
         "status": "skip"
@@ -449,6 +542,10 @@
       }
     },
     "saiunit.linalg.det": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.det'",
         "status": "skip"
@@ -471,6 +568,10 @@
       }
     },
     "saiunit.linalg.diagonal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -480,7 +581,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'diagonal'",
+        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'linalg.diagonal'",
         "status": "skip"
       },
       "numpy": {
@@ -493,6 +594,10 @@
       }
     },
     "saiunit.linalg.dot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -515,6 +620,10 @@
       }
     },
     "saiunit.linalg.eig": {
+      "cupy": {
+        "detail": "JaxRuntimeError: This operation requires CUDA support from jaxlib or jax cuda plugin.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "TypeError: Error interpreting argument to eig as a JAX value. The problematic value is of type <class 'dask.array.core.Array'> and was passed to eig at position 0.\n",
         "status": "skip"
@@ -524,12 +633,12 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to eig as a JAX value. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to eig at position 0.\n",
-        "status": "skip"
+        "detail": "TypeError: Value 'array(data: [[1.0, 2.0], [3.0, 4.0]], dtype=float64)' with dtype object is not a valid JAX array type. Only arrays of numeric types are supported by JAX.",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "TypeError: Error interpreting argument to eig as a JAX value. The problematic value is of type <class 'torch.Tensor'> and was passed to eig at position 0.\n",
@@ -537,6 +646,10 @@
       }
     },
     "saiunit.linalg.eigh": {
+      "cupy": {
+        "detail": "TypeError: Error interpreting argument to transpose as a JAX value. The problematic value is of type <class 'cupy.ndarray'> and was passed to transpose at position 0.\n",
+        "status": "skip"
+      },
       "dask": {
         "detail": "TypeError: Error interpreting argument to transpose as a JAX value. The problematic value is of type <class 'dask.array.core.Array'> and was passed to transpose at position 0.\n",
         "status": "skip"
@@ -550,8 +663,8 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "TypeError: Error interpreting argument to transpose as a JAX value. The problematic value is of type <class 'torch.Tensor'> and was passed to transpose at position 0.\n",
@@ -559,6 +672,10 @@
       }
     },
     "saiunit.linalg.eigvals": {
+      "cupy": {
+        "detail": "JaxRuntimeError: This operation requires CUDA support from jaxlib or jax cuda plugin.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "TypeError: Error interpreting argument to eig as a JAX value. The problematic value is of type <class 'dask.array.core.Array'> and was passed to eig at position 0.\n",
         "status": "skip"
@@ -568,12 +685,12 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to eig as a JAX value. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to eig at position 0.\n",
-        "status": "skip"
+        "detail": "TypeError: Value 'array(data: [[1.0, 2.0], [3.0, 4.0]], dtype=float64)' with dtype object is not a valid JAX array type. Only arrays of numeric types are supported by JAX.",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "TypeError: Error interpreting argument to eig as a JAX value. The problematic value is of type <class 'torch.Tensor'> and was passed to eig at position 0.\n",
@@ -581,6 +698,10 @@
       }
     },
     "saiunit.linalg.eigvalsh": {
+      "cupy": {
+        "detail": "TypeError: Error interpreting argument to transpose as a JAX value. The problematic value is of type <class 'cupy.ndarray'> and was passed to transpose at position 0.\n",
+        "status": "skip"
+      },
       "dask": {
         "detail": "TypeError: Error interpreting argument to transpose as a JAX value. The problematic value is of type <class 'dask.array.core.Array'> and was passed to transpose at position 0.\n",
         "status": "skip"
@@ -594,8 +715,8 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "TypeError: Error interpreting argument to transpose as a JAX value. The problematic value is of type <class 'torch.Tensor'> and was passed to transpose at position 0.\n",
@@ -603,6 +724,10 @@
       }
     },
     "saiunit.linalg.inner": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'inner'",
         "status": "skip"
@@ -625,6 +750,10 @@
       }
     },
     "saiunit.linalg.inv": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -647,6 +776,10 @@
       }
     },
     "saiunit.linalg.kron": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'kron'",
         "status": "skip"
@@ -669,6 +802,10 @@
       }
     },
     "saiunit.linalg.lstsq": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "TypeError: lstsq() got an unexpected keyword argument 'rcond'",
         "status": "skip"
@@ -691,6 +828,10 @@
       }
     },
     "saiunit.linalg.matmul": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -713,6 +854,10 @@
       }
     },
     "saiunit.linalg.matrix_norm": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -735,6 +880,10 @@
       }
     },
     "saiunit.linalg.matrix_power": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.matrix_power'",
         "status": "skip"
@@ -757,6 +906,10 @@
       }
     },
     "saiunit.linalg.matrix_rank": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "TypeError: svd() got an unexpected keyword argument 'compute_uv'",
         "status": "skip"
@@ -779,6 +932,10 @@
       }
     },
     "saiunit.linalg.matrix_transpose": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -801,6 +958,10 @@
       }
     },
     "saiunit.linalg.multi_dot": {
+      "cupy": {
+        "detail": "AttributeError: saiunit: backend 'array_api_compat.cupy' has no operation 'linalg.multi_dot'",
+        "status": "skip"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.multi_dot'",
         "status": "skip"
@@ -823,6 +984,10 @@
       }
     },
     "saiunit.linalg.norm": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -845,6 +1010,10 @@
       }
     },
     "saiunit.linalg.outer": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -867,6 +1036,10 @@
       }
     },
     "saiunit.linalg.pinv": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.pinv'",
         "status": "skip"
@@ -889,6 +1062,10 @@
       }
     },
     "saiunit.linalg.qr": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -911,6 +1088,10 @@
       }
     },
     "saiunit.linalg.slogdet": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array.linalg' has no attribute 'slogdet'",
         "status": "skip"
@@ -933,6 +1114,10 @@
       }
     },
     "saiunit.linalg.solve": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -955,6 +1140,10 @@
       }
     },
     "saiunit.linalg.svd": {
+      "cupy": {
+        "detail": "JaxRuntimeError: This operation requires CUDA support from jaxlib or jax cuda plugin.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "TypeError: Error interpreting argument to svd as a JAX value. The problematic value is of type <class 'dask.array.core.Array'> and was passed to svd at position 0.\n",
         "status": "skip"
@@ -964,12 +1153,12 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to svd as a JAX value. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to svd at position 0.\n",
-        "status": "skip"
+        "detail": "TypeError: Value 'array(data: [[1.0, 2.0], [3.0, 4.0]], dtype=float64)' with dtype object is not a valid JAX array type. Only arrays of numeric types are supported by JAX.",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "TypeError: Error interpreting argument to svd as a JAX value. The problematic value is of type <class 'torch.Tensor'> and was passed to svd at position 0.\n",
@@ -977,6 +1166,10 @@
       }
     },
     "saiunit.linalg.svdvals": {
+      "cupy": {
+        "detail": "JaxRuntimeError: This operation requires CUDA support from jaxlib or jax cuda plugin.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "TypeError: Error interpreting argument to svd as a JAX value. The problematic value is of type <class 'dask.array.core.Array'> and was passed to svd at position 0.\n",
         "status": "skip"
@@ -986,12 +1179,12 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "TypeError: Error interpreting argument to svd as a JAX value. The problematic value is of type <class 'ndonnx._array.Array'> and was passed to svd at position 0.\n",
-        "status": "skip"
+        "detail": "TypeError: Value 'array(data: [[1.0, 2.0], [3.0, 4.0]], dtype=float64)' with dtype object is not a valid JAX array type. Only arrays of numeric types are supported by JAX.",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "TypeError: Error interpreting argument to svd as a JAX value. The problematic value is of type <class 'torch.Tensor'> and was passed to svd at position 0.\n",
@@ -999,6 +1192,10 @@
       }
     },
     "saiunit.linalg.tensordot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1021,6 +1218,10 @@
       }
     },
     "saiunit.linalg.tensorinv": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.tensorinv'",
         "status": "skip"
@@ -1043,6 +1244,10 @@
       }
     },
     "saiunit.linalg.tensorsolve": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.tensorsolve'",
         "status": "skip"
@@ -1065,6 +1270,10 @@
       }
     },
     "saiunit.linalg.trace": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1074,7 +1283,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'trace'",
+        "detail": "AttributeError: saiunit: backend 'ndonnx' has no operation 'linalg.trace'",
         "status": "skip"
       },
       "numpy": {
@@ -1087,6 +1296,10 @@
       }
     },
     "saiunit.linalg.vdot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1109,6 +1322,10 @@
       }
     },
     "saiunit.linalg.vecdot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1131,6 +1348,10 @@
       }
     },
     "saiunit.linalg.vector_norm": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1153,6 +1374,10 @@
       }
     },
     "saiunit.math.abs": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1175,6 +1400,10 @@
       }
     },
     "saiunit.math.absolute": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1197,6 +1426,10 @@
       }
     },
     "saiunit.math.add": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1219,6 +1452,10 @@
       }
     },
     "saiunit.math.all": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1241,6 +1478,10 @@
       }
     },
     "saiunit.math.allclose": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1263,6 +1504,10 @@
       }
     },
     "saiunit.math.alltrue": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1285,6 +1530,10 @@
       }
     },
     "saiunit.math.amax": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1307,6 +1556,10 @@
       }
     },
     "saiunit.math.amin": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1329,6 +1582,10 @@
       }
     },
     "saiunit.math.angle": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1351,6 +1608,10 @@
       }
     },
     "saiunit.math.any": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1373,6 +1634,10 @@
       }
     },
     "saiunit.math.append": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1395,6 +1660,10 @@
       }
     },
     "saiunit.math.arange": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1417,6 +1686,10 @@
       }
     },
     "saiunit.math.arccos": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1439,6 +1712,10 @@
       }
     },
     "saiunit.math.arccosh": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1461,6 +1738,10 @@
       }
     },
     "saiunit.math.arcsin": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1483,6 +1764,10 @@
       }
     },
     "saiunit.math.arcsinh": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1505,6 +1790,10 @@
       }
     },
     "saiunit.math.arctan": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1527,6 +1816,10 @@
       }
     },
     "saiunit.math.arctan2": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1549,6 +1842,10 @@
       }
     },
     "saiunit.math.arctanh": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1571,6 +1868,10 @@
       }
     },
     "saiunit.math.argmax": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1593,6 +1894,10 @@
       }
     },
     "saiunit.math.argmin": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1615,6 +1920,10 @@
       }
     },
     "saiunit.math.argsort": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1637,6 +1946,10 @@
       }
     },
     "saiunit.math.argwhere": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1659,6 +1972,10 @@
       }
     },
     "saiunit.math.around": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1681,6 +1998,10 @@
       }
     },
     "saiunit.math.array": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1703,6 +2024,10 @@
       }
     },
     "saiunit.math.array_equal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'array_equal'",
         "status": "skip"
@@ -1725,6 +2050,10 @@
       }
     },
     "saiunit.math.array_split": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'split'",
         "status": "skip"
@@ -1742,11 +2071,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'split' got an unexpected keyword argument 'axis'",
+        "status": "skip"
       }
     },
     "saiunit.math.as_numpy": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1769,6 +2102,10 @@
       }
     },
     "saiunit.math.asarray": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1791,6 +2128,10 @@
       }
     },
     "saiunit.math.assert_quantity": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -1813,6 +2154,10 @@
       }
     },
     "saiunit.math.astype": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1835,6 +2180,10 @@
       }
     },
     "saiunit.math.atleast_1d": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1857,6 +2206,10 @@
       }
     },
     "saiunit.math.atleast_2d": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1879,6 +2232,10 @@
       }
     },
     "saiunit.math.atleast_3d": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1901,6 +2258,10 @@
       }
     },
     "saiunit.math.average": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1923,28 +2284,36 @@
       }
     },
     "saiunit.math.bartlett": {
+      "cupy": {
+        "detail": "expected cupy result backend; got jax",
+        "status": "fail"
+      },
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected dask result backend; got jax",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected ndonnx result backend; got jax",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected torch result backend; got jax",
+        "status": "fail"
       }
     },
     "saiunit.math.bfloat16": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -1967,6 +2336,10 @@
       }
     },
     "saiunit.math.bincount": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -1989,6 +2362,10 @@
       }
     },
     "saiunit.math.bitwise_and": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2011,6 +2388,10 @@
       }
     },
     "saiunit.math.bitwise_not": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2033,6 +2414,10 @@
       }
     },
     "saiunit.math.bitwise_or": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2055,6 +2440,10 @@
       }
     },
     "saiunit.math.bitwise_xor": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2077,28 +2466,36 @@
       }
     },
     "saiunit.math.blackman": {
+      "cupy": {
+        "detail": "expected cupy result backend; got jax",
+        "status": "fail"
+      },
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected dask result backend; got jax",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected ndonnx result backend; got jax",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected torch result backend; got jax",
+        "status": "fail"
       }
     },
     "saiunit.math.block": {
+      "cupy": {
+        "detail": "AttributeError: saiunit: backend 'array_api_compat.cupy' has no operation 'block'",
+        "status": "skip"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2121,6 +2518,10 @@
       }
     },
     "saiunit.math.bool_": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -2143,6 +2544,10 @@
       }
     },
     "saiunit.math.broadcast_arrays": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2165,6 +2570,10 @@
       }
     },
     "saiunit.math.broadcast_shapes": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2187,6 +2596,10 @@
       }
     },
     "saiunit.math.broadcast_to": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2209,6 +2622,10 @@
       }
     },
     "saiunit.math.cbrt": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2231,6 +2648,10 @@
       }
     },
     "saiunit.math.cdouble": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -2253,6 +2674,10 @@
       }
     },
     "saiunit.math.ceil": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2275,6 +2700,10 @@
       }
     },
     "saiunit.math.celu": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.celu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.celu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -2288,8 +2717,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.celu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -2297,6 +2726,10 @@
       }
     },
     "saiunit.math.check_dims": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -2319,6 +2752,10 @@
       }
     },
     "saiunit.math.check_units": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -2341,9 +2778,13 @@
       }
     },
     "saiunit.math.choose": {
+      "cupy": {
+        "detail": "AttributeError: 'list' object has no attribute 'shape'",
+        "status": "skip"
+      },
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'choose' got an unexpected keyword argument 'mode'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -2363,6 +2804,10 @@
       }
     },
     "saiunit.math.clip": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2385,6 +2830,10 @@
       }
     },
     "saiunit.math.column_stack": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'column_stack'",
         "status": "skip"
@@ -2407,6 +2856,10 @@
       }
     },
     "saiunit.math.complex128": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -2429,6 +2882,10 @@
       }
     },
     "saiunit.math.complex64": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -2451,6 +2908,10 @@
       }
     },
     "saiunit.math.complex_": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -2473,6 +2934,10 @@
       }
     },
     "saiunit.math.compress": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2495,6 +2960,10 @@
       }
     },
     "saiunit.math.concatenate": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2517,6 +2986,10 @@
       }
     },
     "saiunit.math.conj": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2539,6 +3012,10 @@
       }
     },
     "saiunit.math.conjugate": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'conjugate'",
         "status": "skip"
@@ -2561,6 +3038,10 @@
       }
     },
     "saiunit.math.convolve": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'convolve'",
         "status": "skip"
@@ -2583,6 +3064,10 @@
       }
     },
     "saiunit.math.copysign": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2605,6 +3090,10 @@
       }
     },
     "saiunit.math.corrcoef": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2627,6 +3116,10 @@
       }
     },
     "saiunit.math.correlate": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'correlate'",
         "status": "skip"
@@ -2649,6 +3142,10 @@
       }
     },
     "saiunit.math.cos": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2671,6 +3168,10 @@
       }
     },
     "saiunit.math.cosh": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2693,6 +3194,10 @@
       }
     },
     "saiunit.math.count_nonzero": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2715,6 +3220,10 @@
       }
     },
     "saiunit.math.cov": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2737,6 +3246,10 @@
       }
     },
     "saiunit.math.cross": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'cross'",
         "status": "skip"
@@ -2759,6 +3272,10 @@
       }
     },
     "saiunit.math.csingle": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -2781,6 +3298,10 @@
       }
     },
     "saiunit.math.cumprod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2803,6 +3324,10 @@
       }
     },
     "saiunit.math.cumproduct": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2825,6 +3350,10 @@
       }
     },
     "saiunit.math.cumsum": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2847,6 +3376,10 @@
       }
     },
     "saiunit.math.deg2rad": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2869,6 +3402,10 @@
       }
     },
     "saiunit.math.degrees": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2891,6 +3428,10 @@
       }
     },
     "saiunit.math.diag": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2913,6 +3454,10 @@
       }
     },
     "saiunit.math.diag_indices_from": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'diag_indices_from'",
         "status": "skip"
@@ -2935,6 +3480,10 @@
       }
     },
     "saiunit.math.diagflat": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'diagflat'",
         "status": "skip"
@@ -2957,6 +3506,10 @@
       }
     },
     "saiunit.math.diagonal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -2979,6 +3532,10 @@
       }
     },
     "saiunit.math.diff": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3001,6 +3558,10 @@
       }
     },
     "saiunit.math.digitize": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3023,6 +3584,10 @@
       }
     },
     "saiunit.math.display_in_unit": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -3045,6 +3610,10 @@
       }
     },
     "saiunit.math.divide": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3067,6 +3636,10 @@
       }
     },
     "saiunit.math.divmod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3089,6 +3662,10 @@
       }
     },
     "saiunit.math.dot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3111,6 +3688,10 @@
       }
     },
     "saiunit.math.double": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -3133,6 +3714,10 @@
       }
     },
     "saiunit.math.dsplit": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'dsplit'",
         "status": "skip"
@@ -3155,6 +3740,10 @@
       }
     },
     "saiunit.math.dstack": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3177,6 +3766,10 @@
       }
     },
     "saiunit.math.dtype": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3199,6 +3792,10 @@
       }
     },
     "saiunit.math.ediff1d": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3221,6 +3818,10 @@
       }
     },
     "saiunit.math.einrearrange": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3238,11 +3839,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: transpose() received an invalid combination of arguments - got (Tensor, list), but expected one of:\n * (Tensor input, int dim0, int dim1)\n * (Tensor input, name dim0, name dim1)\n",
-        "status": "skip"
+        "detail": "TypeError: transpose(): argument 'dim0' (position 2) must be int, not list",
+        "status": "fail"
       }
     },
     "saiunit.math.einreduce": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3265,6 +3870,10 @@
       }
     },
     "saiunit.math.einrepeat": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3287,6 +3896,10 @@
       }
     },
     "saiunit.math.einshape": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3309,9 +3922,13 @@
       }
     },
     "saiunit.math.einsum": {
+      "cupy": {
+        "detail": "TypeError: Argument '[[1. 2.]\n [3. 4.]]' of type <class 'cupy.ndarray'> is not a valid JAX type.",
+        "status": "fail"
+      },
       "dask": {
-        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/idempotent-seeking-clarke/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
-        "status": "skip"
+        "detail": "TypeError: Argument 'dask.array<array, shape=(2, 2), dtype=float64, chunksize=(2, 2), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
@@ -3322,8 +3939,8 @@
         "status": "skip"
       },
       "numpy": {
-        "detail": "TracerArrayConversionError: The numpy.ndarray conversion method __array__() was called on traced array with shape float32[2,2]\nThe error occurred while tracing the function _einsum at /mnt/d/codes/projects/saiunit/.claude/worktrees/idempotent-seeking-clarke/saiunit/math/_einops.py:843 for jit. This concrete value was not available in Python because it depends on the value of the argument operands[0].\nSee https://docs.jax.dev/en/latest/errors.html#jax.errors.TracerArrayConversionError",
-        "status": "skip"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "TypeError: Error interpreting argument to <function _einsum at 0x...> as an abstract array. The problematic value is of type <class 'torch.Tensor'> and was passed to the function at path operands[0].\nThis typically means that a jit-wrapped function was called with a non-array argument, and this argument was not marked as static using the static_argnums or static_argnames parameters of jax.jit.",
@@ -3331,6 +3948,10 @@
       }
     },
     "saiunit.math.elu": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.elu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.elu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -3344,8 +3965,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.elu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -3353,6 +3974,10 @@
       }
     },
     "saiunit.math.empty": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3375,6 +4000,10 @@
       }
     },
     "saiunit.math.empty_like": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3384,8 +4013,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'empty_like' got an unexpected keyword argument 'shape'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -3397,6 +4026,10 @@
       }
     },
     "saiunit.math.equal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3419,6 +4052,10 @@
       }
     },
     "saiunit.math.exp": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3441,6 +4078,10 @@
       }
     },
     "saiunit.math.exp2": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3463,6 +4104,10 @@
       }
     },
     "saiunit.math.expand_dims": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3485,6 +4130,10 @@
       }
     },
     "saiunit.math.expm1": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3507,6 +4156,10 @@
       }
     },
     "saiunit.math.exprel": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.exprel requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.exprel requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -3520,8 +4173,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.exprel requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -3529,6 +4182,10 @@
       }
     },
     "saiunit.math.extract": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3551,6 +4208,10 @@
       }
     },
     "saiunit.math.eye": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3573,6 +4234,10 @@
       }
     },
     "saiunit.math.fabs": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3595,6 +4260,10 @@
       }
     },
     "saiunit.math.fail_for_dimension_mismatch": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -3617,6 +4286,10 @@
       }
     },
     "saiunit.math.fail_for_unit_mismatch": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -3639,6 +4312,10 @@
       }
     },
     "saiunit.math.fill_diagonal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array' has no attribute 'fill_diagonal'",
         "status": "skip"
@@ -3661,6 +4338,10 @@
       }
     },
     "saiunit.math.finfo": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3683,6 +4364,10 @@
       }
     },
     "saiunit.math.fix": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3705,6 +4390,10 @@
       }
     },
     "saiunit.math.flatnonzero": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3727,6 +4416,10 @@
       }
     },
     "saiunit.math.flatten": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3749,6 +4442,10 @@
       }
     },
     "saiunit.math.flip": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3771,6 +4468,10 @@
       }
     },
     "saiunit.math.fliplr": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3793,6 +4494,10 @@
       }
     },
     "saiunit.math.flipud": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3815,6 +4520,10 @@
       }
     },
     "saiunit.math.float16": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -3837,6 +4546,10 @@
       }
     },
     "saiunit.math.float32": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -3859,6 +4572,10 @@
       }
     },
     "saiunit.math.float64": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -3881,6 +4598,10 @@
       }
     },
     "saiunit.math.float_": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -3903,6 +4624,10 @@
       }
     },
     "saiunit.math.float_power": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3925,6 +4650,10 @@
       }
     },
     "saiunit.math.floor": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3947,6 +4676,10 @@
       }
     },
     "saiunit.math.floor_divide": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3969,6 +4702,10 @@
       }
     },
     "saiunit.math.fmax": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -3991,6 +4728,10 @@
       }
     },
     "saiunit.math.fmin": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4013,6 +4754,10 @@
       }
     },
     "saiunit.math.fmod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4035,6 +4780,10 @@
       }
     },
     "saiunit.math.frexp": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4057,6 +4806,10 @@
       }
     },
     "saiunit.math.from_numpy": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4079,6 +4832,10 @@
       }
     },
     "saiunit.math.full": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4101,6 +4858,10 @@
       }
     },
     "saiunit.math.full_like": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4110,8 +4871,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'full_like' got an unexpected keyword argument 'shape'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -4123,6 +4884,10 @@
       }
     },
     "saiunit.math.gather": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "NotImplementedError: Don't yet support nd fancy indexing",
         "status": "fail"
@@ -4145,6 +4910,10 @@
       }
     },
     "saiunit.math.gcd": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'gcd'",
         "status": "skip"
@@ -4167,6 +4936,10 @@
       }
     },
     "saiunit.math.gelu": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.gelu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.gelu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -4180,8 +4953,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.gelu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -4189,6 +4962,10 @@
       }
     },
     "saiunit.math.get_dim": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4211,6 +4988,10 @@
       }
     },
     "saiunit.math.get_dtype": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4233,6 +5014,10 @@
       }
     },
     "saiunit.math.get_magnitude": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4255,6 +5040,10 @@
       }
     },
     "saiunit.math.get_mantissa": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4277,6 +5066,10 @@
       }
     },
     "saiunit.math.get_or_create_dimension": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4299,6 +5092,10 @@
       }
     },
     "saiunit.math.get_promote_dtypes": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4321,6 +5118,10 @@
       }
     },
     "saiunit.math.get_unit": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4343,6 +5144,10 @@
       }
     },
     "saiunit.math.glu": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.glu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.glu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -4356,8 +5161,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.glu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -4365,6 +5170,10 @@
       }
     },
     "saiunit.math.gradient": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4387,6 +5196,10 @@
       }
     },
     "saiunit.math.greater": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4409,6 +5222,10 @@
       }
     },
     "saiunit.math.greater_equal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4431,50 +5248,62 @@
       }
     },
     "saiunit.math.hamming": {
+      "cupy": {
+        "detail": "expected cupy result backend; got jax",
+        "status": "fail"
+      },
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected dask result backend; got jax",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected ndonnx result backend; got jax",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected torch result backend; got jax",
+        "status": "fail"
       }
     },
     "saiunit.math.hanning": {
+      "cupy": {
+        "detail": "expected cupy result backend; got jax",
+        "status": "fail"
+      },
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected dask result backend; got jax",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected ndonnx result backend; got jax",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected torch result backend; got jax",
+        "status": "fail"
       }
     },
     "saiunit.math.hard_sigmoid": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.hard_sigmoid requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.hard_sigmoid requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -4488,8 +5317,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.hard_sigmoid requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -4497,6 +5326,10 @@
       }
     },
     "saiunit.math.hard_silu": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -4510,8 +5343,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -4519,6 +5352,10 @@
       }
     },
     "saiunit.math.hard_swish": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -4532,8 +5369,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.hard_silu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -4541,6 +5378,10 @@
       }
     },
     "saiunit.math.hard_tanh": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.hard_tanh requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.hard_tanh requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -4554,8 +5395,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.hard_tanh requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -4563,6 +5404,10 @@
       }
     },
     "saiunit.math.heaviside": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'heaviside'",
         "status": "skip"
@@ -4585,9 +5430,13 @@
       }
     },
     "saiunit.math.histogram": {
-      "dask": {
+      "cupy": {
         "detail": "",
         "status": "pass"
+      },
+      "dask": {
+        "detail": "expected dask result backend; got dask, numpy",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
@@ -4607,6 +5456,10 @@
       }
     },
     "saiunit.math.hsplit": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'hsplit'",
         "status": "skip"
@@ -4629,6 +5482,10 @@
       }
     },
     "saiunit.math.hstack": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4651,6 +5508,10 @@
       }
     },
     "saiunit.math.hypot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4673,6 +5534,10 @@
       }
     },
     "saiunit.math.identity": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array' has no attribute 'identity'",
         "status": "skip"
@@ -4695,6 +5560,10 @@
       }
     },
     "saiunit.math.iinfo": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4717,6 +5586,10 @@
       }
     },
     "saiunit.math.imag": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -4739,6 +5612,10 @@
       }
     },
     "saiunit.math.inexact": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4761,6 +5638,10 @@
       }
     },
     "saiunit.math.inner": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'inner'",
         "status": "skip"
@@ -4783,6 +5664,10 @@
       }
     },
     "saiunit.math.int16": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4805,6 +5690,10 @@
       }
     },
     "saiunit.math.int2": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4827,6 +5716,10 @@
       }
     },
     "saiunit.math.int32": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4849,6 +5742,10 @@
       }
     },
     "saiunit.math.int4": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4871,6 +5768,10 @@
       }
     },
     "saiunit.math.int64": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4893,6 +5794,10 @@
       }
     },
     "saiunit.math.int8": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4915,6 +5820,10 @@
       }
     },
     "saiunit.math.int_": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -4937,6 +5846,10 @@
       }
     },
     "saiunit.math.interp": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'interp'",
         "status": "skip"
@@ -4959,6 +5872,10 @@
       }
     },
     "saiunit.math.intersect1d": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'intersect1d'",
         "status": "skip"
@@ -4981,6 +5898,10 @@
       }
     },
     "saiunit.math.invert": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5003,6 +5924,10 @@
       }
     },
     "saiunit.math.is_dimensionless": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -5025,6 +5950,10 @@
       }
     },
     "saiunit.math.is_float": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -5047,6 +5976,10 @@
       }
     },
     "saiunit.math.is_int": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -5069,6 +6002,10 @@
       }
     },
     "saiunit.math.is_quantity": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -5091,6 +6028,10 @@
       }
     },
     "saiunit.math.is_unitless": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -5113,6 +6054,10 @@
       }
     },
     "saiunit.math.isclose": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5135,6 +6080,10 @@
       }
     },
     "saiunit.math.iscomplexobj": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'iscomplexobj'",
         "status": "skip"
@@ -5157,6 +6106,10 @@
       }
     },
     "saiunit.math.isfinite": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5179,6 +6132,10 @@
       }
     },
     "saiunit.math.isinf": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5201,6 +6158,10 @@
       }
     },
     "saiunit.math.isnan": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5223,6 +6184,10 @@
       }
     },
     "saiunit.math.isreal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5245,6 +6210,10 @@
       }
     },
     "saiunit.math.isscalar": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5267,6 +6236,10 @@
       }
     },
     "saiunit.math.issubdtype": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5289,28 +6262,36 @@
       }
     },
     "saiunit.math.kaiser": {
+      "cupy": {
+        "detail": "expected cupy result backend; got jax",
+        "status": "fail"
+      },
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected dask result backend; got jax",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected ndonnx result backend; got jax",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected torch result backend; got jax",
+        "status": "fail"
       }
     },
     "saiunit.math.kron": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'kron'",
         "status": "skip"
@@ -5333,6 +6314,10 @@
       }
     },
     "saiunit.math.lcm": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'lcm'",
         "status": "skip"
@@ -5355,6 +6340,10 @@
       }
     },
     "saiunit.math.ldexp": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5377,6 +6366,10 @@
       }
     },
     "saiunit.math.leaky_relu": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5399,6 +6392,10 @@
       }
     },
     "saiunit.math.left_shift": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5421,6 +6418,10 @@
       }
     },
     "saiunit.math.less": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5443,6 +6444,10 @@
       }
     },
     "saiunit.math.less_equal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5465,6 +6470,10 @@
       }
     },
     "saiunit.math.linspace": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5474,8 +6483,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'linspace' got an unexpected keyword argument 'retstep'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -5487,6 +6496,10 @@
       }
     },
     "saiunit.math.log": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5509,6 +6522,10 @@
       }
     },
     "saiunit.math.log10": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5531,6 +6548,10 @@
       }
     },
     "saiunit.math.log1p": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5553,6 +6574,10 @@
       }
     },
     "saiunit.math.log2": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5575,6 +6600,10 @@
       }
     },
     "saiunit.math.log_sigmoid": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.log_sigmoid requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.log_sigmoid requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -5588,8 +6617,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.log_sigmoid requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -5597,6 +6626,10 @@
       }
     },
     "saiunit.math.logaddexp": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5619,6 +6652,10 @@
       }
     },
     "saiunit.math.logaddexp2": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5641,6 +6678,10 @@
       }
     },
     "saiunit.math.logical_and": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5663,6 +6704,10 @@
       }
     },
     "saiunit.math.logical_not": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5685,6 +6730,10 @@
       }
     },
     "saiunit.math.logical_or": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5707,6 +6756,10 @@
       }
     },
     "saiunit.math.logical_xor": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5729,6 +6782,10 @@
       }
     },
     "saiunit.math.logspace": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array' has no attribute 'logspace'",
         "status": "skip"
@@ -5751,6 +6808,10 @@
       }
     },
     "saiunit.math.matmul": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5773,6 +6834,10 @@
       }
     },
     "saiunit.math.matrix_power": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.matrix_power'",
         "status": "skip"
@@ -5795,6 +6860,10 @@
       }
     },
     "saiunit.math.max": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5817,6 +6886,10 @@
       }
     },
     "saiunit.math.maximum": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5839,6 +6912,10 @@
       }
     },
     "saiunit.math.maybe_decimal": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -5861,6 +6938,10 @@
       }
     },
     "saiunit.math.mean": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5883,9 +6964,13 @@
       }
     },
     "saiunit.math.median": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
-        "detail": "NotImplementedError: The da.median function only works along an axis.  The full algorithm is difficult to do in parallel",
-        "status": "fail"
+        "detail": "TypeError: 'median' got an unexpected keyword argument 'overwrite_input'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -5900,11 +6985,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: median() missing 1 required positional arguments: \"dim\"",
+        "status": "skip"
       }
     },
     "saiunit.math.meshgrid": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5927,6 +7016,10 @@
       }
     },
     "saiunit.math.min": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5949,6 +7042,10 @@
       }
     },
     "saiunit.math.minimum": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -5971,6 +7068,10 @@
       }
     },
     "saiunit.math.mish": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.mish requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.mish requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -5984,8 +7085,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.mish requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -5993,6 +7094,10 @@
       }
     },
     "saiunit.math.mod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6015,6 +7120,10 @@
       }
     },
     "saiunit.math.modf": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6037,6 +7146,10 @@
       }
     },
     "saiunit.math.moveaxis": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6059,6 +7172,10 @@
       }
     },
     "saiunit.math.multi_dot": {
+      "cupy": {
+        "detail": "AttributeError: saiunit: backend 'array_api_compat.cupy' has no operation 'linalg.multi_dot'",
+        "status": "skip"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'linalg.multi_dot'",
         "status": "skip"
@@ -6081,6 +7198,10 @@
       }
     },
     "saiunit.math.multiply": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6103,6 +7224,10 @@
       }
     },
     "saiunit.math.nan_to_num": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6125,6 +7250,10 @@
       }
     },
     "saiunit.math.nanargmax": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6147,6 +7276,10 @@
       }
     },
     "saiunit.math.nanargmin": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6169,6 +7302,10 @@
       }
     },
     "saiunit.math.nancumprod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6191,6 +7328,10 @@
       }
     },
     "saiunit.math.nancumsum": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6213,6 +7354,10 @@
       }
     },
     "saiunit.math.nanmax": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6235,6 +7380,10 @@
       }
     },
     "saiunit.math.nanmean": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6257,9 +7406,13 @@
       }
     },
     "saiunit.math.nanmedian": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
-        "detail": "NotImplementedError: The da.nanmedian function only works along an axis or a subset of axes.  The full algorithm is difficult to do in parallel",
-        "status": "fail"
+        "detail": "TypeError: 'nanmedian' got an unexpected keyword argument 'overwrite_input'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -6274,11 +7427,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: nanmedian() missing 1 required positional arguments: \"dim\"",
+        "status": "skip"
       }
     },
     "saiunit.math.nanmin": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6301,6 +7458,10 @@
       }
     },
     "saiunit.math.nanpercentile": {
+      "cupy": {
+        "detail": "AttributeError: saiunit: backend 'array_api_compat.cupy' has no operation 'nanpercentile'",
+        "status": "skip"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6323,6 +7484,10 @@
       }
     },
     "saiunit.math.nanprod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6345,6 +7510,10 @@
       }
     },
     "saiunit.math.nanquantile": {
+      "cupy": {
+        "detail": "AttributeError: saiunit: backend 'array_api_compat.cupy' has no operation 'nanquantile'",
+        "status": "skip"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6367,6 +7536,10 @@
       }
     },
     "saiunit.math.nanstd": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6389,6 +7562,10 @@
       }
     },
     "saiunit.math.nansum": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6411,6 +7588,10 @@
       }
     },
     "saiunit.math.nanvar": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6433,6 +7614,10 @@
       }
     },
     "saiunit.math.ndim": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6455,6 +7640,10 @@
       }
     },
     "saiunit.math.negative": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6477,6 +7666,10 @@
       }
     },
     "saiunit.math.nextafter": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6499,6 +7692,10 @@
       }
     },
     "saiunit.math.nonzero": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6521,6 +7718,10 @@
       }
     },
     "saiunit.math.not_equal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6543,6 +7744,10 @@
       }
     },
     "saiunit.math.ones": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6565,6 +7770,10 @@
       }
     },
     "saiunit.math.ones_like": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6574,8 +7783,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'ones_like' got an unexpected keyword argument 'shape'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -6587,6 +7796,10 @@
       }
     },
     "saiunit.math.outer": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6609,6 +7822,10 @@
       }
     },
     "saiunit.math.percentile": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6631,6 +7848,10 @@
       }
     },
     "saiunit.math.positive": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6653,6 +7874,10 @@
       }
     },
     "saiunit.math.power": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6675,6 +7900,10 @@
       }
     },
     "saiunit.math.prod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6697,6 +7926,10 @@
       }
     },
     "saiunit.math.product": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6719,6 +7952,10 @@
       }
     },
     "saiunit.math.promote_dtypes": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6741,9 +7978,13 @@
       }
     },
     "saiunit.math.ptp": {
-      "dask": {
+      "cupy": {
         "detail": "",
         "status": "pass"
+      },
+      "dask": {
+        "detail": "TypeError: 'ptp' got an unexpected keyword argument 'keepdims'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -6763,6 +8004,10 @@
       }
     },
     "saiunit.math.quantile": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6785,6 +8030,10 @@
       }
     },
     "saiunit.math.rad2deg": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6807,6 +8056,10 @@
       }
     },
     "saiunit.math.radians": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6829,9 +8082,13 @@
       }
     },
     "saiunit.math.ravel": {
-      "dask": {
+      "cupy": {
         "detail": "",
         "status": "pass"
+      },
+      "dask": {
+        "detail": "TypeError: 'ravel' got an unexpected keyword argument 'order'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -6851,6 +8108,10 @@
       }
     },
     "saiunit.math.real": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6873,6 +8134,10 @@
       }
     },
     "saiunit.math.reciprocal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6895,6 +8160,10 @@
       }
     },
     "saiunit.math.relu": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.relu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.relu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -6908,8 +8177,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.relu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -6917,6 +8186,10 @@
       }
     },
     "saiunit.math.relu6": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.relu6 requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.relu6 requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -6930,8 +8203,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.relu6 requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -6939,6 +8212,10 @@
       }
     },
     "saiunit.math.remainder": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6961,6 +8238,10 @@
       }
     },
     "saiunit.math.remove_diag": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -6970,8 +8251,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "AttributeError: type object 'bool' has no attribute '__ndx_create__'",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "numpy": {
         "detail": "",
@@ -6983,6 +8264,10 @@
       }
     },
     "saiunit.math.repeat": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7005,6 +8290,10 @@
       }
     },
     "saiunit.math.reshape": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7014,8 +8303,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'reshape' got an unexpected keyword argument 'order'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -7027,6 +8316,10 @@
       }
     },
     "saiunit.math.result_type": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7049,6 +8342,10 @@
       }
     },
     "saiunit.math.right_shift": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7071,6 +8368,10 @@
       }
     },
     "saiunit.math.rint": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7093,6 +8394,10 @@
       }
     },
     "saiunit.math.roll": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7115,6 +8420,10 @@
       }
     },
     "saiunit.math.rot90": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7137,6 +8446,10 @@
       }
     },
     "saiunit.math.round": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7146,8 +8459,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'round' got an unexpected keyword argument 'decimals'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -7159,6 +8472,10 @@
       }
     },
     "saiunit.math.row_stack": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7181,6 +8498,10 @@
       }
     },
     "saiunit.math.searchsorted": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7203,6 +8524,10 @@
       }
     },
     "saiunit.math.select": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7220,11 +8545,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: select() received an invalid combination of arguments - got (list, list), but expected one of:\n * (Tensor input, name dim, int index)\n * (Tensor input, int dim, int index)\n",
-        "status": "skip"
+        "detail": "TypeError: select(): argument 'input' (position 1) must be Tensor, not list",
+        "status": "fail"
       }
     },
     "saiunit.math.selu": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.selu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.selu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7238,8 +8567,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.selu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7247,6 +8576,10 @@
       }
     },
     "saiunit.math.set_exprel_order": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -7269,6 +8602,10 @@
       }
     },
     "saiunit.math.shape": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7291,6 +8628,10 @@
       }
     },
     "saiunit.math.sigmoid": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.sigmoid requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.sigmoid requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7304,8 +8645,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.sigmoid requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7313,6 +8654,10 @@
       }
     },
     "saiunit.math.sign": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7335,6 +8680,10 @@
       }
     },
     "saiunit.math.signbit": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7357,6 +8706,10 @@
       }
     },
     "saiunit.math.silu": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.silu requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.silu requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7370,8 +8723,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.silu requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7379,6 +8732,10 @@
       }
     },
     "saiunit.math.sin": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7401,6 +8758,10 @@
       }
     },
     "saiunit.math.sinc": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7423,6 +8784,10 @@
       }
     },
     "saiunit.math.single": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -7445,6 +8810,10 @@
       }
     },
     "saiunit.math.sinh": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7467,6 +8836,10 @@
       }
     },
     "saiunit.math.size": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7489,6 +8862,10 @@
       }
     },
     "saiunit.math.soft_sign": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.soft_sign requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.soft_sign requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7502,8 +8879,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.soft_sign requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7511,6 +8888,10 @@
       }
     },
     "saiunit.math.softplus": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.softplus requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.softplus requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7524,8 +8905,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.softplus requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7533,6 +8914,10 @@
       }
     },
     "saiunit.math.sometrue": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7555,6 +8940,10 @@
       }
     },
     "saiunit.math.sort": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7577,6 +8966,10 @@
       }
     },
     "saiunit.math.sparse_plus": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.sparse_plus requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.sparse_plus requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7590,8 +8983,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.sparse_plus requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7599,6 +8992,10 @@
       }
     },
     "saiunit.math.sparse_sigmoid": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.sparse_sigmoid requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.sparse_sigmoid requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7612,8 +9009,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.sparse_sigmoid requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7621,6 +9018,10 @@
       }
     },
     "saiunit.math.split": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'split'",
         "status": "skip"
@@ -7638,11 +9039,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'split' got an unexpected keyword argument 'axis'",
+        "status": "skip"
       }
     },
     "saiunit.math.sqrt": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7665,6 +9070,10 @@
       }
     },
     "saiunit.math.square": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7687,6 +9096,10 @@
       }
     },
     "saiunit.math.squareplus": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.squareplus requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.squareplus requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7700,8 +9113,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.squareplus requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7709,6 +9122,10 @@
       }
     },
     "saiunit.math.squeeze": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7731,6 +9148,10 @@
       }
     },
     "saiunit.math.stack": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7753,6 +9174,10 @@
       }
     },
     "saiunit.math.std": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7775,6 +9200,10 @@
       }
     },
     "saiunit.math.subtract": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7797,6 +9226,10 @@
       }
     },
     "saiunit.math.sum": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7819,6 +9252,10 @@
       }
     },
     "saiunit.math.swapaxes": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7841,6 +9278,10 @@
       }
     },
     "saiunit.math.swish": {
+      "cupy": {
+        "detail": "BackendError: saiunit.math.swish requires the jax backend; got cupy array. Convert to a JAX array first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "BackendError: saiunit.math.swish requires the jax backend; got dask array. Convert to a JAX array first.",
         "status": "guard"
@@ -7854,8 +9295,8 @@
         "status": "guard"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "expected numpy result backend; got jax",
+        "status": "fail"
       },
       "torch": {
         "detail": "BackendError: saiunit.math.swish requires the jax backend; got torch tensor. Convert to a JAX array first.",
@@ -7863,21 +9304,25 @@
       }
     },
     "saiunit.math.take": {
+      "cupy": {
+        "detail": "TypeError: 'take' got an unexpected keyword argument 'unique_indices'",
+        "status": "skip"
+      },
       "dask": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'take' got an unexpected keyword argument 'unique_indices'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'take' got an unexpected keyword argument 'unique_indices'",
+        "status": "skip"
       },
       "numpy": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'take' got an unexpected keyword argument 'unique_indices'",
+        "status": "skip"
       },
       "torch": {
         "detail": "",
@@ -7885,6 +9330,10 @@
       }
     },
     "saiunit.math.tan": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7907,6 +9356,10 @@
       }
     },
     "saiunit.math.tanh": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7929,6 +9382,10 @@
       }
     },
     "saiunit.math.tensordot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7951,6 +9408,10 @@
       }
     },
     "saiunit.math.tile": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7973,6 +9434,10 @@
       }
     },
     "saiunit.math.trace": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -7995,6 +9460,10 @@
       }
     },
     "saiunit.math.transpose": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8012,11 +9481,41 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: transpose() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim0, int dim1)\n * (Tensor input, name dim0, name dim1)\n",
+        "detail": "TypeError: transpose() missing 2 required positional argument: \"dim0\", \"dim1\"",
         "status": "skip"
       }
     },
+    "saiunit.math.trapezoid": {
+      "cupy": {
+        "detail": "",
+        "status": "unmapped"
+      },
+      "dask": {
+        "detail": "",
+        "status": "unmapped"
+      },
+      "jax": {
+        "detail": "",
+        "status": "unmapped"
+      },
+      "ndonnx": {
+        "detail": "",
+        "status": "unmapped"
+      },
+      "numpy": {
+        "detail": "",
+        "status": "unmapped"
+      },
+      "torch": {
+        "detail": "",
+        "status": "unmapped"
+      }
+    },
     "saiunit.math.tree_ones_like": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8026,8 +9525,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'ones_like' got an unexpected keyword argument 'shape'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -8039,6 +9538,10 @@
       }
     },
     "saiunit.math.tree_zeros_like": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8048,8 +9551,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'zeros_like' got an unexpected keyword argument 'shape'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -8061,6 +9564,10 @@
       }
     },
     "saiunit.math.tri": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8083,6 +9590,10 @@
       }
     },
     "saiunit.math.tril": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8105,6 +9616,10 @@
       }
     },
     "saiunit.math.tril_indices": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8127,6 +9642,10 @@
       }
     },
     "saiunit.math.tril_indices_from": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8149,6 +9668,10 @@
       }
     },
     "saiunit.math.triu": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8171,6 +9694,10 @@
       }
     },
     "saiunit.math.triu_indices": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8193,6 +9720,10 @@
       }
     },
     "saiunit.math.triu_indices_from": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8215,6 +9746,10 @@
       }
     },
     "saiunit.math.true_divide": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8237,6 +9772,10 @@
       }
     },
     "saiunit.math.trunc": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8259,6 +9798,10 @@
       }
     },
     "saiunit.math.uint": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -8281,6 +9824,10 @@
       }
     },
     "saiunit.math.uint16": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -8303,6 +9850,10 @@
       }
     },
     "saiunit.math.uint2": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -8325,6 +9876,10 @@
       }
     },
     "saiunit.math.uint32": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -8347,6 +9902,10 @@
       }
     },
     "saiunit.math.uint4": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -8369,6 +9928,10 @@
       }
     },
     "saiunit.math.uint64": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -8391,6 +9954,10 @@
       }
     },
     "saiunit.math.uint8": {
+      "cupy": {
+        "detail": "",
+        "status": "na"
+      },
       "dask": {
         "detail": "",
         "status": "na"
@@ -8413,6 +9980,10 @@
       }
     },
     "saiunit.math.unflatten": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8435,9 +10006,13 @@
       }
     },
     "saiunit.math.unique": {
-      "dask": {
+      "cupy": {
         "detail": "",
         "status": "pass"
+      },
+      "dask": {
+        "detail": "TypeError: 'unique' got an unexpected keyword argument 'equal_nan'",
+        "status": "skip"
       },
       "jax": {
         "detail": "",
@@ -8457,6 +10032,10 @@
       }
     },
     "saiunit.math.vander": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array' has no attribute 'vander'",
         "status": "skip"
@@ -8479,6 +10058,10 @@
       }
     },
     "saiunit.math.var": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8501,6 +10084,10 @@
       }
     },
     "saiunit.math.vdot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8523,6 +10110,10 @@
       }
     },
     "saiunit.math.vecdot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8545,6 +10136,10 @@
       }
     },
     "saiunit.math.vsplit": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: saiunit: backend 'array_api_compat.dask.array' has no operation 'vsplit'",
         "status": "skip"
@@ -8567,6 +10162,10 @@
       }
     },
     "saiunit.math.vstack": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8589,6 +10188,10 @@
       }
     },
     "saiunit.math.where": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8611,6 +10214,10 @@
       }
     },
     "saiunit.math.zeros": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8633,6 +10240,10 @@
       }
     },
     "saiunit.math.zeros_like": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8642,8 +10253,8 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "",
-        "status": "pass"
+        "detail": "TypeError: 'zeros_like' got an unexpected keyword argument 'shape'",
+        "status": "skip"
       },
       "numpy": {
         "detail": "",
@@ -8783,6 +10394,10 @@
   },
   "jax_only_results": {
     "saiunit.autograd (*)": {
+      "cupy": {
+        "detail": "TypeError: Argument '[1.]' of type <class 'cupy.ndarray'> is not a valid JAX type.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "TypeError: Argument 'dask.array<array, shape=(1,), dtype=float64, chunksize=(1,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
         "status": "fail"
@@ -8805,6 +10420,10 @@
       }
     },
     "saiunit.lax (*)": {
+      "cupy": {
+        "detail": "saiunit.lax.slice requires the jax backend; got cupy-backed Quantity. Call .to_jax() on the input first.",
+        "status": "guard"
+      },
       "dask": {
         "detail": "saiunit.lax.slice requires the jax backend; got dask-backed Quantity. Call .to_jax() on the input first.",
         "status": "guard"
@@ -8827,8 +10446,12 @@
       }
     },
     "saiunit.sparse (*)": {
+      "cupy": {
+        "detail": "csr_fromdense requires the jax backend; got cupy-backed Quantity. Call .to_jax() on the input first.",
+        "status": "guard"
+      },
       "dask": {
-        "detail": "CSR.fromdense requires the jax backend; got dask-backed Quantity. Call .to_jax() on the input first.",
+        "detail": "csr_fromdense requires the jax backend; got dask-backed Quantity. Call .to_jax() on the input first.",
         "status": "guard"
       },
       "jax": {
@@ -8836,15 +10459,15 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "CSR.fromdense requires the jax backend; got ndonnx-backed Quantity. Call .to_jax() on the input first.",
-        "status": "guard"
+        "detail": "TypeError: 'sum' is not implemented for data type `bool`",
+        "status": "fail"
       },
       "numpy": {
-        "detail": "CSR.fromdense requires the jax backend; got numpy-backed Quantity. Call .to_jax() on the input first.",
+        "detail": "csr_fromdense requires the jax backend; got numpy-backed Quantity. Call .to_jax() on the input first.",
         "status": "guard"
       },
       "torch": {
-        "detail": "CSR.fromdense requires the jax backend; got torch-backed Quantity. Call .to_jax() on the input first.",
+        "detail": "csr_fromdense requires the jax backend; got torch-backed Quantity. Call .to_jax() on the input first.",
         "status": "guard"
       }
     }
@@ -8900,6 +10523,10 @@
   ],
   "quantity_results": {
     "Quantity.all": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8922,6 +10549,10 @@
       }
     },
     "Quantity.any": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8944,6 +10575,10 @@
       }
     },
     "Quantity.argmax": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8966,6 +10601,10 @@
       }
     },
     "Quantity.argmin": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -8988,6 +10627,10 @@
       }
     },
     "Quantity.argsort": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9010,6 +10653,10 @@
       }
     },
     "Quantity.astype": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9032,6 +10679,10 @@
       }
     },
     "Quantity.clip": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9054,6 +10705,10 @@
       }
     },
     "Quantity.clone": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array' has no attribute 'copy'",
         "status": "skip"
@@ -9076,6 +10731,10 @@
       }
     },
     "Quantity.conj": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9098,6 +10757,10 @@
       }
     },
     "Quantity.conjugate": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9120,6 +10783,10 @@
       }
     },
     "Quantity.copy": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array' has no attribute 'copy'",
         "status": "skip"
@@ -9142,6 +10809,10 @@
       }
     },
     "Quantity.cpu": {
+      "cupy": {
+        "detail": "InvalidInputException: Argument '[1. 2. 3.]' of type <class 'cupy.ndarray'> is not a valid JAX type.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "InvalidInputException: Argument 'dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>' of type <class 'dask.array.core.Array'> is not a valid JAX type.",
         "status": "fail"
@@ -9164,6 +10835,10 @@
       }
     },
     "Quantity.cross": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array' has no attribute 'cross'",
         "status": "skip"
@@ -9186,6 +10861,10 @@
       }
     },
     "Quantity.cuda": {
+      "cupy": {
+        "detail": "RuntimeError: Unknown backend cuda. Available backends are ['cpu']",
+        "status": "skip"
+      },
       "dask": {
         "detail": "RuntimeError: Unknown backend cuda. Available backends are ['cpu']",
         "status": "skip"
@@ -9208,6 +10887,10 @@
       }
     },
     "Quantity.cumprod": {
+      "cupy": {
+        "detail": "TypeError: cumprod is not supported for quantities with units (has unit m), because each element of the result would have a different unit exponent. Use .prod() for a single reduction, or convert to dimensionless first.",
+        "status": "skip"
+      },
       "dask": {
         "detail": "TypeError: cumprod is not supported for quantities with units (has unit m), because each element of the result would have a different unit exponent. Use .prod() for a single reduction, or convert to dimensionless first.",
         "status": "skip"
@@ -9230,6 +10913,10 @@
       }
     },
     "Quantity.cumsum": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9247,11 +10934,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: cumsum() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim, *, torch.dtype dtype = None, Tensor out = None)\n * (Tensor input, name dim, *, torch.dtype dtype = None, Tensor out = None)\n",
+        "detail": "TypeError: cumsum() missing 1 required positional arguments: \"dim\"",
         "status": "skip"
       }
     },
     "Quantity.diagonal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9269,11 +10960,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: diagonal() received an invalid combination of arguments - got (Tensor, axis1=int, axis2=int, offset=int), but expected one of:\n * (Tensor input, *, name outdim, name dim1, name dim2, int offset = 0)\n * (Tensor input, int offset = 0, int dim1 = 0, int dim2 = 1)\n      didn't match because some of the keywords were incorrect: axis1, axis2, offset\n",
+        "detail": "TypeError: diagonal() got an unexpected keyword argument 'axis1'",
         "status": "skip"
       }
     },
     "Quantity.dot": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9296,6 +10991,10 @@
       }
     },
     "Quantity.double": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9318,6 +11017,10 @@
       }
     },
     "Quantity.expand_as": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9340,6 +11043,10 @@
       }
     },
     "Quantity.expand_dims": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9362,6 +11069,10 @@
       }
     },
     "Quantity.factorless": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9384,6 +11095,10 @@
       }
     },
     "Quantity.fill": {
+      "cupy": {
+        "detail": "ValueError: The dtype of the original data is float32, while we got float64.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "ValueError: The dtype of the original data is float32, while we got float64.",
         "status": "fail"
@@ -9406,6 +11121,10 @@
       }
     },
     "Quantity.flatten": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9428,6 +11147,10 @@
       }
     },
     "Quantity.float": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9450,6 +11173,10 @@
       }
     },
     "Quantity.half": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: module 'array_api_compat.dask.array' has no attribute 'float16'",
         "status": "skip"
@@ -9472,6 +11199,10 @@
       }
     },
     "Quantity.has_same_unit": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9494,6 +11225,10 @@
       }
     },
     "Quantity.in_unit": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9516,6 +11251,10 @@
       }
     },
     "Quantity.item": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "AttributeError: 'Array' object has no attribute 'item'",
         "status": "skip"
@@ -9538,6 +11277,10 @@
       }
     },
     "Quantity.max": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9560,6 +11303,10 @@
       }
     },
     "Quantity.mean": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9582,6 +11329,10 @@
       }
     },
     "Quantity.min": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9604,6 +11355,10 @@
       }
     },
     "Quantity.nancumprod": {
+      "cupy": {
+        "detail": "TypeError: nancumprod is not supported for quantities with units (has unit m), because each element of the result would have a different unit exponent. Use .nanprod() for a single reduction, or convert to dimensionless first.",
+        "status": "skip"
+      },
       "dask": {
         "detail": "TypeError: nancumprod is not supported for quantities with units (has unit m), because each element of the result would have a different unit exponent. Use .nanprod() for a single reduction, or convert to dimensionless first.",
         "status": "skip"
@@ -9626,6 +11381,10 @@
       }
     },
     "Quantity.nanprod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9648,6 +11407,10 @@
       }
     },
     "Quantity.nonzero": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9670,6 +11433,10 @@
       }
     },
     "Quantity.outer": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9692,6 +11459,10 @@
       }
     },
     "Quantity.pow": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9714,6 +11485,10 @@
       }
     },
     "Quantity.prod": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9736,6 +11511,10 @@
       }
     },
     "Quantity.ptp": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9758,6 +11537,10 @@
       }
     },
     "Quantity.put": {
+      "cupy": {
+        "detail": "ValueError: The dtype of the original data is float32, while we got float64.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'set'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
         "status": "skip"
@@ -9780,6 +11563,10 @@
       }
     },
     "Quantity.ravel": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9802,6 +11589,10 @@
       }
     },
     "Quantity.repeat": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9824,6 +11615,10 @@
       }
     },
     "Quantity.repr_in_unit": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9846,6 +11641,10 @@
       }
     },
     "Quantity.reshape": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9868,8 +11667,12 @@
       }
     },
     "Quantity.resize": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
-        "detail": "ValueError: The dtype of the original data is float32, while we got float64.",
+        "detail": "expected dask result backend; got numpy",
         "status": "fail"
       },
       "jax": {
@@ -9877,7 +11680,7 @@
         "status": "pass"
       },
       "ndonnx": {
-        "detail": "ValueError: found array with object dtype but it contains non-string elements",
+        "detail": "expected ndonnx result backend; got numpy",
         "status": "fail"
       },
       "numpy": {
@@ -9885,11 +11688,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: Cannot interpret 'torch.float64' as a data type",
+        "detail": "expected torch result backend; got numpy",
         "status": "fail"
       }
     },
     "Quantity.round": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -9912,6 +11719,10 @@
       }
     },
     "Quantity.scatter_add": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'add'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
         "status": "skip"
@@ -9934,6 +11745,10 @@
       }
     },
     "Quantity.scatter_div": {
+      "cupy": {
+        "detail": "NotImplementedError: `cupy_true_divide.at` is not supported yet",
+        "status": "skip"
+      },
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'divide'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
         "status": "skip"
@@ -9956,6 +11771,10 @@
       }
     },
     "Quantity.scatter_max": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'max'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
         "status": "skip"
@@ -9978,6 +11797,10 @@
       }
     },
     "Quantity.scatter_min": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'min'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
         "status": "skip"
@@ -10000,6 +11823,10 @@
       }
     },
     "Quantity.scatter_mul": {
+      "cupy": {
+        "detail": "NotImplementedError: `cupy_multiply.at` is not supported yet",
+        "status": "skip"
+      },
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'multiply'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
         "status": "skip"
@@ -10022,6 +11849,10 @@
       }
     },
     "Quantity.scatter_sub": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "NotImplementedError: Quantity.at on dask backend does not support index type 'Array' for op 'add'. Use a boolean mask of the source shape, a slice, an int, or a 1D int array; or call .to_numpy() to materialize the array first.",
         "status": "skip"
@@ -10044,6 +11875,10 @@
       }
     },
     "Quantity.searchsorted": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10066,6 +11901,10 @@
       }
     },
     "Quantity.sort": {
+      "cupy": {
+        "detail": "ValueError: The dtype of the original data is float32, while we got float64.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "ValueError: The dtype of the original data is float32, while we got float64.",
         "status": "fail"
@@ -10088,9 +11927,13 @@
       }
     },
     "Quantity.split": {
-      "dask": {
+      "cupy": {
         "detail": "",
         "status": "pass"
+      },
+      "dask": {
+        "detail": "expected dask result backend; got numpy",
+        "status": "fail"
       },
       "jax": {
         "detail": "",
@@ -10110,6 +11953,10 @@
       }
     },
     "Quantity.squeeze": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10132,6 +11979,10 @@
       }
     },
     "Quantity.std": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10154,6 +12005,10 @@
       }
     },
     "Quantity.sum": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10176,6 +12031,10 @@
       }
     },
     "Quantity.swapaxes": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10198,6 +12057,10 @@
       }
     },
     "Quantity.take": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "TypeError: Axis value must be an integer, got None",
         "status": "fail"
@@ -10220,6 +12083,10 @@
       }
     },
     "Quantity.tile": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10242,6 +12109,10 @@
       }
     },
     "Quantity.to": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10264,28 +12135,36 @@
       }
     },
     "Quantity.to_cupy": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
-        "detail": "cupy backend not installed",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "jax": {
-        "detail": "cupy backend not installed",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "ndonnx": {
-        "detail": "cupy backend not installed",
+        "detail": "ValueError: Unsupported dtype object",
         "status": "skip"
       },
       "numpy": {
-        "detail": "cupy backend not installed",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       },
       "torch": {
-        "detail": "cupy backend not installed",
-        "status": "skip"
+        "detail": "",
+        "status": "pass"
       }
     },
     "Quantity.to_dask": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10308,6 +12187,10 @@
       }
     },
     "Quantity.to_decimal": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10330,6 +12213,10 @@
       }
     },
     "Quantity.to_jax": {
+      "cupy": {
+        "detail": "JaxRuntimeError: This operation requires CUDA support from jaxlib or jax cuda plugin.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10352,6 +12239,10 @@
       }
     },
     "Quantity.to_ndonnx": {
+      "cupy": {
+        "detail": "ValueError: unable to infer dtype from `[1. 2. 3.]`",
+        "status": "skip"
+      },
       "dask": {
         "detail": "ValueError: unable to infer dtype from `dask.array<array, shape=(3,), dtype=float64, chunksize=(3,), chunktype=numpy.ndarray>`",
         "status": "skip"
@@ -10374,6 +12265,10 @@
       }
     },
     "Quantity.to_numpy": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10396,6 +12291,10 @@
       }
     },
     "Quantity.to_torch": {
+      "cupy": {
+        "detail": "RuntimeError: Cannot initialize CUDA without ATen_cuda library. PyTorch splits its backend into two shared libraries: a CPU library and a CUDA library; this error has occurred because you are trying to use some CUDA functionality, but the CUDA library has not been loaded by the dynamic linker for some reason.  The CUDA library MUST be loaded, EVEN IF you don't directly use any symbols from the CUDA library! One common culprit is a lack of -Wl,--no-as-needed in your link arguments; many dynamic linkers will delete dynamic library dependencies if you don't depend on any of their symbols.  You can check if this has occurred by using ldd on your binary to see if there is a dependency on *_cuda.so library.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "TypeError: len() of unsized object",
         "status": "fail"
@@ -10418,6 +12317,10 @@
       }
     },
     "Quantity.tolist": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "BackendError (expected): Quantity.tolist() would materialize a dask-backed Quantity. Call `q.mantissa.compute()` first.",
         "status": "warn"
@@ -10440,6 +12343,10 @@
       }
     },
     "Quantity.trace": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10462,6 +12369,10 @@
       }
     },
     "Quantity.transpose": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10479,11 +12390,15 @@
         "status": "pass"
       },
       "torch": {
-        "detail": "TypeError: transpose() received an invalid combination of arguments - got (Tensor), but expected one of:\n * (Tensor input, int dim0, int dim1)\n * (Tensor input, name dim0, name dim1)\n",
+        "detail": "TypeError: transpose() missing 2 required positional argument: \"dim0\", \"dim1\"",
         "status": "skip"
       }
     },
     "Quantity.tree_flatten": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10506,6 +12421,10 @@
       }
     },
     "Quantity.tree_unflatten": {
+      "cupy": {
+        "detail": "",
+        "status": "unmapped"
+      },
       "dask": {
         "detail": "",
         "status": "unmapped"
@@ -10528,6 +12447,10 @@
       }
     },
     "Quantity.unsqueeze": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10550,6 +12473,10 @@
       }
     },
     "Quantity.update_mantissa": {
+      "cupy": {
+        "detail": "ValueError: The dtype of the original data is float32, while we got float64.",
+        "status": "fail"
+      },
       "dask": {
         "detail": "ValueError: The dtype of the original data is float32, while we got float64.",
         "status": "fail"
@@ -10572,6 +12499,10 @@
       }
     },
     "Quantity.var": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10594,6 +12525,10 @@
       }
     },
     "Quantity.view": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10616,6 +12551,10 @@
       }
     },
     "Quantity.with_unit": {
+      "cupy": {
+        "detail": "",
+        "status": "pass"
+      },
       "dask": {
         "detail": "",
         "status": "pass"
@@ -10638,7 +12577,7 @@
       }
     }
   },
-  "schema_version": 1,
+  "schema_version": 2,
   "source_map": {
     "saiunit.fft.fft": "saiunit.fft",
     "saiunit.fft.fft2": "saiunit.fft",
@@ -10660,7 +12599,7 @@
     "saiunit.linalg.cond": "saiunit.linalg",
     "saiunit.linalg.cross": "saiunit.math",
     "saiunit.linalg.det": "saiunit.math",
-    "saiunit.linalg.diagonal": "saiunit.math",
+    "saiunit.linalg.diagonal": "saiunit.linalg",
     "saiunit.linalg.dot": "saiunit.math",
     "saiunit.linalg.eig": "saiunit.linalg",
     "saiunit.linalg.eigh": "saiunit.linalg",
@@ -10687,7 +12626,7 @@
     "saiunit.linalg.tensordot": "saiunit.math",
     "saiunit.linalg.tensorinv": "saiunit.math",
     "saiunit.linalg.tensorsolve": "saiunit.math",
-    "saiunit.linalg.trace": "saiunit.math",
+    "saiunit.linalg.trace": "saiunit.linalg",
     "saiunit.linalg.vdot": "saiunit.math",
     "saiunit.linalg.vecdot": "saiunit.math",
     "saiunit.linalg.vector_norm": "saiunit.linalg",
@@ -10830,7 +12769,7 @@
     "saiunit.math.gcd": "saiunit.math",
     "saiunit.math.gelu": "saiunit.math",
     "saiunit.math.get_dim": "saiunit",
-    "saiunit.math.get_dtype": "brainstate.math",
+    "saiunit.math.get_dtype": "saiunit.math",
     "saiunit.math.get_magnitude": "saiunit",
     "saiunit.math.get_mantissa": "saiunit",
     "saiunit.math.get_or_create_dimension": "saiunit",
@@ -10867,8 +12806,8 @@
     "saiunit.math.intersect1d": "saiunit.math",
     "saiunit.math.invert": "saiunit.math",
     "saiunit.math.is_dimensionless": "saiunit",
-    "saiunit.math.is_float": "brainstate.math",
-    "saiunit.math.is_int": "brainstate.math",
+    "saiunit.math.is_float": "saiunit.math",
+    "saiunit.math.is_int": "saiunit.math",
     "saiunit.math.is_quantity": "saiunit.math._misc",
     "saiunit.math.is_unitless": "saiunit",
     "saiunit.math.isclose": "saiunit.math",
@@ -11003,6 +12942,7 @@
     "saiunit.math.tile": "saiunit.math",
     "saiunit.math.trace": "saiunit.math",
     "saiunit.math.transpose": "saiunit.math",
+    "saiunit.math.trapezoid": "saiunit.math",
     "saiunit.math.tree_ones_like": "saiunit.math",
     "saiunit.math.tree_zeros_like": "saiunit.math",
     "saiunit.math.tri": "saiunit.math",
@@ -11036,11 +12976,10 @@
   "swept_backends": [
     "numpy",
     "jax",
+    "cupy",
     "torch",
     "dask",
     "ndonnx"
   ],
-  "untested_backends": [
-    "cupy"
-  ]
+  "untested_backends": []
 }

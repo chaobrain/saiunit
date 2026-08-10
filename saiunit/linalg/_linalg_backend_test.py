@@ -36,6 +36,7 @@ import pytest
 
 import saiunit as u
 from saiunit import meter, second
+from saiunit._backend import to_backend
 
 
 # Map (backend, op) → reason for known per-backend gaps. These are
@@ -204,7 +205,7 @@ def test_cond_returns_dimensionless(backend):
     q = _quantity(np.eye(3) * 2.0, meter, backend)
     r = u.linalg.cond(q)
     # cond strips units — the result is a raw backend scalar/array.
-    arr = np.asarray(r.compute()) if hasattr(r, "compute") else np.asarray(r)
+    arr = to_backend(r, "numpy")
     assert float(arr) == pytest.approx(1.0, abs=1e-6)
 
 
@@ -212,7 +213,7 @@ def test_slogdet_returns_dimensionless(backend):
     _skip_if_unsupported(backend, "slogdet")
     q = _quantity(np.eye(3) * 2.0, meter, backend)
     sign, logabsdet = u.linalg.slogdet(q)
-    sign_arr = np.asarray(sign.compute()) if hasattr(sign, "compute") else np.asarray(sign)
-    logdet_arr = np.asarray(logabsdet.compute()) if hasattr(logabsdet, "compute") else np.asarray(logabsdet)
+    sign_arr = to_backend(sign, "numpy")
+    logdet_arr = to_backend(logabsdet, "numpy")
     assert float(sign_arr) == pytest.approx(1.0)
     assert float(logdet_arr) == pytest.approx(np.log(8.0), abs=1e-6)

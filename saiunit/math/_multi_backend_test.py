@@ -57,12 +57,8 @@ _EAGER_NUMERIC_BACKENDS = {"numpy", "jax", "cupy", "torch"}
 def _to_np(x):
     """Materialize a backend array (or Quantity mantissa) to a NumPy array."""
     if isinstance(x, u.Quantity):
-        x = x.mantissa
-    if hasattr(x, "unwrap_numpy"):  # ndonnx
-        return x.unwrap_numpy()
-    if hasattr(x, "compute"):  # dask
-        return np.asarray(x.compute())
-    return np.asarray(x)
+        return x.to_numpy().mantissa
+    return to_backend(x, "numpy")
 
 
 def _arr(values, backend, dtype=np.float64):

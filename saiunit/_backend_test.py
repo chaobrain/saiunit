@@ -249,6 +249,62 @@ def test_to_backend_cupy_noop():
     assert out is arr
 
 
+@pytest.mark.parametrize(
+    "values,dtype",
+    [
+        ([[1.0, 2.0], [3.0, 4.0]], np.float32),
+        ([1, 2, 3], np.int64),
+        ([], np.float64),
+    ],
+)
+def test_to_backend_cupy_to_numpy_preserves_array(values, dtype):
+    cupy = pytest.importorskip("cupy")
+    arr = cupy.asarray(values, dtype=dtype)
+
+    out = to_backend(arr, "numpy")
+
+    assert is_numpy_array(out)
+    assert out.shape == arr.shape
+    assert out.dtype == np.dtype(dtype)
+    np.testing.assert_array_equal(out, np.asarray(values, dtype=dtype))
+
+
+def test_to_backend_cupy_to_numpy_handles_non_contiguous_array():
+    cupy = pytest.importorskip("cupy")
+    arr = cupy.arange(12, dtype=cupy.float64).reshape(3, 4)[:, ::2]
+
+    out = to_backend(arr, "numpy")
+
+    np.testing.assert_array_equal(out, np.arange(12).reshape(3, 4)[:, ::2])
+
+
+def test_to_backend_cupy_to_numpy_preserves_active_device():
+    cupy = pytest.importorskip("cupy")
+    arr = cupy.asarray([1.0, 2.0])
+    device_before = cupy.cuda.runtime.getDevice()
+
+    to_backend(arr, "numpy")
+
+    assert cupy.cuda.runtime.getDevice() == device_before
+
+
+def test_cupy_math_stays_on_gpu_until_explicit_materialization(monkeypatch):
+    cupy = pytest.importorskip("cupy")
+    from saiunit._backend import is_cupy_array
+    arr = cupy.asarray([2.0, 3.0])
+
+    def fail_on_host_transfer(value):
+        raise AssertionError("CuPy computation attempted an unexpected host transfer")
+
+    monkeypatch.setattr(cupy, "asnumpy", fail_on_host_transfer)
+
+    out = u.math.square(arr)
+
+    assert is_cupy_array(out)
+    monkeypatch.undo()
+    cupy.testing.assert_array_equal(out, cupy.asarray([4.0, 9.0]))
+
+
 def test_to_backend_cupy_with_device_kwarg():
     cupy = pytest.importorskip("cupy")
     from saiunit._backend import to_backend, is_cupy_array
