@@ -1922,6 +1922,19 @@ def test_to_numpy_from_jax():
     assert np.allclose(np.asarray(qn.mantissa), np.array([1.0, 2.0]))
 
 
+def test_to_numpy_from_cupy_preserves_values_dtype_and_unit():
+    cupy = pytest.importorskip("cupy")
+    q = Quantity(cupy.asarray([1.0, 2.0], dtype=cupy.float32), unit=meter)
+
+    qn = q.to_numpy()
+
+    assert qn.backend == "numpy"
+    assert isinstance(qn.mantissa, np.ndarray)
+    assert qn.mantissa.dtype == np.float32
+    assert qn.unit is q.unit
+    np.testing.assert_array_equal(qn.mantissa, np.array([1.0, 2.0], dtype=np.float32))
+
+
 def test_to_jax_from_numpy():
     q = Quantity(np.array([1.0, 2.0]), unit=meter)
     qj = q.to_jax()

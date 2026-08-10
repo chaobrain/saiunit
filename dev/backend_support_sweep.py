@@ -17,11 +17,11 @@
 
 Walks every public callable in ``saiunit.math``, ``saiunit.linalg``,
 ``saiunit.fft``, plus the ``Quantity`` method surface, invokes each one
-across the locally-installed backends (jax, numpy, torch, dask, ndonnx),
+across the locally-installed backends (jax, numpy, cupy, torch, dask, ndonnx),
 and records pass / skip / fail / unmapped per (function, backend).
 
-``cupy`` is skipped at sweep time when CUDA is unavailable; the renderer
-marks every cupy cell ``?`` in the rst output.
+``cupy`` is swept when a usable CUDA device is available. An unavailable
+backend is omitted from the sweep and rendered as ``?``.
 
 JAX-only subpackages (``saiunit.lax``, ``saiunit.autograd``,
 ``saiunit.sparse``) are probed once per backend with a representative
@@ -37,6 +37,7 @@ import importlib
 import inspect
 import json
 import os
+import platform
 import re
 import sys
 import traceback
@@ -109,6 +110,43 @@ def _detect_installed() -> dict[str, bool]:
         except Exception:
             installed["cupy"] = False
     return installed
+
+
+def _environment_metadata(installed: dict[str, bool]) -> dict[str, Any]:
+    """Return deterministic runtime metadata for reproducing the sweep."""
+    modules = {
+        "numpy": "numpy",
+        "jax": "jax",
+        "cupy": "cupy",
+        "torch": "torch",
+        "dask": "dask",
+        "ndonnx": "ndonnx",
+    }
+    versions: dict[str, str] = {}
+    for backend, module_name in modules.items():
+        if not installed.get(backend):
+            continue
+        module = importlib.import_module(module_name)
+        versions[backend] = str(getattr(module, "__version__", "unknown"))
+
+    metadata: dict[str, Any] = {
+        "python": platform.python_version(),
+        "backend_versions": versions,
+    }
+    if installed.get("cupy"):
+        cupy = importlib.import_module("cupy")
+        device_id = cupy.cuda.runtime.getDevice()
+        properties = cupy.cuda.runtime.getDeviceProperties(device_id)
+        device_name = properties["name"]
+        if isinstance(device_name, bytes):
+            device_name = device_name.decode()
+        metadata["cuda"] = {
+            "device_id": device_id,
+            "device_name": device_name,
+            "driver_version": cupy.cuda.runtime.driverGetVersion(),
+            "runtime_version": cupy.cuda.runtime.runtimeGetVersion(),
+        }
+    return metadata
 
 
 # ---------------------------------------------------------------------------
@@ -1199,6 +1237,51 @@ NON_DISPATCHED_MATH = {
 # ---------------------------------------------------------------------------
 
 
+def _array_backend_name(value: Any) -> str | None:
+    """Return the backend name for an array-like result, if identifiable."""
+    detectors = (
+        ("numpy", is_numpy_array),
+        ("jax", is_jax_array),
+        ("cupy", is_cupy_array),
+        ("torch", is_torch_array),
+        ("dask", is_dask_array),
+        ("ndonnx", is_ndonnx_array),
+    )
+    for name, detector in detectors:
+        if detector(value):
+            return name
+    return None
+
+
+def _result_backend_names(result: Any) -> list[str]:
+    """Collect identifiable array backends from a possibly nested result."""
+    if isinstance(result, u.Quantity):
+        return _result_backend_names(result.mantissa)
+    if isinstance(result, dict):
+        names: list[str] = []
+        for value in result.values():
+            names.extend(_result_backend_names(value))
+        return names
+    if isinstance(result, (tuple, list)):
+        names = []
+        for value in result:
+            names.extend(_result_backend_names(value))
+        return names
+    name = _array_backend_name(result)
+    return [] if name is None else [name]
+
+
+def _expected_result_backend(fn_qualname: str, input_backend: str) -> str:
+    """Return the backend a successful probe result is expected to use."""
+    if fn_qualname == "saiunit.math.as_numpy":
+        return "numpy"
+    if fn_qualname.startswith("Quantity.to_"):
+        target = fn_qualname.removeprefix("Quantity.to_")
+        if target in ALL_BACKENDS:
+            return target
+    return input_backend
+
+
 def _classify_outcome(
     fn_qualname: str,
     backend: str,
@@ -1247,6 +1330,16 @@ def _classify_outcome(
         return {"status": "fail", "detail": f"{type(exc).__name__}: {msg}"}
     except Exception as exc:
         return {"status": "fail", "detail": f"{type(exc).__name__}: {exc}"}
+
+    expected_backend = _expected_result_backend(fn_qualname, backend)
+    result_backends = set(_result_backend_names(result))
+    unexpected = sorted(result_backends - {expected_backend})
+    if unexpected:
+        actual = ", ".join(sorted(result_backends))
+        return {
+            "status": "fail",
+            "detail": f"expected {expected_backend} result backend; got {actual}",
+        }
 
     return {"status": "pass", "detail": ""}
 
@@ -1336,7 +1429,7 @@ def _probe_jax_only_subpackage(
 
 def main() -> None:
     installed = _detect_installed()
-    # Backends actually swept: everything installed except cupy when no CUDA.
+    # Sweep every importable backend with a usable runtime.
     swept: list[str] = [b for b in ALL_BACKENDS if installed.get(b)]
     untested: list[str] = [b for b in ALL_BACKENDS if not installed.get(b)]
 
@@ -1466,7 +1559,8 @@ def main() -> None:
             source_map[f"{prefix}.{name}"] = getattr(fn, "__module__", "?")
 
     out = {
-        "schema_version": 1,
+        "schema_version": 2,
+        "environment": _environment_metadata(installed),
         "swept_backends": swept,
         "untested_backends": untested,
         "all_backends": list(ALL_BACKENDS),

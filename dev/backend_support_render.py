@@ -41,7 +41,6 @@ GLYPHS = {
     "unmapped": "?",
     "na": "—",
     "guard": "🅙",   # JAX-only guard fired (BackendError on non-jax)
-    "cupy": "?",
 }
 
 
@@ -79,8 +78,8 @@ def _row(fq_short: str, row: dict[str, dict[str, str]], notes: dict[str, str]) -
     for b in ALL_BACKENDS:
         cell = row.get(b)
         if cell is None:
-            # cupy column (or any unswept backend) — always '?'
-            lines.append(f"     - {GLYPHS['cupy']}")
+            # Any unswept backend is unknown.
+            lines.append(f"     - {GLYPHS['unmapped']}")
             continue
         glyph = _cell(cell)
         # Footnote only for fail/skip/warn with non-empty detail.
@@ -152,7 +151,7 @@ def _subpackage_summary(
     """For one subpackage, compute a per-backend high-level rating."""
     out: dict[str, str] = {}
     for b in ALL_BACKENDS:
-        if b == "cupy" or b not in swept:
+        if b not in swept:
             out[b] = "?"
             continue
         n = sum(1 for _, r in rows if r.get(b))
@@ -188,6 +187,26 @@ def main() -> None:
     source_map = data["source_map"]
     coverage = data["coverage"]
     non_dispatched_math = data.get("non_dispatched_math", [])
+    environment = data.get("environment", {})
+    backend_versions = environment.get("backend_versions", {})
+    cuda_environment = environment.get("cuda", {})
+    untested = data["untested_backends"]
+    untested_text = "``, ``".join(untested) if untested else "none"
+
+    if "cupy" in swept:
+        cupy_backend_note = [
+            "- **cupy** — measured on a CUDA device through ``array_api_compat.cupy``.",
+            f"  CuPy ``{backend_versions.get('cupy', 'unknown')}``; device",
+            f"  ``{cuda_environment.get('device_name', 'unknown')}``; CUDA driver/runtime",
+            f"  ``{cuda_environment.get('driver_version', 'unknown')}`` /",
+            f"  ``{cuda_environment.get('runtime_version', 'unknown')}``.",
+            "  Cells and summary ratings below are generated from the measured sweep.",
+        ]
+    else:
+        cupy_backend_note = [
+            "- **cupy** — not tested in this report because no usable CUDA device was",
+            "  detected. Cells are ``?`` and no support level is inferred from NumPy.",
+        ]
 
     notes: dict[str, str] = {}
 
@@ -243,7 +262,7 @@ def main() -> None:
         probe = jax_only_results.get(subpkg_label, {})
         row: dict[str, str] = {}
         for b in ALL_BACKENDS:
-            if b == "cupy" or b not in swept:
+            if b not in swept:
                 row[b] = "?"
             elif b == "jax":
                 row[b] = "Full ✓" if probe.get("jax", {}).get("status") == "pass" else "Limited ✗"
@@ -282,14 +301,14 @@ def main() -> None:
         "``🅙``       JAX-only by design — gated by ``saiunit._jax_guard.require_jax_backend``.",
         "            Raises :class:`~saiunit.BackendError` on any non-jax backend.",
         "``—``       Not applicable to backend dispatch (dtype factories, dimension predicates).",
-        "``?``       Not tested in this report. Cupy is always ``?`` because no CUDA backend",
-        "            was available when this sweep ran. The single unmapped Quantity method",
+        "``?``       Not tested in this report or not mapped by the automated sweep. The",
+        "            single unmapped Quantity method",
         "            (``tree_unflatten``) is also ``?`` because automated invocation requires",
         "            a hand-crafted aux/children pair.",
         "==========  ==========================================================",
         "",
-        f"**Sweep environment.**  Backends invoked: ``{'``, ``'.join(swept)}``.  ",
-        f"Backends shown but not tested: ``{'``, ``'.join(data['untested_backends'])}``.",
+        f"**Sweep environment.**  Backends invoked: ``{'``, ``'.join(swept)}``.",
+        f"Backends shown but not tested: ``{untested_text}``.",
         "",
     ]
 
@@ -330,10 +349,7 @@ def main() -> None:
         "  A handful of reductions (``amax``, ``amin``, ``mean``, ``nan*`` variants)",
         "  fail when saiunit forwards a ``where=None`` kwarg numpy can't interpret.",
         "  These are listed with footnotes in the math tables below.",
-        "- **cupy** — *not tested in this report* (no CUDA toolkit in the sweep",
-        "  environment).  Cells are ``?``.  Cupy's array-API surface tracks numpy",
-        "  closely, so support is expected to mirror the numpy column, but this",
-        "  document does not claim it.",
+        *cupy_backend_note,
         "- **torch** — through ``array_api_compat.torch``.  The torch array-API",
         "  surface lacks several ops saiunit dispatches to (``cbrt``, ``digamma``,",
         "  some ``einops`` reductions, ``axes=`` for n-D FFTs) and rejects",
@@ -390,8 +406,8 @@ def main() -> None:
             out.append(f"     - {b}")
         out.append("   * - all functions")
         for b in ALL_BACKENDS:
-            if b == "cupy" or b not in swept:
-                out.append(f"     - {GLYPHS['cupy']}")
+            if b not in swept:
+                out.append(f"     - {GLYPHS['unmapped']}")
                 continue
             st = probe.get(b, {}).get("status", "?")
             if b == "jax":

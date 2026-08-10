@@ -74,6 +74,17 @@ fun_array_creation_other = [
 ]
 
 
+def test_as_numpy_materializes_cupy_array_explicitly():
+    cupy = pytest.importorskip("cupy")
+    value = cupy.asarray([1.0, 2.0], dtype=cupy.float32)
+
+    result = um.as_numpy(value)
+
+    assert isinstance(result, np.ndarray)
+    assert result.dtype == np.float32
+    np.testing.assert_array_equal(result, np.asarray([1.0, 2.0], dtype=np.float32))
+
+
 class TestFunArrayCreationWithArrayCustomArray(parameterized.TestCase):
 
     @parameterized.product(

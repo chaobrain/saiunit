@@ -35,6 +35,7 @@ from contextvars import ContextVar
 from types import ModuleType
 from typing import Iterator, Literal, Optional
 
+from array_api_compat import is_cupy_array as _is_array_api_cupy_array
 import array_api_compat.numpy as _numpy_xp
 import numpy as np
 
@@ -335,6 +336,11 @@ def to_backend(x, name: BackendName, **kwargs):
             raise TypeError(f"to_backend(name='numpy') does not accept kwargs; got {sorted(kwargs)}")
         if is_numpy_array(x):
             return x
+        # CuPy deliberately rejects implicit ``np.asarray`` conversion. This
+        # branch is an explicit device-to-host boundary requested by callers.
+        if _is_array_api_cupy_array(x):
+            cupy = _try_import("cupy")
+            return cupy.asnumpy(x)
         # ndonnx requires explicit materialization; np.asarray returns a 0-d
         # object wrapper instead of evaluating the symbolic graph.
         if is_ndonnx_array(x):
