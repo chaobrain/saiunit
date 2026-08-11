@@ -1300,7 +1300,7 @@ def correlate(
     preferred_element_type: Optional[DTypeLike] = None,
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> Array:
+) -> Union[Array, Quantity]:
     r"""
     Cross-correlation of two 1-dimensional sequences.
 
@@ -1378,7 +1378,7 @@ def cov(
     aweights: Optional[ArrayLike] = None,
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> Array:
+) -> Union[Array, Quantity]:
     """
     Estimate a covariance matrix, given data and weights.
 
@@ -1470,7 +1470,7 @@ def ldexp(
     y: Union[Quantity, ArrayLike],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> Array:
+) -> Union[Array, Quantity]:
     """
     Returns x * 2**y, element-wise.
 

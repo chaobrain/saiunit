@@ -14,7 +14,7 @@
 # ==============================================================================
 
 """
-Unit-aware mathematical functions for JAX arrays.
+Unit-aware mathematical functions for supported array backends.
 
 This subpackage provides unit-aware wrappers for NumPy-style functions,
 organized by how they handle units:
@@ -26,11 +26,16 @@ organized by how they handle units:
   (``multiply``, ``divide``, ``square``, ``sqrt``, ``dot``, ``matmul``, etc.).
 - **Remove unit**: functions that return dimensionless results
   (``equal``, ``greater``, ``argmax``, ``argsort``, ``sign``, etc.).
-- **Accept unitless**: functions that require unitless inputs
+- **Dimensionless input**: functions that operate on dimensionless values,
+  including values explicitly scaled with ``unit_to_scale``
   (``exp``, ``log``, ``sin``, ``cos``, ``arctan``, etc.).
+- **Angle and phase**: angular conversions and phase extraction
+  (``deg2rad``, ``radians``, ``angle``, etc.).
 - **Activations**: neural-network activation functions
   (``relu``, ``sigmoid``, ``gelu``, ``silu``, etc.).
 - **Einops**: Einstein-notation operations (``einsum``, ``einrearrange``, etc.).
+
+Operations dispatch to NumPy, JAX, CuPy, PyTorch, Dask, or ndonnx arrays.
 """
 
 from . import linalg, fft

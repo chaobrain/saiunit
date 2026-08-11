@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import json
 import sys
-from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +29,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT / "dev" / "backend_support_data.json"
 OUT_PATH = ROOT / "docs" / "backends" / "feature_support_matrix.rst"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 ALL_BACKENDS = ["numpy", "jax", "cupy", "torch", "dask", "ndonnx"]
 
@@ -140,6 +141,41 @@ def _render_footnotes(notes: dict[str, str]) -> list[str]:
     return lines
 
 
+def _group_math_results(
+    function_results: dict[str, dict[str, dict[str, str]]],
+    non_dispatched_math: list[str],
+) -> dict[str, list[tuple[str, dict[str, dict[str, str]]]]]:
+    """Group dispatched math results by the public API taxonomy."""
+    from docs.auto_generater import MATH_API_SECTIONS
+
+    non_dispatched = set(non_dispatched_math)
+    rows_by_name = {
+        fq.rsplit(".", 1)[1]: row
+        for fq, row in function_results.items()
+        if fq.startswith("saiunit.math.")
+        and fq.rsplit(".", 1)[1] not in non_dispatched
+    }
+    section_by_name = {
+        name: title
+        for title, names in MATH_API_SECTIONS
+        for name in names
+    }
+    unknown = sorted(set(rows_by_name) - set(section_by_name))
+    if unknown:
+        raise ValueError(
+            "Dispatched saiunit.math functions missing from MATH_API_SECTIONS: "
+            + ", ".join(unknown)
+        )
+
+    return {
+        title: [
+            (name, rows_by_name[name])
+            for name in names if name in rows_by_name
+        ]
+        for title, names in MATH_API_SECTIONS
+    }
+
+
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
@@ -184,7 +220,6 @@ def main() -> None:
     quantity_results = data["quantity_results"]
     jax_only_results = data["jax_only_results"]
     jax_only_inventory = data["jax_only_inventory"]
-    source_map = data["source_map"]
     coverage = data["coverage"]
     non_dispatched_math = data.get("non_dispatched_math", [])
     environment = data.get("environment", {})
@@ -210,21 +245,9 @@ def main() -> None:
 
     notes: dict[str, str] = {}
 
-    # ---- Bucket math by source module ----
-    math_by_submodule: dict[str, list[tuple[str, dict]]] = defaultdict(list)
-    for fq, row in function_results.items():
-        if not fq.startswith("saiunit.math."):
-            continue
-        name = fq.rsplit(".", 1)[1]
-        if name in non_dispatched_math:
-            continue
-        submod = source_map.get(fq, "?")
-        # Normalize known module names to a friendlier label.
-        label = submod.replace("saiunit.math.", "").replace("_fun_", "")
-        math_by_submodule[label].append((name, row))
-
-    for label in math_by_submodule:
-        math_by_submodule[label].sort()
+    math_by_section = _group_math_results(
+        function_results, non_dispatched_math
+    )
 
     linalg_rows = sorted(
         ((fq.rsplit(".", 1)[1], row) for fq, row in function_results.items()
@@ -245,7 +268,7 @@ def main() -> None:
     summary_rows: list[tuple[str, dict[str, str]]] = []
     summary_rows.append(("saiunit.math",
                           _subpackage_summary(
-                              [r for rows in math_by_submodule.values() for r in rows],
+                              [r for rows in math_by_section.values() for r in rows],
                               swept)))
     summary_rows.append(("saiunit.linalg",
                           _subpackage_summary(linalg_rows, swept)))
@@ -428,37 +451,20 @@ def main() -> None:
             out.append(f"      * ``{fn_name}``")
         out.append("")
 
-    # ---- saiunit.math by submodule ----
+    # ---- saiunit.math by public unit semantics ----
     out += [
         "saiunit.math",
         "------------",
         "",
         "Public callables in ``saiunit.math`` that go through the multi-backend",
-        "dispatcher.  Grouped by source submodule for readability.",
+        "dispatcher. Grouped by the same unit semantics used by the math API",
+        "reference.",
         "",
     ]
-    submodule_order = [
-        ("array_creation",  "Array creation"),
-        ("keep_unit",       "Unit-preserving"),
-        ("change_unit",     "Unit-changing"),
-        ("accept_unitless", "Dimensionless-only"),
-        ("remove_unit",     "Unit-removing"),
-    ]
-    seen_labels: set[str] = set()
-    for key, title in submodule_order:
-        rows = math_by_submodule.get(key, [])
-        seen_labels.add(key)
-        header = f"``{key}`` — {title}"
+    for title, rows in math_by_section.items():
+        header = title
         out += [header, "^" * len(header), ""]
         out += _render_table(f"saiunit.math — {title}", rows, swept, notes)
-
-    # Any remaining math buckets we didn't pre-label.
-    for key, rows in math_by_submodule.items():
-        if key in seen_labels:
-            continue
-        header = f"``{key}``"
-        out += [header, "^" * len(header), ""]
-        out += _render_table(f"saiunit.math — {key}", rows, swept, notes)
 
     # Non-dispatched math (dtype factories, predicates).
     out += [
