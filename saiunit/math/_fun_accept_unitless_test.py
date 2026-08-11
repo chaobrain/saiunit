@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import inspect
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -937,3 +938,10 @@ class TestAngleUnitRecategorization:
     def test_cov_raw_unchanged(self):
         r = um.cov(jnp.array([1.0, 2.0, 3.0]))
         np.testing.assert_allclose(np.asarray(r), 1.0)
+
+
+@pytest.mark.parametrize("name", ("correlate", "cov", "ldexp"))
+def test_unit_propagating_functions_advertise_quantity_return(name):
+    annotation = inspect.signature(getattr(um, name)).return_annotation
+
+    assert "Quantity" in str(annotation)
