@@ -8,8 +8,8 @@ Version 0.6.0 redesigns how units are composed, displayed and parsed, adds
 compatibility with JAX 0.12, and lands a broad correctness pass over
 ``Quantity``, ``Unit`` and ``Dimension``. Composite units now display the way
 they were written (``mV * ms`` stays ``ms * mV`` instead of collapsing to
-``uWb``), every display string parses back to an equal unit, and units can be
-rendered as Unicode or LaTeX. CuPy is now a measured, supported backend.
+``uWb``), the ASCII and Unicode display strings parse back to an equal unit,
+and units can also be rendered as LaTeX. CuPy is now a measured, supported backend.
 
 This release raises the minimum requirements to **Python 3.12** and
 **JAX 0.9**, and changes some display strings and math semantics; review
@@ -75,8 +75,9 @@ from the terms in a canonical order (#146).
 - **Deterministic, exact composition.** ``a * b`` and ``b * a`` always display
   identically and compare equal, and ``hour.reverse().reverse() == hour``
   exactly.
-- **Round-trip parsing.** ``parse_unit(str(u)) == u`` for every composition of
-  registered units, and parsing is idempotent. The new tokenizer accepts
+- **Round-trip parsing.** ``parse_unit(str(u)) == u`` (and likewise for
+  ``to_string('unicode')``) for every composition of registered units, and
+  parsing is idempotent. LaTeX output is for display only and is not parsed. The new tokenizer accepts
   ``µ`` / ``μ``, ``Ω``, ``°``, superscripts (``cm²``), ``·`` / ``×``, rational
   exponents (``m^(1/3)``), parenthesised powers (``(m / s)^2``) and registered
   symbols containing spaces or slashes (``km/h``, ``oz t``).
