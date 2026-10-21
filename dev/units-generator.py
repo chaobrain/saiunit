@@ -30,36 +30,42 @@ _siprefixes = {
 fundamental_units = ['metre', 'meter', 'kilogram', 'second', 'amp', 'ampere', 'kelvin', 'mole', 'mol', 'candle']
 
 #### DERIVED UNITS, from http://physics.nist.gov/cuu/Units/units.html
+# columns: long name, symbol, dimension, auto_simplify, unicode, latex
 derived_unit_table = [
-  ['radian', 'rad', 'get_or_create_dimension()'],
-  ['steradian', 'sr', 'get_or_create_dimension()'],
-  ['hertz', 'Hz', 'get_or_create_dimension(s=-1)'],
-  ['newton', 'N', 'get_or_create_dimension(m=1, kg=1, s=-2)'],
-  ['pascal', 'Pa', 'get_or_create_dimension(m=-1, kg=1, s=-2)'],
-  ['joule', 'J', 'get_or_create_dimension(m=2, kg=1, s=-2)'],
-  ['watt', 'W', 'get_or_create_dimension(m=2, kg=1, s=-3)'],
-  ['coulomb', 'C', 'get_or_create_dimension(s=1, A=1)'],
-  ['volt', 'V', 'get_or_create_dimension(m=2, kg=1, s=-3, A=-1)'],
-  ['farad', 'F', 'get_or_create_dimension(m=-2, kg=-1, s=4, A=2)'],
-  ['ohm', 'ohm', 'get_or_create_dimension(m=2, kg=1, s=-3, A=-2)'],
-  ['siemens', 'S', 'get_or_create_dimension(m=-2, kg=-1, s=3, A=2)'],
-  ['weber', 'Wb', 'get_or_create_dimension(m=2, kg=1, s=-2, A=-1)'],
-  ['tesla', 'T', 'get_or_create_dimension(kg=1, s=-2, A=-1)'],
-  ['henry', 'H', 'get_or_create_dimension(m=2, kg=1, s=-2, A=-2)'],
-  ['lumen', 'lm', 'get_or_create_dimension(cd=1)'],
-  ['lux', 'lx', 'get_or_create_dimension(m=-2, cd=1)'],
-  ['becquerel', 'Bq', 'get_or_create_dimension(s=-1)'],
-  ['gray', 'Gy', 'get_or_create_dimension(m=2, s=-2)'],
-  ['sievert', 'Sv', 'get_or_create_dimension(m=2, s=-2)'],
-  ['katal', 'kat', 'get_or_create_dimension(s=-1, mol=1)'],
+  ['radian', 'rad', 'get_or_create_dimension()', False, None, None],
+  ['steradian', 'sr', 'get_or_create_dimension()', False, None, None],
+  ['hertz', 'Hz', 'get_or_create_dimension(s=-1)', True, None, None],
+  ['newton', 'N', 'get_or_create_dimension(m=1, kg=1, s=-2)', True, None, None],
+  ['pascal', 'Pa', 'get_or_create_dimension(m=-1, kg=1, s=-2)', True, None, None],
+  ['joule', 'J', 'get_or_create_dimension(m=2, kg=1, s=-2)', True, None, None],
+  ['watt', 'W', 'get_or_create_dimension(m=2, kg=1, s=-3)', True, None, None],
+  ['coulomb', 'C', 'get_or_create_dimension(s=1, A=1)', True, None, None],
+  ['volt', 'V', 'get_or_create_dimension(m=2, kg=1, s=-3, A=-1)', True, None, None],
+  ['farad', 'F', 'get_or_create_dimension(m=-2, kg=-1, s=4, A=2)', True, None, None],
+  ['ohm', 'ohm', 'get_or_create_dimension(m=2, kg=1, s=-3, A=-2)', True, 'Ω', r'\Omega'],
+  ['siemens', 'S', 'get_or_create_dimension(m=-2, kg=-1, s=3, A=2)', True, None, None],
+  ['weber', 'Wb', 'get_or_create_dimension(m=2, kg=1, s=-2, A=-1)', False, None, None],
+  ['tesla', 'T', 'get_or_create_dimension(kg=1, s=-2, A=-1)', False, None, None],
+  ['henry', 'H', 'get_or_create_dimension(m=2, kg=1, s=-2, A=-2)', False, None, None],
+  ['lumen', 'lm', 'get_or_create_dimension(cd=1)', False, None, None],
+  ['lux', 'lx', 'get_or_create_dimension(m=-2, cd=1)', False, None, None],
+  ['becquerel', 'Bq', 'get_or_create_dimension(s=-1)', False, None, None],
+  ['gray', 'Gy', 'get_or_create_dimension(m=2, s=-2)', False, None, None],
+  ['sievert', 'Sv', 'get_or_create_dimension(m=2, s=-2)', False, None, None],
+  ['katal', 'kat', 'get_or_create_dimension(s=-1, mol=1)', False, None, None],
 ]
 
 ## Generate derived unit objects and make a table of base units from these and the fundamental ones
 base_units = fundamental_units + ['kilogramme', 'gram', 'gramme', 'molar']
 derived = ''
-for longname, shortname, definition in derived_unit_table:
-  derived += '{longname} = Unit.create({definition}, "{longname}", "{shortname}")\n'.format(
-    longname=longname, shortname=shortname, definition=definition)
+for longname, shortname, definition, auto, uni, latex in derived_unit_table:
+  kwargs = ''
+  if auto:
+    kwargs += ', auto_simplify=True'
+  if uni is not None:
+    kwargs += ', unicode="{}", latex=r"{}"'.format(uni, latex)
+  derived += '{longname} = Unit.create({definition}, "{longname}", "{shortname}"{kwargs})\n'.format(
+    longname=longname, shortname=shortname, definition=definition, kwargs=kwargs)
   base_units.append(longname)
 
 
@@ -99,9 +105,7 @@ powered_units = []
 for bu in all_units + []:
   for i in [2, 3]:
     u = bu + str(i)
-    definitions += '{u} = Unit.create(({bu}**{i}).dim, name="{u}", ' \
-                   'dispname=str({bu})+"^{i}", ' \
-                   'scale={bu}.scale*{i})\n'.format(u=u, bu=bu, i=i)
+    definitions += '{u} = Unit.create_power({bu}, {i}, name="{u}")\n'.format(u=u, bu=bu, i=i)
     all_units.append(u)
     if bu not in excluded_scaled_units:
       powered_units.append(u)

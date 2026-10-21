@@ -51,7 +51,7 @@ The constants are organised into the following groups:
     ``light_year``, ``parsec``
 
 **Pressure**
-    ``atm`` / ``atmosphere``, ``bar``, ``mmHg`` / ``torr``, ``psi``
+    ``atm`` / ``atmosphere``, ``bar``, ``mmHg``, ``torr``, ``psi``
 
 **Area**
     ``hectare``, ``acre``
@@ -246,7 +246,8 @@ parsec = np.asarray(3.085677581491367e16) * meter  # Parsec
 # ----- Pressure -----
 atm = atmosphere = np.asarray(1.01325e5) * (newton / meter2)  # Atmosphere
 bar = np.asarray(1e5) * (newton / meter2)  # Bar
-mmHg = torr = np.asarray(1.3332236842105263e2) * (newton / meter2)  # Torr (mmHg)
+torr = np.asarray(1.3332236842105263e2) * (newton / meter2)  # Torr (101325/760 Pa)
+mmHg = np.asarray(1.33322387415e2) * (newton / meter2)  # Conventional millimetre of mercury
 psi = np.asarray(6.894757293168361e3) * (newton / meter2)  # Pound per square inch (psi)
 
 # ----- Area -----

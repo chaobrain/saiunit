@@ -38,7 +38,7 @@ Length
     ``parsec``
 
 Pressure
-    ``atm``/``atmosphere``, ``bar``, ``mmHg``/``torr``, ``psi``
+    ``atm``/``atmosphere``, ``bar``, ``mmHg``, ``torr``, ``psi``
 
 Area
     ``hectare``, ``acre``
@@ -106,11 +106,12 @@ atomic_mass = u = um_u = amu = Unit.create(kilogram.dim, name="atomic mass unit"
                                            scale=kilogram.scale - 27, factor=1.66053906892)
 
 # ----- Angle -----
-degree = Unit.create(radian.dim, name="degree", dispname="°", scale=radian.scale, factor=pi / 180)
-arcmin = arcminute = Unit.create(radian.dim, name="arcminute", dispname="′", scale=radian.scale - 4,
-                                 factor=2.908882086657216)
-arcsec = arcsecond = Unit.create(radian.dim, name="arcsecond", dispname="″", scale=radian.scale - 6,
-                                 factor=4.84813681109536)
+degree = Unit.create(radian.dim, name="degree", dispname="deg", scale=radian.scale, factor=pi / 180,
+                     unicode="°", latex=r"^{\circ}")
+arcmin = arcminute = Unit.create(radian.dim, name="arcminute", dispname="arcmin", scale=radian.scale - 4,
+                                 factor=2.908882086657216, unicode="′", latex=r"^{\prime}")
+arcsec = arcsecond = Unit.create(radian.dim, name="arcsecond", dispname="arcsec", scale=radian.scale - 6,
+                                 factor=4.84813681109536, unicode="″", latex=r"^{\prime\prime}")
 
 # ----- Time -----
 # Note: ``year`` uses the Gregorian calendar year (365.2425 days), not the common 365-day year.
@@ -137,8 +138,9 @@ survey_mile = Unit.create(meter.dim, name="survey mile", dispname="US survey mi"
                           factor=1.6093472186944374)
 nautical_mile = Unit.create(meter.dim, name="nautical mile", dispname="nmi", scale=meter.scale + 3, factor=1.8520)
 fermi = Unit.create(meter.dim, name="fermi", dispname="fm", scale=meter.scale - 15)
-angstrom = Unit.create(meter.dim, name="angstrom", dispname="Å", scale=meter.scale - 10, factor=1.0)
-micron = Unit.create(meter.dim, name="micron", dispname="µm", scale=meter.scale - 6, factor=1.)
+angstrom = Unit.create(meter.dim, name="angstrom", dispname="Angstrom", scale=meter.scale - 10, factor=1.0,
+                       unicode="Å", latex=r"\mathring{A}")
+micron = Unit.create(meter.dim, name="micron", dispname="um", scale=meter.scale - 6, factor=1.)
 au = astronomical_unit = Unit.create(meter.dim, name="astronomical unit", dispname="AU", scale=meter.scale + 11,
                                      factor=1.495978707)
 light_year = Unit.create(meter.dim, name="light year", dispname="ly", scale=meter.scale + 15, factor=9.46073047258080)
@@ -147,7 +149,9 @@ parsec = Unit.create(meter.dim, name="parsec", dispname="pc", scale=meter.scale 
 # ----- Pressure -----
 atm = atmosphere = Unit.create(pascal.dim, name="atmosphere", dispname="atm", scale=pascal.scale + 5, factor=1.01325)
 bar = Unit.create(pascal.dim, name="bar", dispname="bar", scale=pascal.scale + 5, factor=1.)
-mmHg = torr = Unit.create(pascal.dim, name="torr", dispname="torr", scale=pascal.scale + 2, factor=1.3332236842105263)
+torr = Unit.create(pascal.dim, name="torr", dispname="torr", scale=pascal.scale + 2, factor=1.3332236842105263)
+# Conventional millimetre of mercury: 133.322387415 Pa (slightly more than a torr, 101325/760 Pa)
+mmHg = Unit.create(pascal.dim, name="mmHg", dispname="mmHg", scale=pascal.scale + 2, factor=1.33322387415)
 psi = Unit.create(pascal.dim, name="pound per square inch", dispname="psi", scale=pascal.scale + 3,
                   factor=6.894757293168361)
 

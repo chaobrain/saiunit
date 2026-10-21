@@ -266,6 +266,12 @@ class TestPressureMagnitudes:
         # Exact: 101325/760
         assert_magnitude(torr, 101325.0 / 760)
 
+    def test_mmhg_is_not_torr(self):
+        # 1 mmHg = 133.322387415 Pa (conventional), slightly more than a torr
+        assert_magnitude(mmHg, 133.322387415)
+        assert mmHg != torr
+        assert str(mmHg) == "mmHg"
+
     def test_psi(self):
         assert_magnitude(psi, 6894.757293168361)
 
@@ -467,9 +473,12 @@ class TestDispnames:
         assert str(slug) == "slug"
 
     def test_angle_dispnames(self):
-        assert str(degree) == "°"
-        assert str(arcminute) == "′"
-        assert str(arcsecond) == "″"
+        assert str(degree) == "deg"
+        assert str(arcminute) == "arcmin"
+        assert str(arcsecond) == "arcsec"
+        assert degree.to_string('unicode') == "°"
+        assert arcminute.to_string('unicode') == "′"
+        assert arcsecond.to_string('unicode') == "″"
 
     def test_time_dispnames(self):
         assert str(minute) == "min"
@@ -487,8 +496,10 @@ class TestDispnames:
         assert str(mile) == "mi"
         assert str(nautical_mile) == "nmi"
         assert str(fermi) == "fm"
-        assert str(angstrom) == "Å"
-        assert str(micron) == "µm"
+        assert str(angstrom) == "Angstrom"
+        assert str(micron) == "um"
+        assert angstrom.to_string('unicode') == "Å"
+        assert micron.to_string('unicode') == "µm"
         assert str(astronomical_unit) == "AU"
         assert str(light_year) == "ly"
         assert str(parsec) == "pc"
