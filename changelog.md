@@ -1,5 +1,70 @@
 # Release Notes
 
+## Unreleased
+
+### Unit display redesign
+
+Units now carry structured display terms — the named units they were
+composed from, with exact exponents — instead of string triples that were
+merged and re-parsed with a regular expression. All of `__mul__`, `__div__`,
+`__pow__` and `reverse()` go through a single composition function, and
+`dim`/`scale`/`factor` are derived from the terms in a canonical order.
+
+- **Composites display as written.** `mV * ms` is `ms * mV` (was `uWb`),
+  `mol / l` is `mol / l` (was `M`), `km * mm` is `km * mm` (was `m^2`), and
+  `rad * m` is `m * rad` (the radian was dropped). Automatic collapse is
+  limited to a curated set: SI base units, N, Pa, J, W, C, V, F, ohm, S, Hz
+  and their prefixed forms (not da/h/d/c), so `kg * m / s^2` is still `N`
+  and `1 / s` is still `Hz`. Wb, T, H, kat, Gy, Sv, Bq, M, l, … are no
+  longer reached by arithmetic; use the new `Unit.simplify()` /
+  `Quantity.simplify()` to collapse onto any registered unit
+  (`(V * s).simplify()` is `Wb`).
+- **Anonymous operands no longer erase names.** `UNITLESS / mV` and
+  `1 / (3 * mV)` display `1 / mV` (was `10.0^3 * s^3 * A / (m^2 * kg)`).
+- **Operators agree.** `s ** -1` displays `Hz`, like `1 / s`.
+- **Readable scaled dimensionless units.** `mV / V` displays `mV / V`,
+  `minute * Hz` displays `Hz * min`; pure scales display `10^3`
+  (was `10.0^3`).
+- **Exact exponents.** Exponents are kept as integers or fractions:
+  `mV ** (1/3)` displays `mV^(1/3)` and `metre ** Fraction(1, 3)` works.
+- **Deterministic, exact composition.** `a * b` and `b * a` always display
+  identically and compare equal (the factor is folded in canonical order),
+  and `hour.reverse().reverse() == hour` exactly.
+- **Parsing round-trips.** `parse_unit(str(u)) == u` for every composition
+  of registered units, and parsing is idempotent. A new tokenizer accepts
+  `µ`/`μ`, `Ω`, `°`, superscripts (`cm²`), `·`/`×`, rational exponents
+  (`m^(1/3)`) and registered symbols such as `km/h` and `oz t`.
+- **Quantity display.** A unit with no numerator prints with negative
+  exponents (`0.4 mV^-1`, was `0.4 1 / mV`); a numeric unit is joined with
+  `*` (`2.5 * 10^3`).
+- **Unicode and LaTeX.** `Unit.to_string(format)` renders `'ascii'`
+  (canonical), `'ascii_inline'`, `'unicode'` (`mS·nA / cm²`, `µF`, `kΩ`),
+  `'unicode_inline'`, `'latex'` and `'latex_inline'`; `format(unit, spec)`
+  accepts the same names, and `Unit`/`Quantity` implement `_repr_latex_`
+  for Jupyter.
+- **ASCII canonical symbols.** `str()` is pure ASCII: micro is `u`
+  (`micron` is `um`), and degree, arcminute, arcsecond and angstrom display
+  `deg`, `arcmin`, `arcsec` and `Angstrom`; their Unicode forms (`°`, `′`,
+  `″`, `Å`, `µm`) are used by `to_string('unicode')` and accepted by the
+  parser.
+- **`mmHg` is no longer an alias of `torr`.** It is the conventional
+  millimetre of mercury, 133.322387415 Pa (a torr is 101325/760 Pa), in
+  both `saiunit` and `saiunit.constants`.
+
+#### API
+
+- New: `Unit.simplify()`, `Quantity.simplify()`, `Unit.to_string()`,
+  `Unit.create_power(base, n, name=None)`; keyword-only
+  `auto_simplify`/`unicode`/`latex` arguments on `Unit.create` and
+  `auto_simplify` on `add_standard_unit`.
+- `Unit.name` / `Unit.dispname` of a composite return its display string;
+  `Unit.is_fullname` is now a read-only property.
+- Units pickled by earlier versions still load. Units pickled by this
+  version cannot be loaded by earlier versions.
+- Removed private helpers: `_find_standard_unit`, `_get_display_parts`,
+  `_merge_display_parts`, `_normalise_display_parts`,
+  `_format_display_parts`, `_fmt_exp`, `_format_dim_parser_compatible`.
+
 ## Version 0.5.2
 
 ### Highlights

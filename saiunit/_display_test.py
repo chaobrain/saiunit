@@ -217,8 +217,8 @@ class TestUnitCompositionSimplification:
         (u.pascal, u.metre3, "J"),
         # Charge: C = A * s
         (u.amp, u.second, "C"),
-        # Magnetic flux: Wb = T * m^2
-        (u.tesla, u.metre2, "Wb"),
+        # Magnetic flux: Wb is not an auto-simplify target (see simplify())
+        (u.tesla, u.metre2, "m^2 * T"),
         # Charge: C = F * V
         (u.farad, u.volt, "C"),
         # Current: A = S * V
@@ -253,8 +253,8 @@ class TestUnitCompositionSimplification:
         (u.joule, u.coulomb, "V"),
         # Pressure: Pa = N / m^2
         (u.newton, u.metre2, "Pa"),
-        # Inductance: H = Wb / A
-        (u.weber, u.amp, "H"),
+        # Inductance: H is not an auto-simplify target (see simplify())
+        (u.weber, u.amp, "Wb / A"),
         # Resistance: ohm = H / s
         (u.henry, u.second, "ohm"),
         # Time: s = Wb / V
@@ -375,7 +375,9 @@ class TestUnitExponentDisplay:
         assert str(u.metre ** 3) == "m^3"
 
     def test_negative_exponent(self):
-        assert str(u.second ** -1) == "1 / s"
+        # s^-1 collapses onto hertz exactly like 1 / s does
+        assert str(u.second ** -1) == "Hz"
+        assert str(u.metre ** -1) == "1 / m"
 
     def test_negative_exponent_two(self):
         assert str(u.second ** -2) == "1 / s^2"
@@ -469,8 +471,8 @@ class TestUnitDimensionlessDisplay:
     def test_different_scale_division(self):
         """km / m is dimensionless with scale."""
         result = u.kmetre / u.metre
-        s = str(result)
-        assert "10" in s and "3" in s  # "10.0^3"
+        assert str(result) == "km / m"
+        assert str(result.simplify()) == "10^3"
 
     def test_pow_zero(self):
         assert str(u.volt ** 0) == "1"
@@ -528,9 +530,10 @@ class TestUnitDeepCompositions:
         assert str(result) == "J"
 
     def test_tesla_m2_is_weber(self):
-        """T * m^2 → Wb."""
+        """T * m^2 stays composite; simplify() gives Wb."""
         result = u.tesla * u.metre2
-        assert str(result) == "Wb"
+        assert str(result) == "m^2 * T"
+        assert str(result.simplify()) == "Wb"
 
     def test_compound_div_chain(self):
         """(V / A) is ohm, then (ohm * A / s) → V / s."""
@@ -1248,7 +1251,8 @@ class TestRealWorldCompositions:
         B = 1.0 * u.tesla
         A = 2.0 * u.metre2
         Phi = B * A
-        assert str(Phi) == "2. Wb"
+        assert str(Phi) == "2. m^2 * T"
+        assert str(Phi.simplify()) == "2. Wb"
 
     def test_neuroscience_current_density(self):
         """I/A in nA/cm^2 — common in neuroscience."""
@@ -1302,17 +1306,23 @@ class TestExhaustiveSimplification:
     def test_siemens_from_composition(self):
         assert str(u.amp / u.volt) == "S"
 
+    # Wb, T, H and kat are not auto-simplify targets: arithmetic keeps the
+    # composite and simplify() collapses onto the registered unit.
     def test_weber_from_composition(self):
-        assert str(u.volt * u.second) == "Wb"
+        assert str(u.volt * u.second) == "s * V"
+        assert str((u.volt * u.second).simplify()) == "Wb"
 
     def test_tesla_from_composition(self):
-        assert str(u.weber / u.metre2) == "T"
+        assert str(u.weber / u.metre2) == "Wb / m^2"
+        assert str((u.weber / u.metre2).simplify()) == "T"
 
     def test_henry_from_composition(self):
-        assert str(u.weber / u.amp) == "H"
+        assert str(u.weber / u.amp) == "Wb / A"
+        assert str((u.weber / u.amp).simplify()) == "H"
 
     def test_katal_from_composition(self):
-        assert str(u.mole / u.second) == "kat"
+        assert str(u.mole / u.second) == "mol / s"
+        assert str((u.mole / u.second).simplify()) == "kat"
 
 
 # ===================================================================
@@ -1504,3 +1514,131 @@ class TestCompoundExponentNormalization:
 
     def test_compound_with_cm_cm2_cancel(self):
         assert str((u.mS * u.nA / u.cm2) * u.cm) == "mS * nA / cm"
+
+
+# ===================================================================
+# Regressions from the display redesign (structured terms)
+# ===================================================================
+
+class TestDisplayRedesignRegressions:
+    """Each case reproduces a display bug of the string-based design."""
+
+    def test_anonymous_operand_keeps_names(self):
+        # bug 1: UNITLESS / mV rendered as "10.0^3 * s^3 * A / (m^2 * kg)"
+        assert str(UNITLESS / u.mV) == "1 / mV"
+        assert str(UNITLESS * u.mV) == "mV"
+        assert repr(1 / (3 * u.mV)) == 'Quantity(0.33333334, "1 / mV")'
+
+    def test_parse_round_trips(self):
+        # bug 2: "1 / mV" re-parsed to the SI base form
+        assert str(parse_unit("1 / mV")) == "1 / mV"
+        # the SI form re-parsed as "A * das^3 / (kg * m^2)"
+        assert str(parse_unit("A * s^3 / (kg * m^2)")) == "A * s^3 / (kg * m^2)"
+        assert parse_unit("A * s^3 / (kg * m^2)") == u.volt.reverse()
+
+    @pytest.mark.parametrize("make, expected", [
+        (lambda: u.mV * u.ms, "ms * mV"),
+        (lambda: u.mole / u.liter, "mol / l"),
+        (lambda: u.kmetre * u.mmetre, "km * mm"),
+        (lambda: u.radian * u.metre, "m * rad"),
+        (lambda: u.radian / u.second, "rad / s"),
+    ])
+    def test_no_over_eager_collapse(self, make, expected):
+        # bug 3
+        assert str(make()) == expected
+
+    def test_operators_agree(self):
+        # bug 4: 1/s -> Hz but s**-1 -> "1 / s"
+        assert str((1 / u.second).unit) == "Hz"
+        assert str(u.second ** -1) == str(u.second.reverse()) == "Hz"
+
+    @pytest.mark.parametrize("make, expected", [
+        (lambda: u.mV / u.volt, "mV / V"),
+        (lambda: u.minute * u.hertz, "Hz * min"),
+        (lambda: u.hour / u.ms, "h / ms"),
+        (lambda: Unit(scale=3), "10^3"),
+    ])
+    def test_scaled_dimensionless_readable(self, make, expected):
+        # bug 5: rendered "10.0^-3", "6.0 * 10.0^1", "3.6 * 10.0^6"
+        assert str(make()) == expected
+        assert parse_unit(expected) == make()
+
+    def test_fractional_exponents(self):
+        # bug 6: float exponents displayed in full; Fraction crashed
+        from fractions import Fraction
+        assert str(u.mV ** (1 / 3)) == "mV^(1/3)"
+        assert str(u.metre ** Fraction(1, 3)) == "m^(1/3)"
+        assert (u.metre ** Fraction(1, 3)) ** 3 == u.metre
+
+    def test_quantity_without_numerator(self):
+        # bug 7: printed "1 1 / mV"
+        assert str(Quantity(1., unit=u.mV.reverse())) == "1. mV^-1"
+
+    def test_micro_sign_is_ascii(self):
+        # bug 8: "µm" vs "uF"
+        assert str(u.micron) == str(u.umetre) == "um"
+        assert u.micron.to_string('unicode') == "µm"
+        assert str(u.ufarad) == "uF"
+
+    def test_mmhg_is_not_torr(self):
+        # bug 9: mmHg was the same object as torr
+        assert u.mmHg is not u.torr
+        assert u.mmHg != u.torr
+
+    def test_reverse_twice_is_exact(self):
+        assert u.hour.reverse().reverse() == u.hour
+        assert u.hour.reverse().reverse().factor == u.hour.factor
+
+    def test_name_and_dispname_of_composites(self):
+        r = u.mS / u.cm2
+        assert r.name == r.dispname == str(r) == "mS / cm^2"
+        assert u.metre2.name == "metre2"
+        assert u.metre2.dispname == "m^2"
+
+
+# Pickles of units/quantities produced by saiunit before the redesign
+# (``_to_unit(dim, scale, base, factor, name, dispname, is_fullname,
+# display_parts)``), with the str() they had then.
+LEGACY_PICKLES = {
+    'mV': (b'\x80\x04\x958\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\x02\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\xfd\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94J\xfd\xff\xff\xffG@$\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00\x8c\x05mvolt\x94\x8c\x02mV\x94\x88Nt\x94R\x94.', 'mV'),
+    'mS_nA_cm2': (b'\x80\x04\x95z\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\xfc\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x03\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94J\xf8\xff\xff\xffG@$\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00\x8c\x0emS * nA / cm^2\x94h\x1c\x88]\x94(\x8c\x08msiemens\x94\x8c\x02mS\x94K\x01\x87\x94\x8c\x04namp\x94\x8c\x02nA\x94K\x01\x87\x94\x8c\x06cmetre\x94\x8c\x02cm\x94J\xfe\xff\xff\xff\x87\x94et\x94R\x94.', 'mS * nA / cm^2'),
+    'unitless_over_mV': (b'\x80\x04\x95g\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\xfe\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x03\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94K\x03G@$\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00\x8c%second^3 * amp / (metre^2 * kilogram)\x94\x8c\x14s^3 * A / (m^2 * kg)\x94\x89Nt\x94R\x94.', '10.0^3 * s^3 * A / (m^2 * kg)'),
+    'anon_cal': (b'\x80\x04\x95Y\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\x02\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\xfe\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94K\x00G@$\x00\x00\x00\x00\x00\x00G@\x10\xbcj~\xf9\xdb#\x8c\x1dmetre^2 * kilogram / second^2\x94\x8c\x0em^2 * kg / s^2\x94\x89Nt\x94R\x94.', '4.184 * m^2 * kg / s^2'),
+    'rad2': (b'\x80\x04\x95G\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94K\x00G@$\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00\x8c\x05rad^2\x94h\x1c\x88]\x94\x8c\x06radian\x94\x8c\x03rad\x94K\x02\x87\x94at\x94R\x94.', 'rad^2'),
+    'metre2': (b'\x80\x04\x957\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94K\x00G@$\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00\x8c\x06metre2\x94\x8c\x03m^2\x94\x88Nt\x94R\x94.', 'm^2'),
+    'named_dim': (b'\x80\x04\x954\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94K\x00G@$\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00\x8c\x05metre\x94\x8c\x01m\x94\x88Nt\x94R\x94.', 'm'),
+    'q_mV_ms': (b'\x80\x04\x95\x9c\x01\x00\x00\x00\x00\x00\x00\x8c\x16saiunit._base_quantity\x94\x8c\x13_quantity_with_unit\x94\x93\x94G@\x04\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\x0c\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\x02\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\xfc\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94K\x00G@$\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00\x8c\x07mV / ms\x94h\x1f\x88]\x94(\x8c\x05mvolt\x94\x8c\x02mV\x94K\x01\x87\x94\x8c\x07msecond\x94\x8c\x02ms\x94J\xff\xff\xff\xff\x87\x94et\x94R\x94\x86\x94R\x94.', '2.5 mV / ms'),
+    'hour': (b'\x80\x04\x953\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94K\x03G@$\x00\x00\x00\x00\x00\x00G@\x0c\xcc\xcc\xcc\xcc\xcc\xcd\x8c\x04hour\x94\x8c\x01h\x94\x88Nt\x94R\x94.', 'h'),
+    'uF_cm2': (b'\x80\x04\x95c\x01\x00\x00\x00\x00\x00\x00\x8c\x12saiunit._base_unit\x94\x8c\x08_to_unit\x94\x93\x94(\x8c\x07saiunit\x94\x8c\x17get_or_create_dimension\x94\x93\x94\x8c\x16numpy._core.multiarray\x94\x8c\x0c_reconstruct\x94\x93\x94\x8c\x05numpy\x94\x8c\x07ndarray\x94\x93\x94K\x00\x85\x94C\x01b\x94\x87\x94R\x94(K\x01K\x07\x85\x94h\t\x8c\x05dtype\x94\x93\x94\x8c\x02i8\x94\x89\x88\x87\x94R\x94(K\x03\x8c\x01<\x94NNNJ\xff\xff\xff\xffJ\xff\xff\xff\xffK\x00t\x94b\x89C8\xfc\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x04\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x94t\x94b\x85\x94R\x94J\xfe\xff\xff\xffG@$\x00\x00\x00\x00\x00\x00G?\xf0\x00\x00\x00\x00\x00\x00\x8c\tuF / cm^2\x94h\x1c\x88]\x94(\x8c\x06ufarad\x94\x8c\x02uF\x94K\x01\x87\x94\x8c\x06cmetre\x94\x8c\x02cm\x94J\xfe\xff\xff\xff\x87\x94et\x94R\x94.', 'uF / cm^2'),
+}
+
+LEGACY_EXPECTED = {
+    'mV': (lambda: u.mV, "mV"),
+    'mS_nA_cm2': (lambda: u.mS * u.nA / u.cm2, "mS * nA / cm^2"),
+    'unitless_over_mV': (lambda: Unit(u.mV.reverse().dim, scale=3), "10^3 * A * s^3 / (kg * m^2)"),
+    'anon_cal': (lambda: Unit(u.joule.dim, factor=4.184), "4.184 * J"),
+    'rad2': (lambda: u.radian ** 2, "rad^2"),
+    'metre2': (lambda: u.metre2, "m^2"),
+    'named_dim': (lambda: u.metre, "m"),
+    'q_mV_ms': (lambda: 2.5 * u.mV / u.ms, "2.5 mV / ms"),
+    'hour': (lambda: u.hour, "h"),
+    'uF_cm2': (lambda: u.uF / u.cm2, "uF / cm^2"),
+}
+
+
+@pytest.mark.parametrize("key", sorted(LEGACY_PICKLES))
+def test_legacy_pickles_load(key):
+    import pickle
+    blob, _old_str = LEGACY_PICKLES[key]
+    make, expected_str = LEGACY_EXPECTED[key]
+    obj = pickle.loads(blob)
+    expected = make()
+    if isinstance(obj, Quantity):
+        assert obj.unit == expected.unit
+        assert str(obj) == expected_str
+    else:
+        assert obj == expected
+        assert str(obj) == expected_str
+    # and the new format round-trips
+    again = pickle.loads(pickle.dumps(obj))
+    assert str(again) == str(obj)

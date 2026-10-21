@@ -106,8 +106,8 @@ Pressure
 ``atm``            standard atmosphere in pascals
 ``atmosphere``     standard atmosphere in pascals
 ``bar``            one bar in pascals
-``torr``           one torr (mmHg) in pascals
-``mmHg``           one torr (mmHg) in pascals
+``torr``           one torr (101325/760 Pa) in pascals
+``mmHg``           one millimetre of mercury (133.322387415 Pa)
 ``psi``            one psi in pascals
 =================  ============================================================
 

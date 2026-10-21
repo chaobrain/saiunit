@@ -23,12 +23,7 @@ from saiunit._base_unit import (
     UNITLESS,
     Unit,
     _assert_same_base,
-    _find_standard_unit,
-    _fmt_exp,
-    _format_display_parts,
-    _get_display_parts,
-    _merge_display_parts,
-    _normalise_display_parts,
+    _auto_targets,
     _siprefixes,
     _standard_units,
     _unit_name_registry,
@@ -585,108 +580,58 @@ class TestUnitPickle:
 
 
 # =========================================================================
-# Display-parts helpers
+# Display terms
 # =========================================================================
 
-class TestDisplayParts:
-    def test_get_display_parts_simple(self):
+class TestDisplayTerms:
+    def test_named_unit_is_single_atom(self):
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         u = Unit(d, name="metre", dispname="m")
-        parts = _get_display_parts(u)
-        assert parts == [("metre", "m", 1)]
+        assert len(u._terms) == 1
+        atom, exp = u._terms[0]
+        assert atom.symbol == "m" and exp == 1
 
-    def test_get_display_parts_with_cached(self):
+    def test_legacy_display_parts_resolve_via_registry(self):
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
-        cached = [("metre", "m", 2)]
-        u = Unit(d, name="m2", dispname="m^2", display_parts=cached)
-        parts = _get_display_parts(u)
-        assert parts == [("metre", "m", 2)]
+        u = Unit(d ** 2, name="m2", dispname="m^2", display_parts=[("metre", "m", 2)])
+        assert str(u) == "m^2"
+        assert u == metre ** 2
 
-    def test_merge_display_parts(self):
-        parts_a = [("metre", "m", 1)]
-        parts_b = [("second", "s", -1)]
-        merged = _merge_display_parts(parts_a, parts_b)
-        assert len(merged) == 2
-        # positive exponent first
-        assert merged[0][2] > 0
-        assert merged[1][2] < 0
+    def test_terms_merge_and_order(self):
+        r = metre / second
+        assert [(a.symbol, e) for a, e in r._terms] == [("m", 1), ("s", -1)]
+        # numerator first, then case-insensitive alphabetical
+        r = second * amp * metre
+        assert [a.symbol for a, e in r._terms] == ["A", "m", "s"]
 
-    def test_merge_display_parts_cancel(self):
-        parts_a = [("metre", "m", 1)]
-        parts_b = [("metre", "m", -1)]
-        merged = _merge_display_parts(parts_a, parts_b)
-        assert len(merged) == 0
+    def test_terms_cancel(self):
+        assert (metre / metre)._terms == ()
+        assert str(metre / metre) == "1"
 
-    def test_normalise_display_parts_stacked_exp(self):
-        parts = [("metre2", "m^2", 3)]
-        normed = _normalise_display_parts(parts)
-        assert len(normed) == 1
-        assert normed[0][1] == "m"
-        assert normed[0][2] == 6
+    def test_power_alias_expands_to_terms(self):
+        assert [(a.symbol, e) for a, e in (metre2 ** 3)._terms] == [("m", 6)]
+        assert str(metre2 ** 3) == "m^6"
+        assert str(cmetre2 * cmetre) == "cm^3"
 
-    def test_normalise_drops_zero(self):
-        parts = [("metre", "m", 0)]
-        normed = _normalise_display_parts(parts)
-        assert len(normed) == 0
-
-    # --- U3: merge keys on (name, disp), not disp alone ---
-    def test_normalise_does_not_merge_same_dispname_different_name(self):
-        # Two distinct units that happen to share a display symbol "m"
-        # must NOT have their exponents summed together.
-        parts = [("metre", "m", 1), ("my_unit", "m", 1)]
-        normed = _normalise_display_parts(parts)
-        assert len(normed) == 2
-        assert set(normed) == {("metre", "m", 1), ("my_unit", "m", 1)}
-
-    def test_normalise_still_merges_same_name_same_dispname(self):
-        parts = [("metre", "m", 1), ("metre", "m", 2)]
-        normed = _normalise_display_parts(parts)
-        assert normed == [("metre", "m", 3)]
-
-    def test_rendered_compound_keeps_same_dispname_units_distinct(self):
-        # Construct two units that share a display symbol ("m") but have
-        # different underlying names, then verify the rendered compound
-        # string keeps both terms rather than summing their exponents.
+    def test_same_symbol_same_value_units_share_an_atom(self):
+        # Spelling variants with the same symbol and value (metre/meter, or
+        # a user unit re-declaring "m") are the same atom and merge.
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
         u1 = Unit(d, name="metre", dispname="m")
         u2 = Unit(d, name="my_length_unit", dispname="m")
-        parts = _normalise_display_parts(
-            _merge_display_parts(_get_display_parts(u1), _get_display_parts(u2))
-        )
-        assert len(parts) == 2
-        s = _format_display_parts(parts)
-        assert s == "m * m"
+        assert str(u1 * u2) == "m^2"
 
-    def test_fmt_exp_int(self):
-        assert _fmt_exp(3.0) == "3"
-        assert _fmt_exp(3) == "3"
+    def test_rational_exponents_stay_exact(self):
+        from fractions import Fraction
+        r = metre ** (1 / 3)
+        assert r._terms[0][1] == Fraction(1, 3)
+        assert str(r) == "m^(1/3)"
+        assert (r ** 3) == metre
+        assert str(r ** 3) == "m"
 
-    def test_fmt_exp_float(self):
-        assert _fmt_exp(0.5) == "0.5"
-
-    def test_format_display_parts_empty(self):
-        assert _format_display_parts([]) == "1"
-
-    def test_format_display_parts_single_positive(self):
-        parts = [("metre", "m", 1)]
-        assert _format_display_parts(parts) == "m"
-
-    def test_format_display_parts_with_exponent(self):
-        parts = [("metre", "m", 2)]
-        assert _format_display_parts(parts) == "m^2"
-
-    def test_format_display_parts_division(self):
-        parts = [("metre", "m", 1), ("second", "s", -1)]
-        s = _format_display_parts(parts)
-        assert "m" in s
-        assert "/" in s
-        assert "s" in s
-
-    def test_format_display_parts_numerator_only(self):
-        parts = [("metre", "m", 1), ("second", "s", 1)]
-        s = _format_display_parts(parts)
-        assert "/" not in s
-        assert "*" in s
+    def test_float_exponent_display(self):
+        assert str(metre ** 0.5) == "m^0.5"
+        assert str(metre ** -1.5) == "1 / m^1.5"
 
     def test_assert_same_base_ok(self):
         d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
@@ -695,20 +640,29 @@ class TestDisplayParts:
         _assert_same_base(u1, u2)  # should not raise
 
 # =========================================================================
-# _find_standard_unit / add_standard_unit
+# add_standard_unit / auto-simplify targets / simplify()
 # =========================================================================
 
 class TestStandardUnitLookup:
-    def test_find_standard_unit_dimensionless(self):
-        name, disp, is_full, is_dimless = _find_standard_unit(DIMENSIONLESS, 10., 0, 1.)
-        assert is_dimless
-        assert name is None
+    def test_auto_targets_are_curated(self):
+        assert (newton.dim, 0, 10., 1.) in _auto_targets
+        assert (hertz.dim, 3, 10., 1.) in _auto_targets       # kHz
+        assert (weber.dim, 0, 10., 1.) not in _auto_targets   # Wb
+        assert (metre.dim, -2, 10., 1.) not in _auto_targets  # cm (c prefix)
 
-    def test_find_standard_unit_non_numeric_base(self):
-        d = get_or_create_dimension([1, 0, 0, 0, 0, 0, 0])
-        name, disp, is_full, is_dimless = _find_standard_unit(d, "non-numeric", 0, 1.)
-        assert name is None
-        assert not is_dimless
+    def test_simplify_uses_any_registered_unit(self):
+        assert str((volt * second).simplify()) == "Wb"
+        assert str((mole / liter).simplify()) == "M"
+        assert (mole / second).simplify() is _standard_units[(katal.dim, 0, 10., 1.)]
+
+    def test_simplify_dimensionless_is_anonymous(self):
+        assert str((mvolt / volt).simplify()) == "10^-3"
+        assert str((radian * metre / metre).simplify()) == "1"
+
+    def test_simplify_without_match_keeps_value(self):
+        r = (metre / second ** 3).simplify()
+        assert r == metre / second ** 3
+        assert str(r) == "m / s^3"
 
     def test_add_standard_unit_registers(self):
         from saiunit._base_unit import _standard_unit_aliases, _unit_name_registry, _ambiguous_keys
@@ -773,7 +727,7 @@ class TestUnitIntegration:
                 inplace_op(volt)
 
     def test_display(self):
-        assert_equal(str(u.kmeter / u.meter), '10.0^3')
+        assert_equal(str(u.kmeter / u.meter), 'km / m')
 
     def test_inverse_second_prefers_hertz_alias(self):
         q = 1 / u.second
@@ -1170,9 +1124,10 @@ class TestDisplayBugFixes:
         assert r.count("Unit") == 1
 
     def test_dimensionless_scaled_str(self):
-        """Dimensionless with scale should show base^scale."""
+        """Dimensionless with scale keeps its terms; simplify() shows 10^scale."""
         unit = u.kmeter / u.meter
-        assert_equal(str(unit), "10.0^3")
+        assert_equal(str(unit), "km / m")
+        assert_equal(str(unit.simplify()), "10^3")
 
     def test_meter_pow_zero_str(self):
         """m**0 should show as '1'."""

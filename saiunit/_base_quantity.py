@@ -1347,10 +1347,25 @@ class Quantity:
             >>> x.to(u.volt).repr_in_unit(3)
             '0.025 V'
         """
-        s = self._format_value(precision=precision)
-        if self.unit.should_display_unit:
-            s += f" {str(self.unit)}"
+        s = self._format_value(precision=precision) + self._unit_suffix()
         return s.strip()
+
+    def _unit_suffix(self) -> str:
+        """Unit text appended to the value by ``str`` and ``format``.
+
+        A unit with no numerator uses negative exponents (``2.5 mV^-1``
+        rather than ``2.5 1 / mV``); a unit string starting with a number
+        is joined with ``*`` (``2.5 * 10^3 / s``).
+        """
+        unit = self.unit
+        if not unit.should_display_unit:
+            return ''
+        s = str(unit)
+        if s.startswith('1 / '):
+            return ' ' + unit.to_string('ascii_inline')
+        if s[:1].isdigit():
+            return ' * ' + s
+        return ' ' + s
 
     def factorless(self) -> 'Quantity':
         """
@@ -1377,6 +1392,31 @@ class Quantity:
             return Quantity(self.mantissa * self.unit.factor, unit=self.unit.factorless())
         else:
             return self
+
+    def simplify(self) -> 'Quantity':
+        """
+        Return this quantity with its unit collapsed onto a registered unit.
+
+        See :meth:`Unit.simplify`.  The value is unchanged; only the unit's
+        display changes.
+
+        Returns
+        -------
+        Quantity
+            An equal quantity, e.g. ``3 V * s`` → ``3 Wb``.
+
+        Examples
+        --------
+        .. code-block:: python
+
+            >>> import saiunit as u
+            >>> (3. * u.volt * u.second).simplify()
+            Quantity(3., "Wb")
+        """
+        unit = self.unit.simplify()
+        if unit is self.unit:
+            return self
+        return Quantity(self.mantissa, unit=unit)
 
     @property
     def dtype(self):
@@ -1692,6 +1732,18 @@ class Quantity:
     def __str__(self) -> str:
         return self.repr_in_unit()
 
+    def _repr_latex_(self) -> str | None:
+        from saiunit._backend import is_dask_array, is_ndonnx_array
+        mantissa = self.mantissa
+        if _is_tracer(mantissa) or is_dask_array(mantissa) or is_ndonnx_array(mantissa):
+            return None
+        value = self._format_value()
+        if self.shape != ():
+            value = r'\text{' + ' '.join(value.split()) + '}'
+        if not self.unit.should_display_unit:
+            return f'${value}$'
+        return f"${value}\\;{self.unit.to_string('latex')}$"
+
     def __format__(self, format_spec) -> str:
         if not format_spec:
             return str(self)
@@ -1704,8 +1756,6 @@ class Quantity:
                 f"'%' format is not supported for Quantity with unit {str(self.unit)!r}. "
                 f"Convert to a dimensionless value first."
             )
-        unit_str = str(self.unit)
-        show_unit = self.unit.should_display_unit
         if self.shape == ():
             try:
                 formatted_value = format(self.mantissa, format_spec)
@@ -1713,9 +1763,7 @@ class Quantity:
                 # Mantissas that don't implement format specs (JAX tracers,
                 # lazy/symbolic backends): degrade to the plain display.
                 return str(self)
-            if not show_unit:
-                return formatted_value
-            return f"{formatted_value} {unit_str}"
+            return formatted_value + self._unit_suffix()
         else:
             # Apply the spec per element so 'e'/'g'/'%' types keep their
             # Python semantics. Traced / lazy / symbolic mantissas cannot
@@ -1735,9 +1783,7 @@ class Quantity:
             except (TypeError, ValueError):
                 # Spec not applicable element-wise — fall back to str()
                 return str(self)
-            if not show_unit:
-                return s
-            return f"{s} {unit_str}"
+            return s + self._unit_suffix()
 
     def __iter__(self):
         """Solve the issue of DeviceArray.__iter__.

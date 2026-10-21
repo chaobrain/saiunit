@@ -833,7 +833,7 @@ class TestQuantityIntegration:
             with pytest.raises(u.UnitMismatchError):
                 display_in_unit(10 * nS, ohm)
 
-        assert_equal(display_in_unit(10.0, Unit(scale=1)), "1. 10.0^1")
+        assert_equal(display_in_unit(10.0, Unit(scale=1)), "1. * 10^1")
         assert_equal(str(3 * u.kmeter / u.meter), '3000.0')
         assert_equal(str(u.mS / u.cm ** 2), 'mS / cm^2')
 
