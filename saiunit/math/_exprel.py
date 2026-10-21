@@ -14,7 +14,7 @@
 # ==============================================================================
 
 """
-Numerically stable implementation of expm1(x)/x as a JAX primitive.
+Numerically stable implementation of expm1(x)/x with a custom JVP rule.
 
 The function f(x) = (exp(x) - 1) / x has a removable singularity at x = 0.
 Using Taylor expansion: f(x) = 1 + x/2! + x²/3! + x³/4! + ...
@@ -25,25 +25,12 @@ f'(x) = 1/2 + x/3 + x²/8 + x³/30 + ...
 So f'(0) = 1/2.
 """
 
+from functools import partial
 from math import factorial
 from typing import Optional
 
-from saiunit._jax_compat import HAS_JAX, jnp, require_jax
+from saiunit._jax_compat import HAS_JAX, jax, jnp, require_jax
 from saiunit._typing import Array
-
-if HAS_JAX:
-    from jax import core
-    from jax.interpreters import ad
-    from jax.interpreters import batching
-    from jax.interpreters import mlir
-
-    from saiunit._compatible_import import Primitive
-else:
-    core = None  # type: ignore[assignment]
-    ad = None  # type: ignore[assignment]
-    batching = None  # type: ignore[assignment]
-    mlir = None  # type: ignore[assignment]
-    Primitive = None
 
 __all__ = ['exprel', 'set_exprel_order']
 
@@ -411,7 +398,7 @@ def exprel(x, /, order: Optional[int] = None):
         >>> exprel(jnp.array([0.0, 1.0, -1.0]))
         Array([1.        , 1.7182819 , 0.63212055], dtype=float32)
     """
-    require_jax("saiunit.math.exprel (custom JAX primitive)")
+    require_jax("saiunit.math.exprel")
     if order is None:
         order = _current_order
     if not isinstance(order, int) or order < 2 or order > 20:
@@ -422,76 +409,25 @@ def exprel(x, /, order: Optional[int] = None):
         # floating result, so binding with an integer aval would make the
         # abstract eval (and hence JIT lowering) inconsistent with the impl.
         x = x.astype(jnp.result_type(float, x.dtype))
-    return exprel_p.bind(x, order=order)
-
-
-def _exprel_abstract_eval(x, order=None):
-    return core.ShapedArray(x.shape, x.dtype)
-
-
-def _exprel_jvp(primals, tangents, *, order):
-    """
-    JVP rule for exprel.
-
-    d/dx[(exp(x) - 1) / x] = [(x-1)*exp(x) + 1] / x²
-
-    For numerical stability near x = 0, we use Taylor expansion.
-    """
-    x, = primals
-    x_dot, = tangents
-
-    primal_out = exprel(x, order=order)
-    tangent_out = _exprel_deriv(x, order=order) * x_dot
-
-    return primal_out, tangent_out
-
-
-def _exprel_transpose(cotangent, x, *, order):
-    """
-    Transpose rule for exprel (used for reverse-mode AD).
-
-    For a function f(x), the transpose of df/dx is just df/dx * cotangent.
-    This is because exprel is an elementwise operation.
-    """
-    # The transpose of the JVP tangent computation is:
-    # tangent_out = deriv(x) * x_dot
-    # So the cotangent propagation is:
-    # x_cot = deriv(x) * cotangent
-    return (_exprel_deriv(x, order=order) * cotangent,)
-
-
-def _exprel_batching(batched_args, batch_dims, *, order):
-    x, = batched_args
-    bd, = batch_dims
-    return exprel(x, order=order), bd
-
-
-def _exprel_lowering(ctx, x, *, order):
-    """Lowering rule for exprel - uses the stable implementation."""
-
-    def impl_with_order(x):
-        return _exprel_impl(x, order=order)
-
-    return mlir.lower_fun(impl_with_order, multiple_results=False)(ctx, x)
+    return _exprel_cjvp(x, order)
 
 
 if HAS_JAX:
-    # Define the primitive
-    exprel_p = Primitive("exprel")
-    exprel_p.def_impl(_exprel_impl)
-    exprel_p.def_abstract_eval(_exprel_abstract_eval)
+    # ``jax.custom_jvp`` is public API; vmap, jit and reverse-mode AD follow
+    # from the JVP rule (the tangent is linear in ``x_dot``).
+    @partial(jax.custom_jvp, nondiff_argnums=(1,))
+    def _exprel_cjvp(x, order):
+        return _exprel_impl(x, order=order)
 
-    # Register JVP (forward-mode AD)
-    ad.primitive_jvps[exprel_p] = _exprel_jvp
+    @_exprel_cjvp.defjvp
+    def _exprel_jvp(order, primals, tangents):
+        """
+        JVP rule for exprel.
 
-    # Register transpose rule for reverse-mode AD
-    # Note: For elementwise operations, the transpose of df/dx * tangent is df/dx * cotangent
-    ad.primitive_transposes[exprel_p] = _exprel_transpose
+        d/dx[(exp(x) - 1) / x] = [(x-1)*exp(x) + 1] / x²
 
-    # Register batching rule for vmap
-    batching.primitive_batchers[exprel_p] = _exprel_batching
-
-    # Register MLIR lowering for JIT compilation
-    mlir.register_lowering(exprel_p, _exprel_lowering)
-else:
-    exprel_p = None
+        For numerical stability near x = 0, we use Taylor expansion.
+        """
+        x, = primals
+        x_dot, = tangents
+        return _exprel_cjvp(x, order), _exprel_deriv(x, order=order) * x_dot

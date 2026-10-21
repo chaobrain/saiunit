@@ -495,14 +495,16 @@ def qr(
         True
     """
     x = maybe_custom_array(x)
+    # Only forward ``use_magma`` when set, so a future JAX that drops the
+    # GPU-only keyword keeps working for the default call.
+    extra = {} if use_magma is None else {'use_magma': use_magma}
     if isinstance(x, Quantity):
-        q, r, *rest = lax.linalg.qr(x.mantissa, pivoting=pivoting, full_matrices=full_matrices,
-                                    use_magma=use_magma)
+        q, r, *rest = lax.linalg.qr(x.mantissa, pivoting=pivoting, full_matrices=full_matrices, **extra)
         if pivoting:
             return q, maybe_decimal(Quantity(r, unit=x.unit)), rest[0]
         return q, maybe_decimal(Quantity(r, unit=x.unit))
     else:
-        return lax.linalg.qr(x, pivoting=pivoting, full_matrices=full_matrices, use_magma=use_magma)
+        return lax.linalg.qr(x, pivoting=pivoting, full_matrices=full_matrices, **extra)
 
 
 @set_module_as('saiunit.lax')

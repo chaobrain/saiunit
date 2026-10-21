@@ -198,6 +198,8 @@ class TestFunChangeUnitWithArrayCustomArray(parameterized.TestCase):
         for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
             print(f'fun: {bm_fun.__name__}')
             value1, value2 = value
+            if bm_fun.__name__ == 'cross' and len(value1) != 3:
+                continue  # 2-D cross products were removed in JAX 0.12
 
             result = bm_fun(jnp.array(value1), jnp.array(value2))
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))
@@ -429,6 +431,8 @@ class TestFunChangeUnit(parameterized.TestCase):
         for bm_fun, jnp_fun in zip(bm_fun_list, jnp_fun_list):
             print(f'fun: {bm_fun.__name__}')
             value1, value2 = value
+            if bm_fun.__name__ == 'cross' and len(value1) != 3:
+                continue  # 2-D cross products were removed in JAX 0.12
 
             result = bm_fun(jnp.array(value1), jnp.array(value2))
             expected = jnp_fun(jnp.array(value1), jnp.array(value2))

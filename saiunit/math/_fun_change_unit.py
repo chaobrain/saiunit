@@ -708,6 +708,8 @@ def cross(
 
     The cross product of `a` and `b` in :math:`R^3` is a vector perpendicular
     to both `a` and `b`. The resulting unit is ``a.unit * b.unit``.
+    Vectors must have 3 components; 2-D vectors are not supported by
+    ``jax.numpy.cross`` since JAX 0.12.
 
     Parameters
     ----------
@@ -720,8 +722,8 @@ def cross(
     axisb : int, optional
         Axis of `b` that defines the vector(s). By default, the last axis.
     axisc : int, optional
-        Axis of `c` containing the cross product vector(s). Ignored if both
-        input vectors have dimension 2. By default, the last axis.
+        Axis of `c` containing the cross product vector(s). By default, the
+        last axis.
     axis : int, optional
         If defined, the axis of `a`, `b` and `c` that defines the vector(s)
         and cross product(s). Overrides `axisa`, `axisb` and `axisc`.

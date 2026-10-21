@@ -887,3 +887,18 @@ class TestAsarrayBackendDispatch:
     def test_list_uses_default_backend(self):
         r = um.asarray([1.0, 2.0])
         assert isinstance(r, jnp.ndarray)
+
+
+def test_full_like_zero_takes_any_unit():
+    a = jnp.array([1., 2.]) * u.mV
+    assert_quantity(um.full_like(a, 0), jnp.array([0., 0.]), u.mV)
+    with pytest.raises(TypeError):
+        um.full_like(a, 1.)
+
+
+def test_meshgrid_returns_tuple():
+    # Matches jax.numpy.meshgrid (JAX >= 0.11.1) and NumPy 2.
+    r = um.meshgrid(jnp.array([1., 2.]) * u.mV, jnp.array([3., 4., 5.]) * u.mV)
+    assert isinstance(r, tuple)
+    assert r[0].shape == (3, 2)
+    assert r[0].unit == u.mV

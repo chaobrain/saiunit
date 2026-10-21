@@ -111,3 +111,11 @@ module = [
     "jax.util",
 ]
 ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+# Fail on deprecations raised from saiunit's own code so JAX/NumPy API
+# removals surface before they turn into hard errors.
+filterwarnings = [
+    "error::DeprecationWarning:saiunit.*",
+]

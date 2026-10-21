@@ -120,6 +120,12 @@ class TestFunAcceptUnitless(parameterized.TestCase):
                 r = bm_fun(q1, q2)
                 assert isinstance(r, u.Quantity)
                 assert r.unit.has_same_dim(meter * meter)
+            elif bm_fun.__name__ == 'hypot':
+                # same-unit legs give a hypotenuse in that unit
+                assert_quantity(bm_fun(q1, q2), jnp_fun(jnp.array(value1), jnp.array(value2)), meter)
+            elif bm_fun.__name__ == 'arctan2':
+                # same-unit inputs give a plain angle
+                assert_quantity(bm_fun(q1, q2), jnp_fun(jnp.array(value1), jnp.array(value2)))
             else:
                 with pytest.raises(TypeError, match='requires a dimensionless "x"'):
                     result = bm_fun(q1, q2)
@@ -441,11 +447,16 @@ class TestFunAcceptUnitlessWithArrayCustomArray(parameterized.TestCase):
             pass
 
         # Test that Arrays with units raise error without unit_to_scale
-        # (correlate/cov now propagate units instead)
+        # (correlate/cov now propagate units instead; hypot/arctan2 accept
+        # same-unit inputs)
         if fun_name in ('correlate', 'cov'):
             r = fun(meter1, meter2)
             assert isinstance(r, u.Quantity)
             assert r.unit.has_same_dim(meter * meter)
+        elif fun_name == 'hypot':
+            assert_quantity(fun(meter1, meter2), jnp_fun(array1.data, array2.data), meter)
+        elif fun_name == 'arctan2':
+            assert_quantity(fun(meter1, meter2), jnp_fun(array1.data, array2.data))
         else:
             with pytest.raises((TypeError, u.UnitMismatchError)):
                 fun(meter1, meter2)
@@ -757,7 +768,7 @@ class TestDocstringExamplesAcceptUnitless(parameterized.TestCase):
 
     def test_arctan2_quantity_without_scale_raises(self):
         y = jnp.array([1.0]) * meter
-        x = jnp.array([1.0]) * meter
+        x = jnp.array([1.0]) * u.second
         with pytest.raises(TypeError, match='requires a dimensionless "x"'):
             u.math.arctan2(y, x)
 
@@ -945,3 +956,20 @@ def test_unit_propagating_functions_advertise_quantity_return(name):
     annotation = inspect.signature(getattr(um, name)).return_annotation
 
     assert "Quantity" in str(annotation)
+
+
+def test_hypot_same_unit_quantities():
+    assert_quantity(u.math.hypot(3. * meter, 4. * meter), 5., meter)
+    assert_quantity(u.math.hypot(3. * meter, 400. * u.cmeter), 5., meter)
+    assert_quantity(np.hypot(3. * meter, 4. * meter), 5., meter)
+    with pytest.raises(TypeError):
+        u.math.hypot(3. * meter, 4. * u.second)
+
+
+def test_arctan2_same_unit_quantities():
+    r = u.math.arctan2(1. * meter, 100. * u.cmeter)
+    assert not isinstance(r, u.Quantity)
+    assert jnp.allclose(r, jnp.pi / 4)
+    assert jnp.allclose(np.arctan2(1. * meter, 1. * meter), jnp.pi / 4)
+    with pytest.raises(TypeError):
+        u.math.arctan2(1. * meter, 1. * u.second)

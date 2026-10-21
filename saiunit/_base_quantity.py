@@ -43,7 +43,6 @@ from ._typing import (
 )
 from ._base_dimension import Dimension, UnitMismatchError, _is_tracer
 from ._base_getters import (
-    get_dim,
     fail_for_dimension_mismatch,
     maybe_decimal,
     _to_quantity,
@@ -110,6 +109,9 @@ def _wrap_function_keep_unit(func):
 
     @functools.wraps(func)
     def f(x: 'Quantity', *args, **kwds):  # pylint: disable=C0111
+        # ``initial`` (sum/max/min) is a value in the same unit as ``x``.
+        if kwds.get('initial') is not None:
+            kwds['initial'] = Quantity(kwds['initial']).in_unit(x.unit).mantissa
         return Quantity(func(x.mantissa, *args, **kwds), unit=x.unit)
 
     f._arg_units = [None]
@@ -370,6 +372,23 @@ def _is_concrete_zero(mantissa) -> bool:
             return False
         return bool(np.all(arr == 0))
     return False
+
+
+def _zero_takes_unit(x, y):
+    """Give a concrete unitless zero operand the unit of the other operand.
+
+    Applies the same "0 is compatible with any dimension" convention as the
+    Quantity operators to the function API (``u.math.greater``, ``where``, ...).
+    """
+    x_unit = x.unit if isinstance(x, Quantity) else UNITLESS
+    y_unit = y.unit if isinstance(y, Quantity) else UNITLESS
+    x_val = x.mantissa if isinstance(x, Quantity) else x
+    y_val = y.mantissa if isinstance(y, Quantity) else y
+    if x_unit.is_unitless and not y_unit.is_unitless and _is_concrete_zero(x_val):
+        return Quantity(x_val, unit=y_unit), y
+    if y_unit.is_unitless and not x_unit.is_unitless and _is_concrete_zero(y_val):
+        return x, Quantity(y_val, unit=x_unit)
+    return x, y
 
 
 # ---------------------------------------------------------------------------
@@ -1218,20 +1237,21 @@ class Quantity:
 
     def has_same_unit(self, other):
         """
-        Check whether this quantity shares the same physical dimension as *other*.
+        Check whether this quantity has the same unit as *other*.
 
-        Two quantities that differ only in scale (e.g. ``mV`` vs ``V``) are
-        considered to have the same unit dimension.
+        Equivalent to :func:`saiunit.has_same_unit`. Quantities that differ
+        only in scale (e.g. ``mV`` vs ``V``) do *not* have the same unit; use
+        :func:`saiunit.have_same_dim` to compare dimensions only.
 
         Parameters
         ----------
-        other : Quantity or Unit
+        other : Quantity, Unit, array-like or number
             The object to compare with.
 
         Returns
         -------
         bool
-            ``True`` if both have identical physical dimensions.
+            ``True`` if both have the same unit.
 
         Examples
         --------
@@ -1239,16 +1259,13 @@ class Quantity:
 
             >>> import saiunit as u
             >>> a = u.Quantity(1.0, unit=u.mV)
-            >>> b = u.Quantity(2.0, unit=u.volt)
-            >>> a.has_same_unit(b)
+            >>> a.has_same_unit(u.Quantity(2.0, unit=u.mV))
             True
-            >>> c = u.Quantity(1.0, unit=u.second)
-            >>> a.has_same_unit(c)
+            >>> a.has_same_unit(u.Quantity(2.0, unit=u.volt))
             False
         """
-        self_dim = get_dim(self.dim)
-        other_dim = get_dim(other.dim)
-        return (self_dim is other_dim) or (self_dim == other_dim)
+        from ._base_getters import has_same_unit
+        return has_same_unit(self, other)
 
     def _format_value(self, precision: int | None = None) -> str:
         """Format the mantissa value as a string."""
@@ -2227,6 +2244,10 @@ class Quantity:
                 # Python scalars there is nothing to mutate either. Degrade to
                 # the functional form so `q += x` still works (Python rebinds
                 # the name).
+                return r
+            if getattr(r.mantissa, 'dtype', None) != getattr(self.mantissa, 'dtype', None):
+                # The result was promoted (e.g. int mV += 1 V needs a float
+                # conversion ratio); rebind like plain arrays do.
                 return r
             self.update_mantissa(r.mantissa)
             return self
@@ -3208,7 +3229,11 @@ class Quantity:
           Values to place in the array at target indices.
         """
         fail_for_dimension_mismatch(self, values, "put")
-        self.__setitem__(indices, values)
+        # ``indices`` index the flattened array, as in ``numpy.put``.
+        if isinstance(indices, (list, tuple)):
+            indices = np.asarray(indices)
+        flat = self.flatten().at[indices].set(values)
+        self.update_mantissa(flat.mantissa.reshape(self.shape))
         return self
 
     def repeat(self, repeats, axis=None) -> 'Quantity':
@@ -3774,12 +3799,11 @@ class Quantity:
             else:
                 return Quantity(self.mantissa.view(dtype), unit=self.unit)
         else:
-            if isinstance(args[0], int):  # shape
+            if isinstance(args[0], (int, tuple, list)):  # shape
                 if dtype is not None:
                     raise ValueError('Provide one of dtype or shape. Not both.')
                 return Quantity(self.mantissa.reshape(*args), unit=self.unit)
             else:  # dtype
-                assert not isinstance(args[0], int)
                 assert dtype is None
                 return Quantity(self.mantissa.view(args[0]), unit=self.unit)
 
@@ -3835,7 +3859,7 @@ class Quantity:
 
         return saiunit_fn(*inputs, **kwargs)
 
-    def __array__(self, dtype: DTypeLike | None = None) -> np.ndarray:
+    def __array__(self, dtype: DTypeLike | None = None, copy: bool | None = None) -> np.ndarray:
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions.
 
         Only dimensionless quantities are coercible — converting a unit-bearing
@@ -3844,7 +3868,7 @@ class Quantity:
         """
         _dask_materialization_guard(self._mantissa, "np.asarray(Quantity)")
         if self.dim.is_dimensionless:
-            return np.asarray(self.to_decimal(), dtype=dtype)
+            return np.array(self.to_decimal(), dtype=dtype, copy=copy)
         else:
             raise TypeError(
                 f"Only dimensionless quantities can be "
@@ -4292,6 +4316,11 @@ class _IndexUpdateRef:
         """
         if not isinstance(values, int):
             raise TypeError(f"values must be an integer, but got {values}")
+        if self.unit ** values != self.unit:
+            raise TypeError(
+                f"at[...].power would change the unit of only the indexed elements "
+                f"(got unit={self.unit}). Use Quantity.__pow__ for unit-changing powers."
+            )
         return Quantity(
             self._scatter(
                 "power", values,
@@ -4299,7 +4328,7 @@ class _IndexUpdateRef:
                 unique_indices=unique_indices,
                 mode=mode,
             ),
-            unit=self.unit ** values,
+            unit=self.unit,
         )
 
     def min(
@@ -4379,7 +4408,11 @@ class _IndexUpdateRef:
             Transforms the unit of the result. If omitted the unit is preserved
             (unit-preserving operations such as ``jnp.abs``).
         """
-        result_unit = unit_fun(self.unit) if unit_fun is not None else self.unit
+        if unit_fun is not None and unit_fun(self.unit) != self.unit:
+            raise TypeError(
+                f"at[...].apply cannot change the unit of only the indexed elements "
+                f"(got unit={self.unit}, unit_fun returned {unit_fun(self.unit)})."
+            )
         return Quantity(
             self._scatter(
                 "apply", mantissa_fun,
@@ -4387,7 +4420,7 @@ class _IndexUpdateRef:
                 unique_indices=unique_indices,
                 mode=mode,
             ),
-            unit=result_unit,
+            unit=self.unit,
         )
 
 

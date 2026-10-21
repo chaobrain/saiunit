@@ -32,6 +32,7 @@ import pytest
 
 import saiunit as u
 from saiunit import BackendError, Quantity, meter, mV
+from saiunit._base_unit import UNITLESS
 
 
 # ---------------------------------------------------------------------------
@@ -80,7 +81,7 @@ def test_ndonnx_at_raises(op):
     with pytest.raises(BackendError, match="ndonnx"):
         ref = q.at[0]
         if op == "power":
-            ref.power(2)
+            ref.power(1)  # unit-preserving, so the backend check is what fires
         elif op == "multiply":
             ref.multiply(2.0)
         elif op == "divide":
@@ -208,13 +209,19 @@ def test_power_integer(backend):
         pytest.skip()
     if backend == "cupy":
         pytest.skip("CuPy 14 does not implement cupy_power.at")
-    q = _make_quantity([2.0, 3.0, 4.0], meter, backend)
+    q = _make_quantity([2.0, 3.0, 4.0], UNITLESS, backend)
     r = q.at[1].power(2)
     np.testing.assert_allclose(_to_numpy(r), [2.0, 9.0, 4.0])
-    # Quantity.at.power changes the unit on the entire array (this matches JAX's
-    # behavior — repeated multiplication of unit). We assert that the unit
-    # dimension is squared:
-    assert r.unit == meter ** 2
+    assert r.unit == UNITLESS
+
+
+def test_power_unit_change_raises(backend):
+    # Powering only the indexed elements would leave the rest mislabelled.
+    if backend == "ndonnx":
+        pytest.skip()
+    q = _make_quantity([2.0, 3.0, 4.0], meter, backend)
+    with pytest.raises(TypeError, match="change the unit"):
+        q.at[1].power(2)
 
 
 def test_power_repeated_indices_accumulates(backend):
@@ -223,12 +230,12 @@ def test_power_repeated_indices_accumulates(backend):
     # match. (torch/dask are documented last-write-wins / mask-based.)
     if backend in ("ndonnx", "torch", "dask", "cupy"):
         pytest.skip("repeated-index power accumulation is a documented limitation here")
-    q = _make_quantity([2.0, 3.0, 4.0, 5.0], meter, backend)
+    q = _make_quantity([2.0, 3.0, 4.0, 5.0], UNITLESS, backend)
     idx = np.asarray([0, 0])
     r = q.at[idx].power(2)
     # (2**2)**2 == 16 at idx 0; others unchanged.
     np.testing.assert_allclose(_to_numpy(r), [16.0, 3.0, 4.0, 5.0])
-    assert r.unit == meter ** 2
+    assert r.unit == UNITLESS
 
 
 def test_power_non_integer_raises(backend):

@@ -983,3 +983,39 @@ class TestDefaultValueValidation:
             return v
 
         assert f() == 1 * _msecond
+
+
+# ---------------------------------------------------------------------------
+# result= callables receive keyword arguments
+# ---------------------------------------------------------------------------
+
+def test_check_units_result_callable_with_keyword_args():
+    @check_units(a=_volt, b=_volt, result=lambda a, b: a)
+    def f(a, b):
+        return a + b
+
+    assert f(1 * _volt, b=2 * _volt) == 3 * _volt
+
+
+def test_check_dims_result_callable_with_keyword_args():
+    @check_dims(a=_voltage_dim, b=_voltage_dim, result=lambda a, b: a)
+    def f(a, b):
+        return a + b
+
+    assert f(1 * _volt, b=2 * _volt) == 3 * _volt
+
+
+def test_assign_units_result_callable_with_keyword_args():
+    @assign_units(a=_volt, result=lambda a: a)
+    def g(a):
+        return a
+
+    assert g(a=1 * _volt) == 1 * _volt
+
+
+def test_result_callable_ignores_unknown_keyword_args():
+    @check_units(a=_volt, b=_volt, result=lambda a, b: a)
+    def f(a, b, flag=True):
+        return a + b
+
+    assert f(1 * _volt, 2 * _volt, flag=False) == 3 * _volt

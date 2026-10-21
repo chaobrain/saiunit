@@ -852,3 +852,12 @@ def test_sometrue_is_any_alias():
     assert bm.sometrue is bm.any
     x = jnp.array([False, False, True])
     assert bool(bm.sometrue(x)) == bool(jnp.any(x))
+
+
+def test_logic_binary_zero_takes_any_unit():
+    x = jnp.array([-1., 0., 3.]) * u.mV
+    assert jnp.array_equal(bm.greater(x, 0), jnp.array([False, False, True]))
+    assert jnp.array_equal(bm.less(0, x), jnp.array([False, False, True]))
+    assert jnp.array_equal(bm.equal(x, 0.), jnp.array([False, True, False]))
+    with pytest.raises(TypeError):
+        bm.greater(x, 1)

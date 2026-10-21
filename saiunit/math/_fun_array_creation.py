@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Sequence
-from typing import (Union, Optional, List, Any, Tuple)
+from typing import (Union, Optional, Any, Tuple)
 
 from saiunit._jax_compat import jax, jnp, tree as _tree
 from saiunit._typing import Array, ArrayLike, DTypeLike
@@ -32,7 +32,7 @@ from saiunit._backend import (
 from saiunit._base_dimension import UnitMismatchError
 from saiunit._base_unit import UNITLESS, Unit
 from saiunit._base_getters import fail_for_unit_mismatch, get_unit, unit_scale_align_to_first
-from saiunit._base_quantity import Quantity
+from saiunit._base_quantity import Quantity, _zero_takes_unit
 from saiunit._misc import set_module_as, maybe_custom_array_tree, maybe_custom_array
 
 import array_api_compat.numpy as _numpy_xp
@@ -477,6 +477,8 @@ def full_like(
     """
     a = maybe_custom_array(a)
     fill_value = maybe_custom_array(fill_value)
+    if isinstance(a, Quantity) and not isinstance(fill_value, Quantity):
+        _, fill_value = _zero_takes_unit(a, fill_value)
     xp = get_backend(a.mantissa if isinstance(a, Quantity) else a)
     if isinstance(fill_value, Quantity):
         if isinstance(a, Quantity):
@@ -1319,7 +1321,7 @@ def meshgrid(
     copy: Optional[bool] = True,
     sparse: Optional[bool] = False,
     indexing: Optional[str] = 'xy'
-) -> List[Union[Quantity, Array]]:
+) -> Tuple[Union[Quantity, Array], ...]:
     """
     Return coordinate matrices from coordinate vectors.
 
@@ -1342,7 +1344,7 @@ def meshgrid(
 
     Returns
     -------
-    X1, X2, ..., XN : list of Quantity or Array
+    X1, X2, ..., XN : tuple of Quantity or Array
         Coordinate matrices.
 
     Examples
@@ -1387,7 +1389,7 @@ def meshgrid(
     ]
     if indexing == "xy" and len(args) >= 2:
         output[0], output[1] = output[1], output[0]
-    return output
+    return tuple(output)
 
 
 @set_module_as('saiunit.math')

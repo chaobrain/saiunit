@@ -24,7 +24,8 @@ import jax.numpy as jnp
 import numpy as np
 from jax import lax
 from jax import tree_util
-from jax.experimental.sparse import JAXSparse, coo_todense_p, coo_fromdense_p, coo_matmat_p, coo_matvec_p
+from jax.experimental import sparse as jsparse
+from jax.experimental.sparse import JAXSparse
 
 from saiunit._base_getters import (
     get_mantissa,
@@ -55,6 +56,16 @@ class COOInfo(NamedTuple):
     shape: Shape
     rows_sorted: bool = False
     cols_sorted: bool = False
+
+
+def _jax_coo(data, row, col, spinfo: COOInfo) -> jsparse.COO:
+    """Wrap raw COO buffers (unitless) as a JAX ``COO`` for the public kernels."""
+    return jsparse.COO(
+        (data, row, col),
+        shape=spinfo.shape,
+        rows_sorted=spinfo.rows_sorted,
+        cols_sorted=spinfo.cols_sorted,
+    )
 
 
 @tree_util.register_pytree_node_class
@@ -640,7 +651,7 @@ def _coo_todense(
       mat : array with specified shape and dtype matching ``data``
     """
     data, unit = split_mantissa_unit(data)
-    r = coo_todense_p.bind(data, row, col, spinfo=spinfo)
+    r = jsparse.coo_todense(_jax_coo(data, row, col, spinfo))
     return maybe_decimal(r * unit)
 
 
@@ -663,9 +674,10 @@ def _coo_fromdense(
       col : array of shape ``(nse,)`` and dtype ``index_dtype``
     """
     mat = asarray(mat)
-    mat, unit = split_mantissa_unit(mat)
+    mat_m, unit = split_mantissa_unit(mat)
     nse = concrete_or_error(operator.index, nse, "nse argument of coo_fromdense()")
-    r = coo_fromdense_p.bind(mat, nse=nse, index_dtype=index_dtype)
+    m = jsparse.coo_fromdense(mat_m, nse=nse, index_dtype=index_dtype)
+    r = (m.data, m.row, m.col)
     if unit.is_unitless:
         return r
     return r[0] * unit, r[1], r[2]
@@ -719,8 +731,8 @@ def _coo_matvec(
         the matrix vector product.
     """
     data, unita = split_mantissa_unit(data)
-    v, unitv = split_mantissa_unit(v)
-    r = coo_matvec_p.bind(data, row, col, v, spinfo=spinfo, transpose=transpose)
+    v_m, unitv = split_mantissa_unit(v)
+    r = jsparse.coo_matvec(_jax_coo(data, row, col, spinfo), v_m, transpose=transpose)
     return maybe_decimal(r * unita * unitv)
 
 
@@ -773,6 +785,6 @@ def _coo_matmat(
         representing the matrix vector product.
     """
     data, unita = split_mantissa_unit(data)
-    B, unitb = split_mantissa_unit(B)
-    res = coo_matmat_p.bind(data, row, col, B, spinfo=spinfo, transpose=transpose)
+    B_m, unitb = split_mantissa_unit(B)
+    res = jsparse.coo_matmat(_jax_coo(data, row, col, spinfo), B_m, transpose=transpose)
     return maybe_decimal(res * unita * unitb)
