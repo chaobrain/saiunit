@@ -22,7 +22,8 @@ namespaces across JAX versions. When JAX is not installed, calling any of these
 symbols raises :class:`BackendError`; importing this module is still safe.
 """
 
-from typing import TypeVar, Iterable, Callable
+import operator
+from typing import Any, TypeVar, Iterable, Callable
 
 from saiunit._jax_compat import HAS_JAX, jax, require_jax
 
@@ -77,11 +78,20 @@ if HAS_JAX:
 
     # ``is_constant_dim`` was removed from ``jax.core`` in JAX 0.11 with no
     # ``jax.extend.core`` replacement; it still lives in the private
-    # ``jax._src.core`` module. Use the public alias on older JAX.
-    if jax.__version_info__ < (0, 10, 0):
-        from jax.core import is_constant_dim  # type: ignore[attr-defined]
-    else:
+    # ``jax._src.core`` module. Fall back to a plain integer check if JAX
+    # moves it again, so ``saiunit.math`` keeps importing.
+    def _is_constant_dim_fallback(d) -> bool:
+        """Return True if ``d`` is a concrete (non-symbolic) dimension."""
+        try:
+            operator.index(d)
+        except TypeError:
+            return False
+        return True
+
+    try:
         from jax._src.core import is_constant_dim
+    except ImportError:
+        is_constant_dim = _is_constant_dim_fallback
 
 
     def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):
@@ -135,8 +145,10 @@ else:
     def concrete_or_error(typ, val, context=""):  # type: ignore[no-redef]
         require_jax("concrete_or_error")
 
-    def is_constant_dim(d):  # type: ignore[no-redef]
+    # Signature mirrors ``jax._src.core.is_constant_dim(d: DimSize) -> bool``.
+    def is_constant_dim(d: int | Any) -> bool:  # type: ignore[no-redef]
         require_jax("is_constant_dim")
+        return False  # unreachable: require_jax raises without JAX
 
     def wrap_init(fun: Callable, args: tuple, kwargs: dict, name: str):  # type: ignore[no-redef]
         require_jax("wrap_init")

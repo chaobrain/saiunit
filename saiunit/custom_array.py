@@ -720,9 +720,9 @@ class CustomArray:
         else:
             return math.asarray(self.data, dtype=dtype)
 
-    def __array__(self, dtype=None):
+    def __array__(self, dtype=None, copy=None):
         """Support ``numpy.array()`` and ``numpy.asarray()`` functions."""
-        return np.asarray(self.data, dtype=dtype)
+        return np.array(self.data, dtype=dtype, copy=copy)
 
     def __jax_array__(self):
         return self.data

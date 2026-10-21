@@ -92,7 +92,12 @@ if HAS_JAX:
     Tracer = _jax.core.Tracer
     ShapedArray = _jax.core.ShapedArray
     ShapeDtypeStruct = _jax.ShapeDtypeStruct
-    from jax.interpreters.partial_eval import DynamicJaxprTracer  # noqa: F401
+    try:
+        from jax.interpreters.partial_eval import DynamicJaxprTracer  # noqa: F401
+    except ImportError:
+        # ``jax.interpreters`` is a shrinking legacy namespace; every
+        # DynamicJaxprTracer is a Tracer, so the isinstance checks still hold.
+        DynamicJaxprTracer = Tracer  # type: ignore[misc, assignment]
     TracerArrayConversionError = _jax.errors.TracerArrayConversionError
     from jax.tree_util import register_pytree_node_class  # noqa: F401
     ensure_compile_time_eval = _jax.ensure_compile_time_eval

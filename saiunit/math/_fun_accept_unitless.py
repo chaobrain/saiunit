@@ -1091,13 +1091,26 @@ def _fun_accept_unitless_binary(
     return _dispatch_call(func, (x, y, *args), kwargs)
 
 
+def _same_dim_mantissas(x, y, unit_to_scale):
+    """Return ``(x, y)`` mantissas in ``x.unit`` if both are Quantities with the
+    same non-trivial dimension and no ``unit_to_scale`` is given, else ``None``."""
+    if unit_to_scale is not None:
+        return None
+    x = maybe_custom_array(x)
+    y = maybe_custom_array(y)
+    if (isinstance(x, Quantity) and isinstance(y, Quantity)
+        and not x.dim.is_dimensionless and x.dim == y.dim):
+        return x.unit, x.mantissa, y.in_unit(x.unit).mantissa
+    return None
+
+
 @set_module_as('saiunit.math')
 def hypot(
     x: Union[ArrayLike, Quantity],
     y: Union[ArrayLike, Quantity],
     unit_to_scale: Optional[Unit] = None,
     **kwargs,
-) -> Array:
+) -> Union[Array, Quantity]:
     """
     Given the legs of a right triangle, return its hypotenuse.
 
@@ -1114,8 +1127,10 @@ def hypot(
 
     Returns
     -------
-    out : Array
-        Hypotenuse values.
+    out : Array or Quantity
+        Hypotenuse values. If ``x`` and ``y`` are Quantities with the same
+        dimension (and ``unit_to_scale`` is not given), the result is a
+        Quantity in the unit of ``x``.
 
     Examples
     --------
@@ -1126,6 +1141,10 @@ def hypot(
         >>> u.math.hypot(jnp.array([3.0]), jnp.array([4.0]))
         Array([5.], dtype=float32)
     """
+    same = _same_dim_mantissas(x, y, unit_to_scale)
+    if same is not None:
+        unit, xm, ym = same
+        return Quantity(_fun_accept_unitless_binary('hypot', xm, ym, **kwargs), unit=unit)
     return _fun_accept_unitless_binary('hypot', x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 
@@ -1146,7 +1165,8 @@ def arctan2(
     y : array_like or Quantity
         x-coordinates (denominator). Must be broadcastable with ``x``.
     unit_to_scale : Unit, optional
-        Unit used to convert both inputs to dimensionless numbers.
+        Unit used to convert both inputs to dimensionless numbers. Not needed
+        when ``x`` and ``y`` are Quantities with the same dimension.
 
     Returns
     -------
@@ -1163,6 +1183,10 @@ def arctan2(
         ...                 jnp.array([1.0, 1.0]))
         Array([ 0.7853982, -0.7853982], dtype=float32)
     """
+    same = _same_dim_mantissas(x, y, unit_to_scale)
+    if same is not None:
+        _, xm, ym = same
+        return _fun_accept_unitless_binary('arctan2', xm, ym, **kwargs)
     return _fun_accept_unitless_binary('arctan2', x, y, unit_to_scale=unit_to_scale, **kwargs)
 
 

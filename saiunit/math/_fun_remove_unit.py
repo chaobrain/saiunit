@@ -24,7 +24,7 @@ from saiunit._typing import Array, ArrayLike
 
 from saiunit._backend import get_backend
 from saiunit._base_getters import get_unit
-from saiunit._base_quantity import Quantity, _is_concrete_zero
+from saiunit._base_quantity import Quantity, _is_concrete_zero, _zero_takes_unit
 from saiunit._base_unit import UNITLESS
 from ._fun_keep_unit import _resolve_op, _strip_none_kwargs, _dispatch_call
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
@@ -552,6 +552,7 @@ def _fun_logic_binary(func, x, y, *args, **kwargs):
     y = maybe_custom_array(y)
     args, kwargs = maybe_custom_array_tree((args, kwargs))
     kwargs = _strip_none_kwargs(kwargs)
+    x, y = _zero_takes_unit(x, y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         xm, ym = x.mantissa, y.in_unit(x.unit).mantissa
         xp = get_backend(xm, ym)

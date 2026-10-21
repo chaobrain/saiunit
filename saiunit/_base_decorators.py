@@ -15,6 +15,7 @@
 
 """Decorators for dimension and unit checking/assignment."""
 
+import inspect
 from collections.abc import Callable
 from functools import partial, wraps
 from typing import cast
@@ -42,6 +43,22 @@ __all__ = [
     'check_dims',
     'assign_units',
 ]
+
+
+def _call_result_fun(fun, getter, args, kwds):
+    """Call a ``result=`` callable with the units/dims of the call's arguments.
+
+    Keyword arguments are forwarded only when ``fun`` accepts them, so result
+    callables written for positional calls keep working.
+    """
+    vals = [getter(a) for a in args]
+    try:
+        params = inspect.signature(fun).parameters
+    except (TypeError, ValueError):
+        return fun(*vals)
+    accepts_any = any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values())
+    kw = {k: getter(v) for k, v in kwds.items() if accepts_any or k in params}
+    return fun(*vals, **kw)
 
 
 def _is_quantity(x):
@@ -247,7 +264,7 @@ def check_dims(**au):
             result = f(*args, **kwds)
             if "result" in au:
                 if isinstance(au["result"], Callable) and au["result"] != bool:
-                    expected_result = au["result"](*[get_dim(a) for a in args])
+                    expected_result = _call_result_fun(au["result"], get_dim, args, kwds)
                 else:
                     expected_result = au["result"]
 
@@ -522,7 +539,7 @@ def check_units(**au):
                     # Pass the argument *units* (not dimensions): the result is
                     # validated by unit with ``_check_unit`` below, so a Dimension
                     # here would always mismatch the returned Quantity's unit.
-                    expected_result = au["result"](*[get_unit(a) for a in args])
+                    expected_result = _call_result_fun(au["result"], get_unit, args, kwds)
                 else:
                     expected_result = au["result"]
 
@@ -699,7 +716,7 @@ def assign_units(f: Callable = missing, **au) -> CallableAssignUnit | Callable[[
         result = f(*pos_args, *extra_args, **new_kwds)
         if "result" in au:
             if isinstance(au["result"], Callable) and au["result"] != bool:
-                expected_result = au["result"](*[get_unit(a) for a in args])
+                expected_result = _call_result_fun(au["result"], get_unit, args, kwds)
             else:
                 expected_result = au["result"]
 

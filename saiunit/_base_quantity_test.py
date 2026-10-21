@@ -795,7 +795,7 @@ class TestQuantityIntegration:
         q = 500 * ms
         assert get_or_create_dimension(q.dim._dims) == q.dim
         assert q.dim is q.dim
-        assert q.has_same_unit(3 * second)
+        assert u.have_same_dim(q, 3 * second)
         dims = q.dim
         assert_equal(dims.get_dimension("time"), 1.0)
         assert_equal(dims.get_dimension("length"), 0)
@@ -938,8 +938,8 @@ class TestQuantityIntegration:
 
         # Test put
         q_put = [[1, 2], [3, 4]] * volt
-        q_put.put(((1, 0), (0, 1)), [10, 30] * volt)
-        assert_quantity(q_put, [[1, 30], [10, 4]], volt)
+        q_put.put([1, 2], [10, 30] * volt)  # flat indices, as in numpy.put
+        assert_quantity(q_put, [[1, 10], [30, 4]], volt)
 
         # Test squeeze (no axes to squeeze in this case, so the array remains the same)
         q_squeeze = [[1, 2], [3, 4]] * volt
@@ -1750,11 +1750,8 @@ def test_docstring_example_has_same_unit():
     import saiunit as u
 
     a = u.Quantity(1.0, unit=u.mV)
-    b = u.Quantity(2.0, unit=u.volt)
-    assert a.has_same_unit(b) is True
-
-    c = u.Quantity(1.0, unit=u.second)
-    assert a.has_same_unit(c) is False
+    assert a.has_same_unit(u.Quantity(2.0, unit=u.mV)) is True
+    assert a.has_same_unit(u.Quantity(2.0, unit=u.volt)) is False
 
 
 def test_docstring_example_with_unit():
@@ -2142,3 +2139,64 @@ def test_quantity_backend_ndonnx():
     import saiunit as u
     q = u.Quantity(ndonnx.asarray(np.array([1.0])), unit=u.meter)
     assert q.backend == "ndonnx"
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for audited bugs
+# ---------------------------------------------------------------------------
+
+def test_array_protocol_accepts_copy_keyword():
+    import warnings
+    q = u.Quantity(np.array([1.0, 2.0]))
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DeprecationWarning)
+        np.testing.assert_array_equal(np.array(q, copy=True), [1.0, 2.0])
+        np.testing.assert_array_equal(np.asarray(q), [1.0, 2.0])
+
+
+def test_at_power_partial_index_rejected():
+    q = jnp.arange(3.) * u.mV
+    with pytest.raises(TypeError):
+        q.at[0].power(2)
+
+
+def test_put_uses_flat_indices():
+    q = u.Quantity(np.arange(4.).reshape(2, 2), unit=u.mV)
+    q.put(np.array([1]), 9 * u.mV)
+    assert_quantity(q, np.array([[0., 9.], [2., 3.]]), u.mV)
+
+
+def test_put_converts_units():
+    q = u.Quantity(jnp.arange(4.), unit=u.mV)
+    q.put(jnp.array([0, 3]), 1 * u.volt)
+    assert_quantity(q, jnp.array([1000., 1., 2., 1000.]), u.mV)
+
+
+def test_has_same_unit_compares_units():
+    assert not (1 * u.mV).has_same_unit(1 * u.volt)
+    assert (1 * u.mV).has_same_unit(2 * u.mV)
+    assert not (1 * u.mV).has_same_unit(1.0)
+    assert u.Quantity(1.0).has_same_unit(1.0)
+
+
+def test_view_accepts_shape_tuple():
+    q = jnp.zeros(16, dtype=jnp.float32) * u.mV
+    assert q.view((2, 8)).shape == (2, 8)
+    assert q.view(2, 8).shape == (2, 8)
+    assert q.view((2, 8)).unit == u.mV
+
+
+def test_reduction_initial_respects_units():
+    x = jnp.ones(3) * u.volt
+    assert_quantity(x.sum(initial=1 * u.volt), 4.0, u.volt)
+    assert_quantity(x.max(initial=2 * u.kvolt), 2000.0, u.volt)
+    with pytest.raises(u.UnitMismatchError):
+        x.sum(initial=1)
+    with pytest.raises(u.UnitMismatchError):
+        x.max(initial=1 * u.second)
+
+
+def test_inplace_add_with_dtype_change_rebinds():
+    q = u.Quantity(jnp.array([1, 2]), unit=u.mV)
+    q += 1 * u.volt
+    assert_quantity(q, jnp.array([1001., 1002.]), u.mV)

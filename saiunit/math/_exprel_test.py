@@ -575,20 +575,28 @@ class TestExprelTaylorOrder:
             set_exprel_order(3.5)  # Not an integer
 
     def test_set_exprel_order_affects_default_call(self):
-        """set_exprel_order must change the order bound when order isn't given."""
+        """set_exprel_order must change the order used when order isn't given."""
+        from unittest import mock
+        import saiunit.math._exprel as exprel_mod
+
+        seen = []
+        real_impl = exprel_mod._exprel_impl
+
+        def spy(x, order=None):
+            seen.append(order)
+            return real_impl(x, order=order)
+
         original_order = get_exprel_order()
         try:
-            set_exprel_order(8)
-            jaxpr = jax.make_jaxpr(exprel)(jnp.float32(0.1))
-            orders = [eqn.params['order'] for eqn in jaxpr.jaxpr.eqns
-                      if eqn.primitive.name == 'exprel']
-            assert orders == [8], f"expected bound order [8], got {orders}"
+            with mock.patch.object(exprel_mod, '_exprel_impl', spy):
+                set_exprel_order(8)
+                exprel(jnp.float32(0.1))
+                assert seen == [8], f"expected order [8], got {seen}"
 
-            # Explicit order= must still take precedence.
-            jaxpr = jax.make_jaxpr(lambda v: exprel(v, order=3))(jnp.float32(0.1))
-            orders = [eqn.params['order'] for eqn in jaxpr.jaxpr.eqns
-                      if eqn.primitive.name == 'exprel']
-            assert orders == [3], f"expected bound order [3], got {orders}"
+                # Explicit order= must still take precedence.
+                seen.clear()
+                exprel(jnp.float32(0.1), order=3)
+                assert seen == [3], f"expected order [3], got {seen}"
         finally:
             set_exprel_order(original_order)
 

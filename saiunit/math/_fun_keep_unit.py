@@ -47,7 +47,7 @@ from saiunit._base_getters import (
     split_mantissa_unit,
     unit_scale_align_to_first,
 )
-from saiunit._base_quantity import Quantity
+from saiunit._base_quantity import Quantity, _zero_takes_unit
 from saiunit._misc import set_module_as, maybe_custom_array, maybe_custom_array_tree
 from ._fun_array_creation import asarray
 
@@ -725,7 +725,7 @@ def array_split(
       >>> a = jnp.arange(9.0) * u.second
       >>> u.math.array_split(a, 3)
     """
-    return _fun_keep_unit_return_sequence('split', ary, indices_or_sections, axis=axis, **kwargs)
+    return _fun_keep_unit_return_sequence('array_split', ary, indices_or_sections, axis=axis, **kwargs)
 
 
 @set_module_as('saiunit.math')
@@ -4338,7 +4338,7 @@ def histogram(
     weights: Optional[ArrayLike | Quantity] = None,
     density: Optional[bool] = None,
     **kwargs,
-) -> Tuple[Array, Array | Quantity]:
+) -> Tuple[Array | Quantity, Array | Quantity]:
     """
     Compute the histogram of a set of data.
 
@@ -4378,9 +4378,10 @@ def histogram(
 
     Returns
     -------
-    hist : array
+    hist : array or Quantity
       The values of the histogram. See `density` and `weights` for a
-      description of the possible semantics.
+      description of the possible semantics. Counts carry the unit of
+      `weights` (if any); densities carry the inverse unit of `x`.
     bin_edges : array of dtype float
       Return the bin edges ``(length(hist)+1)``.
 
@@ -4398,7 +4399,9 @@ def histogram(
         x = x.mantissa  # type: ignore[assignment]
     if isinstance(bins, Quantity):
         bins = bins.in_unit(unit).mantissa
+    weights_unit = UNITLESS
     if isinstance(weights, Quantity):
+        weights_unit = weights.unit
         weights = weights.mantissa
     if range is not None:
         range = (
@@ -4413,6 +4416,10 @@ def histogram(
         range = (x_min, x_max)  # type: ignore[assignment]
     hist_kwargs = _strip_none_kwargs(dict(range=range, weights=weights, density=density, **kwargs))
     hist, bin_edges = _dispatch_call(_resolve_op('histogram', backend), (x, bins), hist_kwargs)
+    # A density integrates to 1 over ``x``, so the weights unit cancels out.
+    hist_unit = UNITLESS / unit if density else weights_unit
+    if not hist_unit.is_unitless:
+        hist = Quantity(hist, unit=hist_unit)
     if unit.is_unitless:
         return hist, bin_edges
     return hist, Quantity(bin_edges, unit=unit)
@@ -4805,6 +4812,7 @@ def where(condition, x=None, y=None, /, *, size=None, fill_value=None, **kwargs)
             f'where does not support "size" or "fill_value" when x and y are provided. '
             f'Got size={size}, fill_value={fill_value}.'
         )
+    x, y = _zero_takes_unit(x, y)
     if isinstance(x, Quantity) and isinstance(y, Quantity):
         y = y.in_unit(x.unit)
         xp = get_backend(condition, x.mantissa, y.mantissa)

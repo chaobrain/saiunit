@@ -21,7 +21,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import tree_util
-from jax.experimental.sparse import JAXSparse, csr_fromdense_p, csr_todense_p, csr_matvec_p, csr_matmat_p
+from jax.experimental import sparse as jsparse
+from jax.experimental.sparse import JAXSparse
 
 from saiunit._base_getters import (
     get_mantissa,
@@ -970,9 +971,10 @@ def _csr_fromdense(
       indptr : array of shape ``(mat.shape[0] + 1,)`` and dtype ``index_dtype``
     """
     mat = asarray(mat)
-    mat, unit = split_mantissa_unit(mat)
+    mat_m, unit = split_mantissa_unit(mat)
     nse = concrete_or_error(operator.index, nse, "nse argument of csr_fromdense()")
-    r = csr_fromdense_p.bind(mat, nse=nse, index_dtype=np.dtype(index_dtype))
+    m = jsparse.csr_fromdense(mat_m, nse=nse, index_dtype=np.dtype(index_dtype))
+    r = (m.data, m.indices, m.indptr)
     if unit.is_unitless:
         return r
     else:
@@ -997,7 +999,7 @@ def _csr_todense(
       mat : array with specified shape and dtype matching ``data``
     """
     data, unit = split_mantissa_unit(data)
-    mat = csr_todense_p.bind(data, indices, indptr, shape=shape)
+    mat = jsparse.csr_todense(jsparse.CSR((data, indices, indptr), shape=shape))
     return maybe_decimal(mat * unit)
 
 
@@ -1027,8 +1029,8 @@ def _csr_matvec(
         the matrix vector product.
     """
     data, unitd = split_mantissa_unit(data)
-    v, unitv = split_mantissa_unit(v)
-    res = csr_matvec_p.bind(data, indices, indptr, v, shape=shape, transpose=transpose)
+    v_m, unitv = split_mantissa_unit(v)
+    res = jsparse.csr_matvec(jsparse.CSR((data, indices, indptr), shape=shape), v_m, transpose=transpose)
     return maybe_decimal(res * unitd * unitv)
 
 
@@ -1058,8 +1060,8 @@ def _csr_matmat(
         representing the matrix-matrix product.
     """
     data, unitd = split_mantissa_unit(data)
-    B, unitb = split_mantissa_unit(B)
-    res = csr_matmat_p.bind(data, indices, indptr, B, shape=shape, transpose=transpose)
+    B_m, unitb = split_mantissa_unit(B)
+    res = jsparse.csr_matmat(jsparse.CSR((data, indices, indptr), shape=shape), B_m, transpose=transpose)
     return maybe_decimal(res * unitd * unitb)
 
 

@@ -1568,3 +1568,29 @@ def test_filter_unsupported_kwargs_raises_on_unknown():
 
     # **kwargs / un-introspectable functions are left for _safe_call
     assert _filter_unsupported_kwargs(fn_varkw, {'whatever': 1}) == {'whatever': 1}
+
+
+def test_array_split_unequal_sections():
+    parts = u.math.array_split(jnp.arange(5.) * u.mV, 3)
+    assert [p.shape for p in parts] == [(2,), (2,), (1,)]
+    assert all(p.unit == u.mV for p in parts)
+
+
+def test_histogram_hist_units():
+    x = jnp.array([1., 2., 2.]) * u.mV
+    hist, _ = u.math.histogram(x, bins=2)
+    assert not isinstance(hist, u.Quantity)
+    hist, _ = u.math.histogram(x, bins=2, weights=jnp.ones(3) * u.second)
+    assert_quantity(hist, jnp.array([1., 2.]), u.second)
+    hist, edges = u.math.histogram(x, bins=2, density=True)
+    assert_quantity(hist, jnp.array([2. / 3., 4. / 3.]), u.mV ** -1)
+    hist, _ = u.math.histogram(x, bins=2, density=True, weights=jnp.ones(3) * u.second)
+    assert_quantity(hist, jnp.array([2. / 3., 4. / 3.]), u.mV ** -1)
+
+
+def test_where_zero_takes_any_unit():
+    x = jnp.array([-1., 2.]) * u.mV
+    assert_quantity(u.math.where(x > 0, x, 0), jnp.array([0., 2.]), u.mV)
+    assert_quantity(u.math.where(x > 0, 0., x), jnp.array([-1., 0.]), u.mV)
+    with pytest.raises(TypeError):
+        u.math.where(x > 0, x, 1.)
