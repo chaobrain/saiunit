@@ -70,9 +70,12 @@ definitions = '######### SCALED BASE UNITS ###########\n'
 # Generate scaled units for all base units
 scaled_units = []
 excluded_scaled_units = set()
+# Prefixed kelvin units are exported but not powered (no "mkelvin2") and not
+# part of the display lists below.
+unpowered_exports = []
 for _bu in base_units:
   if _bu in ['kelvin', 'kilogram', 'kilogramme']:
-    continue  # do not create "mkelvin", "kkilogram" etc.
+    continue  # do not create "kkilogram" etc.; kelvin is handled after candle
   for _k in _siprefixes.keys():
     if len(_k):
       _u = _k + _bu
@@ -83,6 +86,12 @@ for _bu in base_units:
         scaled_units.append(_u)
       else:
         excluded_scaled_units.add(_u)
+  if _bu == 'candle':
+    for _k in _siprefixes.keys():
+      if len(_k):
+        _u = _k + 'kelvin'
+        unpowered_exports.append((len(all_units), _u))
+        definitions += '{_u} = Unit.create_scaled_unit(kelvin, "{_k}")\n'.format(_u=_u, _k=_k)
 
 # Generate 2nd and 3rd powers for all scaled base units
 definitions += '######### SCALED BASE UNITS TO POWERS ###########\n'
@@ -130,12 +139,15 @@ modular_dynamics_units = [
 # all_units = all_units + modular_dynamics_units
 
 
-# Add unit names to __all__
+# Add unit names to __all__ (deduplicated, kelvin prefixes inserted in place)
+export_names = list(all_units)
+for _pos, _u in reversed(unpowered_exports):
+  export_names.insert(_pos, _u)
 all = '''
 __all__ = [
 {allunits}
     ]
-'''.format(allunits='\n'.join('    "' + u + '",' for u in all_units))
+'''.format(allunits='\n'.join('    "' + u + '",' for u in dict.fromkeys(export_names)))
 
 
 def to_definition(name, x):
