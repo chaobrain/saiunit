@@ -1,69 +1,167 @@
 # Release Notes
 
-## Unreleased
+## Version 0.6.0
 
-### Unit display redesign
+### Highlights
 
-Units now carry structured display terms — the named units they were
-composed from, with exact exponents — instead of string triples that were
-merged and re-parsed with a regular expression. All of `__mul__`, `__div__`,
-`__pow__` and `reverse()` go through a single composition function, and
-`dim`/`scale`/`factor` are derived from the terms in a canonical order.
+Version 0.6.0 redesigns how units are composed, displayed and parsed, adds
+compatibility with JAX 0.12, and lands a broad correctness pass over
+``Quantity``, ``Unit`` and ``Dimension``. Composite units now display the way
+they were written (``mV * ms`` stays ``ms * mV`` instead of collapsing to
+``uWb``), the ASCII and Unicode display strings parse back to an equal unit,
+and units can also be rendered as LaTeX. CuPy is now a measured, supported backend.
 
-- **Composites display as written.** `mV * ms` is `ms * mV` (was `uWb`),
-  `mol / l` is `mol / l` (was `M`), `km * mm` is `km * mm` (was `m^2`), and
-  `rad * m` is `m * rad` (the radian was dropped). Automatic collapse is
-  limited to a curated set: SI base units, N, Pa, J, W, C, V, F, ohm, S, Hz
-  and their prefixed forms (not da/h/d/c), so `kg * m / s^2` is still `N`
-  and `1 / s` is still `Hz`. Wb, T, H, kat, Gy, Sv, Bq, M, l, … are no
-  longer reached by arithmetic; use the new `Unit.simplify()` /
-  `Quantity.simplify()` to collapse onto any registered unit
-  (`(V * s).simplify()` is `Wb`).
-- **Anonymous operands no longer erase names.** `UNITLESS / mV` and
-  `1 / (3 * mV)` display `1 / mV` (was `10.0^3 * s^3 * A / (m^2 * kg)`).
-- **Operators agree.** `s ** -1` displays `Hz`, like `1 / s`.
-- **Readable scaled dimensionless units.** `mV / V` displays `mV / V`,
-  `minute * Hz` displays `Hz * min`; pure scales display `10^3`
-  (was `10.0^3`).
+This release raises the minimum requirements to **Python 3.12** and
+**JAX 0.9**, and changes some display strings and math semantics; review
+*Breaking and behaviour changes* below before upgrading.
+
+### Breaking and behaviour changes
+
+- **Requirements.** Python ≥ 3.12 (was 3.11) and, for the JAX extras,
+  ``jax >= 0.9.0``. Python 3.15 is now a listed classifier.
+- **Unit display.** Arithmetic collapses a composite only onto a curated set of
+  units: the SI base units, ``N``, ``Pa``, ``J``, ``W``, ``C``, ``V``, ``F``,
+  ``ohm``, ``S``, ``Hz`` and their prefixed forms (except ``da``, ``h``, ``d``,
+  ``c``). ``kg * m / s^2`` is still ``N`` and ``1 / s`` is still ``Hz``, but
+  ``V * s`` now displays ``s * V`` (was ``Wb``), ``mol / l`` displays
+  ``mol / l`` (was ``M``) and ``km * mm`` displays ``km * mm`` (was ``m^2``).
+  Use the new ``Unit.simplify()`` / ``Quantity.simplify()`` to collapse onto
+  any registered unit (``(V * s).simplify()`` → ``Wb``).
+- **ASCII canonical symbols.** ``str(unit)`` is pure ASCII: micro is ``u``
+  (``micron`` displays ``um``), and degree, arcminute, arcsecond and angstrom
+  display ``deg``, ``arcmin``, ``arcsec`` and ``Angstrom``. The Unicode forms
+  (``µm``, ``°``, ``′``, ``″``, ``Å``) are available through
+  ``to_string('unicode')`` and are still accepted by the parser.
+- **Pure scales** display as ``10^3`` (was ``10.0^3``); the old form still
+  parses.
+- **``mmHg`` is no longer an alias of ``torr``.** It is now the conventional
+  millimetre of mercury, 133.322387415 Pa; a torr remains 101325/760 Pa. This
+  applies to both ``saiunit.mmHg`` and ``saiunit.constants.mmHg``.
+- **Math semantics.**
+  - ``u.math.hypot`` and ``u.math.arctan2`` accept two Quantities of the same
+    dimension; ``hypot`` returns a Quantity in the first argument's unit.
+  - ``u.math.histogram`` returns counts carrying the ``weights`` unit, or
+    ``1 / x``-unit densities when ``density=True``.
+  - ``u.math`` comparisons, ``where`` and ``full_like`` accept a literal ``0``
+    for an operand of any unit.
+  - ``u.math.meshgrid`` returns a tuple, matching NumPy 2 and JAX ≥ 0.11.1.
+- **Quantity semantics.** ``==`` / ``!=`` between Quantities of different
+  dimensions return ``False`` instead of raising; ``Quantity.put`` uses flat
+  indices like ``numpy.put``; ``Quantity.has_same_unit`` compares units
+  (matching ``u.has_same_unit``); ``at[].power`` / ``at[].apply`` reject
+  operations that would change the unit of part of an array.
+- **Pickles.** Units pickled by earlier versions still load. Units pickled by
+  0.6.0 cannot be loaded by earlier versions.
+
+### Units: display, parsing and composition
+
+Units now carry structured display terms — the named units they were composed
+from, with exact exponents — instead of string triples that were merged and
+re-parsed with a regular expression. ``*``, ``/``, ``**`` and ``reverse()``
+share one composition function, and ``dim`` / ``scale`` / ``factor`` are derived
+from the terms in a canonical order (#146).
+
+- **Composites display as written** and keep dimensionless names:
+  ``rad * m`` is ``m * rad`` (the radian was previously dropped).
+- **Anonymous operands no longer erase names.** ``UNITLESS / mV`` and
+  ``1 / (3 * mV)`` display ``1 / mV`` (was ``10.0^3 * s^3 * A / (m^2 * kg)``).
+- **Operators agree.** ``second ** -1`` displays ``Hz``, like ``1 / second``.
+- **Readable scaled dimensionless units.** ``mV / V`` displays ``mV / V`` and
+  ``minute * Hz`` displays ``Hz * min`` (were ``10.0^-3`` and
+  ``6.0 * 10.0^1``).
 - **Exact exponents.** Exponents are kept as integers or fractions:
-  `mV ** (1/3)` displays `mV^(1/3)` and `metre ** Fraction(1, 3)` works.
-- **Deterministic, exact composition.** `a * b` and `b * a` always display
-  identically and compare equal (the factor is folded in canonical order),
-  and `hour.reverse().reverse() == hour` exactly.
-- **Parsing round-trips.** `parse_unit(str(u)) == u` for every composition
-  of registered units, and parsing is idempotent. A new tokenizer accepts
-  `µ`/`μ`, `Ω`, `°`, superscripts (`cm²`), `·`/`×`, rational exponents
-  (`m^(1/3)`) and registered symbols such as `km/h` and `oz t`.
+  ``mV ** (1/3)`` displays ``mV^(1/3)``, and ``metre ** Fraction(1, 3)`` works
+  (it previously raised).
+- **Deterministic, exact composition.** ``a * b`` and ``b * a`` always display
+  identically and compare equal, and ``hour.reverse().reverse() == hour``
+  exactly.
+- **Round-trip parsing.** ``parse_unit(str(u)) == u`` (and likewise for
+  ``to_string('unicode')``) for every composition of registered units, and
+  parsing is idempotent. LaTeX output is for display only and is not parsed. The new tokenizer accepts
+  ``µ`` / ``μ``, ``Ω``, ``°``, superscripts (``cm²``), ``·`` / ``×``, rational
+  exponents (``m^(1/3)``), parenthesised powers (``(m / s)^2``) and registered
+  symbols containing spaces or slashes (``km/h``, ``oz t``).
+- **Unicode and LaTeX output.** ``Unit.to_string(format)`` renders ``'ascii'``
+  (canonical), ``'ascii_inline'``, ``'unicode'`` (``mS·nA / cm²``, ``µF``,
+  ``kΩ``), ``'unicode_inline'``, ``'latex'`` and ``'latex_inline'``.
+  ``format(unit, spec)`` accepts the same names, and ``Unit`` and ``Quantity``
+  implement ``_repr_latex_`` for Jupyter.
 - **Quantity display.** A unit with no numerator prints with negative
-  exponents (`0.4 mV^-1`, was `0.4 1 / mV`); a numeric unit is joined with
-  `*` (`2.5 * 10^3`).
-- **Unicode and LaTeX.** `Unit.to_string(format)` renders `'ascii'`
-  (canonical), `'ascii_inline'`, `'unicode'` (`mS·nA / cm²`, `µF`, `kΩ`),
-  `'unicode_inline'`, `'latex'` and `'latex_inline'`; `format(unit, spec)`
-  accepts the same names, and `Unit`/`Quantity` implement `_repr_latex_`
-  for Jupyter.
-- **ASCII canonical symbols.** `str()` is pure ASCII: micro is `u`
-  (`micron` is `um`), and degree, arcminute, arcsecond and angstrom display
-  `deg`, `arcmin`, `arcsec` and `Angstrom`; their Unicode forms (`°`, `′`,
-  `″`, `Å`, `µm`) are used by `to_string('unicode')` and accepted by the
-  parser.
-- **`mmHg` is no longer an alias of `torr`.** It is the conventional
-  millimetre of mercury, 133.322387415 Pa (a torr is 101325/760 Pa), in
-  both `saiunit` and `saiunit.constants`.
+  exponents (``0.4 mV^-1``, was ``0.4 1 / mV``); a purely numeric unit is
+  joined with ``*`` (``2.5 * 10^3``).
+- **New API.** ``Unit.simplify()``, ``Quantity.simplify()``,
+  ``Unit.to_string()`` and ``Unit.create_power(base, n, name=None)``; the
+  keyword-only ``auto_simplify``, ``unicode`` and ``latex`` arguments on
+  ``Unit.create``; and ``auto_simplify`` on ``add_standard_unit``.
+  ``Unit.name`` / ``Unit.dispname`` of a composite return its display string,
+  and ``Unit.is_fullname`` is now a read-only property.
+- **Removed private helpers.** ``_find_standard_unit``, ``_get_display_parts``,
+  ``_merge_display_parts``, ``_normalise_display_parts``,
+  ``_format_display_parts``, ``_fmt_exp`` and ``_format_dim_parser_compatible``.
 
-#### API
+### JAX compatibility
 
-- New: `Unit.simplify()`, `Quantity.simplify()`, `Unit.to_string()`,
-  `Unit.create_power(base, n, name=None)`; keyword-only
-  `auto_simplify`/`unicode`/`latex` arguments on `Unit.create` and
-  `auto_simplify` on `add_standard_unit`.
-- `Unit.name` / `Unit.dispname` of a composite return its display string;
-  `Unit.is_fullname` is now a read-only property.
-- Units pickled by earlier versions still load. Units pickled by this
-  version cannot be loaded by earlier versions.
-- Removed private helpers: `_find_standard_unit`, `_get_display_parts`,
-  `_merge_display_parts`, `_normalise_display_parts`,
-  `_format_display_parts`, `_fmt_exp`, `_format_dim_parser_compatible`.
+- **JAX 0.12.** ``Quantity.__array__`` and ``CustomArray.__array__`` accept
+  the NumPy 2 ``copy=`` keyword. Private and legacy JAX imports
+  (``is_constant_dim``, ``DynamicJaxprTracer``) are guarded with fallbacks.
+  ``u.math.exprel`` uses the public ``jax.custom_jvp`` instead of a
+  hand-registered primitive, and the sparse COO/CSR kernels call the public
+  ``jax.experimental.sparse`` functions. ``u.lax.qr`` forwards ``use_magma``
+  only when it is set (#145).
+- The test suite now fails on ``DeprecationWarning`` raised from saiunit code,
+  so upstream API removals surface before they become errors (#145).
+
+### Core: ``Quantity``, ``Unit`` and ``Dimension``
+
+A review of the core types fixed the following (#140, #145):
+
+- ``q -= unit`` is rejected like ``+``, ``-`` and ``+=`` (it previously
+  subtracted ``1 * unit``).
+- The NumPy ufunc dispatch table covers the common ufuncs that
+  ``saiunit.math`` implements (``np.maximum``, ``np.minimum``, ``np.floor``,
+  ``np.hypot``, ``np.tanh``, …), which previously raised ``TypeError``.
+- Arithmetic dunders return ``NotImplemented`` for unknown operand types, so
+  third-party types' reflected operators are honoured.
+- The zero convention (``0`` is compatible with any unit) applies consistently
+  to item assignment, ``at[].set`` / ``at[].add``, ``clip`` and ``fill``.
+- Assigning a plain number into a Quantity raises a consistent exception type.
+- ``**`` accepts dimensionless but scaled exponents.
+- ``Quantity.__pow__`` preserves the unit factor (``(1 * foot) ** 1`` stays in
+  feet).
+- ``Unit.factorless()`` no longer substitutes unrelated dimensionless aliases
+  (``arcmin.factorless()`` gave ``crad^2``).
+- Unit conversion no longer saturates for magnitudes beyond ~10^±308.
+- ``fftfreq`` / ``rfftfreq`` no longer register ad-hoc units globally.
+- Overflowing unit factors raise ``ValueError`` with an actionable message
+  instead of a raw ``OverflowError``, and a concrete 0-d array used as a
+  factor no longer produces an unhashable ``Unit``.
+- ``Quantity.view`` accepts a shape tuple; ``sum`` / ``max`` / ``min``
+  convert ``initial`` into the array's unit; ``u.math.array_split`` no longer
+  dispatches to ``split``; in-place ``+=`` / ``-=`` rebind when unit
+  conversion promotes the dtype; ``result=`` callables in ``check_units`` /
+  ``check_dims`` / ``assign_units`` receive keyword arguments.
+
+### Backends
+
+- **CuPy.** CuPy arrays are a measured, supported backend: conversion to
+  NumPy is an explicit device-to-host copy via ``cupy.asnumpy``, and
+  ``u.math.as_numpy`` converts arrays from any supported backend (#141).
+
+### Documentation
+
+- Corrected the ``saiunit.math`` API taxonomy (dimensionless-input and
+  angle/phase groups) and regenerated the backend notebooks and the feature
+  support matrix with measured outputs (#141, #142).
+- Updated the mechanism tutorial and the constants reference for the new unit
+  internals and the ``mmHg`` / ``torr`` split.
+
+### Tooling
+
+- The unit generator (``dev/units-generator.py``) reproduces
+  ``_unit_common.py`` exactly and emits ``auto_simplify`` flags,
+  Unicode/LaTeX symbols and ``Unit.create_power`` for powered units.
+- Added ``dev/bench_unit_display.py`` for unit composition and display
+  micro-benchmarks.
 
 ## Version 0.5.2
 
