@@ -22,7 +22,7 @@ description = "Physical Units and Unit-Aware Mathematical System for General-Pur
 readme = 'README.md'
 license = 'Apache-2.0'
 requires-python = '>=3.10'
-authors = [{ name = 'BrainUnit Developers', email = 'chao.brain@qq.com' }]
+authors = [{ name = 'BrainUnit Developers', email = 'chaobrain@outlook.com' }]
 classifiers = [
     'Natural Language :: English',
     'Operating System :: OS Independent',
