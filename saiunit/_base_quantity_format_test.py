@@ -195,3 +195,43 @@ class TestFormatSpecLazyBackends:
         q = Quantity(torch.tensor([1.5], requires_grad=True), unit=u.mV)
         out = format(q, ".2f")
         assert isinstance(out, str)
+
+
+_SHARDED_SCRIPT = r"""
+import jax, jax.numpy as jnp
+from jax.sharding import AxisType, NamedSharding, PartitionSpec
+import saiunit as u
+assert len(jax.devices()) == 2, jax.devices()
+mesh = jax.make_mesh((2,), ('m',), axis_types=(AxisType.Explicit,))
+plain = jnp.arange(4.)
+x = jax.device_put(plain, NamedSharding(mesh, PartitionSpec('m')))
+q, ref = u.Quantity(x, unit=u.mV), u.Quantity(plain, unit=u.mV)
+assert repr(q) == repr(ref), (repr(q), repr(ref))
+assert str(q) == str(ref), (str(q), str(ref))
+assert q.repr_in_unit() == ref.repr_in_unit()
+big = jax.device_put(jnp.arange(200.), NamedSharding(mesh, PartitionSpec('m')))
+assert repr(u.Quantity(big, unit=u.mV)) == repr(u.Quantity(jnp.arange(200.), unit=u.mV))
+print('OK')
+"""
+
+
+class TestReprShardedArray:
+    def test_repr_of_an_array_sharded_over_explicit_axes(self):
+        """numpy's printing indexes a jax array element by element. For an array
+        sharded over an explicit mesh axis each such gather raises, so
+        ``repr``/``str`` of the Quantity crashed while ``repr`` of the array works.
+
+        Before the fix: jax ShardingTypeError: Use ``.at[...].get(out_sharding=)``
+        to provide output PartitionSpec for the gather indexing ...
+        """
+        import os
+        import pathlib
+        import subprocess
+        import sys
+        root = pathlib.Path(__file__).resolve().parents[1]
+        env = dict(os.environ, JAX_PLATFORMS='cpu',
+                   XLA_FLAGS='--xla_force_host_platform_device_count=2',
+                   PYTHONPATH=str(root) + os.pathsep + os.environ.get('PYTHONPATH', ''))
+        out = subprocess.run([sys.executable, '-c', _SHARDED_SCRIPT], capture_output=True,
+                             text=True, env=env, timeout=300)
+        assert out.returncode == 0 and 'OK' in out.stdout, out.stderr[-2000:]
