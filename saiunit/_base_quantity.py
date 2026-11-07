@@ -1276,8 +1276,15 @@ class Quantity:
         if is_dask_array(m):
             return repr(m)
         value: 'ArrayLike'
-        if isinstance(m, (_JaxArray, np.ndarray)):
+        if isinstance(m, np.ndarray):
             value = m
+        elif isinstance(m, _JaxArray):
+            # Format a concrete array on the host. numpy's printing indexes it
+            # element by element, which raises for an array sharded over
+            # explicit mesh axes; tracers and arrays spread over several
+            # processes stay as they are.
+            fetch = not _is_tracer(m) and getattr(m, 'is_fully_addressable', False)
+            value = np.asarray(m) if fetch else m
         elif isinstance(m, (numbers.Number, list, tuple)):
             # Python scalars / sequences — promote so we get a printable array.
             # Prefer ``jnp.asarray`` when JAX is installed so the precision
